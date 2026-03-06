@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 
 class CartItem {
   final String variantId;
@@ -39,6 +40,15 @@ class _PosScreenState extends State<PosScreen> {
   String? _selectedStoreId;
   String? _storeName;
   bool _isLoading = true;
+
+  StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
+
+  @override
+  void dispose() {
+    _inventorySubscription?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -82,6 +92,44 @@ class _PosScreenState extends State<PosScreen> {
     }
   }
 
+  void _setupInventoryStream() {
+    if (_selectedStoreId == null) return;
+    
+    _inventorySubscription?.cancel();
+    _inventorySubscription = Supabase.instance.client
+        .from('inventory')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', _selectedStoreId!)
+        .listen((inventoryData) {
+          if (!mounted) return;
+          
+          // When inventory changes, we need to update our _searchResults
+          // to reflect the true quantities without a full re-fetch of variants.
+          setState(() {
+            for (var searchResult in _searchResults) {
+              final variantId = searchResult['id'];
+              final invItem = inventoryData.firstWhere(
+                (inv) => inv['variant_id'] == variantId && inv['store_id'] == _selectedStoreId,
+                orElse: () => {},
+              );
+              
+              if (invItem.isNotEmpty) {
+                // Find or update the inventory list inside searchResult
+                final invList = searchResult['inventory'] as List<dynamic>? ?? [];
+                final existingInvIndex = invList.indexWhere((i) => i['store_id'] == _selectedStoreId);
+                
+                if (existingInvIndex >= 0) {
+                  invList[existingInvIndex]['quantity'] = invItem['quantity'];
+                } else {
+                  invList.add({'store_id': _selectedStoreId, 'quantity': invItem['quantity']});
+                  searchResult['inventory'] = invList;
+                }
+              }
+            }
+          });
+        });
+  }
+
   Future<void> _searchProduct(String query) async {
     setState(() => _isSearching = true);
 
@@ -89,7 +137,7 @@ class _PosScreenState extends State<PosScreen> {
       var queryBuilder = Supabase.instance.client
           .from('product_variants')
           .select('''
-            id, size, color, barcode,
+            id, size, color, barcode, sell_price,
             products!inner(name, image_url),
             inventory(quantity, store_id)
           ''');
@@ -105,6 +153,11 @@ class _PosScreenState extends State<PosScreen> {
           _searchResults = response;
           _isSearching = false;
         });
+        
+        // After fetching variants, ensure the stream is attached to keep them updated
+        if (_inventorySubscription == null) {
+          _setupInventoryStream();
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isSearching = false);
@@ -152,7 +205,7 @@ class _PosScreenState extends State<PosScreen> {
           size: variantData['size'],
           color: variantData['color'],
           quantity: 1,
-          unitPrice: 0.0,
+          unitPrice: double.tryParse(variantData['sell_price']?.toString() ?? '0') ?? 0.0,
         ));
       });
     }
@@ -189,6 +242,7 @@ class _PosScreenState extends State<PosScreen> {
       final invoiceNumber = 'INV-${DateTime.now().millisecondsSinceEpoch}';
 
       for (var item in _cart) {
+        // Insert the sale transaction → Trigger auto-updates inventory
         await Supabase.instance.client.from('transactions').insert({
           'invoice_number': invoiceNumber,
           'type': 'out',
@@ -397,7 +451,7 @@ class _PosScreenState extends State<PosScreen> {
                           ? const Center(child: Text("Le panier est vide", style: TextStyle(color: Colors.grey, fontSize: 16)))
                           : ListView.separated(
                               itemCount: _cart.length,
-                              separatorBuilder: (_, _) => const Divider(height: 1),
+                              separatorBuilder: (_, __) => const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final item = _cart[index];
                                 return Padding(
@@ -412,7 +466,10 @@ class _PosScreenState extends State<PosScreen> {
                                             Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                             Text('${item.size} - ${item.color}', style: const TextStyle(color: Colors.grey)),
                                             const SizedBox(height: 8),
-                                            Row(
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 8,
+                                              crossAxisAlignment: WrapCrossAlignment.center,
                                               children: [
                                                 const Text("Qté: ", style: TextStyle(fontWeight: FontWeight.bold)),
                                                 SizedBox(
@@ -427,7 +484,6 @@ class _PosScreenState extends State<PosScreen> {
                                                     },
                                                   ),
                                                 ),
-                                                const SizedBox(width: 16),
                                                 const Text("Prix U: ", style: TextStyle(fontWeight: FontWeight.bold)),
                                                 SizedBox(
                                                   width: 70,

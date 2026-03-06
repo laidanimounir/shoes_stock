@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -21,16 +22,29 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
+  // Real-time subscriptions
+  StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _lowStockSubscription;
+
   // Stats
   int _totalProducts = 0;
   int _totalStock = 0;
   int _lowStockCount = 0;
+  double _totalValue = 0;
 
   @override
   void initState() {
     super.initState();
     timeago.setLocaleMessages('fr', timeago.FrMessages());
     _fetchStores();
+  }
+
+  @override
+  void dispose() {
+    _inventorySubscription?.cancel();
+    _lowStockSubscription?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchStores() async {
@@ -58,58 +72,74 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
-  Future<void> _fetchInventoryData() async {
-    setState(() => _isLoading = true);
-    await Future.wait([
-      _fetchInventory(),
-      _fetchLowStock(),
-      _fetchRecentMovements(),
-    ]);
-    if (mounted) setState(() => _isLoading = false);
-  }
+  void _setupRealtimeStreams() {
+    _inventorySubscription?.cancel();
+    _lowStockSubscription?.cancel();
 
-  Future<void> _fetchInventory() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('inventory')
-          .select('id, quantity, product_variants(id, size, color, barcode, products(name, image_url))')
-          .eq('store_id', _selectedStoreId!)
-          .order('quantity', ascending: true);
+    if (_selectedStoreId == null) return;
 
-      if (mounted) {
-        setState(() {
-          _inventoryItems = res;
-          _totalProducts = res.length;
-          _totalStock = 0;
-          _lowStockCount = 0;
-          for (var item in res) {
-            final qty = (item['quantity'] as int?) ?? 0;
-            _totalStock += qty;
-            if (qty < 3) _lowStockCount++;
+    // 1. Inventory Stream
+    _inventorySubscription = Supabase.instance.client
+        .from('inventory')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', _selectedStoreId!)
+        .order('quantity', ascending: true)
+        .listen((data) async {
+          final enrichedData = await Future.wait(data.map((item) async {
+            final variantRes = await Supabase.instance.client
+                .from('product_variants')
+                .select('id, size, color, barcode, products(name, image_url)')
+                .eq('id', item['variant_id'])
+                .maybeSingle();
+            item['product_variants'] = variantRes;
+            return item;
+          }));
+
+          if (mounted) {
+            setState(() {
+              _inventoryItems = enrichedData;
+              _totalProducts = enrichedData.length;
+              _totalStock = 0;
+              _lowStockCount = 0;
+              _totalValue = 0;
+              for (var item in enrichedData) {
+                final qty = (item['quantity'] as int?) ?? 0;
+                final price = double.tryParse(item['product_variants']?['sell_price']?.toString() ?? '0') ?? 0.0;
+                _totalStock += qty;
+                _totalValue += (qty * price);
+                if (qty < 3) _lowStockCount++;
+              }
+            });
           }
         });
-      }
-    } catch (e) {
-      debugPrint("Error fetching inventory: $e");
-    }
+
+    // 2. Low Stock Stream (filtered locally since .lt() is not supported on .stream())
+    _lowStockSubscription = Supabase.instance.client
+        .from('inventory')
+        .stream(primaryKey: ['id'])
+        .eq('store_id', _selectedStoreId!)
+        .order('quantity', ascending: true)
+        .limit(100)
+        .listen((data) async {
+          final lowStockData = data.where((item) => (item['quantity'] ?? 0) < 3).toList();
+          final enrichedData = await Future.wait(lowStockData.map((item) async {
+            final variantRes = await Supabase.instance.client
+                .from('product_variants')
+                .select('size, color, barcode, products(name)')
+                .eq('id', item['variant_id'])
+                .maybeSingle();
+            item['product_variants'] = variantRes;
+            return item;
+          }));
+          if (mounted) setState(() => _lowStockAlerts = enrichedData);
+        });
   }
 
-  Future<void> _fetchLowStock() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('inventory')
-          .select('quantity, product_variants(size, color, barcode, products(name))')
-          .eq('store_id', _selectedStoreId!)
-          .lt('quantity', 3)
-          .order('quantity', ascending: true)
-          .limit(20);
-
-      if (mounted) {
-        setState(() => _lowStockAlerts = res);
-      }
-    } catch (e) {
-      debugPrint("Error fetching low stock: $e");
-    }
+  Future<void> _fetchInventoryData() async {
+    setState(() => _isLoading = true);
+    _setupRealtimeStreams();
+    await _fetchRecentMovements();
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _fetchRecentMovements() async {
@@ -142,12 +172,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -156,7 +180,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
-          // Store selector
           if (_stores.isNotEmpty)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -224,6 +247,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 const SizedBox(width: 12),
                                 _buildStatCard('Stock Total', '$_totalStock unités', Icons.inventory_2, Colors.green),
                                 const SizedBox(width: 12),
+                                _buildStatCard('Valeur du Stock', '${_totalValue.toStringAsFixed(2)} €', Icons.euro, Colors.orange),
+                                const SizedBox(width: 12),
                                 _buildStatCard('Stock Faible', '$_lowStockCount', Icons.warning_amber, Colors.red),
                               ],
                             ),
@@ -275,7 +300,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _filteredInventory.length,
-                                      separatorBuilder: (_, _) => const Divider(height: 1),
+                                      separatorBuilder: (_, __) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final item = _filteredInventory[index];
                                         final variant = item['product_variants'] ?? {};
@@ -378,7 +403,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _lowStockAlerts.length,
-                                      separatorBuilder: (_, _) => const Divider(height: 1),
+                                      separatorBuilder: (_, __) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final alert = _lowStockAlerts[index];
                                         final name = alert['product_variants']?['products']?['name'] ?? 'Inconnu';
@@ -421,7 +446,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _recentMovements.length,
-                                      separatorBuilder: (_, _) => const Divider(height: 1),
+                                      separatorBuilder: (_, __) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final mov = _recentMovements[index];
                                         final isIn = mov['type'] == 'in';

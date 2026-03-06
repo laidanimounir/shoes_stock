@@ -92,7 +92,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       final invoiceNumber = 'ACH-${DateTime.now().millisecondsSinceEpoch}';
 
       for (var item in _purchaseItems) {
-        // Insert a transaction of type 'in' → trigger will auto-increment inventory
+        // Insert transaction → Trigger auto-updates inventory
         await Supabase.instance.client.from('transactions').insert({
           'invoice_number': invoiceNumber,
           'type': 'in',

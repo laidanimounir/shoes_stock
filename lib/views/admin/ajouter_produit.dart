@@ -8,6 +8,7 @@ class VariantFormData {
   String size = '';
   String color = '';
   String barcode = '';
+  String sellPrice = '';
 }
 
 class AjouterProduitScreen extends StatefulWidget {
@@ -117,9 +118,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     
     // Check if variants are valid
     for (var v in _variants) {
-      if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty) {
+      if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez remplir tous les champs des variantes.'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Veuillez remplir tous les champs des variantes (y compris le prix).'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+      if (double.tryParse(v.sellPrice) == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Veuillez entrer un prix valide.'), backgroundColor: Colors.red),
         );
         return;
       }
@@ -155,6 +162,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           'size': variant.size.trim(),
           'color': variant.color.trim(),
           'barcode': variant.barcode.trim(),
+          'sell_price': double.tryParse(variant.sellPrice) ?? 0.0,
         }).select('id').single();
 
         final variantId = variantRes['id'];
