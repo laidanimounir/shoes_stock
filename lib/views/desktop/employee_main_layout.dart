@@ -40,7 +40,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar
+      
           NavigationRail(
             backgroundColor: Colors.blueGrey[900],
             selectedIndex: _selectedIndex,

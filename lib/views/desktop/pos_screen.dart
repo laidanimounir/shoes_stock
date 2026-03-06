@@ -60,7 +60,7 @@ class _PosScreenState extends State<PosScreen> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        // Fetch employee's assigned store
+      
         final profile = await Supabase.instance.client
             .from('user_profiles')
             .select('store_id')
@@ -69,7 +69,7 @@ class _PosScreenState extends State<PosScreen> {
         
         _selectedStoreId = profile['store_id'];
 
-        // Fetch store name for display
+        
         if (_selectedStoreId != null) {
           final storeRes = await Supabase.instance.client
               .from('stores')
@@ -83,7 +83,7 @@ class _PosScreenState extends State<PosScreen> {
           setState(() => _isLoading = false);
         }
         
-        // Load products
+
         _searchProduct('');
       }
     } catch (e) {
@@ -103,8 +103,7 @@ class _PosScreenState extends State<PosScreen> {
         .listen((inventoryData) {
           if (!mounted) return;
           
-          // When inventory changes, we need to update our _searchResults
-          // to reflect the true quantities without a full re-fetch of variants.
+          
           setState(() {
             for (var searchResult in _searchResults) {
               final variantId = searchResult['id'];
@@ -114,7 +113,7 @@ class _PosScreenState extends State<PosScreen> {
               );
               
               if (invItem.isNotEmpty) {
-                // Find or update the inventory list inside searchResult
+              
                 final invList = searchResult['inventory'] as List<dynamic>? ?? [];
                 final existingInvIndex = invList.indexWhere((i) => i['store_id'] == _selectedStoreId);
                 
@@ -154,7 +153,7 @@ class _PosScreenState extends State<PosScreen> {
           _isSearching = false;
         });
         
-        // After fetching variants, ensure the stream is attached to keep them updated
+       
         if (_inventorySubscription == null) {
           _setupInventoryStream();
         }
@@ -174,7 +173,7 @@ class _PosScreenState extends State<PosScreen> {
       return;
     }
 
-    // Check inventory for the selected store
+
     final inventoryList = variantData['inventory'] as List<dynamic>? ?? [];
     int availability = 0;
     for (var inv in inventoryList) {
@@ -224,7 +223,7 @@ class _PosScreenState extends State<PosScreen> {
     if (_cart.isEmpty) return;
     if (_selectedStoreId == null) return;
     
-    // Validate prices
+
     for (var item in _cart) {
       if (item.unitPrice <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -242,7 +241,7 @@ class _PosScreenState extends State<PosScreen> {
       final invoiceNumber = 'INV-${DateTime.now().millisecondsSinceEpoch}';
 
       for (var item in _cart) {
-        // Insert the sale transaction → Trigger auto-updates inventory
+  
         await Supabase.instance.client.from('transactions').insert({
           'invoice_number': invoiceNumber,
           'type': 'out',
@@ -287,7 +286,7 @@ class _PosScreenState extends State<PosScreen> {
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
-          // Show employee's assigned store name
+     
           if (_storeName != null)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -310,7 +309,7 @@ class _PosScreenState extends State<PosScreen> {
         ? const Center(child: CircularProgressIndicator())
         : Row(
             children: [
-              // Left Panel (Search & Products)
+ 
               Expanded(
                 flex: 5,
                 child: Container(
@@ -338,7 +337,7 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Results Grid
+            
                       Expanded(
                         child: _isSearching
                             ? const Center(child: CircularProgressIndicator())
@@ -422,7 +421,7 @@ class _PosScreenState extends State<PosScreen> {
                 ),
               ),
               
-              // Right Panel (Cart)
+       
               Expanded(
                 flex: 2,
                 child: Container(
@@ -521,7 +520,7 @@ class _PosScreenState extends State<PosScreen> {
                             ),
                       ),
                       
-                      // Payment Section
+                  
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
