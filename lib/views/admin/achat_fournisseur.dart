@@ -35,7 +35,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       final results = await Future.wait([
         Supabase.instance.client.from('suppliers').select(),
         Supabase.instance.client.from('stores').select(),
-        Supabase.instance.client.from('product_variants').select('id, size, color, barcode, products(name)'),
+        Supabase.instance.client.from('product_variants').select('id, size, color, barcode, buy_price, products(name)'),
       ]);
       if (mounted) {
         setState(() {
@@ -198,7 +198,18 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 child: Text('$name (${v['size']} / ${v['color']})'),
                               );
                             }).toList(),
-                            onChanged: (val) => setState(() => _selectedVariantId = val),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedVariantId = val;
+                                // Auto-fill price from DB if available
+                                if (val != null) {
+                                  final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
+                                  if (v != null && v['buy_price'] != null) {
+                                    _priceController.text = v['buy_price'].toString();
+                                  }
+                                }
+                              });
+                            },
                           ),
                           const SizedBox(height: 16),
 

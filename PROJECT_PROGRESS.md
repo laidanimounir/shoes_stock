@@ -1,25 +1,30 @@
 # سجل تقدم المشروع (Shoes Stock)
 
-## الحالة الحالية: جاهز للعمل ✅ (يتطلب خطوة واحدة أخيرة)
+## الحالة الحالية: نظام إدارة المنتجات جاهز 🚀
 
-### ✅ ما تم إنجازه (2026-03-06):
-1. **ترجمة الواجهة:** كل النصوص بالفرنسية.
-2. **إصلاح واجهة POS:** حل مشكلة التداخل (Overflow).
-3. **نظام الأسعار:** `sell_price` في `product_variants` + جلب تلقائي.
-4. **التحديث الآني (Real-time):** Supabase Streams في `inventory_screen.dart` و `pos_screen.dart`.
-5. **تحديث المخزون التلقائي:**
-   - `pos_screen.dart`: يخصم الكمية من `inventory` عند البيع.
-   - `achat_fournisseur.dart`: يضيف الكمية إلى `inventory` عند الشراء.
-6. **قيمة المخزون:** بطاقة إحصائية تعرض إجمالي القيمة.
-7. **SQL Trigger:** ملف `supabase_trigger.sql` جاهز للتنفيذ.
+### ✅ ما تم إنجازه (إضافة المنتجات والكتالوج):
+1. **جدول `product_variants`:** تم تحضير سكربت لإضافة عمود `buy_price` الذي كان مفقوداً.
+2. **شاشة الإضافة `ajouter_produit.dart`:**
+   - تم تعديل النموذج ليحتوي على حقلي: **سعر الشراء (buy_price)** و **سعر البيع (sell_price)** بوضوح داخل بطاقة المتغيرات (Variants).
+   - تم إرفاق حقول السعر مباشرة مع الإدخال في قاعدة البيانات.
+3. **شاشة كتالوج المنتجات الجديدة `liste_produits.dart`:**
+   - صُممت شاشة أنيقة ومريحة تعرض **كل المنتجات** مع الموردين.
+   - يمكن التوسع لرؤية كل الخيارات (Pointures, Couleurs) لأي منتج بضغطة زر.
+   - تعرض في الجدول: **سعر الشراء، سعر البيع، والمخزون الحي** مع تلوين بالأحمر إذا نفد المخزون.
+4. **شاشة المشتريات `achat_fournisseur.dart`:**
+   - بمجرد اختيار المتغير (Produit - Variante)، يتم تعبئة حقل **Prix unitaire** (سعر الوحدة) تلقائياً بسعر الشراء من قاعدة البيانات.
+5. **لوحة التحكم والتنقل:**
+   - أصبح زر **Produits** يأخذك الآن إلى "كتالوج المنتجات" مباشرة.
+   - أُضيف زر جديد اسمه **Ajouter Produit** لمن يريد إضافة منتج جديد من الصفر.
+   - تم التحديث لكل من صفحة الـ Admin والـ Employee.
 
-### ⚠️ خطوة واحدة متبقية (يدوية):
-**قم بتنفيذ ملف `supabase_trigger.sql`** في Supabase Dashboard → SQL Editor.
-هذا يضمن طبقة حماية إضافية لتحديث المخزون تلقائياً.
+### ⚠️ خطوة واحدة أخيرة لك (SQL):
+يرجى نسخ ولصق محتوى ملف `supabase_add_buy_price.sql` في محرر Supabase (SQL Editor) لتحديث قاعدة البيانات.
 
 ### 📂 الملفات المعدلة:
-- `lib/views/desktop/pos_screen.dart` — بيع + خصم مخزون
-- `lib/views/admin/achat_fournisseur.dart` — شراء + زيادة مخزون
-- `lib/views/admin/inventory_screen.dart` — عرض حي + قيمة المخزون
-- `lib/views/admin/ajouter_produit.dart` — إدخال سعر البيع
-- `supabase_trigger.sql` — Trigger لقاعدة البيانات
+- `supabase_add_buy_price.sql` (ملف جديد)
+- `lib/views/admin/liste_produits.dart` (ملف جديد)
+- `lib/views/admin/ajouter_produit.dart`
+- `lib/views/admin/achat_fournisseur.dart`
+- `lib/views/desktop/admin_main_layout.dart`
+- `lib/views/desktop/employee_main_layout.dart`

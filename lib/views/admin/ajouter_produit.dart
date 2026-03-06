@@ -8,6 +8,7 @@ class VariantFormData {
   String size = '';
   String color = '';
   String barcode = '';
+  String buyPrice = '';
   String sellPrice = '';
 }
 
@@ -118,15 +119,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     
     // Check if variants are valid
     for (var v in _variants) {
-      if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty) {
+      if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty || v.buyPrice.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez remplir tous les champs des variantes (y compris le prix).'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Veuillez remplir tous les champs des variantes (y compris les prix).'), backgroundColor: Colors.red),
         );
         return;
       }
-      if (double.tryParse(v.sellPrice) == null) {
+      if (double.tryParse(v.sellPrice) == null || double.tryParse(v.buyPrice) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez entrer un prix valide.'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Veuillez entrer des prix valides.'), backgroundColor: Colors.red),
         );
         return;
       }
@@ -162,6 +163,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           'size': variant.size.trim(),
           'color': variant.color.trim(),
           'barcode': variant.barcode.trim(),
+          'buy_price': double.tryParse(variant.buyPrice) ?? 0.0,
           'sell_price': double.tryParse(variant.sellPrice) ?? 0.0,
         }).select('id').single();
 
@@ -345,38 +347,78 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       margin: const EdgeInsets.only(bottom: 16),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Text('#${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: v.size,
-                                decoration: const InputDecoration(labelText: 'Pointure (ex: 42)', isDense: true),
-                                onChanged: (val) => v.size = val,
-                              ),
+                            Row(
+                              children: [
+                                Text('#${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: v.size,
+                                    decoration: const InputDecoration(labelText: 'Pointure (ex: 42)', isDense: true),
+                                    onChanged: (val) => v.size = val,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: v.color,
+                                    decoration: const InputDecoration(labelText: 'Couleur', isDense: true),
+                                    onChanged: (val) => v.color = val,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 2,
+                                  child: TextFormField(
+                                    initialValue: v.barcode,
+                                    decoration: const InputDecoration(labelText: 'Code-barres', isDense: true),
+                                    onChanged: (val) => v.barcode = val,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: _variants.length > 1 ? () => _removeVariant(index) : null,
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
-                                initialValue: v.color,
-                                decoration: const InputDecoration(labelText: 'Couleur', isDense: true),
-                                onChanged: (val) => v.color = val,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                initialValue: v.barcode,
-                                decoration: const InputDecoration(labelText: 'Code-barres', isDense: true),
-                                onChanged: (val) => v.barcode = val,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: _variants.length > 1 ? () => _removeVariant(index) : null,
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const SizedBox(width: 32),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: v.buyPrice,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: "Prix d'achat (€)",
+                                      isDense: true,
+                                      prefixIcon: const Icon(Icons.arrow_downward, color: Colors.orange, size: 18),
+                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange[200]!)),
+                                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.orange)),
+                                    ),
+                                    onChanged: (val) => v.buyPrice = val,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: v.sellPrice,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Prix de vente (€)',
+                                      isDense: true,
+                                      prefixIcon: const Icon(Icons.arrow_upward, color: Colors.green, size: 18),
+                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green[200]!)),
+                                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                                    ),
+                                    onChanged: (val) => v.sellPrice = val,
+                                  ),
+                                ),
+                                const SizedBox(width: 48),
+                              ],
                             ),
                           ],
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/ajouter_produit.dart';
+import '../admin/liste_produits.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
@@ -16,13 +17,22 @@ class EmployeeMainLayout extends StatefulWidget {
 class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const PosScreen(),
-    const AjouterProduitScreen(),
-    const GestionClientsScreen(),
-    const GestionFournisseursScreen(),
-    const AchatFournisseurScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const PosScreen(),
+      ListeProduitsScreen(
+        onAddProduct: () => setState(() => _selectedIndex = 2),
+      ),
+      const AjouterProduitScreen(),
+      const GestionClientsScreen(),
+      const GestionFournisseursScreen(),
+      const AchatFournisseurScreen(),
+    ];
+  }
 
 
   @override
@@ -77,6 +87,11 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                 icon: Icon(Icons.inventory_2_outlined),
                 selectedIcon: Icon(Icons.inventory_2),
                 label: Text('Produits'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.add_box_outlined),
+                selectedIcon: Icon(Icons.add_box),
+                label: Text('Ajouter Produit'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.people_outline),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../admin/ajouter_produit.dart';
+import '../admin/liste_produits.dart';
 import '../admin/gestion_employes.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
@@ -19,16 +20,25 @@ class AdminMainLayout extends StatefulWidget {
 class _AdminMainLayoutState extends State<AdminMainLayout> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const GestionStoresScreen(),
-    const InventoryScreen(),
-    const AjouterProduitScreen(),
-    const GestionClientsScreen(),
-    const GestionFournisseursScreen(),
-    const AchatFournisseurScreen(),
-    const GestionEmployesScreen(),
-    const ActivityLogsScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const GestionStoresScreen(),
+      const InventoryScreen(),
+      ListeProduitsScreen(
+        onAddProduct: () => setState(() => _selectedIndex = 3),
+      ),
+      const AjouterProduitScreen(),
+      const GestionClientsScreen(),
+      const GestionFournisseursScreen(),
+      const AchatFournisseurScreen(),
+      const GestionEmployesScreen(),
+      const ActivityLogsScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +97,11 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 icon: Icon(Icons.inventory_2_outlined),
                 selectedIcon: Icon(Icons.inventory_2),
                 label: Text('Produits'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.add_box_outlined),
+                selectedIcon: Icon(Icons.add_box),
+                label: Text('Ajouter Produit'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.people_outline),
