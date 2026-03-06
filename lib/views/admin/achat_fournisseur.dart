@@ -102,6 +102,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
           'total_price': item.unitPrice * item.quantity,
           'store_id': _selectedStoreId,
           'user_id': user!.id,
+          'supplier_id': _selectedSupplierId,
         });
       }
 
