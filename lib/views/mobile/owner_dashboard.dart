@@ -11,12 +11,19 @@ class OwnerDashboard extends StatefulWidget {
 }
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
+  // البيانات العامة للمقاييس
   double _salesToday = 0;
   double _salesMonth = 0;
-  
+
+  // بيانات المتاجر للكاروسيل
+  List<Map<String, dynamic>> _storePerformance = [];
+  int _currentStorePage = 0;
+  final PageController _pageController = PageController(viewportFraction: 0.85);
+
+  // القوائم الأخرى
   List<dynamic> _lowStockAlerts = [];
   List<dynamic> _recentActivities = [];
-  
+
   bool _isLoading = true;
   late final RealtimeChannel _activitySubscription;
 
@@ -36,7 +43,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           schema: 'public',
           table: 'activity_logs',
           callback: (payload) {
-            _fetchActivities(); // Refresh feed on new insert
+            _fetchActivities(); // تحديث السجل عند إضافة نشاط جديد
           },
         )
         .subscribe();
@@ -45,44 +52,49 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
   void dispose() {
     Supabase.instance.client.removeChannel(_activitySubscription);
+    _pageController.dispose();
     super.dispose();
   }
 
   Future<void> _fetchDashboardData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     await Future.wait([
-      _fetchSales(),
+      _fetchOverallSales(),
+      _fetchStorePerformance(),
       _fetchLowStock(),
       _fetchActivities(),
     ]);
+
     if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _fetchSales() async {
+  Future<void> _fetchOverallSales() async {
     try {
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
       final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
 
-      // Today Sales
+      // إجمالي مبيعات اليوم (كل المتاجر)
       final todayRes = await Supabase.instance.client
           .from('transactions')
           .select('total_price')
           .eq('type', 'out')
           .gte('created_at', todayStart);
-          
+
       double todayTotal = 0;
       for (var row in todayRes) {
         todayTotal += (row['total_price'] as num).toDouble();
       }
 
-      // Month Sales
+      // إجمالي مبيعات الشهر (كل المتاجر)
       final monthRes = await Supabase.instance.client
           .from('transactions')
           .select('total_price')
           .eq('type', 'out')
           .gte('created_at', monthStart);
-          
+
       double monthTotal = 0;
       for (var row in monthRes) {
         monthTotal += (row['total_price'] as num).toDouble();
@@ -95,7 +107,48 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching sales: $e");
+      debugPrint("Error overall sales: $e");
+    }
+  }
+
+  Future<void> _fetchStorePerformance() async {
+    try {
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+
+      // 1. جلب قائمة المتاجر
+      final stores = await Supabase.instance.client.from('stores').select('id, name');
+      
+      List<Map<String, dynamic>> tempPerformance = [];
+
+      for (var store in stores) {
+        // 2. حساب مبيعات كل متجر لليوم
+        final res = await Supabase.instance.client
+            .from('transactions')
+            .select('total_price')
+            .eq('type', 'out')
+            .eq('store_id', store['id'])
+            .gte('created_at', todayStart);
+
+        double total = 0;
+        for (var row in res) {
+          total += (row['total_price'] as num).toDouble();
+        }
+
+        tempPerformance.add({
+          'id': store['id'],
+          'name': store['name'],
+          'today_sales': total,
+        });
+      }
+
+      if (mounted) {
+        setState(() {
+          _storePerformance = tempPerformance;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error store performance: $e");
     }
   }
 
@@ -103,18 +156,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     try {
       final res = await Supabase.instance.client
           .from('inventory')
-          .select('quantity, stores(name), product_variants(size, color, barcode, products(name, image_url))')
+          .select('quantity, stores(name), product_variants(size, color, products(name))')
           .lt('quantity', 3)
           .order('quantity', ascending: true)
           .limit(10);
           
-      if (mounted) {
-        setState(() {
-          _lowStockAlerts = res;
-        });
-      }
+      if (mounted) setState(() => _lowStockAlerts = res);
     } catch (e) {
-      debugPrint("Error fetching low stock: $e");
+      debugPrint("Error low stock: $e");
     }
   }
 
@@ -122,17 +171,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     try {
       final res = await Supabase.instance.client
           .from('activity_logs')
-          .select('*, user_profiles(full_name, role)')
+          .select('*, user_profiles(full_name)')
           .order('created_at', ascending: false)
           .limit(15);
           
-      if (mounted) {
-        setState(() {
-          _recentActivities = res;
-        });
-      }
+      if (mounted) setState(() => _recentActivities = res);
     } catch (e) {
-      debugPrint("Error fetching activities: $e");
+      debugPrint("Error activities: $e");
     }
   }
 
@@ -146,7 +191,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           child: Column(
             children: [
               AppBar(
-                title: const Text('Scanner le Code-barres'),
+                title: const Text('Scanner un Produit'),
                 automaticallyImplyLeading: false,
                 actions: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
@@ -187,7 +232,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .eq('barcode', barcode)
           .maybeSingle();
 
-      if (mounted) Navigator.pop(context); // Close loading dialog
+      if (mounted) Navigator.pop(context);
 
       if (res == null) {
         if (mounted) {
@@ -212,14 +257,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   if (res['products']['image_url'] != null)
                     Center(child: Image.network(res['products']['image_url'], height: 100)),
                   const SizedBox(height: 16),
-                  Text('Taille: ${res['size']}'),
-                  Text('Couleur: ${res['color']}'),
-                  Text('Code-barres: $barcode', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Taille: ${res['size']} | Couleur: ${res['color']}'),
                   const Divider(),
-                  const Text('Stocks:', style: TextStyle(fontWeight: FontWeight.bold)),
-                   ...inventory.map((inv) {
-                     return Text('- ${inv['stores']['name']}: ${inv['quantity']} unités');
-                   }),
+                  const Text('État des Stocks:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...inventory.map((inv) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text('• ${inv['stores']['name']}: ${inv['quantity']} unités'),
+                  )),
                 ],
               ),
               actions: [
@@ -231,7 +276,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Close loading dialog
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
       }
     }
@@ -242,18 +287,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Tableau de bord (Propriétaire)'),
-        backgroundColor: Colors.indigo[800],
+        title: const Text('Tableau de Bord Mâitre'),
+        backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchDashboardData,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => Supabase.instance.client.auth.signOut(),
-          )
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchDashboardData),
         ],
       ),
       body: _isLoading
@@ -261,151 +300,208 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           : RefreshIndicator(
               onRefresh: _fetchDashboardData,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
-                  // --- SALES CARDS ---
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildMetricCard(
-                          title: "Ventes Aujourd'hui",
-                          value: "${_salesToday.toStringAsFixed(2)} €",
-                          icon: Icons.point_of_sale,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildMetricCard(
-                          title: "Ventes du Mois",
-                          value: "${_salesMonth.toStringAsFixed(2)} €",
-                          icon: Icons.calendar_month,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                    ],
+                  // --- CAROUSEL DES MAGASINS ---
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text("Performance par Magasin", 
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  ),
+                  SizedBox(
+                    height: 170,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _storePerformance.length,
+                      onPageChanged: (int index) => setState(() => _currentStorePage = index),
+                      itemBuilder: (context, index) {
+                        final store = _storePerformance[index];
+                        return _buildStoreCard(store);
+                      },
+                    ),
                   ),
                   
-                  const SizedBox(height: 24),
-                  
-                  // --- ALERTS ---
-                  if (_lowStockAlerts.isNotEmpty) ...[
-                    const Row(
+                  // Indicators
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _storePerformance.asMap().entries.map((entry) {
+                      return Container(
+                        width: 7.0,
+                        height: 7.0,
+                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.indigo.withOpacity(_currentStorePage == entry.key ? 0.9 : 0.2),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // --- GLOBAL METRICS ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Alertes Stock Faible (< 3)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+                        Expanded(child: _buildMetricCard("Aujourd'hui", "${_salesToday.toStringAsFixed(2)} €", Icons.today, Colors.green)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricCard("Ce Mois", "${_salesMonth.toStringAsFixed(2)} €", Icons.calendar_month, Colors.blue)),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _lowStockAlerts.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final alert = _lowStockAlerts[index];
-                          final prodName = alert['product_variants']['products']['name'];
-                          final size = alert['product_variants']['size'];
-                          final store = alert['stores']['name'];
-                          final qty = alert['quantity'];
-                          
-                          return ListTile(
-                            leading: const CircleAvatar(backgroundColor: Colors.redAccent, child: Icon(Icons.inventory, color: Colors.white, size: 20)),
-                            title: Text('$prodName (Taille: $size)'),
-                            subtitle: Text('Magasin: $store'),
-                            trailing: Text('$qty en stock', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16)),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // --- LOW STOCK SECTION ---
+                  if (_lowStockAlerts.isNotEmpty) ...[
+                    _buildSectionHeader("Alertes Stock Faible", Icons.warning_amber_rounded, Colors.red),
+                    _buildLowStockList(),
                   ],
-                  
+
+                  const SizedBox(height: 24),
+
                   // --- ACTIVITY FEED ---
-                  const Row(
-                    children: [
-                      Icon(Icons.history, color: Colors.indigo),
-                      SizedBox(width: 8),
-                      Text('Activités Récentes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: _recentActivities.isEmpty
-                        ? const Padding(padding: EdgeInsets.all(24), child: Center(child: Text("Aucune activité récente.")))
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _recentActivities.length,
-                            separatorBuilder: (_, _) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final log = _recentActivities[index];
-                              final date = DateTime.parse(log['created_at']);
-                              final user = log['user_profiles']?['full_name'] ?? 'Inconnu';
-                              final action = log['action_type'];
-                              
-                              IconData icon = Icons.info_outline;
-                              Color color = Colors.grey;
-                              
-                              if (action == 'SALE' || action == 'out') {
-                                icon = Icons.shopping_cart_checkout;
-                                color = Colors.green;
-                              } else if (action == 'UPDATE_TRANSACTION') {
-                                icon = Icons.edit;
-                                color = Colors.orange;
-                              } else if (action == 'DELETE_TRANSACTION') {
-                                icon = Icons.delete;
-                                color = Colors.red;
-                              }
-                              
-                              return ListTile(
-                                leading: Icon(icon, color: color),
-                                title: Text(log['description'], style: const TextStyle(fontSize: 14)),
-                                subtitle: Text('$user • ${timeago.format(date, locale: 'fr')}'),
-                              );
-                            },
-                          ),
-                  ),
-                  const SizedBox(height: 80), // Padding for FloatingActionButton
+                  _buildSectionHeader("Activités Récentes", Icons.history, Colors.indigo),
+                  _buildActivityList(),
+                  
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
-            
-      floatingActionButton: FloatingActionButton.extended(
+      
+      floatingActionButton: FloatingActionButton(
         onPressed: _scanBarcode,
-        backgroundColor: Colors.indigo[800],
-        icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-        label: const Text("Scanner un Produit", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.indigo[900],
+        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(icon: const Icon(Icons.dashboard, color: Colors.indigo), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.inventory_2_outlined), onPressed: () {}),
+              const SizedBox(width: 40), // Space for FAB
+              IconButton(icon: const Icon(Icons.analytics_outlined), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.person_outline), onPressed: () {}),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildMetricCard({required String title, required String value, required IconData icon, required Color color}) {
+  Widget _buildStoreCard(Map<String, dynamic> store) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-        border: Border(bottom: BorderSide(color: color, width: 4)),
+        gradient: LinearGradient(
+          colors: [Colors.indigo[900]!, Colors.indigo[600]!],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(store['name'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Icon(Icons.storefront, color: Colors.white60),
+            ],
+          ),
+          const Spacer(),
+          const Text("Recettes du jour", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          Text("${store['today_sales'].toStringAsFixed(2)} €", 
+            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLowStockList() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _lowStockAlerts.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final alert = _lowStockAlerts[index];
+          return ListTile(
+            title: Text("${alert['product_variants']['products']['name']} (${alert['product_variants']['size']})"),
+            subtitle: Text("Magasin: ${alert['stores']['name']}"),
+            trailing: Text("${alert['quantity']} restants", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActivityList() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _recentActivities.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final log = _recentActivities[index];
+          final date = DateTime.parse(log['created_at']);
+          return ListTile(
+            leading: const Icon(Icons.notifications_none, size: 20),
+            title: Text(log['description'], style: const TextStyle(fontSize: 13)),
+            subtitle: Text("${log['user_profiles']['full_name']} • ${timeago.format(date, locale: 'fr')}"),
+          );
+        },
       ),
     );
   }
