@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+
+class OwnerDashboard extends StatelessWidget {
+  const OwnerDashboard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Owner Dashboard'),
+      ),
+      body: const Center(
+        child: Text(
+          'Mobile Dashboard\n(Real-time Stock, Sales, Employees Logs)',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
