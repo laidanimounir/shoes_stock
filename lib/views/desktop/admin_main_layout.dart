@@ -9,6 +9,7 @@ import '../admin/achat_fournisseur.dart';
 import '../admin/activity_logs_screen.dart';
 import '../admin/gestion_stores.dart';
 import '../admin/inventory_screen.dart';
+import '../admin/sales_history_screen.dart';
 
 class AdminMainLayout extends StatefulWidget {
   const AdminMainLayout({super.key});
@@ -37,6 +38,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
       const AchatFournisseurScreen(),
       const GestionEmployesScreen(),
       const ActivityLogsScreen(),
+      const SalesHistoryScreen(),
     ];
   }
 
@@ -128,6 +130,11 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 selectedIcon: Icon(Icons.history),
                 label: Text("Journaux d'activité"),
               ),
+              NavigationRailDestination(
+  icon: Icon(Icons.history_edu_outlined),
+  selectedIcon: Icon(Icons.history_edu),
+  label: Text('Historique Ventes'),
+),
             ],
           ),
           

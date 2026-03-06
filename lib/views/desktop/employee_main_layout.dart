@@ -6,6 +6,7 @@ import '../admin/liste_produits.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
+import '../admin/sales_history_screen.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
   const EmployeeMainLayout({super.key});
@@ -31,6 +32,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
       const GestionClientsScreen(),
       const GestionFournisseursScreen(),
       const AchatFournisseurScreen(),
+      const SalesHistoryScreen(),
     ];
   }
 
@@ -108,6 +110,11 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                 selectedIcon: Icon(Icons.shopping_bag),
                 label: Text('Achats'),
               ),
+              NavigationRailDestination(
+  icon: Icon(Icons.history_edu_outlined),
+  selectedIcon: Icon(Icons.history_edu),
+  label: Text('Mes Ventes'),
+),
             ],
           ),
 
