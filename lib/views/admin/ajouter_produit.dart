@@ -284,7 +284,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder()),
-                                    value: _selectedSupplierId,
+                                    initialValue: _selectedSupplierId,
                                     items: _suppliers.map((s) => DropdownMenuItem<String>(
                                       value: s['id'],
                                       child: Text(s['company_name']),
@@ -297,7 +297,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: const InputDecoration(labelText: 'Magasin', border: OutlineInputBorder()),
-                                    value: _selectedStoreId,
+                                    initialValue: _selectedStoreId,
                                     items: _stores.map((s) => DropdownMenuItem<String>(
                                       value: s['id'],
                                       child: Text(s['name']),

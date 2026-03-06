@@ -217,9 +217,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   Text('Code-barres: $barcode', style: const TextStyle(fontWeight: FontWeight.bold)),
                   const Divider(),
                   const Text('Stocks:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...inventory.map((inv) {
-                    return Text('- ${inv['stores']['name']}: ${inv['quantity']} unités');
-                  }).toList(),
+                   ...inventory.map((inv) {
+                     return Text('- ${inv['stores']['name']}: ${inv['quantity']} unités');
+                   }),
                 ],
               ),
               actions: [
@@ -305,7 +305,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _lowStockAlerts.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final alert = _lowStockAlerts[index];
                           final prodName = alert['product_variants']['products']['name'];
@@ -343,7 +343,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _recentActivities.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, _) => const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final log = _recentActivities[index];
                               final date = DateTime.parse(log['created_at']);
@@ -393,7 +393,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
         border: Border(bottom: BorderSide(color: color, width: 4)),
       ),

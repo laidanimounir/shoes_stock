@@ -1,34 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../desktop/pos_screen.dart';
 import '../admin/ajouter_produit.dart';
-import '../admin/gestion_employes.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
-import '../admin/activity_logs_screen.dart';
-import '../admin/gestion_stores.dart';
-import '../admin/inventory_screen.dart';
 
-class AdminMainLayout extends StatefulWidget {
-  const AdminMainLayout({super.key});
+class EmployeeMainLayout extends StatefulWidget {
+  const EmployeeMainLayout({super.key});
 
   @override
-  State<AdminMainLayout> createState() => _AdminMainLayoutState();
+  State<EmployeeMainLayout> createState() => _EmployeeMainLayoutState();
 }
 
-class _AdminMainLayoutState extends State<AdminMainLayout> {
+class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const GestionStoresScreen(),
-    const InventoryScreen(),
+    const PosScreen(),
     const AjouterProduitScreen(),
     const GestionClientsScreen(),
     const GestionFournisseursScreen(),
     const AchatFournisseurScreen(),
-    const GestionEmployesScreen(),
-    const ActivityLogsScreen(),
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +32,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
         children: [
           // Sidebar
           NavigationRail(
-            backgroundColor: Colors.indigo[900],
+            backgroundColor: Colors.blueGrey[900],
             selectedIndex: _selectedIndex,
             onDestinationSelected: (int index) {
               setState(() {
@@ -45,7 +40,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               });
             },
             extended: true,
-            minExtendedWidth: 250,
+            minExtendedWidth: 230,
             unselectedIconTheme: const IconThemeData(color: Colors.white70),
             unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
             selectedIconTheme: const IconThemeData(color: Colors.white),
@@ -53,10 +48,10 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             leading: Column(
               children: [
                 const SizedBox(height: 24),
-                const Icon(Icons.admin_panel_settings, size: 64, color: Colors.white),
+                const Icon(Icons.person, size: 48, color: Colors.white),
                 const SizedBox(height: 8),
-                const Text("Tableau de Bord", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 32),
+                const Text("Espace Employé", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 24),
               ],
             ),
             trailing: Expanded(
@@ -74,14 +69,9 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             ),
             destinations: const [
               NavigationRailDestination(
-                icon: Icon(Icons.warehouse_outlined),
-                selectedIcon: Icon(Icons.warehouse),
-                label: Text('Magasins'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.inventory_outlined),
-                selectedIcon: Icon(Icons.inventory),
-                label: Text('Inventaire'),
+                icon: Icon(Icons.point_of_sale_outlined),
+                selectedIcon: Icon(Icons.point_of_sale),
+                label: Text('Point de Vente'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.inventory_2_outlined),
@@ -103,19 +93,9 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 selectedIcon: Icon(Icons.shopping_bag),
                 label: Text('Achats'),
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.badge_outlined),
-                selectedIcon: Icon(Icons.badge),
-                label: Text('Employés'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.history_outlined),
-                selectedIcon: Icon(Icons.history),
-                label: Text("Journaux d'activité"),
-              ),
             ],
           ),
-          
+
           // Main Content
           Expanded(
             child: AnimatedSwitcher(

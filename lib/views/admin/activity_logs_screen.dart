@@ -98,7 +98,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   itemCount: _logs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final log = _logs[index];
                     final date = DateTime.parse(log['created_at']);
@@ -113,15 +113,15 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))
                         ],
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         leading: CircleAvatar(
-                          backgroundColor: color.withOpacity(0.1),
+                          backgroundColor: color.withValues(alpha: 0.1),
                           child: Icon(icon, color: color),
                         ),
                         title: RichText(

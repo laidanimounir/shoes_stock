@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'views/auth/login_screen.dart';
-import 'views/desktop/pos_screen.dart';
 import 'views/desktop/admin_main_layout.dart';
+import 'views/desktop/employee_main_layout.dart';
 import 'views/mobile/owner_dashboard.dart';
 
 Future<void> main() async {
@@ -69,9 +69,7 @@ class _AuthGateState extends State<AuthGate> {
       }
 
       // User logged in, check role
-      if (session.user != null) {
-        await _handleRouting(session.user!.id);
-      }
+      await _handleRouting(session.user.id);
     });
   }
 
@@ -133,9 +131,9 @@ class _AuthGateState extends State<AuthGate> {
             );
           }
         } else {
-          // Employees on Desktop
+          // Employees on Desktop → Employee Layout (POS + products + customers + suppliers + purchases)
           setState(() {
-            _currentScreen = const PosScreen();
+            _currentScreen = const EmployeeMainLayout();
             _isLoading = false;
           });
         }

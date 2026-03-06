@@ -84,7 +84,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                   'phone': phoneCtrl.text.trim(),
                 };
                 if (isEdit) {
-                  await Supabase.instance.client.from('suppliers').update(data).eq('id', supplier!['id']);
+                  await Supabase.instance.client.from('suppliers').update(data).eq('id', supplier['id']);
                 } else {
                   await Supabase.instance.client.from('suppliers').insert(data);
                 }
@@ -158,14 +158,14 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: _suppliers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final s = _suppliers[index];
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

@@ -37,8 +37,7 @@ class _PosScreenState extends State<PosScreen> {
   final List<CartItem> _cart = [];
   
   String? _selectedStoreId;
-  String? _userRole;
-  List<dynamic> _stores = [];
+  String? _storeName;
   bool _isLoading = true;
 
   @override
@@ -51,25 +50,23 @@ class _PosScreenState extends State<PosScreen> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        // Fetch user profile (role + store)
+        // Fetch employee's assigned store
         final profile = await Supabase.instance.client
             .from('user_profiles')
-            .select('store_id, role')
+            .select('store_id')
             .eq('id', user.id)
             .single();
         
-        _userRole = profile['role'];
-        
-        if (_userRole == 'owner') {
-          // Owner can sell in any store → fetch all stores
-          final storesRes = await Supabase.instance.client.from('stores').select();
-          _stores = storesRes;
-          if (_stores.isNotEmpty) {
-            _selectedStoreId = _stores.first['id'];
-          }
-        } else {
-          // Employee uses their assigned store
-          _selectedStoreId = profile['store_id'];
+        _selectedStoreId = profile['store_id'];
+
+        // Fetch store name for display
+        if (_selectedStoreId != null) {
+          final storeRes = await Supabase.instance.client
+              .from('stores')
+              .select('name')
+              .eq('id', _selectedStoreId!)
+              .maybeSingle();
+          _storeName = storeRes?['name'] ?? 'Inconnu';
         }
         
         if (mounted) {
@@ -232,45 +229,27 @@ class _PosScreenState extends State<PosScreen> {
     return Scaffold(
       backgroundColor: Colors.blueGrey[50],
       appBar: AppBar(
-        title: const Text('Caisse Enregistreuse (POS)'),
+        title: const Text('Point de Vente (POS)'),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
-          // Owner store selector in the AppBar
-          if (_userRole == 'owner' && _stores.isNotEmpty)
+          // Show employee's assigned store name
+          if (_storeName != null)
             Container(
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedStoreId,
-                  dropdownColor: Colors.indigo[800],
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                  items: _stores.map<DropdownMenuItem<String>>((store) {
-                    return DropdownMenuItem<String>(
-                      value: store['id'],
-                      child: Row(
-                        children: [
-                          const Icon(Icons.store, color: Colors.white70, size: 18),
-                          const SizedBox(width: 8),
-                          Text(store['name']),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedStoreId = val),
-                ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warehouse, color: Colors.white70, size: 18),
+                  const SizedBox(width: 8),
+                  Text(_storeName!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => Supabase.instance.client.auth.signOut(),
-          )
         ],
       ),
       body: _isLoading 
@@ -289,7 +268,7 @@ class _PosScreenState extends State<PosScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
                         ),
                         child: TextField(
                           controller: _searchController,
@@ -418,7 +397,7 @@ class _PosScreenState extends State<PosScreen> {
                           ? const Center(child: Text("Le panier est vide", style: TextStyle(color: Colors.grey, fontSize: 16)))
                           : ListView.separated(
                               itemCount: _cart.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              separatorBuilder: (_, _) => const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final item = _cart[index];
                                 return Padding(
@@ -491,7 +470,7 @@ class _PosScreenState extends State<PosScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
                         ),
                         child: Column(
                           children: [

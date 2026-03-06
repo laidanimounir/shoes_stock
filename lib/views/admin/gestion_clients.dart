@@ -126,9 +126,13 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
         'email': email.trim(),
       });
       _fetchCustomers(_searchController.text);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client ajouté.'), backgroundColor: Colors.green));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client ajouté.'), backgroundColor: Colors.green));
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -192,14 +196,14 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : ListView.separated(
                           itemCount: _customers.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final c = _customers[index];
                             final isSelected = _selectedCustomer?['id'] == c['id'];
                             
                             return ListTile(
                               selected: isSelected,
-                              selectedTileColor: Colors.indigo.withOpacity(0.1),
+                              selectedTileColor: Colors.indigo.withValues(alpha: 0.1),
                               leading: const CircleAvatar(child: Icon(Icons.person)),
                               title: Text(c['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text(c['phone'] ?? c['email'] ?? 'Auccun contact'),
@@ -226,7 +230,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(24),
-                          color: Colors.indigo.withOpacity(0.05),
+                          color: Colors.indigo.withValues(alpha: 0.05),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

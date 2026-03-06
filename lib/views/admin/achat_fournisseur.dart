@@ -20,7 +20,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   final _qtyController = TextEditingController();
   final _priceController = TextEditingController();
 
-  List<_PurchaseItem> _purchaseItems = [];
+  final List<_PurchaseItem> _purchaseItems = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
 
@@ -154,7 +154,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -165,7 +165,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           // Supplier selector
                           DropdownButtonFormField<String>(
                             isExpanded: true,
-                            value: _selectedSupplierId,
+                            initialValue: _selectedSupplierId,
                             decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder(), prefixIcon: Icon(Icons.local_shipping)),
                             items: _suppliers.map<DropdownMenuItem<String>>((s) {
                               return DropdownMenuItem(value: s['id'], child: Text(s['company_name']));
@@ -177,7 +177,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           // Store selector
                           DropdownButtonFormField<String>(
                             isExpanded: true,
-                            value: _selectedStoreId,
+                            initialValue: _selectedStoreId,
                             decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
                             items: _stores.map<DropdownMenuItem<String>>((s) {
                               return DropdownMenuItem(value: s['id'], child: Text(s['name']));
@@ -189,7 +189,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           // Variant selector
                           DropdownButtonFormField<String>(
                             isExpanded: true,
-                            value: _selectedVariantId,
+                            initialValue: _selectedVariantId,
                             decoration: const InputDecoration(labelText: 'Produit (Variante)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.category)),
                             items: _variants.map<DropdownMenuItem<String>>((v) {
                               final name = v['products']['name'];
@@ -248,7 +248,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,

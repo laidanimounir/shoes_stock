@@ -218,7 +218,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, spreadRadius: 2),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, spreadRadius: 2),
                   ],
                 ),
                 child: Form(
@@ -257,7 +257,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                       if (_stores.isNotEmpty)
                         DropdownButtonFormField<String>(
                           isExpanded: true,
-                          value: _selectedStoreId,
+                          initialValue: _selectedStoreId,
                           decoration: const InputDecoration(labelText: 'Affecter au magasin', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
                           items: _stores.map((store) {
                             return DropdownMenuItem<String>(
@@ -300,7 +300,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, spreadRadius: 2),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, spreadRadius: 2),
                 ],
               ),
               child: Column(
