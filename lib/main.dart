@@ -141,7 +141,19 @@ class _AuthGateState extends State<AuthGate> {
     } catch (e) {
       // In case of error (e.g. no internet), show login or error
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _currentScreen = const LoginScreen(); 
+        });
+        
+       
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur de connexion : Impossible de vérifier le profil. Veuillez vérifier votre internet."),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
   }
