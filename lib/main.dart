@@ -87,8 +87,17 @@ class _AuthGateState extends State<AuthGate> {
           .maybeSingle();
 
       if (response == null) {
-        // No profile found, force sign out for safety
+        // No profile found, force sign out with a clear message
         await supabase.auth.signOut();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Profil utilisateur introuvable. Contactez l'administrateur."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
         return;
       }
 

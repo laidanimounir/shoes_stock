@@ -36,45 +36,56 @@ class _PosScreenState extends State<PosScreen> {
   
   final List<CartItem> _cart = [];
   
-  String? _employeeStoreId;
+  String? _selectedStoreId;
+  String? _userRole;
+  List<dynamic> _stores = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchEmployeeData();
-    _searchProduct(''); // Load initial products right away
+    _fetchInitialData();
   }
 
-  Future<void> _fetchEmployeeData() async {
+  Future<void> _fetchInitialData() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
+        // Fetch user profile (role + store)
         final profile = await Supabase.instance.client
             .from('user_profiles')
-            .select('store_id')
+            .select('store_id, role')
             .eq('id', user.id)
             .single();
-        setState(() {
-          _employeeStoreId = profile['store_id'];
-          _isLoading = false;
-        });
+        
+        _userRole = profile['role'];
+        
+        if (_userRole == 'owner') {
+          // Owner can sell in any store → fetch all stores
+          final storesRes = await Supabase.instance.client.from('stores').select();
+          _stores = storesRes;
+          if (_stores.isNotEmpty) {
+            _selectedStoreId = _stores.first['id'];
+          }
+        } else {
+          // Employee uses their assigned store
+          _selectedStoreId = profile['store_id'];
+        }
+        
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+        
+        // Load products
+        _searchProduct('');
       }
     } catch (e) {
-      debugPrint("Error fetching employee store: $e");
-      setState(() => _isLoading = false);
+      debugPrint("Error fetching initial data: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _searchProduct(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _isSearching = false;
-        // In POS, an empty string should just load a default list of products
-        // We will execute the query without the .or() filter
-      });
-    }
-
     setState(() => _isSearching = true);
 
     try {
@@ -83,7 +94,7 @@ class _PosScreenState extends State<PosScreen> {
           .select('''
             id, size, color, barcode,
             products!inner(name, image_url),
-            inventory(quantity)
+            inventory(quantity, store_id)
           ''');
 
       if (query.isNotEmpty) {
@@ -105,24 +116,28 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   void _addToCart(dynamic variantData) {
-    if (_employeeStoreId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Magasin non assigné à cet employé."), backgroundColor: Colors.red));
+    if (_selectedStoreId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Veuillez sélectionner un magasin."),
+        backgroundColor: Colors.red,
+      ));
       return;
     }
 
-    // Check inventory for the employee's store
-    final inventoryList = variantData['inventory'] as List<dynamic>?;
+    // Check inventory for the selected store
+    final inventoryList = variantData['inventory'] as List<dynamic>? ?? [];
     int availability = 0;
-    if (inventoryList != null) {
-      for (var inv in inventoryList) {
-        // We only selected quantity, but in a real-world scenario we'd filter by store_id in the query
-        // For now, let's assume availability might be 0. We'll let them add to cart anyway (they might sell negative inventory or just receive a warning).
+    for (var inv in inventoryList) {
+      if (inv['store_id'] == _selectedStoreId) {
         availability += (inv['quantity'] as int?) ?? 0;
       }
     }
     
     if (availability <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Attention: Stock épuisé en base de données."), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Attention: Stock épuisé pour ce magasin."),
+        backgroundColor: Colors.orange,
+      ));
     }
 
     final variantId = variantData['id'];
@@ -140,7 +155,7 @@ class _PosScreenState extends State<PosScreen> {
           size: variantData['size'],
           color: variantData['color'],
           quantity: 1,
-          unitPrice: 0.0, // Since schema has no price, CASHIER MUST SET IT manually
+          unitPrice: 0.0,
         ));
       });
     }
@@ -157,12 +172,15 @@ class _PosScreenState extends State<PosScreen> {
 
   Future<void> _processPayment() async {
     if (_cart.isEmpty) return;
-    if (_employeeStoreId == null) return;
+    if (_selectedStoreId == null) return;
     
     // Validate prices
     for (var item in _cart) {
       if (item.unitPrice <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Veuillez saisir un prix unitaire pour chaque article."), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Veuillez saisir un prix unitaire pour chaque article."),
+          backgroundColor: Colors.red,
+        ));
         return;
       }
     }
@@ -174,8 +192,6 @@ class _PosScreenState extends State<PosScreen> {
       final invoiceNumber = 'INV-${DateTime.now().millisecondsSinceEpoch}';
 
       for (var item in _cart) {
-        // Insert into transactions
-        // Trigger handle_inventory_transaction will auto-decrement inventory (type = 'out')
         await Supabase.instance.client.from('transactions').insert({
           'invoice_number': invoiceNumber,
           'type': 'out',
@@ -183,13 +199,16 @@ class _PosScreenState extends State<PosScreen> {
           'quantity': item.quantity,
           'unit_price': item.unitPrice,
           'total_price': item.totalPrice,
-          'store_id': _employeeStoreId,
+          'store_id': _selectedStoreId,
           'user_id': user!.id,
         });
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vente enregistrée avec succès."), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Vente enregistrée avec succès."),
+          backgroundColor: Colors.green,
+        ));
         setState(() {
           _cart.clear();
           _isLoading = false;
@@ -198,7 +217,10 @@ class _PosScreenState extends State<PosScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erreur de paiement: $e"), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Erreur de paiement: $e"),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -214,6 +236,37 @@ class _PosScreenState extends State<PosScreen> {
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
+          // Owner store selector in the AppBar
+          if (_userRole == 'owner' && _stores.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedStoreId,
+                  dropdownColor: Colors.indigo[800],
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  items: _stores.map<DropdownMenuItem<String>>((store) {
+                    return DropdownMenuItem<String>(
+                      value: store['id'],
+                      child: Row(
+                        children: [
+                          const Icon(Icons.store, color: Colors.white70, size: 18),
+                          const SizedBox(width: 8),
+                          Text(store['name']),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => _selectedStoreId = val),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => Supabase.instance.client.auth.signOut(),
@@ -307,7 +360,7 @@ class _PosScreenState extends State<PosScreen> {
                                                       maxLines: 1, overflow: TextOverflow.ellipsis,
                                                     ),
                                                     const SizedBox(height: 4),
-                                                    Text('Taille: ${item['size']} | Couleurs: ${item['color']}', style: const TextStyle(color: Colors.black54)),
+                                                    Text('Taille: ${item['size']} | Couleur: ${item['color']}', style: const TextStyle(color: Colors.black54)),
                                                     Text('Code: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
                                                   ],
                                                 ),

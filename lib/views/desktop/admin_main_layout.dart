@@ -4,6 +4,8 @@ import '../desktop/pos_screen.dart';
 import '../admin/ajouter_produit.dart';
 import '../admin/gestion_employes.dart';
 import '../admin/gestion_clients.dart';
+import '../admin/gestion_fournisseurs.dart';
+import '../admin/achat_fournisseur.dart';
 import '../admin/activity_logs_screen.dart';
 
 class AdminMainLayout extends StatefulWidget {
@@ -20,6 +22,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     const PosScreen(),
     const AjouterProduitScreen(),
     const GestionClientsScreen(),
+    const GestionFournisseursScreen(),
+    const AchatFournisseurScreen(),
     const GestionEmployesScreen(),
     const ActivityLogsScreen(),
   ];
@@ -28,6 +32,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     'Point de Vente (POS)',
     'Gestion des Produits',
     'Gestion des Clients',
+    'Gestion des Fournisseurs',
+    'Achat / Approvisionnement',
     'Gestion des Employés',
     'Journaux d\'activité',
   ];
@@ -89,6 +95,16 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 icon: Icon(Icons.people_outline),
                 selectedIcon: Icon(Icons.people),
                 label: Text('Clients'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.local_shipping_outlined),
+                selectedIcon: Icon(Icons.local_shipping),
+                label: Text('Fournisseurs'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.shopping_bag_outlined),
+                selectedIcon: Icon(Icons.shopping_bag),
+                label: Text('Achats'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.badge_outlined),
