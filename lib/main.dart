@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'views/auth/login_screen.dart';
 import 'views/desktop/pos_screen.dart';
+import 'views/desktop/admin_main_layout.dart';
 import 'views/mobile/owner_dashboard.dart';
 
 Future<void> main() async {
@@ -104,7 +105,7 @@ class _AuthGateState extends State<AuthGate> {
 
       if (role == 'owner') {
         setState(() {
-          _currentScreen = isDesktop ? const PosScreen() : const OwnerDashboard();
+          _currentScreen = isDesktop ? const AdminMainLayout() : const OwnerDashboard();
           _isLoading = false;
         });
       } else if (role == 'employee') {
@@ -115,7 +116,7 @@ class _AuthGateState extends State<AuthGate> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                  "Accès refusé : Les employés ne peuvent se connecter que depuis l'ordinateur de caisse.",
+                  "Accès refusé : Mobile réservé au Propriétaire.",
                 ),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 5),
