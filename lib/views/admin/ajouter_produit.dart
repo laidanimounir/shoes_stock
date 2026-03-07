@@ -30,10 +30,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   List<dynamic> _stores = [];
   String? _selectedStoreId;
 
-  final List<VariantFormData> _variants = [VariantFormData()]; // Start with 1 variant
+  final List<VariantFormData> _variants = [VariantFormData()]; 
   
   File? _imageFile;
-  Uint8List? _imageBytes; // For web/desktop 
+  Uint8List? _imageBytes; 
   final ImagePicker _picker = ImagePicker();
   
   bool _isLoading = false;
@@ -46,9 +46,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
   Future<void> _fetchData() async {
     try {
+    
       final futures = await Future.wait([
-        Supabase.instance.client.from('suppliers').select(),
-        Supabase.instance.client.from('stores').select(),
+        Supabase.instance.client.from('suppliers').select().eq('is_active', true),
+        Supabase.instance.client.from('stores').select().eq('is_active', true),
       ]);
       
       if (mounted) {
@@ -117,7 +118,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     
-    // Check if variants are valid
+    
     for (var v in _variants) {
       if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty || v.buyPrice.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -143,20 +144,21 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Upload Image
+    
       final imageUrl = await _uploadImage();
 
-      // 2. Insert Product
+    
       final productRes = await Supabase.instance.client.from('products').insert({
         'name': _nameController.text.trim(),
         'description': _descController.text.trim(),
         'supplier_id': _selectedSupplierId,
         'image_url': imageUrl,
+        'is_active': true, 
       }).select('id').single();
 
       final productId = productRes['id'];
 
-      // 3. Insert Variants & Inventory
+      
       for (var variant in _variants) {
         final variantRes = await Supabase.instance.client.from('product_variants').insert({
           'product_id': productId,
@@ -165,15 +167,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           'barcode': variant.barcode.trim(),
           'buy_price': double.tryParse(variant.buyPrice) ?? 0.0,
           'sell_price': double.tryParse(variant.sellPrice) ?? 0.0,
+          'is_active': true,
         }).select('id').single();
 
         final variantId = variantRes['id'];
 
-        // Create inventory record for selected store (qty 0)
+       
         await Supabase.instance.client.from('inventory').insert({
           'variant_id': variantId,
           'store_id': _selectedStoreId,
-          'quantity': 0, // starts at 0
+          'quantity': 0, 
         });
       }
 
@@ -181,7 +184,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Produit ajouté avec succès !'), backgroundColor: Colors.green),
         );
-        // Reset form
+       
         _formKey.currentState!.reset();
         _nameController.clear();
         _descController.clear();
@@ -242,11 +245,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- IMAGE & INFOS ---
+               
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Image Picker
+                     
                       GestureDetector(
                         onTap: _pickImage,
                         child: Container(
@@ -273,7 +276,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       ),
                       const SizedBox(width: 32),
                       
-                      // Infos
+                  
                       Expanded(
                         child: Column(
                           children: [
@@ -294,7 +297,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder()),
-                                    initialValue: _selectedSupplierId,
+                                    value: _selectedSupplierId,
                                     items: _suppliers.map((s) => DropdownMenuItem<String>(
                                       value: s['id'],
                                       child: Text(s['company_name']),
@@ -307,7 +310,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: const InputDecoration(labelText: 'Magasin', border: OutlineInputBorder()),
-                                    initialValue: _selectedStoreId,
+                                    value: _selectedStoreId,
                                     items: _stores.map((s) => DropdownMenuItem<String>(
                                       value: s['id'],
                                       child: Text(s['name']),
