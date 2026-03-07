@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// استدعاء ملف لوحة التحكم الجديد
+import '../admin/dashboard_screen.dart'; 
 import '../admin/ajouter_produit.dart';
 import '../admin/liste_produits.dart';
 import '../admin/gestion_employes.dart';
@@ -26,11 +29,13 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
   @override
   void initState() {
     super.initState();
+    // 💡 تم إضافة DashboardScreen في البداية (index 0)
     _screens = [
+      const DashboardScreen(),
       const GestionStoresScreen(),
       const InventoryScreen(),
       ListeProduitsScreen(
-        onAddProduct: () => setState(() => _selectedIndex = 3),
+        onAddProduct: () => setState(() => _selectedIndex = 4), // تم تعديل الـ index ليتناسب مع الإضافة
       ),
       const AjouterProduitScreen(),
       const GestionClientsScreen(),
@@ -62,13 +67,13 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
             selectedIconTheme: const IconThemeData(color: Colors.white),
             selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            leading: Column(
+            leading: const Column(
               children: [
-                const SizedBox(height: 24),
-                const Icon(Icons.admin_panel_settings, size: 64, color: Colors.white),
-                const SizedBox(height: 8),
-                const Text("Tableau de Bord", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 32),
+                SizedBox(height: 24),
+                Icon(Icons.admin_panel_settings, size: 64, color: Colors.white),
+                SizedBox(height: 8),
+                Text("ERP Shoes Stock", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                SizedBox(height: 32),
               ],
             ),
             trailing: Expanded(
@@ -85,6 +90,12 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               ),
             ),
             destinations: const [
+              // 💡 الزر الجديد الخاص بلوحة التحكم
+              NavigationRailDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard),
+                label: Text('Tableau de Bord'),
+              ),
               NavigationRailDestination(
                 icon: Icon(Icons.warehouse_outlined),
                 selectedIcon: Icon(Icons.warehouse),
@@ -131,10 +142,10 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 label: Text("Journaux d'activité"),
               ),
               NavigationRailDestination(
-  icon: Icon(Icons.history_edu_outlined),
-  selectedIcon: Icon(Icons.history_edu),
-  label: Text('Historique Ventes'),
-),
+                icon: Icon(Icons.history_edu_outlined),
+                selectedIcon: Icon(Icons.history_edu),
+                label: Text('Historique Ventes'),
+              ),
             ],
           ),
           
