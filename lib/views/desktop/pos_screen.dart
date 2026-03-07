@@ -40,11 +40,11 @@ class _PosScreenState extends State<PosScreen> {
   String? _selectedStoreId;
   String? _storeName;
   
-
   List<dynamic> _customers = [];
   String? _selectedCustomerId; 
 
   bool _isLoading = true;
+  bool _isProcessingPayment = false;
 
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
 
@@ -65,8 +65,6 @@ class _PosScreenState extends State<PosScreen> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        
- 
         final profile = await Supabase.instance.client
             .from('user_profiles')
             .select('store_id')
@@ -84,10 +82,11 @@ class _PosScreenState extends State<PosScreen> {
           _storeName = storeRes?['name'] ?? 'Inconnu';
         }
 
-
+      
         final customersRes = await Supabase.instance.client
             .from('customers')
             .select('id, full_name')
+            .eq('is_active', true)
             .order('full_name');
             
         _customers = customersRes;
@@ -149,7 +148,7 @@ class _PosScreenState extends State<PosScreen> {
             id, size, color, barcode, sell_price,
             products!inner(name, image_url),
             inventory(quantity, store_id)
-          ''');
+          ''').eq('is_active', true); // المنتجات غير المحذوفة فقط
 
       if (query.isNotEmpty) {
         queryBuilder = queryBuilder.or('barcode.ilike.%$query%,products.name.ilike.%$query%');
@@ -227,66 +226,180 @@ class _PosScreenState extends State<PosScreen> {
     });
   }
 
-  Future<void> _processPayment() async {
+  double get _cartTotal => _cart.fold(0, (sum, item) => sum + item.totalPrice);
+
+
+  void _showPaymentDialog() {
     if (_cart.isEmpty) return;
-    if (_selectedStoreId == null) return;
     
     for (var item in _cart) {
       if (item.unitPrice <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Veuillez saisir un prix unitaire pour chaque article."),
+          content: Text("Veuillez saisir un prix unitaire valide pour chaque article."),
           backgroundColor: Colors.red,
         ));
         return;
       }
     }
 
-    setState(() => _isLoading = true);
+    final totalAmount = _cartTotal;
+    final paymentController = TextEditingController(text: totalAmount.toStringAsFixed(2));
+    final isWalkInCustomer = _selectedCustomerId == null;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.point_of_sale, color: Colors.indigo),
+              SizedBox(width: 8),
+              Text('Encaissement'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.indigo[50], borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total à payer :', style: TextStyle(fontSize: 18)),
+                    Text('${totalAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (isWalkInCustomer)
+                const Text(
+                  'Client Comptoir : Le paiement complet est exigé (Pas de crédit possible).',
+                  style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                )
+              else
+                TextFormField(
+                  controller: paymentController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Montant encaissé (DA)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.payments),
+                  ),
+                ),
+              if (!isWalkInCustomer)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Le reste sera ajouté aux dettes (crédit) du client.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler', style: TextStyle(color: Colors.red)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                double paidAmount = totalAmount;
+                if (!isWalkInCustomer) {
+                  paidAmount = double.tryParse(paymentController.text) ?? 0;
+                }
+                Navigator.pop(context);
+                _processPayment(totalAmount, paidAmount);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              child: const Text('Valider la Vente', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  
+  Future<void> _processPayment(double totalAmount, double paidAmount) async {
+    setState(() => _isProcessingPayment = true);
     
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      final invoiceNumber = 'INV-${DateTime.now().millisecondsSinceEpoch}';
+      final invoiceNumber = 'FAC-${DateTime.now().millisecondsSinceEpoch}';
 
-      for (var item in _cart) {
-      
-        await Supabase.instance.client.from('transactions').insert({
-          'invoice_number': invoiceNumber,
-          'type': 'out',
-          'variant_id': item.variantId,
-          'quantity': item.quantity,
-          'unit_price': item.unitPrice,
-          'total_price': item.totalPrice,
+    
+      String status = 'paid';
+      if (paidAmount == 0) status = 'unpaid';
+      else if (paidAmount < totalAmount) status = 'partial';
+
+     
+      final invoiceData = {
+        'invoice_number': invoiceNumber,
+        'type': 'out',
+        'store_id': _selectedStoreId,
+        'user_id': user!.id,
+        'customer_id': _selectedCustomerId,
+        'total_amount': totalAmount,
+        'paid_amount': paidAmount,
+        'status': status,
+      };
+
+      final invoiceRes = await Supabase.instance.client.from('invoices').insert(invoiceData).select().single();
+      final String invoiceId = invoiceRes['id'];
+
+      final List<Map<String, dynamic>> transactionsData = _cart.map((item) => {
+        'invoice_id': invoiceId,
+        'invoice_number': invoiceNumber,
+        'type': 'out',
+        'variant_id': item.variantId,
+        'quantity': item.quantity,
+        'unit_price': item.unitPrice,
+        'total_price': item.totalPrice,
+        'store_id': _selectedStoreId,
+        'user_id': user.id,
+        'customer_id': _selectedCustomerId,
+      }).toList();
+
+      await Supabase.instance.client.from('transactions').insert(transactionsData);
+
+     
+      if (paidAmount > 0) {
+        await Supabase.instance.client.from('payments').insert({
+          'invoice_id': invoiceId,
+          'customer_id': _selectedCustomerId,
           'store_id': _selectedStoreId,
-          'user_id': user!.id,
-          'customer_id': _selectedCustomerId, 
+          'user_id': user.id,
+          'amount': paidAmount,
+          'payment_method': 'cash',
+          'notes': 'Paiement à la caisse pour facture $invoiceNumber',
         });
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Vente enregistrée avec succès."),
+          content: Text("Vente enregistrée ! Facture et stocks mis à jour."),
           backgroundColor: Colors.green,
         ));
         setState(() {
           _cart.clear();
           _selectedCustomerId = null; 
-          _isLoading = false;
+          _isProcessingPayment = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isProcessingPayment = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Erreur de paiement: $e"),
+          content: Text("Erreur système: $e"),
           backgroundColor: Colors.red,
         ));
       }
     }
   }
 
-  double get _cartTotal => _cart.fold(0, (sum, item) => sum + item.totalPrice);
-
-  
 
   Widget _buildTodaySalesTab() {
     if (_selectedStoreId == null) return const Center(child: Text("Magasin non sélectionné"));
@@ -296,12 +409,8 @@ class _PosScreenState extends State<PosScreen> {
 
     return FutureBuilder<List<dynamic>>(
       future: Supabase.instance.client
-          .from('transactions')
-          .select('''
-            id, invoice_number, quantity, total_price, created_at,
-            product_variants(products(name), size, color),
-            customers(full_name) 
-          ''') 
+          .from('invoices')
+          .select('id, invoice_number, total_amount, paid_amount, status, created_at, customers(full_name)')
           .eq('store_id', _selectedStoreId!)
           .eq('type', 'out')
           .gte('created_at', startOfDay)
@@ -317,7 +426,7 @@ class _PosScreenState extends State<PosScreen> {
         final sales = snapshot.data ?? [];
         if (sales.isEmpty) {
           return const Center(
-            child: Text("Aucune vente enregistrée aujourd'hui.", style: TextStyle(fontSize: 18, color: Colors.grey)),
+            child: Text("Aucune facture enregistrée aujourd'hui.", style: TextStyle(fontSize: 18, color: Colors.grey)),
           );
         }
 
@@ -326,26 +435,31 @@ class _PosScreenState extends State<PosScreen> {
           itemCount: sales.length,
           itemBuilder: (context, index) {
             final sale = sales[index];
-            final variant = sale['product_variants'];
-            final productName = variant['products']['name'];
             final time = DateTime.parse(sale['created_at']).toLocal();
             final formattedTime = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-
-  
             final customerName = sale['customers']?['full_name'] ?? 'Client Comptoir';
+            final total = (sale['total_amount'] as num).toDouble();
+            final paid = (sale['paid_amount'] as num).toDouble();
+            final bool hasDebt = paid < total;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.green[50],
-                  child: const Icon(Icons.check_circle, color: Colors.green),
+                  backgroundColor: hasDebt ? Colors.orange[50] : Colors.green[50],
+                  child: Icon(hasDebt ? Icons.pending_actions : Icons.check_circle, color: hasDebt ? Colors.orange : Colors.green),
                 ),
-                title: Text('$productName (${variant['size']}/${variant['color']})', style: const TextStyle(fontWeight: FontWeight.bold)),
-              
-                subtitle: Text('Facture: ${sale['invoice_number']}\nClient: $customerName • Heure: $formattedTime'),
+                title: Text('Facture: ${sale['invoice_number']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('Client: $customerName • Heure: $formattedTime\nStatut: ${hasDebt ? 'Crédit (Non soldé)' : 'Payé'}'),
                 isThreeLine: true,
-                trailing: Text('${sale['total_price']} DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('$total DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (hasDebt) Text('Reste: ${total - paid} DA', style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             );
           },
@@ -356,7 +470,6 @@ class _PosScreenState extends State<PosScreen> {
 
   @override
   Widget build(BuildContext context) {
-   
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -371,7 +484,7 @@ class _PosScreenState extends State<PosScreen> {
             indicatorColor: Colors.white,
             tabs: [
               Tab(icon: Icon(Icons.point_of_sale), text: 'Nouvelle Vente'),
-              Tab(icon: Icon(Icons.receipt_long), text: 'Ventes du Jour'),
+              Tab(icon: Icon(Icons.receipt_long), text: 'Factures du Jour'),
             ],
           ),
           actions: [
@@ -380,7 +493,7 @@ class _PosScreenState extends State<PosScreen> {
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -397,10 +510,8 @@ class _PosScreenState extends State<PosScreen> {
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(
               children: [
-             
                 Row(
                   children: [
-                
                     Expanded(
                       flex: 5,
                       child: Container(
@@ -411,7 +522,7 @@ class _PosScreenState extends State<PosScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                               ),
                               child: TextField(
                                 controller: _searchController,
@@ -509,7 +620,6 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                     ),
                     
-          
                     Expanded(
                       flex: 2,
                       child: Container(
@@ -608,16 +718,14 @@ class _PosScreenState extends State<PosScreen> {
                                   ),
                             ),
                             
-                          
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
                               ),
                               child: Column(
                                 children: [
-                                
                                   DropdownButtonFormField<String?>(
                                     isExpanded: true,
                                     decoration: InputDecoration(
@@ -653,20 +761,22 @@ class _PosScreenState extends State<PosScreen> {
                                     width: double.infinity,
                                     height: 60,
                                     child: ElevatedButton(
-                                      onPressed: _cart.isEmpty ? null : _processPayment,
+                                      onPressed: (_cart.isEmpty || _isProcessingPayment) ? null : _showPaymentDialog,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.green,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
-                                      child: const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.payments_outlined, size: 28),
-                                          SizedBox(width: 12),
-                                          Text("Payer", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                                        ],
-                                      ),
+                                      child: _isProcessingPayment 
+                                        ? const CircularProgressIndicator(color: Colors.white)
+                                        : const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.payments_outlined, size: 28),
+                                            SizedBox(width: 12),
+                                            Text("Payer", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
                                     ),
                                   )
                                 ],
@@ -678,7 +788,6 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                   ],
                 ),
-               
                 _buildTodaySalesTab(),
               ],
             ),

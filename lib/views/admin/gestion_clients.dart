@@ -8,36 +8,50 @@ class GestionClientsScreen extends StatefulWidget {
   State<GestionClientsScreen> createState() => _GestionClientsScreenState();
 }
 
-class _GestionClientsScreenState extends State<GestionClientsScreen> {
+class _GestionClientsScreenState extends State<GestionClientsScreen> with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   
   List<dynamic> _customers = [];
   bool _isLoading = true;
+  bool _showOnlyWithDebt = false; // فلتر الديون
   
   Map<String, dynamic>? _selectedCustomer;
-  List<dynamic> _customerHistory = [];
+  late TabController _tabController;
+  
+  // بيانات الملف التفصيلي
+  List<dynamic> _invoices = [];
+  List<dynamic> _payments = [];
   bool _isLoadingHistory = false;
+  double _currentBalance = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _fetchCustomers();
   }
 
   Future<void> _fetchCustomers([String query = '']) async {
     setState(() => _isLoading = true);
     try {
-      var queryBuilder = Supabase.instance.client.from('customers').select();
+      var queryBuilder = Supabase.instance.client
+          .from('customers')
+          .select()
+          .eq('is_active', true); // Soft Delete filter
       
       if (query.isNotEmpty) {
         queryBuilder = queryBuilder.or('full_name.ilike.%$query%,phone.ilike.%$query%');
       }
 
-      final response = await queryBuilder.order('created_at', ascending: false);
+      final response = await queryBuilder.order('full_name', ascending: true);
       
       if (mounted) {
         setState(() {
-          _customers = response;
+          if (_showOnlyWithDebt) {
+            _customers = (response as List).where((c) => (c['balance'] as num? ?? 0) > 0).toList();
+          } else {
+            _customers = response;
+          }
           _isLoading = false;
         });
       }
@@ -47,35 +61,59 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
     }
   }
 
+  // تحديث استعلام التاريخ لجلب الفواتير والمدفوعات الفعلية
   Future<void> _fetchCustomerHistory(String customerId) async {
     setState(() => _isLoadingHistory = true);
     try {
-      // In a real scenario, transactions should have a customer_id. 
-      // Checking the DB schema from earlier... wait, the transactions table does NOT have customer_id!
-      // Only user_id (employee) and store_id.
-      // So I'll just show "Aucune transaction liée au client" since customer_id wasn't in the transactions table schema requested.
-      // I will put a placeholder for history or fetch an empty list.
+      final invoicesRes = await Supabase.instance.client
+          .from('invoices')
+          .select('*, user_profiles(full_name)')
+          .eq('customer_id', customerId)
+          .eq('type', 'out') // فواتير البيع للزبائن
+          .order('created_at', ascending: false);
+          
+      final paymentsRes = await Supabase.instance.client
+          .from('payments')
+          .select('*, user_profiles(full_name)')
+          .eq('customer_id', customerId)
+          .order('payment_date', ascending: false);
+          
+      final balanceRes = await Supabase.instance.client
+          .from('customers')
+          .select('balance')
+          .eq('id', customerId)
+          .single();
+
       if (mounted) {
         setState(() {
-          _customerHistory = []; // No customer_id in transactions
+          _invoices = invoicesRes;
+          _payments = paymentsRes;
+          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+          
+          // تحديث الرصيد المعروض في القائمة الجانبية أيضاً
+          if (_selectedCustomer != null) {
+            _selectedCustomer!['balance'] = _currentBalance;
+          }
           _isLoadingHistory = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoadingHistory = false);
+      debugPrint("Error fetching history: $e");
     }
   }
 
-  void _showAddCustomerDialog() {
+  void _showAddEditCustomerDialog([Map<String, dynamic>? customer]) {
+    final isEdit = customer != null;
     final formKey = GlobalKey<FormState>();
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
+    final nameCtrl = TextEditingController(text: customer?['full_name'] ?? '');
+    final phoneCtrl = TextEditingController(text: customer?['phone'] ?? '');
+    final emailCtrl = TextEditingController(text: customer?['email'] ?? '');
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nouveau Client'),
+        title: Text(isEdit ? 'Modifier le Client' : 'Nouveau Client'),
         content: Form(
           key: formKey,
           child: Column(
@@ -83,56 +121,96 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom complet', prefixIcon: Icon(Icons.person)),
+                decoration: const InputDecoration(labelText: 'Nom complet', prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone', prefixIcon: Icon(Icons.phone)),
+                decoration: const InputDecoration(labelText: 'Téléphone', prefixIcon: Icon(Icons.phone), border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: emailCtrl,
-                decoration: const InputDecoration(labelText: 'Adresse e-mail', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(labelText: 'Adresse e-mail', prefixIcon: Icon(Icons.email), border: OutlineInputBorder()),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
           ElevatedButton(
             onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context);
-                await _addCustomer(nameCtrl.text, phoneCtrl.text, emailCtrl.text);
+              if (!formKey.currentState!.validate()) return;
+              Navigator.pop(context);
+              
+              try {
+                final Map<String, dynamic> data = {
+                  'full_name': nameCtrl.text.trim(),
+                  'phone': phoneCtrl.text.trim(),
+                  'email': emailCtrl.text.trim(),
+                };
+                
+                if (isEdit) {
+                  await Supabase.instance.client.from('customers').update(data).eq('id', customer['id']);
+                  if (_selectedCustomer?['id'] == customer['id']) {
+                    setState(() {
+                       _selectedCustomer!['full_name'] = data['full_name'];
+                       _selectedCustomer!['phone'] = data['phone'];
+                       _selectedCustomer!['email'] = data['email'];
+                    });
+                  }
+                } else {
+                  data['balance'] = 0;
+                  data['is_active'] = true;
+                  await Supabase.instance.client.from('customers').insert(data);
+                }
+                
+                _fetchCustomers(_searchController.text);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(isEdit ? 'Client modifié.' : 'Client ajouté.'),
+                    backgroundColor: Colors.green,
+                  ));
+                }
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
             },
-            child: const Text('Enregistrer'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+            child: Text(isEdit ? 'Modifier' : 'Enregistrer'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _addCustomer(String name, String phone, String email) async {
+  // الإخفاء الآمن
+  Future<void> _deleteCustomer(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Archiver le client'),
+        content: const Text('Voulez-vous masquer ce client ? (Ses factures seront conservées).'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            child: const Text('Archiver'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
     try {
-      await Supabase.instance.client.from('customers').insert({
-        'full_name': name.trim(),
-        'phone': phone.trim(),
-        'email': email.trim(),
-      });
+      await Supabase.instance.client.from('customers').update({'is_active': false}).eq('id', id);
+      if (_selectedCustomer?['id'] == id) setState(() => _selectedCustomer = null);
       _fetchCustomers(_searchController.text);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client ajouté.'), backgroundColor: Colors.green));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client archivé.'), backgroundColor: Colors.orange));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -143,49 +221,134 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
     _fetchCustomerHistory(customer['id']);
   }
 
+  // تسجيل دفعة (استلام أموال من الزبون)
+  void _showAddPaymentDialog() {
+    final amountCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Recevoir un paiement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Crédit (Dette) du client: ${_currentBalance.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: amountCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Montant reçu', border: OutlineInputBorder(), prefixIcon: Icon(Icons.euro)),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: notesCtrl,
+              decoration: const InputDecoration(labelText: 'Notes / Motif', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = double.tryParse(amountCtrl.text);
+              if (amount == null || amount <= 0) return;
+              Navigator.pop(ctx);
+              
+              try {
+                final user = Supabase.instance.client.auth.currentUser;
+                await Supabase.instance.client.from('payments').insert({
+                  'customer_id': _selectedCustomer!['id'],
+                  'user_id': user?.id,
+                  'amount': amount,
+                  'payment_method': 'cash',
+                  'notes': notesCtrl.text.isEmpty ? 'Versement manuel (Client)' : notesCtrl.text,
+                });
+                
+                _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
+                _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paiement enregistré avec succès.'), backgroundColor: Colors.green));
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+            child: const Text('Confirmer', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Gestion des Clients'),
-        backgroundColor: Colors.indigo,
+        title: const Text('Gestion des Clients & Crédits'),
+        backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
       ),
       body: Row(
         children: [
-          // Left: Client List
+          // --- LEFT PANEL: LISTE DES CLIENTS ---
           Expanded(
-            flex: 1,
+            flex: 4,
             child: Container(
               margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
               child: Column(
                 children: [
-                   Padding(
+                  Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Rechercher (Nom ou Téléphone)...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Rechercher un client...',
+                                  prefixIcon: Icon(Icons.search),
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                                onChanged: (val) => _fetchCustomers(val),
+                              ),
                             ),
-                            onChanged: (val) {
-                              _fetchCustomers(val);
-                            },
-                          ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _showAddEditCustomerDialog(),
+                              icon: const Icon(Icons.person_add_alt_1),
+                              color: Colors.indigo,
+                              tooltip: 'Ajouter un client',
+                            )
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: _showAddCustomerDialog,
-                          icon: const Icon(Icons.person_add_alt_1),
-                          color: Colors.indigo,
-                          tooltip: 'Ajouter un client',
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const Text("Endettés", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                            Switch(
+                              value: _showOnlyWithDebt,
+                              activeColor: Colors.orange,
+                              onChanged: (val) {
+                                setState(() {
+                                  _showOnlyWithDebt = val;
+                                  _fetchCustomers(_searchController.text);
+                                });
+                              },
+                            ),
+                          ],
                         )
                       ],
                     ),
@@ -194,19 +357,29 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
                   Expanded(
                     child: _isLoading 
                       ? const Center(child: CircularProgressIndicator())
-                      : ListView.separated(
+                      : _customers.isEmpty 
+                        ? const Center(child: Text("Aucun client trouvé.", style: TextStyle(color: Colors.grey)))
+                        : ListView.separated(
                           itemCount: _customers.length,
                           separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final c = _customers[index];
                             final isSelected = _selectedCustomer?['id'] == c['id'];
+                            final balance = (c['balance'] as num?)?.toDouble() ?? 0.0;
+                            final hasDebt = balance > 0;
                             
                             return ListTile(
                               selected: isSelected,
-                              selectedTileColor: Colors.indigo.withValues(alpha: 0.1),
-                              leading: const CircleAvatar(child: Icon(Icons.person)),
+                              selectedTileColor: Colors.indigo.withOpacity(0.1),
+                              leading: CircleAvatar(
+                                backgroundColor: isSelected ? Colors.indigo : Colors.grey[200],
+                                child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
+                              ),
                               title: Text(c['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text(c['phone'] ?? c['email'] ?? 'Auccun contact'),
+                              subtitle: Text(c['phone'] ?? c['email'] ?? 'Aucun contact'),
+                              trailing: hasDebt 
+                                  ? Text('${balance.toStringAsFixed(2)} €', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                                  : const Icon(Icons.check_circle, color: Colors.green, size: 16),
                               onTap: () => _selectCustomer(c),
                             );
                           },
@@ -217,61 +390,105 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
             ),
           ),
           
-          // Right: Details & History
+          // --- RIGHT PANEL: CRM & PROFIL CLIENT ---
           Expanded(
-            flex: 2,
+            flex: 6,
             child: Container(
               margin: const EdgeInsets.only(top: 16, bottom: 16, right: 16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
               child: _selectedCustomer == null
-                  ? const Center(child: Text("Sélectionnez un client pour voir l'historique", style: TextStyle(color: Colors.grey, fontSize: 18)))
+                  ? const Center(child: Text("Sélectionnez un client pour voir les détails", style: TextStyle(color: Colors.grey, fontSize: 18)))
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // HEADER DU CLIENT
                         Container(
                           padding: const EdgeInsets.all(24),
-                          color: Colors.indigo.withValues(alpha: 0.05),
-                          child: Column(
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.withOpacity(0.05),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          ),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_selectedCustomer!['full_name'], style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.phone, size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(_selectedCustomer!['phone'] ?? 'Non renseigné', style: const TextStyle(fontSize: 16, color: Colors.black87)),
-                                  const SizedBox(width: 24),
-                                  const Icon(Icons.email, size: 16, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Text(_selectedCustomer!['email'] ?? 'Non renseigné', style: const TextStyle(fontSize: 16, color: Colors.black87)),
-                                ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_selectedCustomer!['full_name'], style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.phone, size: 16, color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Text(_selectedCustomer!['phone'] ?? 'Non renseigné'),
+                                        const SizedBox(width: 24),
+                                        const Icon(Icons.email, size: 16, color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Text(_selectedCustomer!['email'] ?? 'Non renseigné'),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text("Crédit (Dette)", style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    '${_currentBalance.toStringAsFixed(2)} €',
+                                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _currentBalance > 0 ? Colors.red : Colors.green),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
+                                      IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
+                                    ],
+                                  )
+                                ],
+                              )
                             ],
                           ),
                         ),
-                        const Divider(height: 1),
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text("Historique des achats", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        
+                        // ONGLETS (TABS)
+                        TabBar(
+                          controller: _tabController,
+                          labelColor: Colors.indigo,
+                          indicatorColor: Colors.indigo,
+                          tabs: const [
+                            Tab(icon: Icon(Icons.shopping_bag), text: "Factures de Vente"),
+                            Tab(icon: Icon(Icons.account_balance_wallet), text: "Paiements & Versements"),
+                          ],
                         ),
+                        
+                        // CONTENU DES ONGLETS
                         Expanded(
                           child: _isLoadingHistory
                               ? const Center(child: CircularProgressIndicator())
-                              : _customerHistory.isEmpty
-                                  ? const Center(
-                                      child: Text(
-                                        "Aucune transaction (La liaison Transactions <> Clients sera implémentée via un client_id)",
-                                        style: TextStyle(color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      itemCount: _customerHistory.length,
-                                      itemBuilder: (context, index) {
-                                        return const ListTile(title: Text("Transaction"));
-                                      },
-                                    ),
+                              : TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _buildInvoicesTab(),
+                                    _buildPaymentsTab(),
+                                  ],
+                                ),
+                        ),
+                        
+                        // BOUTON DE PAIEMENT RAPIDE
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: ElevatedButton.icon(
+                            onPressed: _showAddPaymentDialog,
+                            icon: const Icon(Icons.payments),
+                            label: const Text("Enregistrer un paiement (Versement)", style: TextStyle(fontSize: 16)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -279,6 +496,63 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInvoicesTab() {
+    if (_invoices.isEmpty) return const Center(child: Text("Aucun achat enregistré."));
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _invoices.length,
+      itemBuilder: (context, index) {
+        final inv = _invoices[index];
+        final total = (inv['total_amount'] as num?)?.toDouble() ?? 0;
+        final paid = (inv['paid_amount'] as num?)?.toDouble() ?? 0;
+        final date = DateTime.parse(inv['created_at']).toLocal();
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
+          child: ListTile(
+            leading: CircleAvatar(backgroundColor: Colors.indigo[50], child: const Icon(Icons.shopping_bag, color: Colors.indigo)),
+            title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • Vendu par: ${inv['user_profiles']['full_name']}"),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text("Total: ${total.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("Payé: ${paid.toStringAsFixed(2)} €", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentsTab() {
+    if (_payments.isEmpty) return const Center(child: Text("Aucun versement enregistré."));
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _payments.length,
+      itemBuilder: (context, index) {
+        final pay = _payments[index];
+        final amount = (pay['amount'] as num?)?.toDouble() ?? 0;
+        final date = DateTime.parse(pay['payment_date']).toLocal();
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
+          child: ListTile(
+            leading: CircleAvatar(backgroundColor: Colors.green[50], child: const Icon(Icons.check_circle, color: Colors.green)),
+            title: Text("Paiement de ${amount.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • Motif: ${pay['notes']}"),
+          ),
+        );
+      },
     );
   }
 }
