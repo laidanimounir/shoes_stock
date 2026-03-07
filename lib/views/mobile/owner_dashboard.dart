@@ -11,21 +11,23 @@ class OwnerDashboard extends StatefulWidget {
 }
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
-
+  // مؤشرات مالية عامة (Global KPIs)
   double _salesToday = 0;
-  double _salesMonth = 0;
+  double _profitToday = 0;
+  double _customerDebt = 0;
+  double _supplierDebt = 0;
 
-  
+  // أداء الفروع
   List<Map<String, dynamic>> _storePerformance = [];
   int _currentStorePage = 0;
   final PageController _pageController = PageController(viewportFraction: 0.85);
 
-  // القوائم الأخرى
+  // القوائم
   List<dynamic> _lowStockAlerts = [];
   List<dynamic> _recentActivities = [];
 
   bool _isLoading = true;
-  late final RealtimeChannel _activitySubscription;
+  late final RealtimeChannel _dashboardSubscription;
 
   @override
   void initState() {
@@ -36,109 +38,158 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   }
 
   void _setupRealtime() {
-    _activitySubscription = Supabase.instance.client
-        .channel('public:activity_logs')
+    _dashboardSubscription = Supabase.instance.client
+        .channel('public:mobile_dashboard')
         .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
+          event: PostgresChangeEvent.all,
           schema: 'public',
-          table: 'activity_logs',
-          callback: (payload) {
-            _fetchActivities(); 
-          },
+          table: 'transactions',
+          callback: (payload) => _fetchDashboardData(isRefresh: true),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'payments',
+          callback: (payload) => _fetchDashboardData(isRefresh: true),
         )
         .subscribe();
   }
 
   @override
   void dispose() {
-    Supabase.instance.client.removeChannel(_activitySubscription);
+    Supabase.instance.client.removeChannel(_dashboardSubscription);
     _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchDashboardData() async {
+  Future<void> _fetchDashboardData({bool isRefresh = false}) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    
+    if (!isRefresh) setState(() => _isLoading = true);
 
-    await Future.wait([
-      _fetchOverallSales(),
-      _fetchStorePerformance(),
-      _fetchLowStock(),
-      _fetchActivities(),
-    ]);
-
-    if (mounted) setState(() => _isLoading = false);
+    try {
+      await Future.wait([
+        _fetchGlobalFinancials(),
+        _fetchStorePerformance(),
+        _fetchLowStock(),
+        _fetchActivities(),
+      ]);
+    } catch (e) {
+      debugPrint("Dashboard update error: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  Future<void> _fetchOverallSales() async {
+  Future<void> _fetchGlobalFinancials() async {
     try {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
-      final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
+      final today = DateTime.now();
+      // تم إزالة toUtc() ليتطابق 100% مع توقيت الكمبيوتر (الـ POS)
+      final todayStart = DateTime(today.year, today.month, today.day).toIso8601String();
 
-   
       final todayRes = await Supabase.instance.client
           .from('transactions')
-          .select('total_price')
+          .select('quantity, total_price, product_variants(buy_price)')
           .eq('type', 'out')
           .gte('created_at', todayStart);
 
-      double todayTotal = 0;
+      double todaySales = 0;
+      double todayProfit = 0;
+
       for (var row in todayRes) {
-        todayTotal += (row['total_price'] as num).toDouble();
+        double total = (row['total_price'] as num?)?.toDouble() ?? 0.0;
+        int qty = (row['quantity'] as num?)?.toInt() ?? 0;
+        
+        double buyPrice = 0.0;
+        final pv = row['product_variants'];
+        if (pv != null) {
+          if (pv is Map) {
+            buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
+          } else if (pv is List && pv.isNotEmpty) {
+            buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
+          }
+        }
+        
+        todaySales += total;
+        todayProfit += (total - (buyPrice * qty));
       }
 
-  
-      final monthRes = await Supabase.instance.client
-          .from('transactions')
-          .select('total_price')
-          .eq('type', 'out')
-          .gte('created_at', monthStart);
+      final custRes = await Supabase.instance.client.from('customers').select('balance').eq('is_active', true);
+      double cDebt = custRes.fold(0.0, (sum, c) => sum + ((c['balance'] as num?)?.toDouble() ?? 0.0));
 
-      double monthTotal = 0;
-      for (var row in monthRes) {
-        monthTotal += (row['total_price'] as num).toDouble();
-      }
+      final suppRes = await Supabase.instance.client.from('suppliers').select('balance').eq('is_active', true);
+      double sDebt = suppRes.fold(0.0, (sum, s) => sum + ((s['balance'] as num?)?.toDouble() ?? 0.0));
 
       if (mounted) {
         setState(() {
-          _salesToday = todayTotal;
-          _salesMonth = monthTotal;
+          _salesToday = todaySales;
+          _profitToday = todayProfit;
+          _customerDebt = cDebt;
+          _supplierDebt = sDebt;
         });
       }
     } catch (e) {
-      debugPrint("Error overall sales: $e");
+      debugPrint("Error global financials: $e");
     }
   }
 
   Future<void> _fetchStorePerformance() async {
     try {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day).toIso8601String();
 
-      
-      final stores = await Supabase.instance.client.from('stores').select('id, name');
-      
+      final stores = await Supabase.instance.client.from('stores').select('id, name').eq('is_active', true);
       List<Map<String, dynamic>> tempPerformance = [];
 
       for (var store in stores) {
-        // 2. حساب مبيعات كل متجر لليوم
-        final res = await Supabase.instance.client
+        final transRes = await Supabase.instance.client
             .from('transactions')
-            .select('total_price')
+            .select('quantity, total_price, product_variants(buy_price)')
             .eq('type', 'out')
             .eq('store_id', store['id'])
             .gte('created_at', todayStart);
 
-        double total = 0;
-        for (var row in res) {
-          total += (row['total_price'] as num).toDouble();
+        double storeSales = 0;
+        double storeProfit = 0;
+        for (var row in transRes) {
+          double total = (row['total_price'] as num?)?.toDouble() ?? 0.0;
+          int qty = (row['quantity'] as num?)?.toInt() ?? 0;
+          
+          double buyPrice = 0.0;
+          final pv = row['product_variants'];
+          if (pv != null) {
+            if (pv is Map) buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
+            else if (pv is List && pv.isNotEmpty) buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
+          }
+
+          storeSales += total;
+          storeProfit += (total - (buyPrice * qty));
+        }
+
+        final invRes = await Supabase.instance.client
+            .from('inventory')
+            .select('quantity, product_variants(buy_price)')
+            .eq('store_id', store['id'])
+            .gt('quantity', 0);
+
+        double stockValue = 0;
+        for (var i in invRes) {
+          int qty = (i['quantity'] as num?)?.toInt() ?? 0;
+          double buyPrice = 0.0;
+          final pv = i['product_variants'];
+          if (pv != null) {
+            if (pv is Map) buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
+            else if (pv is List && pv.isNotEmpty) buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
+          }
+          stockValue += (qty * buyPrice);
         }
 
         tempPerformance.add({
           'id': store['id'],
           'name': store['name'],
-          'today_sales': total,
+          'today_sales': storeSales,
+          'today_profit': storeProfit,
+          'stock_value': stockValue,
         });
       }
 
@@ -160,11 +211,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .lt('quantity', 3)
           .order('quantity', ascending: true)
           .limit(10);
-          
       if (mounted) setState(() => _lowStockAlerts = res);
-    } catch (e) {
-      debugPrint("Error low stock: $e");
-    }
+    } catch (e) {}
   }
 
   Future<void> _fetchActivities() async {
@@ -174,11 +222,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .select('*, user_profiles(full_name)')
           .order('created_at', ascending: false)
           .limit(15);
-          
       if (mounted) setState(() => _recentActivities = res);
-    } catch (e) {
-      debugPrint("Error activities: $e");
-    }
+    } catch (e) {}
   }
 
   void _scanBarcode() {
@@ -191,8 +236,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           child: Column(
             children: [
               AppBar(
-                title: const Text('Scanner un Produit'),
+                title: const Text('Scanner (Mode Propriétaire)'),
                 automaticallyImplyLeading: false,
+                backgroundColor: Colors.indigo[900],
+                foregroundColor: Colors.white,
                 actions: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
                 ],
@@ -235,11 +282,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       if (mounted) Navigator.pop(context);
 
       if (res == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Produit introuvable.'), backgroundColor: Colors.red),
-          );
-        }
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produit introuvable.'), backgroundColor: Colors.red));
         return;
       }
 
@@ -248,24 +291,51 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           context: context,
           builder: (context) {
             final inventory = res['inventory'] as List<dynamic>? ?? [];
+            final buyP = (res['buy_price'] as num?)?.toDouble() ?? 0.0;
+            final sellP = (res['sell_price'] as num?)?.toDouble() ?? 0.0;
+            final margin = sellP - buyP;
+
             return AlertDialog(
-              title: Text(res['products']['name']),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (res['products']['image_url'] != null)
-                    Center(child: Image.network(res['products']['image_url'], height: 100)),
-                  const SizedBox(height: 16),
-                  Text('Taille: ${res['size']} | Couleur: ${res['color']}'),
-                  const Divider(),
-                  const Text('État des Stocks:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ...inventory.map((inv) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('• ${inv['stores']['name']}: ${inv['quantity']} unités'),
-                  )),
-                ],
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(res['products']['name'], style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (res['products']['image_url'] != null)
+                      Center(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(res['products']['image_url'], height: 120))),
+                    const SizedBox(height: 16),
+                    Text('Taille: ${res['size']} | Couleur: ${res['color']} | Code: $barcode', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const Divider(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                      child: Column(
+                        children: [
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Prix Achat:'), Text('$buyP DA', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
+                          const SizedBox(height: 4),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Prix Vente:'), Text('$sellP DA', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))]),
+                          const Divider(),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Marge Nette:'), Text('+$margin DA', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold))]),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Stocks par magasin:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    ...inventory.map((inv) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('• ${inv['stores']['name']}'),
+                          Text('${inv['quantity']} unités', style: TextStyle(fontWeight: FontWeight.bold, color: (inv['quantity'] as int) > 0 ? Colors.green : Colors.red)),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer'))
@@ -287,29 +357,56 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Tableau de Bord Mâitre'),
+        title: const Text('Tableau de Bord Mâitre', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchDashboardData),
+          IconButton(
+            icon: const Icon(Icons.refresh), 
+            onPressed: () => _fetchDashboardData(isRefresh: true) // تحديث يدوي سريع
+          ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _fetchDashboardData,
+              onRefresh: () => _fetchDashboardData(isRefresh: true),
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
-             
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Text("Performance par Magasin", 
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    child: Text("Santé Financière (Aujourd'hui)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildMetricCard("Chiffre d'Affaires", "${_salesToday.toStringAsFixed(0)} DA", Icons.point_of_sale, Colors.blue)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricCard("Bénéfice Net", "+${_profitToday.toStringAsFixed(0)} DA", Icons.trending_up, Colors.green)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildMetricCard("Créances Clients", "${_customerDebt.toStringAsFixed(0)} DA", Icons.account_balance_wallet, Colors.orange)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricCard("Dettes Fournisseurs", "${_supplierDebt.toStringAsFixed(0)} DA", Icons.money_off, Colors.red)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text("Performance par Magasin", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                   ),
                   SizedBox(
-                    height: 170,
+                    height: 200, 
                     child: PageView.builder(
                       controller: _pageController,
                       itemCount: _storePerformance.length,
@@ -320,15 +417,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       },
                     ),
                   ),
-                  
-                 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: _storePerformance.asMap().entries.map((entry) {
                       return Container(
-                        width: 7.0,
-                        height: 7.0,
-                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        width: 8.0,
+                        height: 8.0,
+                        margin: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.indigo.withOpacity(_currentStorePage == entry.key ? 0.9 : 0.2),
@@ -336,36 +431,15 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       );
                     }).toList(),
                   ),
-
                   const SizedBox(height: 16),
-
-          
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildMetricCard("Aujourd'hui", "${_salesToday.toStringAsFixed(2)} DA", Icons.today, Colors.green)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard("Ce Mois", "${_salesMonth.toStringAsFixed(2)} DA", Icons.calendar_month, Colors.blue)),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-           
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader("Alertes Stock Faible", Icons.warning_amber_rounded, Colors.red),
                     _buildLowStockList(),
                   ],
-
                   const SizedBox(height: 24),
-
-             
                   _buildSectionHeader("Activités Récentes", Icons.history, Colors.indigo),
                   _buildActivityList(),
-                  
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 80), 
                 ],
               ),
             ),
@@ -407,7 +481,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, 4))],
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,14 +489,39 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(store['name'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Expanded(child: Text(store['name'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
               const Icon(Icons.storefront, color: Colors.white60),
             ],
           ),
           const Spacer(),
-          const Text("Recettes du jour", style: TextStyle(color: Colors.white70, fontSize: 13)),
-          Text("${store['today_sales'].toStringAsFixed(2)} DA", 
-            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Ventes du jour", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text("${store['today_sales'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text("Bénéfice net", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text("+${store['today_profit'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white24, height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Valeur du Stock:", style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text("${store['stock_value'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ],
       ),
     );
@@ -435,14 +534,22 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        border: Border(bottom: BorderSide(color: color, width: 3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 24),
+              CircleAvatar(radius: 4, backgroundColor: color),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
@@ -474,9 +581,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         itemBuilder: (context, index) {
           final alert = _lowStockAlerts[index];
           return ListTile(
-            title: Text("${alert['product_variants']['products']['name']} (${alert['product_variants']['size']})"),
-            subtitle: Text("Magasin: ${alert['stores']['name']}"),
-            trailing: Text("${alert['quantity']} restants", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            title: Text("${alert['product_variants']['products']['name']} (${alert['product_variants']['size']})", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            subtitle: Text("Magasin: ${alert['stores']['name']}", style: const TextStyle(fontSize: 12)),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(12)),
+              child: Text("${alert['quantity']} restants", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
           );
         },
       ),
@@ -497,9 +608,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           final log = _recentActivities[index];
           final date = DateTime.parse(log['created_at']);
           return ListTile(
-            leading: const Icon(Icons.notifications_none, size: 20),
-            title: Text(log['description'], style: const TextStyle(fontSize: 13)),
-            subtitle: Text("${log['user_profiles']['full_name']} • ${timeago.format(date, locale: 'fr')}"),
+            leading: CircleAvatar(backgroundColor: Colors.indigo[50], child: const Icon(Icons.notifications_none, size: 20, color: Colors.indigo)),
+            title: Text(log['description'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            subtitle: Text("${log['user_profiles']['full_name']} • ${timeago.format(date, locale: 'fr')}", style: const TextStyle(fontSize: 11)),
           );
         },
       ),
