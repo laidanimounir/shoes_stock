@@ -22,11 +22,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Real-time subscriptions
+ 
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
-  StreamSubscription<List<Map<String, dynamic>>>? _lowStockSubscription;
 
-  // Stats
+  
   int _totalProducts = 0;
   int _totalStock = 0;
   int _lowStockCount = 0;
@@ -42,7 +41,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void dispose() {
     _inventorySubscription?.cancel();
-    _lowStockSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -52,6 +50,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       final res = await Supabase.instance.client
           .from('stores')
           .select()
+          .eq('is_active', true) 
           .order('name', ascending: true);
       if (mounted) {
         setState(() {
@@ -74,11 +73,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   void _setupRealtimeStreams() {
     _inventorySubscription?.cancel();
-    _lowStockSubscription?.cancel();
-
     if (_selectedStoreId == null) return;
 
-    // 1. Inventory Stream
+  
     _inventorySubscription = Supabase.instance.client
         .from('inventory')
         .stream(primaryKey: ['id'])
@@ -88,50 +85,42 @@ class _InventoryScreenState extends State<InventoryScreen> {
           final enrichedData = await Future.wait(data.map((item) async {
             final variantRes = await Supabase.instance.client
                 .from('product_variants')
-                .select('id, size, color, barcode, products(name, image_url)')
+                .select('id, size, color, barcode, buy_price, products(name, image_url)') // جلب buy_price الحقيقي
                 .eq('id', item['variant_id'])
+                .eq('is_active', true) 
                 .maybeSingle();
             item['product_variants'] = variantRes;
             return item;
           }));
+
+          
+          final validData = enrichedData.where((item) => item['product_variants'] != null).toList();
 
           if (mounted) {
             setState(() {
-              _inventoryItems = enrichedData;
-              _totalProducts = enrichedData.length;
+              _inventoryItems = validData;
+              _totalProducts = validData.length;
               _totalStock = 0;
               _lowStockCount = 0;
               _totalValue = 0;
-              for (var item in enrichedData) {
+              
+              _lowStockAlerts.clear(); 
+
+              for (var item in validData) {
                 final qty = (item['quantity'] as int?) ?? 0;
-                final price = double.tryParse(item['product_variants']?['sell_price']?.toString() ?? '0') ?? 0.0;
+            
+                final buyPrice = double.tryParse(item['product_variants']?['buy_price']?.toString() ?? '0') ?? 0.0;
+                
                 _totalStock += qty;
-                _totalValue += (qty * price);
-                if (qty < 3) _lowStockCount++;
+                _totalValue += (qty * buyPrice);
+                
+                if (qty < 3) {
+                  _lowStockCount++;
+                  _lowStockAlerts.add(item); 
+                }
               }
             });
           }
-        });
-
-    // 2. Low Stock Stream (filtered locally since .lt() is not supported on .stream())
-    _lowStockSubscription = Supabase.instance.client
-        .from('inventory')
-        .stream(primaryKey: ['id'])
-        .eq('store_id', _selectedStoreId!)
-        .order('quantity', ascending: true)
-        .limit(100)
-        .listen((data) async {
-          final lowStockData = data.where((item) => (item['quantity'] ?? 0) < 3).toList();
-          final enrichedData = await Future.wait(lowStockData.map((item) async {
-            final variantRes = await Supabase.instance.client
-                .from('product_variants')
-                .select('size, color, barcode, products(name)')
-                .eq('id', item['variant_id'])
-                .maybeSingle();
-            item['product_variants'] = variantRes;
-            return item;
-          }));
-          if (mounted) setState(() => _lowStockAlerts = enrichedData);
         });
   }
 
@@ -149,7 +138,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           .select('*, product_variants(size, color, products(name)), user_profiles(full_name)')
           .eq('store_id', _selectedStoreId!)
           .order('created_at', ascending: false)
-          .limit(30);
+          .limit(20); 
 
       if (mounted) {
         setState(() => _recentMovements = res);
@@ -176,7 +165,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Gestion de l'Inventaire"),
+        title: const Text("Tableau de Bord: Inventaire & Flux"),
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
@@ -185,7 +174,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButtonHideUnderline(
@@ -232,36 +221,36 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                 )
               : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left Panel: Inventory List
+
                     Expanded(
                       flex: 3,
                       child: Column(
                         children: [
-                          // Stats Row
+                       
                           Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Row(
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
                               children: [
                                 _buildStatCard('Total Produits', '$_totalProducts', Icons.category, Colors.blue),
-                                const SizedBox(width: 12),
                                 _buildStatCard('Stock Total', '$_totalStock unités', Icons.inventory_2, Colors.green),
-                                const SizedBox(width: 12),
-                                _buildStatCard('Valeur du Stock', '${_totalValue.toStringAsFixed(2)} DA', Icons.attach_money, Colors.orange),
-                                const SizedBox(width: 12),
+                                _buildStatCard('Valeur (Achat)', '${_totalValue.toStringAsFixed(2)} DA', Icons.account_balance_wallet, Colors.orange),
                                 _buildStatCard('Stock Faible', '$_lowStockCount', Icons.warning_amber, Colors.red),
                               ],
                             ),
                           ),
 
-                          // Search Bar
+                     
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                               ),
                               child: TextField(
                                 controller: _searchController,
@@ -277,14 +266,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Inventory Table
+                        
                           Expanded(
                             child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                               ),
                               child: _filteredInventory.isEmpty
                                   ? const Center(
@@ -360,22 +349,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
 
-                    // Right Panel: Alerts + Movements
+                   
                     Expanded(
                       flex: 2,
                       child: Container(
-                        color: Colors.white,
+                        margin: const EdgeInsets.only(top: 16, right: 16, bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                        ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Low Stock Alerts
+                     
                             Container(
                               padding: const EdgeInsets.all(16),
-                              color: Colors.red[50],
+                              decoration: BoxDecoration(
+                                color: Colors.red[50],
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                              ),
                               child: Row(
                                 children: [
                                   const Icon(Icons.warning_amber_rounded, color: Colors.red),
@@ -394,20 +391,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 ],
                               ),
                             ),
+                           
                             SizedBox(
-                              height: 200,
+                              height: 250,
                               child: _lowStockAlerts.isEmpty
-                                  ? const Center(
-                                      child: Text('Aucune alerte', style: TextStyle(color: Colors.green, fontSize: 16)),
-                                    )
+                                  ? const Center(child: Text('Aucune alerte. Le stock est bon!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _lowStockAlerts.length,
                                       separatorBuilder: (_, __) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final alert = _lowStockAlerts[index];
-                                        final name = alert['product_variants']?['products']?['name'] ?? 'Inconnu';
-                                        final size = alert['product_variants']?['size'] ?? '-';
+                                        final variant = alert['product_variants'] ?? {};
+                                        final name = variant['products']?['name'] ?? 'Inconnu';
+                                        final size = variant['size'] ?? '-';
                                         final qty = alert['quantity'] ?? 0;
                                         return ListTile(
                                           dense: true,
@@ -423,9 +420,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                     ),
                             ),
 
-                            const Divider(height: 1),
-
-                            // Recent Movements
+                        
                             Container(
                               padding: const EdgeInsets.all(16),
                               color: Colors.indigo[50],
@@ -434,15 +429,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   Icon(Icons.swap_vert, color: Colors.indigo),
                                   SizedBox(width: 8),
                                   Text(
-                                    'Derniers Mouvements (Entrée / Sortie)',
+                                    'Derniers Flux (Entrées / Sorties)',
                                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 16),
                                   ),
                                 ],
                               ),
                             ),
+                        
                             Expanded(
                               child: _recentMovements.isEmpty
-                                  ? const Center(child: Text('Aucun mouvement', style: TextStyle(color: Colors.grey)))
+                                  ? const Center(child: Text('Aucun mouvement récent', style: TextStyle(color: Colors.grey)))
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _recentMovements.length,
@@ -452,10 +448,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         final isIn = mov['type'] == 'in';
                                         final productName = mov['product_variants']?['products']?['name'] ?? 'Inconnu';
                                         final size = mov['product_variants']?['size'] ?? '-';
-                                        final userName = mov['user_profiles']?['full_name'] ?? 'Inconnu';
+                                        final userName = mov['user_profiles']?['full_name'] ?? 'Système';
                                         final date = DateTime.tryParse(mov['created_at'] ?? '');
                                         final qty = mov['quantity'] ?? 0;
-                                        final total = mov['total_price'] ?? 0;
 
                                         return ListTile(
                                           dense: true,
@@ -473,15 +468,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
-                                            '${isIn ? "Entrée" : "Sortie"} × $qty • $userName • ${date != null ? timeago.format(date, locale: 'fr') : ''}',
+                                            '${isIn ? "Acheté" : "Vendu"} par $userName • ${date != null ? timeago.format(date, locale: 'fr') : ''}',
                                             style: const TextStyle(fontSize: 11),
                                           ),
                                           trailing: Text(
-                                            '${(total as num).toStringAsFixed(2)} DA',
+                                            '${isIn ? "+" : "-"}$qty',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: isIn ? Colors.blue : Colors.green,
-                                              fontSize: 13,
+                                              fontSize: 14,
                                             ),
                                           ),
                                         );
@@ -497,33 +492,37 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
+  
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)],
-          border: Border(bottom: BorderSide(color: color, width: 3)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: color.withValues(alpha: 0.1),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Column(
+    return Container(
+      width: 220, 
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        border: Border(bottom: BorderSide(color: color, width: 3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withOpacity(0.1),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded( 
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+                Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color), maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
