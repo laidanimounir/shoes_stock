@@ -247,7 +247,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 const SizedBox(width: 12),
                                 _buildStatCard('Stock Total', '$_totalStock unités', Icons.inventory_2, Colors.green),
                                 const SizedBox(width: 12),
-                                _buildStatCard('Valeur du Stock', '${_totalValue.toStringAsFixed(2)} €', Icons.euro, Colors.orange),
+                                _buildStatCard('Valeur du Stock', '${_totalValue.toStringAsFixed(2)} DA', Icons.attach_money, Colors.orange),
                                 const SizedBox(width: 12),
                                 _buildStatCard('Stock Faible', '$_lowStockCount', Icons.warning_amber, Colors.red),
                               ],
@@ -477,7 +477,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             style: const TextStyle(fontSize: 11),
                                           ),
                                           trailing: Text(
-                                            '${(total as num).toStringAsFixed(2)} €',
+                                            '${(total as num).toStringAsFixed(2)} DA',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: isIn ? Colors.blue : Colors.green,

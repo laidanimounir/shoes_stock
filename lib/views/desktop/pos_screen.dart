@@ -345,7 +345,7 @@ class _PosScreenState extends State<PosScreen> {
               
                 subtitle: Text('Facture: ${sale['invoice_number']}\nClient: $customerName • Heure: $formattedTime'),
                 isThreeLine: true,
-                trailing: Text('${sale['total_price']} €', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                trailing: Text('${sale['total_price']} DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
               ),
             );
           },
@@ -598,7 +598,7 @@ class _PosScreenState extends State<PosScreen> {
                                                   onPressed: () => setState(() => _cart.removeAt(index)),
                                                 ),
                                                 const SizedBox(height: 8),
-                                                Text('${item.totalPrice.toStringAsFixed(2)} €', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                                Text('${item.totalPrice.toStringAsFixed(2)} DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                                               ],
                                             )
                                           ],
@@ -645,7 +645,7 @@ class _PosScreenState extends State<PosScreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text("Total à payer", style: TextStyle(fontSize: 20, color: Colors.grey)),
-                                      Text('${_cartTotal.toStringAsFixed(2)} €', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                      Text('${_cartTotal.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                     ],
                                   ),
                                   const SizedBox(height: 24),

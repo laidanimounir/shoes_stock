@@ -268,14 +268,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                   Expanded(
                                                     flex: 2,
                                                     child: Text(
-                                                      '${(v['buy_price'] ?? 0.0).toStringAsFixed(2)} €',
+                                                      '${(v['buy_price'] ?? 0.0).toStringAsFixed(2)} DA',
                                                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.orange),
                                                     ),
                                                   ),
                                                   Expanded(
                                                     flex: 2,
                                                     child: Text(
-                                                      '${(v['sell_price'] ?? 0.0).toStringAsFixed(2)} €',
+                                                      '${(v['sell_price'] ?? 0.0).toStringAsFixed(2)} DA',
                                                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
                                                     ),
                                                   ),

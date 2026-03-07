@@ -393,7 +393,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                     initialValue: v.buyPrice,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
-                                      labelText: "Prix d'achat (€)",
+                                      labelText: "Prix d'achat (DA)",
                                       isDense: true,
                                       prefixIcon: const Icon(Icons.arrow_downward, color: Colors.orange, size: 18),
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange[200]!)),
@@ -408,7 +408,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                     initialValue: v.sellPrice,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
-                                      labelText: 'Prix de vente (€)',
+                                      labelText: 'Prix de vente (DA)',
                                       isDense: true,
                                       prefixIcon: const Icon(Icons.arrow_upward, color: Colors.green, size: 18),
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green[200]!)),

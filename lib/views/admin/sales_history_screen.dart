@@ -116,7 +116,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           "Facture: ${s['invoice_number']}\n"
                           "Client: ${s['customers']?['full_name'] ?? 'Passager'} | Magasin: ${s['stores']['name']}",
                         ),
-                        trailing: Text("${s['total_price']} €", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        trailing: Text("${s['total_price']} DA", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
                     );
                   },

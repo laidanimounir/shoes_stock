@@ -11,11 +11,11 @@ class OwnerDashboard extends StatefulWidget {
 }
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
-  // البيانات العامة للمقاييس
+
   double _salesToday = 0;
   double _salesMonth = 0;
 
-  // بيانات المتاجر للكاروسيل
+  
   List<Map<String, dynamic>> _storePerformance = [];
   int _currentStorePage = 0;
   final PageController _pageController = PageController(viewportFraction: 0.85);
@@ -43,7 +43,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           schema: 'public',
           table: 'activity_logs',
           callback: (payload) {
-            _fetchActivities(); // تحديث السجل عند إضافة نشاط جديد
+            _fetchActivities(); 
           },
         )
         .subscribe();
@@ -76,7 +76,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
       final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
 
-      // إجمالي مبيعات اليوم (كل المتاجر)
+   
       final todayRes = await Supabase.instance.client
           .from('transactions')
           .select('total_price')
@@ -88,7 +88,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         todayTotal += (row['total_price'] as num).toDouble();
       }
 
-      // إجمالي مبيعات الشهر (كل المتاجر)
+  
       final monthRes = await Supabase.instance.client
           .from('transactions')
           .select('total_price')
@@ -116,7 +116,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 1. جلب قائمة المتاجر
+      
       final stores = await Supabase.instance.client.from('stores').select('id, name');
       
       List<Map<String, dynamic>> tempPerformance = [];
@@ -302,7 +302,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
-                  // --- CAROUSEL DES MAGASINS ---
+             
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     child: Text("Performance par Magasin", 
@@ -321,7 +321,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ),
                   ),
                   
-                  // Indicators
+                 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: _storePerformance.asMap().entries.map((entry) {
@@ -339,21 +339,21 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
                   const SizedBox(height: 16),
 
-                  // --- GLOBAL METRICS ---
+          
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Expanded(child: _buildMetricCard("Aujourd'hui", "${_salesToday.toStringAsFixed(2)} €", Icons.today, Colors.green)),
+                        Expanded(child: _buildMetricCard("Aujourd'hui", "${_salesToday.toStringAsFixed(2)} DA", Icons.today, Colors.green)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard("Ce Mois", "${_salesMonth.toStringAsFixed(2)} €", Icons.calendar_month, Colors.blue)),
+                        Expanded(child: _buildMetricCard("Ce Mois", "${_salesMonth.toStringAsFixed(2)} DA", Icons.calendar_month, Colors.blue)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // --- LOW STOCK SECTION ---
+           
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader("Alertes Stock Faible", Icons.warning_amber_rounded, Colors.red),
                     _buildLowStockList(),
@@ -361,7 +361,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
                   const SizedBox(height: 24),
 
-                  // --- ACTIVITY FEED ---
+             
                   _buildSectionHeader("Activités Récentes", Icons.history, Colors.indigo),
                   _buildActivityList(),
                   
@@ -387,7 +387,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             children: [
               IconButton(icon: const Icon(Icons.dashboard, color: Colors.indigo), onPressed: () {}),
               IconButton(icon: const Icon(Icons.inventory_2_outlined), onPressed: () {}),
-              const SizedBox(width: 40), // Space for FAB
+              const SizedBox(width: 40),
               IconButton(icon: const Icon(Icons.analytics_outlined), onPressed: () {}),
               IconButton(icon: const Icon(Icons.person_outline), onPressed: () {}),
             ],
@@ -421,7 +421,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           ),
           const Spacer(),
           const Text("Recettes du jour", style: TextStyle(color: Colors.white70, fontSize: 13)),
-          Text("${store['today_sales'].toStringAsFixed(2)} €", 
+          Text("${store['today_sales'].toStringAsFixed(2)} DA", 
             style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
         ],
       ),
