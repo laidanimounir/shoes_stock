@@ -223,7 +223,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                               children: [
                                 const Text("Dettes (Crédit)", style: TextStyle(fontSize: 12, color: Colors.grey)),
                                 Text(
-                                  '${balance.toStringAsFixed(2)} €',
+                                  '${balance.toStringAsFixed(2)} DA',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -373,7 +373,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Dette actuelle: ${_currentBalance.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("Dette actuelle: ${_currentBalance.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
@@ -477,8 +477,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text("Total: ${total.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("Payé: ${paid.toStringAsFixed(2)} €", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("Total: ${total.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("Payé: ${paid.toStringAsFixed(2)} DA", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
               ],
             ),
           ),
@@ -501,7 +501,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.monetization_on, color: Colors.white)),
-            title: Text("Versement de ${amount.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            title: Text("Versement de ${amount.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
             subtitle: Text("${date.day}/${date.month}/${date.year} • Motif: ${pay['notes']}"),
           ),
         );

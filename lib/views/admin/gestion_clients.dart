@@ -289,7 +289,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Crédit (Dette) du client: ${_currentBalance.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("Crédit (Dette) du client: ${_currentBalance.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
@@ -434,7 +434,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                               title: Text(c['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text(c['phone'] ?? c['email'] ?? 'Aucun contact'),
                               trailing: hasDebt 
-                                  ? Text('${balance.toStringAsFixed(2)} €', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                                  ? Text('${balance.toStringAsFixed(2)} DA', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
                                   : const Icon(Icons.check_circle, color: Colors.green, size: 16),
                               onTap: () => _selectCustomer(c),
                             );
@@ -492,7 +492,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                                 children: [
                                   const Text("Crédit (Dette)", style: TextStyle(color: Colors.grey)),
                                   Text(
-                                    '${_currentBalance.toStringAsFixed(2)} €',
+                                    '${_currentBalance.toStringAsFixed(2)} DA',
                                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _currentBalance > 0 ? Colors.red : Colors.green),
                                   ),
                                   const SizedBox(height: 8),
@@ -578,8 +578,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text("Total: ${total.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("Payé: ${paid.toStringAsFixed(2)} €", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("Total: ${total.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("Payé: ${paid.toStringAsFixed(2)} DA", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
               ],
             ),
           ),
@@ -604,7 +604,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
           child: ListTile(
             leading: CircleAvatar(backgroundColor: Colors.green[50], child: const Icon(Icons.check_circle, color: Colors.green)),
-            title: Text("Paiement de ${amount.toStringAsFixed(2)} €", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            title: Text("Paiement de ${amount.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
             subtitle: Text("${date.day}/${date.month}/${date.year} • Motif: ${pay['notes']}"),
           ),
         );
