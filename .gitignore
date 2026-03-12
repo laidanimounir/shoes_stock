@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Temporary analysis files
+analyze_output.txt
+analyze_output_utf8.txt
+analyze_result.txt
+schema_output.txt
+
+# Diagnostic scripts (contain API keys)
+lib/check_schema.dart
+lib/check_schema.py
+
+# Environment & secrets
+.env
+*.env

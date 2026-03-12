@@ -263,11 +263,32 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   bool _isLoading = true;
   double _currentBalance = 0.0;
 
+  String? _userRole;
+  String? _userStoreId;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _currentBalance = (widget.supplier['balance'] as num?)?.toDouble() ?? 0.0;
+    _loadProfileAndFetch();
+  }
+
+  Future<void> _loadProfileAndFetch() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role, store_id')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+        _userStoreId = profile['store_id'];
+      }
+    } catch (e) {
+      debugPrint("Error loading user profile: $e");
+    }
     _fetchProfileData();
   }
 
@@ -276,34 +297,67 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     final supplierId = widget.supplier['id'];
     
     try {
-      
-      final invoicesRes = await Supabase.instance.client.from('invoices')
+      var invoicesQuery = Supabase.instance.client.from('invoices')
           .select('*, user_profiles(full_name)')
           .eq('supplier_id', supplierId)
-          .eq('type', 'in')
-          .order('created_at', ascending: false);
-          
-      final paymentsRes = await Supabase.instance.client.from('payments')
+          .eq('type', 'in');
+
+      var paymentsQuery = Supabase.instance.client.from('payments')
           .select('*, user_profiles(full_name)')
-          .eq('supplier_id', supplierId)
-          .order('payment_date', ascending: false);
-          
-      final balanceRes = await Supabase.instance.client.from('suppliers')
-          .select('balance')
-          .eq('id', supplierId)
-          .single();
+          .eq('supplier_id', supplierId);
+
+      // Employee: filter by store_id
+      if (_userRole == 'employee' && _userStoreId != null) {
+        invoicesQuery = invoicesQuery.eq('store_id', _userStoreId!);
+        paymentsQuery = paymentsQuery.eq('store_id', _userStoreId!);
+      }
+
+      final invoicesRes = await invoicesQuery.order('created_at', ascending: false);
+      final paymentsRes = await paymentsQuery.order('payment_date', ascending: false);
 
       if (mounted) {
         setState(() {
           _invoices = invoicesRes;
           _payments = paymentsRes;
-          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+
+          if (_userRole == 'employee' && _userStoreId != null) {
+            // Employee: compute balance from filtered invoices/payments
+            double totalInvoiced = 0.0;
+            for (var inv in _invoices) {
+              totalInvoiced += (inv['total_amount'] as num?)?.toDouble() ?? 0.0;
+            }
+            double totalPaid = 0.0;
+            for (var pay in _payments) {
+              totalPaid += (pay['amount'] as num?)?.toDouble() ?? 0.0;
+            }
+            _currentBalance = totalInvoiced - totalPaid;
+          } else {
+            // Owner: read global balance from DB
+            _fetchGlobalBalance(supplierId);
+          }
+
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
       debugPrint("Error fetching profile: $e");
+    }
+  }
+
+  Future<void> _fetchGlobalBalance(String supplierId) async {
+    try {
+      final balanceRes = await Supabase.instance.client.from('suppliers')
+          .select('balance')
+          .eq('id', supplierId)
+          .single();
+      if (mounted) {
+        setState(() {
+          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching global balance: $e");
     }
   }
 

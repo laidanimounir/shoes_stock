@@ -24,10 +24,31 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   bool _isLoadingHistory = false;
   double _currentBalance = 0.0;
 
+  String? _userRole;
+  String? _userStoreId;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role, store_id')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+        _userStoreId = profile['store_id'];
+      }
+    } catch (e) {
+      debugPrint("Error loading user profile: $e");
+    }
     _fetchCustomers();
   }
 
@@ -65,32 +86,47 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   Future<void> _fetchCustomerHistory(String customerId) async {
     setState(() => _isLoadingHistory = true);
     try {
-      final invoicesRes = await Supabase.instance.client
+      var invoicesQuery = Supabase.instance.client
           .from('invoices')
           .select('*, user_profiles(full_name)')
           .eq('customer_id', customerId)
-          .eq('type', 'out') // فواتير البيع للزبائن
-          .order('created_at', ascending: false);
-          
-      final paymentsRes = await Supabase.instance.client
+          .eq('type', 'out');
+      
+      var paymentsQuery = Supabase.instance.client
           .from('payments')
           .select('*, user_profiles(full_name)')
-          .eq('customer_id', customerId)
-          .order('payment_date', ascending: false);
-          
-      final balanceRes = await Supabase.instance.client
-          .from('customers')
-          .select('balance')
-          .eq('id', customerId)
-          .single();
+          .eq('customer_id', customerId);
+
+      // Employee: filter by store_id
+      if (_userRole == 'employee' && _userStoreId != null) {
+        invoicesQuery = invoicesQuery.eq('store_id', _userStoreId!);
+        paymentsQuery = paymentsQuery.eq('store_id', _userStoreId!);
+      }
+
+      final invoicesRes = await invoicesQuery.order('created_at', ascending: false);
+      final paymentsRes = await paymentsQuery.order('payment_date', ascending: false);
 
       if (mounted) {
         setState(() {
           _invoices = invoicesRes;
           _payments = paymentsRes;
-          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
-          
-          // تحديث الرصيد المعروض في القائمة الجانبية أيضاً
+
+          if (_userRole == 'employee' && _userStoreId != null) {
+            // Employee: compute balance from filtered invoices/payments
+            double totalInvoiced = 0.0;
+            for (var inv in _invoices) {
+              totalInvoiced += (inv['total_amount'] as num?)?.toDouble() ?? 0.0;
+            }
+            double totalPaid = 0.0;
+            for (var pay in _payments) {
+              totalPaid += (pay['amount'] as num?)?.toDouble() ?? 0.0;
+            }
+            _currentBalance = totalInvoiced - totalPaid;
+          } else {
+            // Owner: read global balance from DB (unchanged behavior)
+            _fetchGlobalBalance(customerId);
+          }
+
           if (_selectedCustomer != null) {
             _selectedCustomer!['balance'] = _currentBalance;
           }
@@ -100,6 +136,26 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     } catch (e) {
       if (mounted) setState(() => _isLoadingHistory = false);
       debugPrint("Error fetching history: $e");
+    }
+  }
+
+  Future<void> _fetchGlobalBalance(String customerId) async {
+    try {
+      final balanceRes = await Supabase.instance.client
+          .from('customers')
+          .select('balance')
+          .eq('id', customerId)
+          .single();
+      if (mounted) {
+        setState(() {
+          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+          if (_selectedCustomer != null) {
+            _selectedCustomer!['balance'] = _currentBalance;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching global balance: $e");
     }
   }
 

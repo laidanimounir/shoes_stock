@@ -17,6 +17,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   String? _selectedStoreId;
   String? _selectedVariantId;
 
+  String? _userRole;
+  String? _userStoreId;
+
   final _qtyController = TextEditingController();
   final _priceController = TextEditingController();
 
@@ -32,6 +35,18 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
   Future<void> _fetchData() async {
     try {
+      // Fetch user role and store_id
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role, store_id')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+        _userStoreId = profile['store_id'];
+      }
+
       // جلب البيانات النشطة فقط (غير المحذوفة وهمياً)
       final results = await Future.wait([
         Supabase.instance.client.from('suppliers').select().eq('is_active', true),
@@ -46,7 +61,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
           _variants = results[2];
           
           if (_suppliers.isNotEmpty) _selectedSupplierId = _suppliers.first['id'];
-          if (_stores.isNotEmpty) _selectedStoreId = _stores.first['id'];
+          // Employee: lock to their store; Owner: default to first store
+          if (_userRole == 'employee' && _userStoreId != null) {
+            _selectedStoreId = _userStoreId;
+          } else if (_stores.isNotEmpty) {
+            _selectedStoreId = _stores.first['id'];
+          }
           if (_variants.isNotEmpty) _selectedVariantId = _variants.first['id'];
           
           _isLoading = false;
@@ -293,15 +313,24 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           const SizedBox(height: 16),
 
                           // Store
-                          DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: _selectedStoreId,
-                            decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
-                            items: _stores.map<DropdownMenuItem<String>>((s) {
-                              return DropdownMenuItem(value: s['id'], child: Text(s['name']));
-                            }).toList(),
-                            onChanged: (val) => setState(() => _selectedStoreId = val),
-                          ),
+                          if (_userRole == 'employee')
+                            TextFormField(
+                              readOnly: true,
+                              decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                              initialValue: _stores.where((s) => s['id'] == _userStoreId).isNotEmpty
+                                  ? _stores.firstWhere((s) => s['id'] == _userStoreId)['name']
+                                  : 'Mon magasin',
+                            )
+                          else
+                            DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              value: _selectedStoreId,
+                              decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                              items: _stores.map<DropdownMenuItem<String>>((s) {
+                                return DropdownMenuItem(value: s['id'], child: Text(s['name']));
+                              }).toList(),
+                              onChanged: (val) => setState(() => _selectedStoreId = val),
+                            ),
                           const SizedBox(height: 16),
 
                           // Variant
