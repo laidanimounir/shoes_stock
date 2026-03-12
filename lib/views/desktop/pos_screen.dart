@@ -336,47 +336,21 @@ class _PosScreenState extends State<PosScreen> {
       else if (paidAmount < totalAmount) status = 'partial';
 
      
-      final invoiceData = {
-        'invoice_number': invoiceNumber,
-        'type': 'out',
-        'store_id': _selectedStoreId,
-        'user_id': user!.id,
-        'customer_id': _selectedCustomerId,
-        'total_amount': totalAmount,
-        'paid_amount': paidAmount,
-        'status': status,
-      };
-
-      final invoiceRes = await Supabase.instance.client.from('invoices').insert(invoiceData).select().single();
-      final String invoiceId = invoiceRes['id'];
-
-      final List<Map<String, dynamic>> transactionsData = _cart.map((item) => {
-        'invoice_id': invoiceId,
-        'invoice_number': invoiceNumber,
-        'type': 'out',
-        'variant_id': item.variantId,
-        'quantity': item.quantity,
-        'unit_price': item.unitPrice,
-        'total_price': item.totalPrice,
-        'store_id': _selectedStoreId,
-        'user_id': user.id,
-        'customer_id': _selectedCustomerId,
-      }).toList();
-
-      await Supabase.instance.client.from('transactions').insert(transactionsData);
-
-     
-      if (paidAmount > 0) {
-        await Supabase.instance.client.from('payments').insert({
-          'invoice_id': invoiceId,
-          'customer_id': _selectedCustomerId,
-          'store_id': _selectedStoreId,
-          'user_id': user.id,
-          'amount': paidAmount,
-          'payment_method': 'cash',
-          'notes': 'Paiement à la caisse pour facture $invoiceNumber',
-        });
-      }
+      await Supabase.instance.client.rpc('process_sale', params: {
+        'p_store_id': _selectedStoreId,
+        'p_customer_id': _selectedCustomerId,
+        'p_invoice_number': invoiceNumber,
+        'p_items': _cart.map((e) => {
+          'variant_id': e.variantId,
+          'quantity': e.quantity,
+          'unit_price': e.unitPrice,
+          'total_price': e.totalPrice,
+        }).toList(),
+        'p_total_amount': totalAmount,
+        'p_paid_amount': paidAmount,
+        'p_payment_method': 'cash',
+        'p_notes': 'Paiement à la caisse pour facture $invoiceNumber',
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

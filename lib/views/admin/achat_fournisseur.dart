@@ -199,49 +199,21 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
         status = 'partial';
       }
 
-      // 2. إنشاء الفاتورة (رأس الفاتورة)
-      final invoiceData = {
-        'invoice_number': invoiceNumber,
-        'type': 'in',
-        'store_id': _selectedStoreId,
-        'user_id': user!.id,
-        'supplier_id': _selectedSupplierId,
-        'total_amount': totalAmount,
-        'paid_amount': paidAmount,
-        'status': status,
-      };
-
-      final invoiceRes = await Supabase.instance.client.from('invoices').insert(invoiceData).select().single();
-      final String invoiceId = invoiceRes['id'];
-
- 
-      final transactionsData = _purchaseItems.map((item) => {
-        'invoice_id': invoiceId,
-        'invoice_number': invoiceNumber,
-        'type': 'in',
-        'variant_id': item.variantId,
-        'quantity': item.quantity,
-        'unit_price': item.unitPrice,
-        'total_price': item.unitPrice * item.quantity,
-        'store_id': _selectedStoreId,
-        'user_id': user.id,
-        'supplier_id': _selectedSupplierId,
-      }).toList();
-
-      await Supabase.instance.client.from('transactions').insert(transactionsData);
-
-     
-      if (paidAmount > 0) {
-        await Supabase.instance.client.from('payments').insert({
-          'invoice_id': invoiceId,
-          'supplier_id': _selectedSupplierId,
-          'store_id': _selectedStoreId,
-          'user_id': user.id,
-          'amount': paidAmount,
-          'payment_method': 'cash',
-          'notes': 'Paiement à la création de la facture $invoiceNumber',
-        });
-      }
+      await Supabase.instance.client.rpc('process_purchase', params: {
+        'p_store_id': _selectedStoreId,
+        'p_supplier_id': _selectedSupplierId,
+        'p_invoice_number': invoiceNumber,
+        'p_items': _purchaseItems.map((item) => {
+          'variant_id': item.variantId,
+          'quantity': item.quantity,
+          'unit_price': item.unitPrice,
+          'total_price': item.unitPrice * item.quantity,
+        }).toList(),
+        'p_total_amount': totalAmount,
+        'p_paid_amount': paidAmount,
+        'p_payment_method': 'cash',
+        'p_notes': 'Paiement à la création de la facture $invoiceNumber',
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
