@@ -14,10 +14,28 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
   bool _isLoading = true;
   bool _showOnlyWithDebt = false;
 
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
-    _fetchSuppliers();
+    _initRoleAndFetch();
+  }
+
+  Future<void> _initRoleAndFetch() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+      }
+    } catch (_) {}
+    if (mounted) setState(() {});
+    await _fetchSuppliers();
   }
 
   Future<void> _fetchSuppliers() async {
@@ -114,6 +132,8 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                     backgroundColor: Colors.green,
                   ));
                 }
+              } on PostgrestException catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
@@ -150,6 +170,8 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
       await Supabase.instance.client.from('suppliers').update({'is_active': false}).eq('id', id);
       _fetchSuppliers();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fournisseur archivé.'), backgroundColor: Colors.orange));
+    } on PostgrestException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
     }
@@ -185,7 +207,8 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
               ),
             ],
           ),
-          IconButton(icon: const Icon(Icons.add), tooltip: 'Ajouter', onPressed: () => _showAddEditDialog()),
+          if (_userRole == 'owner')
+            IconButton(icon: const Icon(Icons.add), tooltip: 'Ajouter', onPressed: () => _showAddEditDialog()),
         ],
       ),
       body: _isLoading
@@ -233,8 +256,10 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                               ],
                             ),
                             const SizedBox(width: 24),
-                            IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _showAddEditDialog(s)),
-                            IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _deleteSupplier(s['id'])),
+                            if (_userRole == 'owner') ...[
+                              IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _showAddEditDialog(s)),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _deleteSupplier(s['id'])),
+                            ]
                           ],
                         ),
                       ),
@@ -408,6 +433,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
                 
                 _fetchProfileData();
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Versement enregistré.'), backgroundColor: Colors.green));
+              } on PostgrestException catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
@@ -447,12 +474,12 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
                 _buildPaymentsTab(),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _userRole == 'owner' ? FloatingActionButton.extended(
         onPressed: _showAddPaymentDialog,
         backgroundColor: Colors.orange,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("Verser un montant", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
+      ) : null,
     );
   }
 

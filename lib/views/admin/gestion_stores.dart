@@ -12,10 +12,28 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
   List<dynamic> _stores = [];
   bool _isLoading = true;
 
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
-    _fetchStores();
+    _initRoleAndFetch();
+  }
+
+  Future<void> _initRoleAndFetch() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+      }
+    } catch (_) {}
+    if (mounted) setState(() {});
+    await _fetchStores();
   }
 
   Future<void> _fetchStores() async {
@@ -97,6 +115,13 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                     backgroundColor: Colors.green,
                   ));
                 }
+              } on PostgrestException catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+                    backgroundColor: Colors.red,
+                  ));
+                }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -163,6 +188,13 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
           backgroundColor: Colors.green,
         ));
       }
+    } on PostgrestException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+          backgroundColor: Colors.red,
+        ));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -209,19 +241,20 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddEditDialog(),
-              icon: const Icon(Icons.add_business, size: 20),
-              label: const Text('Nouveau Magasin', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.indigo[800],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          if (_userRole == 'owner')
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: ElevatedButton.icon(
+                onPressed: () => _showAddEditDialog(),
+                icon: const Icon(Icons.add_business, size: 20),
+                label: const Text('Nouveau Magasin', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.indigo[800],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ),
-          ),
         ],
       ),
       body: _isLoading
@@ -243,17 +276,18 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddEditDialog(),
-                        icon: const Icon(Icons.add_business),
-                        label: const Text('Ajouter un magasin', style: TextStyle(fontSize: 18)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      if (_userRole == 'owner')
+                        ElevatedButton.icon(
+                          onPressed: () => _showAddEditDialog(),
+                          icon: const Icon(Icons.add_business),
+                          label: const Text('Ajouter un magasin', style: TextStyle(fontSize: 18)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 )
@@ -308,17 +342,18 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert, color: Colors.grey),
-                                        onSelected: (val) {
-                                          if (val == 'edit') _showAddEditDialog(store);
-                                          if (val == 'delete') _deleteStore(store);
-                                        },
-                                        itemBuilder: (ctx) => [
-                                          const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, color: Colors.orange, size: 20), SizedBox(width: 8), Text('Modifier')])),
-                                          const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 20), SizedBox(width: 8), Text('Supprimer')])),
-                                        ],
-                                      ),
+                                      if (_userRole == 'owner')
+                                        PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                          onSelected: (val) {
+                                            if (val == 'edit') _showAddEditDialog(store);
+                                            if (val == 'delete') _deleteStore(store);
+                                          },
+                                          itemBuilder: (ctx) => [
+                                            const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, color: Colors.orange, size: 20), SizedBox(width: 8), Text('Modifier')])),
+                                            const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 20), SizedBox(width: 8), Text('Supprimer')])),
+                                          ],
+                                        ),
                                     ],
                                   ),
                                   const Spacer(),

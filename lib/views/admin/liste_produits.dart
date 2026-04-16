@@ -14,12 +14,33 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
   List<dynamic> _products = [];
   bool _isLoading = true;
   final _searchController = TextEditingController();
+  String? _userRole;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchProducts();
+    _initRoleAndFetch();
+  }
+
+  Future<void> _initRoleAndFetch() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        _userRole = profile['role'];
+      }
+    } catch (e) {
+      debugPrint("Error fetching role: $e");
+    }
+    if (mounted) {
+      setState(() {});
+    }
+    await _fetchProducts();
   }
 
   Future<void> _fetchProducts() async {
@@ -135,6 +156,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 
                 _fetchProducts();
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Variante mise à jour avec succès.'), backgroundColor: Colors.green));
+              } on PostgrestException catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
@@ -169,6 +192,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       try {
         await Supabase.instance.client.from('product_variants').update({'is_active': false}).eq('id', variantId);
         _fetchProducts();
+      } on PostgrestException catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
       } catch (e) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
       }
@@ -197,6 +222,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       try {
         await Supabase.instance.client.from('products').update({'is_active': false}).eq('id', productId);
         _fetchProducts();
+      } on PostgrestException catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
       } catch (e) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
       }
@@ -427,16 +454,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                     child: Row(
                                                       mainAxisAlignment: MainAxisAlignment.end,
                                                       children: [
-                                                        IconButton(
-                                                          icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                                                          tooltip: 'Modifier Prix/Code',
-                                                          onPressed: () => _showEditVariantDialog(v),
-                                                        ),
-                                                        IconButton(
-                                                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                          tooltip: 'Archiver cette variante',
-                                                          onPressed: () => _archiveVariant(v['id']),
-                                                        ),
+                                                        if (_userRole == 'owner') ...[
+                                                          IconButton(
+                                                            icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                                            tooltip: 'Modifier Prix/Code',
+                                                            onPressed: () => _showEditVariantDialog(v),
+                                                          ),
+                                                          IconButton(
+                                                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                            tooltip: 'Archiver cette variante',
+                                                            onPressed: () => _archiveVariant(v['id']),
+                                                          ),
+                                                        ]
                                                       ],
                                                     ),
                                                   ),
@@ -448,17 +477,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                       ),
                                     ),
                                   
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton.icon(
-                                        onPressed: () => _archiveProduct(product['id']),
-                                        icon: const Icon(Icons.archive, color: Colors.red, size: 18),
-                                        label: const Text('Archiver TOUT le produit', style: TextStyle(color: Colors.red)),
+                                  if (_userRole == 'owner')
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton.icon(
+                                          onPressed: () => _archiveProduct(product['id']),
+                                          icon: const Icon(Icons.archive, color: Colors.red, size: 18),
+                                          label: const Text('Archiver TOUT le produit', style: TextStyle(color: Colors.red)),
+                                        ),
                                       ),
-                                    ),
-                                  )
+                                    )
                                 ],
                               ),
                             );

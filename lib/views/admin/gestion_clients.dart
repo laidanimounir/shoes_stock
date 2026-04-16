@@ -229,6 +229,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                     backgroundColor: Colors.green,
                   ));
                 }
+              } on PostgrestException catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
@@ -265,6 +267,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
       if (_selectedCustomer?['id'] == id) setState(() => _selectedCustomer = null);
       _fetchCustomers(_searchController.text);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client archivé.'), backgroundColor: Colors.orange));
+    } on PostgrestException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
     }
@@ -324,6 +328,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
                 _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paiement enregistré avec succès.'), backgroundColor: Colors.green));
+              } on PostgrestException catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
               }
@@ -498,8 +504,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
-                                      IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
+                                      if (_userRole == 'owner') ...[
+                                        IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
+                                        IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
+                                      ]
                                     ],
                                   )
                                 ],

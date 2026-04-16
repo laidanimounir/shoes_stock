@@ -27,7 +27,21 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
     _fetchData();
   }
 
+  String? _userRole;
+
   Future<void> _fetchData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profile = await Supabase.instance.client
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        if (mounted) setState(() => _userRole = profile['role']);
+      }
+    } catch (_) {}
+
     await Future.wait([
       _fetchStores(),
       _fetchEmployees(),
@@ -208,88 +222,89 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Left side: Create Employee Form
-          Expanded(
-            flex: 1,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, spreadRadius: 2),
-                  ],
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        "Ajouter un employé",
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(labelText: 'Nom complet', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person)),
-                        validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(labelText: 'Adresse e-mail', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email)),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (v) => v!.isEmpty || !v.contains('@') ? 'Email invalide' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(labelText: 'Mot de passe', border: OutlineInputBorder(), prefixIcon: Icon(Icons.lock)),
-                        obscureText: true,
-                        // No password strength restrictions requested
-                        validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      if (_stores.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          isExpanded: true,
-                          initialValue: _selectedStoreId,
-                          decoration: const InputDecoration(labelText: 'Affecter au magasin', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
-                          items: _stores.map((store) {
-                            return DropdownMenuItem<String>(
-                              value: store['id'],
-                              child: Text(store['name']),
-                            );
-                          }).toList(),
-                          onChanged: (val) => setState(() => _selectedStoreId = val),
-                        )
-                      else
-                        const Center(child: CircularProgressIndicator()),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _createEmployee,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Créer l\'employé', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      )
+          if (_userRole == 'owner')
+            Expanded(
+              flex: 1,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, spreadRadius: 2),
                     ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          "Ajouter un employé",
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(labelText: 'Nom complet', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person)),
+                          validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(labelText: 'Adresse e-mail', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email)),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) => v!.isEmpty || !v.contains('@') ? 'Email invalide' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(labelText: 'Mot de passe', border: OutlineInputBorder(), prefixIcon: Icon(Icons.lock)),
+                          obscureText: true,
+                          // No password strength restrictions requested
+                          validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        if (_stores.isNotEmpty)
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue: _selectedStoreId,
+                            decoration: const InputDecoration(labelText: 'Affecter au magasin', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                            items: _stores.map((store) {
+                              return DropdownMenuItem<String>(
+                                value: store['id'],
+                                child: Text(store['name']),
+                              );
+                            }).toList(),
+                            onChanged: (val) => setState(() => _selectedStoreId = val),
+                          )
+                        else
+                          const Center(child: CircularProgressIndicator()),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _createEmployee,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Créer l\'employé', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           
           // Right side: Employee List
           Expanded(
@@ -342,11 +357,11 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                                     title: Text(emp['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
                                     subtitle: Text('Magasin: $storeName\nAjouté le: ${emp['created_at'].toString().split('T')[0]}'),
                                     isThreeLine: true,
-                                    trailing: IconButton(
+                                    trailing: _userRole == 'owner' ? IconButton(
                                       icon: const Icon(Icons.delete_outline, color: Colors.red),
                                       tooltip: 'Supprimer',
                                       onPressed: () => _deleteEmployee(emp['id']),
-                                    ),
+                                    ) : null,
                                   );
                                 },
                               ),

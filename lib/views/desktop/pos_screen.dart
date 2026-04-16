@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
@@ -48,17 +49,42 @@ class _PosScreenState extends State<PosScreen> {
 
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
 
+  String _barcodeBuffer = '';
+  DateTime? _lastKeyPress;
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    _fetchInitialData();
+  }
+
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _inventorySubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchInitialData();
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        if (_barcodeBuffer.isNotEmpty) {
+          _searchController.text = _barcodeBuffer;
+          _searchProduct(_barcodeBuffer);
+          _barcodeBuffer = '';
+        }
+      } else if (event.character != null) {
+        final now = DateTime.now();
+        if (_lastKeyPress != null && now.difference(_lastKeyPress!).inMilliseconds > 50) {
+          _barcodeBuffer = '';
+        }
+        _barcodeBuffer += event.character!;
+        _lastKeyPress = now;
+      }
+    }
+    return false;
   }
 
   Future<void> _fetchInitialData() async {
@@ -362,6 +388,14 @@ class _PosScreenState extends State<PosScreen> {
           _selectedCustomerId = null; 
           _isProcessingPayment = false;
         });
+      }
+    } on PostgrestException catch (e) {
+      if (mounted) {
+        setState(() => _isProcessingPayment = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
       if (mounted) {
