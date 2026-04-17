@@ -20,7 +20,16 @@ class ShiftService {
             .select()
             .eq('id', shiftId)
             .single();
-        return ShiftModel.fromJson(shiftData);
+        final shift = ShiftModel.fromJson(shiftData);
+        
+        final shiftDate = shift.openedAt.toLocal();
+        final today = DateTime.now();
+        final isToday = shiftDate.year == today.year &&
+                        shiftDate.month == today.month &&
+                        shiftDate.day == today.day;
+        if (!isToday) return null; // treat old shift as expired
+        
+        return shift;
       }
       return null;
     } catch (e) {

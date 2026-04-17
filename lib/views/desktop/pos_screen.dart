@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
 import '../../services/shift_service.dart';
+import '../../models/shift_model.dart';
 import 'shift_dialog.dart';
 import 'end_of_day_report.dart';
+import 'close_shift_screen.dart';
 
 class CartItem {
   final String variantId;
@@ -115,6 +117,54 @@ class _PosScreenState extends State<PosScreen> {
           final shiftService = ShiftService();
           final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
           if (activeShift == null) {
+            
+            // Check for unclosed manual shifts from previous days
+            final openShiftsRes = await Supabase.instance.client
+                .from('shifts')
+                .select()
+                .eq('store_id', _selectedStoreId!)
+                .eq('status', 'open')
+                .order('opened_at', ascending: false)
+                .limit(1);
+
+            if (openShiftsRes.isNotEmpty && mounted) {
+              final oldShift = ShiftModel.fromJson(openShiftsRes[0]);
+              final oldDate = oldShift.openedAt.toLocal();
+              final dateStr = "${oldDate.day.toString().padLeft(2, '0')}/${oldDate.month.toString().padLeft(2, '0')}/${oldDate.year}";
+
+              bool handleOldShift = false;
+              await showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Caisse non clôturée / وردية غير مغلقة'),
+                  content: Text('Une caisse du $dateStr n\'a pas été clôturée.\nهناك وردية من تاريخ $dateStr لم يتم إغلاقها.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                      },
+                      child: const Text('Ignorer / تجاهل', style: TextStyle(color: Colors.grey)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        handleOldShift = true;
+                        Navigator.of(ctx).pop();
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                      child: const Text('Clôturer l\'ancienne / إغلاق القديمة'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (handleOldShift && mounted) {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => CloseShiftScreen(shift: oldShift)),
+                );
+              }
+            }
+
             if (mounted) {
               await showDialog(
                 context: context,
@@ -432,8 +482,14 @@ class _PosScreenState extends State<PosScreen> {
   Widget _buildTodaySalesTab() {
     if (_selectedStoreId == null) return const Center(child: Text("Magasin non sélectionné"));
     
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day).toIso8601String();
+    final now = DateTime.now();
+    final startOfTodayUTC = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(hours: 1)) // convert UTC+1 to UTC
+        .toIso8601String();
+    final endOfTodayUTC = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(hours: 1))
+        .add(const Duration(hours: 24))
+        .toIso8601String();
 
     return FutureBuilder<List<dynamic>>(
       future: Supabase.instance.client
@@ -441,7 +497,8 @@ class _PosScreenState extends State<PosScreen> {
           .select('id, invoice_number, total_amount, paid_amount, status, created_at, customers(full_name)')
           .eq('store_id', _selectedStoreId!)
           .eq('type', 'out')
-          .gte('created_at', startOfDay)
+          .gte('created_at', startOfTodayUTC)
+          .lte('created_at', endOfTodayUTC)
           .order('created_at', ascending: false),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
