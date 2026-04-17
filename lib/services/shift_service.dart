@@ -12,7 +12,7 @@ class ShiftService {
 
       if (response != null && response is List && response.isNotEmpty) {
         // the RPC returns a table which might be mapped to a List of maps
-        // get_active_shift returns only id, opening_amount, opened_at.
+        // ge_active_shift returns only id, opening_amount, opened_at.
         // We might need to fetch the full shift object to map it to ShiftModel
         final shiftId = response[0]['id'];
         final shiftData = await _supabase
