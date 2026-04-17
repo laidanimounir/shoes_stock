@@ -37,45 +37,29 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
 
   Future<void> _fetchReportData() async {
     try {
-      final startOfDay = DateTime(widget.date.year, widget.date.month, widget.date.day).toIso8601String();
-      final endOfDay = DateTime(widget.date.year, widget.date.month, widget.date.day, 23, 59, 59).toIso8601String();
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(hours: 1)); // UTC+1 → UTC
+      final todayEnd = todayStart.add(const Duration(hours: 24));
       
       final user = _supabase.auth.currentUser;
       final profile = await _supabase.from('user_profiles').select('store_id').eq('id', user!.id).single();
       final storeId = profile['store_id'];
 
       if (widget.shiftId != null) {
-        // CASE A - Shift exists
         final shiftRes = await _supabase.from('shifts').select('opening_amount, status').eq('id', widget.shiftId!).single();
         _openingAmount = (shiftRes['opening_amount'] as num?)?.toDouble() ?? 0.0;
-
-        final invoicesRes = await _supabase.from('invoices')
-            .select('total_amount')
-            .eq('shift_id', widget.shiftId!)
-            .eq('status', 'paid')
-            .gte('created_at', startOfDay)
-            .lte('created_at', endOfDay);
-            
-        double sum = 0.0;
-        for (var inv in invoicesRes) {
-          sum += (inv['total_amount'] as num).toDouble();
-        }
-        _totalSales = sum;
-      } else {
-        // CASE B - No shift
-        final invoicesRes = await _supabase.from('invoices')
-            .select('total_amount')
-            .eq('store_id', storeId)
-            .eq('status', 'paid')
-            .gte('created_at', startOfDay)
-            .lte('created_at', endOfDay);
-            
-        double sum = 0.0;
-        for (var inv in invoicesRes) {
-          sum += (inv['total_amount'] as num).toDouble();
-        }
-        _totalSales = sum;
       }
+
+      final invoicesRes = await _supabase.from('invoices')
+          .select('total_amount')
+          .eq('store_id', storeId)
+          .eq('status', 'paid')
+          .gte('created_at', todayStart.toIso8601String())
+          .lt('created_at', todayEnd.toIso8601String());
+          
+      _totalSales = invoicesRes.fold<double>(
+          0.0, (sum, row) => sum + (row['total_amount'] as num).toDouble());
 
       if (mounted) {
         setState(() => _isLoading = false);

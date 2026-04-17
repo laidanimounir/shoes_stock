@@ -71,6 +71,45 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+  Widget _buildStatusBadge(String? status) {
+    if (status == 'refunded') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade400),
+        ),
+        child: Text(
+          'Remboursé ↩ / مُرجَع',
+          style: TextStyle(
+            color: Colors.red.shade700,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    if (status == 'paid') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.green.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade400),
+        ),
+        child: Text(
+          'Payé ✓',
+          style: TextStyle(
+            color: Colors.green.shade700,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,11 +164,18 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   itemCount: _sales.length,
                   itemBuilder: (context, index) {
                     final s = _sales[index];
+                    final status = s['invoices']?['status'] as String?;
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: const Icon(Icons.receipt, color: Colors.indigo),
-                        title: Text("${s['product_variants']['products']['name']} (${s['product_variants']['size']})"),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text("${s['product_variants']['products']['name']} (${s['product_variants']['size']})")),
+                            const SizedBox(width: 8),
+                            _buildStatusBadge(status),
+                          ],
+                        ),
                         subtitle: Text(
                           "Facture: ${s['invoice_number']}\n"
                           "Client: ${s['customers']?['full_name'] ?? 'Passager'} | Magasin: ${s['stores']['name']}",
@@ -137,8 +183,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text("${s['total_price']} DA", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            if (s['invoices']?['status'] == 'paid') ...[
+                            Text(
+                              "${s['total_price']} DA",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                decoration: status == 'refunded' ? TextDecoration.lineThrough : TextDecoration.none,
+                                color: status == 'refunded' ? Colors.red.shade400 : Colors.black87,
+                              ),
+                            ),
+                            if (status == 'paid') ...[
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.assignment_return, color: Colors.red),
