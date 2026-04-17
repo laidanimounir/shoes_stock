@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
 import '../../services/shift_service.dart';
-import 'open_shift_screen.dart';
+import 'shift_dialog.dart';
+import 'end_of_day_report.dart';
 
 class CartItem {
   final String variantId;
@@ -115,13 +116,15 @@ class _PosScreenState extends State<PosScreen> {
           final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
           if (activeShift == null) {
             if (mounted) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => OpenShiftScreen(storeId: _selectedStoreId!)),
+              await showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => ShiftDialog(storeId: _selectedStoreId!),
               );
             }
-            return; // Stop loading POS
+          } else {
+             AppSession.currentShiftId = activeShift.id;
           }
-           AppSession.currentShiftId = activeShift.id;
         }
 
       
@@ -513,6 +516,20 @@ class _PosScreenState extends State<PosScreen> {
             ],
           ),
           actions: [
+            TextButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => EndOfDayReport(
+                    date: DateTime.now(),
+                    shiftId: AppSession.currentShiftId,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.assessment, color: Colors.white),
+              label: const Text('Rapport / تقرير اليوم', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 8),
             if (_storeName != null)
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
