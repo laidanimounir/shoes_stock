@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
+import '../../core/app_session.dart';
+import '../../services/shift_service.dart';
+import 'open_shift_screen.dart';
 
 class CartItem {
   final String variantId;
@@ -106,6 +109,19 @@ class _PosScreenState extends State<PosScreen> {
               .eq('id', _selectedStoreId!)
               .maybeSingle();
           _storeName = storeRes?['name'] ?? 'Inconnu';
+
+          // Check for active shift
+          final shiftService = ShiftService();
+          final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
+          if (activeShift == null) {
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => OpenShiftScreen(storeId: _selectedStoreId!)),
+              );
+            }
+            return; // Stop loading POS
+          }
+           AppSession.currentShiftId = activeShift.id;
         }
 
       
@@ -376,6 +392,7 @@ class _PosScreenState extends State<PosScreen> {
         'p_paid_amount': paidAmount,
         'p_payment_method': 'cash',
         'p_notes': 'Paiement à la caisse pour facture $invoiceNumber',
+        'p_shift_id': AppSession.currentShiftId,
       });
 
       if (mounted) {

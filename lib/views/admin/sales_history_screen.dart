@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../desktop/refund_modal.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -48,10 +49,11 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     try {
     
       var query = supabase.from('transactions').select('''
-        id, invoice_number, quantity, total_price, created_at, type,
-        product_variants(products(name), size, color),
+        id, invoice_number, invoice_id, quantity, total_price, created_at, type,
+        product_variants(id, products(name), size, color),
         customers(full_name),
-        stores(name)
+        stores(name),
+        invoices(status)
       ''').eq('type', 'out'); 
 
       if (_filterStoreId != null) {
@@ -116,7 +118,28 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           "Facture: ${s['invoice_number']}\n"
                           "Client: ${s['customers']?['full_name'] ?? 'Passager'} | Magasin: ${s['stores']['name']}",
                         ),
-                        trailing: Text("${s['total_price']} DA", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text("${s['total_price']} DA", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            if (s['invoices']?['status'] == 'paid') ...[
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.assignment_return, color: Colors.red),
+                                tooltip: "إرجاع",
+                                onPressed: () async {
+                                  final result = await showDialog(
+                                    context: context,
+                                    builder: (_) => RefundModal(invoice: s),
+                                  );
+                                  if (result == true) {
+                                    _fetchSales();
+                                  }
+                                },
+                              ),
+                            ]
+                          ],
+                        ),
                       ),
                     );
                   },

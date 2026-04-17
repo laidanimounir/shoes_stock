@@ -7,6 +7,9 @@ import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
 import '../admin/sales_history_screen.dart';
+import '../../core/app_session.dart';
+import '../../services/shift_service.dart';
+import 'close_shift_screen.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
   const EmployeeMainLayout({super.key});
@@ -71,10 +74,31 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                 alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
-                  child: IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.redAccent),
-                    tooltip: 'Déconnexion',
-                    onPressed: () => Supabase.instance.client.auth.signOut(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (AppSession.currentShiftId != null) ...[
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final user = Supabase.instance.client.auth.currentUser;
+                            final profile = await Supabase.instance.client.from('user_profiles').select('store_id').eq('id', user!.id).single();
+                            final shift = await ShiftService().getActiveShift(profile['store_id']);
+                            if (shift != null && mounted) {
+                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => CloseShiftScreen(shift: shift)));
+                            }
+                          },
+                          icon: const Icon(Icons.lock_clock),
+                          label: const Text('إغلاق الوردية'),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      IconButton(
+                        icon: const Icon(Icons.logout, color: Colors.redAccent),
+                        tooltip: 'Déconnexion',
+                        onPressed: () => Supabase.instance.client.auth.signOut(),
+                      ),
+                    ],
                   ),
                 ),
               ),
