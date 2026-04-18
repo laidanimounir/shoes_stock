@@ -8,6 +8,7 @@ import '../../models/shift_model.dart';
 import 'shift_dialog.dart';
 import 'end_of_day_report.dart';
 import 'close_shift_screen.dart';
+import '../../services/invoice_service.dart';
 
 class CartItem {
   final String variantId;
@@ -422,31 +423,24 @@ class _PosScreenState extends State<PosScreen> {
     setState(() => _isProcessingPayment = true);
     
     try {
-      final user = Supabase.instance.client.auth.currentUser;
       final invoiceNumber = 'FAC-${DateTime.now().millisecondsSinceEpoch}';
 
-    
-      String status = 'paid';
-      if (paidAmount == 0) status = 'unpaid';
-      else if (paidAmount < totalAmount) status = 'partial';
-
-     
-      await Supabase.instance.client.rpc('process_sale', params: {
-        'p_store_id': _selectedStoreId,
-        'p_customer_id': _selectedCustomerId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': _cart.map((e) => {
+      await InvoiceService.instance.processSale(
+        storeId: _selectedStoreId!,
+        invoiceNumber: invoiceNumber,
+        items: _cart.map((e) => {
           'variant_id': e.variantId,
           'quantity': e.quantity,
           'unit_price': e.unitPrice,
           'total_price': e.totalPrice,
         }).toList(),
-        'p_total_amount': totalAmount,
-        'p_paid_amount': paidAmount,
-        'p_payment_method': 'cash',
-        'p_notes': 'Paiement à la caisse pour facture $invoiceNumber',
-        'p_shift_id': AppSession.currentShiftId,
-      });
+        totalAmount: totalAmount,
+        paidAmount: paidAmount,
+        paymentMethod: 'cash',
+        customerId: _selectedCustomerId,
+        shiftId: AppSession.currentShiftId,
+        notes: 'Paiement à la caisse pour facture $invoiceNumber',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

@@ -12,6 +12,7 @@ import '../admin/activity_logs_screen.dart';
 import '../admin/gestion_stores.dart';
 import '../admin/inventory_screen.dart';
 import '../admin/sales_history_screen.dart';
+import '../../widgets/offline_banner.dart';
 
 class AdminMainLayout extends StatefulWidget {
   const AdminMainLayout({super.key});
@@ -320,9 +321,16 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
 
        
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_selectedIndex],
+            child: Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _screens[_selectedIndex],
+                  ),
+                ),
+              ],
             ),
           ),
         ],

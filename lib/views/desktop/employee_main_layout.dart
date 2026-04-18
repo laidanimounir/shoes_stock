@@ -11,6 +11,7 @@ import '../admin/sales_history_screen.dart';
 import '../../core/app_session.dart';
 import '../../services/shift_service.dart';
 import 'end_of_day_report.dart';
+import '../../widgets/offline_banner.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
   const EmployeeMainLayout({super.key});
@@ -275,9 +276,16 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
 
  
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_selectedIndex],
+            child: Column(
+              children: [
+                const OfflineBanner(),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _screens[_selectedIndex],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
