@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:isar/isar.dart';
 import '../../services/shift_service.dart';
 import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/shift_local.dart';
+import '../../local_db/collections/invoice_local.dart';
+import '../../local_db/collections/user_profile_local.dart';
 
 class EndOfDayReport extends StatefulWidget {
   final DateTime date;
@@ -36,6 +41,44 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
   }
 
   Future<void> _fetchReportData() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final todayEnd = todayStart.add(const Duration(hours: 24));
+      
+      final storeId = AppSession.currentStoreId;
+      if (storeId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      if (widget.shiftId != null) {
+        final shift = await isar.shiftLocals
+            .filter()
+            .supabaseIdEqualTo(widget.shiftId!)
+            .findFirst();
+        if (shift != null) {
+          _openingAmount = shift.openingAmount;
+        }
+      }
+
+      final invoices = await isar.invoiceLocals
+          .filter()
+          .storeIdEqualTo(storeId)
+          .statusEqualTo('paid')
+          .createdAtBetween(todayStart, todayEnd)
+          .findAll();
+          
+      _totalSales = invoices.fold<double>(
+          0.0, (sum, inv) => sum + inv.totalAmount);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
     try {
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day)

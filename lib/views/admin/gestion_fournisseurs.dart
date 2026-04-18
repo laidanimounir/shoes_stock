@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
+import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/supplier_local.dart';
+import '../../local_db/collections/invoice_local.dart';
+import '../../local_db/collections/payment_local.dart';
+import '../../local_db/collections/user_profile_local.dart';
 
 class GestionFournisseursScreen extends StatefulWidget {
   const GestionFournisseursScreen({super.key});
@@ -23,6 +30,21 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
   }
 
   Future<void> _initRoleAndFetch() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final userId = AppSession.currentUserId;
+      if (userId != null) {
+        final profile = await isar.userProfileLocals
+            .filter()
+            .supabaseIdEqualTo(userId)
+            .findFirst();
+        _userRole = profile?.role;
+      }
+      if (mounted) setState(() {});
+      await _fetchSuppliers();
+      return;
+    }
+
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
@@ -40,6 +62,31 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
 
   Future<void> _fetchSuppliers() async {
     setState(() => _isLoading = true);
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final response = await isar.supplierLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+          
+      if (mounted) {
+        setState(() {
+          _suppliers = response.map((s) => {
+            'id': s.supabaseId,
+            'company_name': s.companyName,
+            'contact_name': s.contactName,
+            'phone': s.phone,
+            'balance': s.balance,
+            'is_active': s.isActive,
+          }).toList();
+          _applyFilters();
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     try {
       final res = await Supabase.instance.client
           .from('suppliers')
@@ -300,6 +347,21 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   }
 
   Future<void> _loadProfileAndFetch() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final userId = AppSession.currentUserId;
+      if (userId != null) {
+        final profile = await isar.userProfileLocals
+            .filter()
+            .supabaseIdEqualTo(userId)
+            .findFirst();
+        _userRole = profile?.role;
+        _userStoreId = profile?.storeId;
+      }
+      _fetchProfileData();
+      return;
+    }
+
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
@@ -321,6 +383,68 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     setState(() => _isLoading = true);
     final supplierId = widget.supplier['id'];
     
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      final localInvoices = await isar.invoiceLocals
+          .filter()
+          .supplierIdEqualTo(supplierId)
+          .typeEqualTo('in')
+          .findAll();
+          
+      final localPayments = await isar.paymentLocals
+          .filter()
+          .supplierIdEqualTo(supplierId)
+          .findAll();
+
+      final profiles = await isar.userProfileLocals.where().findAll();
+      final profileMap = {for (var p in profiles) p.supabaseId: p};
+
+      final mappedInvoices = localInvoices.map((inv) {
+        final profile = profileMap[inv.userId];
+        return {
+          'id': inv.supabaseId,
+          'invoice_number': inv.invoiceNumber,
+          'total_amount': inv.totalAmount,
+          'paid_amount': inv.paidAmount,
+          'status': inv.status,
+          'type': inv.type,
+          'created_at': inv.createdAt?.toIso8601String(),
+          'user_profiles': profile != null ? {'full_name': profile.fullName} : null,
+        };
+      }).toList();
+
+      final mappedPayments = localPayments.map((p) {
+        final profile = profileMap[p.userId];
+        return {
+          'id': p.supabaseId,
+          'amount': p.amount,
+          'payment_method': p.paymentMethod,
+          'payment_date': p.createdAt?.toIso8601String(), // UI expects payment_date
+          'notes': p.notes,
+          'user_profiles': profile != null ? {'full_name': profile.fullName} : null,
+        };
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _invoices = mappedInvoices;
+          _payments = mappedPayments;
+
+          if (_userRole == 'employee' && _userStoreId != null) {
+            double totalInvoiced = mappedInvoices.fold(0, (sum, inv) => sum + (inv['total_amount'] as num).toDouble());
+            double totalPaid = mappedPayments.fold(0, (sum, p) => sum + (p['amount'] as num).toDouble());
+            _currentBalance = totalInvoiced - totalPaid;
+          } else {
+            _fetchGlobalBalance(supplierId);
+          }
+
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     try {
       var invoicesQuery = Supabase.instance.client.from('invoices')
           .select('*, user_profiles(full_name)')
@@ -371,6 +495,20 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   }
 
   Future<void> _fetchGlobalBalance(String supplierId) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final supplier = await isar.supplierLocals
+          .filter()
+          .supabaseIdEqualTo(supplierId)
+          .findFirst();
+      if (supplier != null && mounted) {
+        setState(() {
+          _currentBalance = supplier.balance;
+        });
+      }
+      return;
+    }
+
     try {
       final balanceRes = await Supabase.instance.client.from('suppliers')
           .select('balance')

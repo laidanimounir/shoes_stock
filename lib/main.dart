@@ -130,7 +130,6 @@ class _AuthGateState extends State<AuthGate> {
             });
           }
         } else {
-          AppSession.isOfflineMode = false;
           await ConnectivityService.instance.initialize();
           if (mounted) {
             setState(() {

@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
+import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/customer_local.dart';
+import '../../local_db/collections/invoice_local.dart';
+import '../../local_db/collections/payment_local.dart';
+import '../../local_db/collections/user_profile_local.dart';
 
 class GestionClientsScreen extends StatefulWidget {
   const GestionClientsScreen({super.key});
@@ -35,6 +42,21 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   }
 
   Future<void> _loadUserProfile() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final userId = AppSession.currentUserId;
+      if (userId != null) {
+        final profile = await isar.userProfileLocals
+            .filter()
+            .supabaseIdEqualTo(userId)
+            .findFirst();
+        _userRole = profile?.role;
+        _userStoreId = profile?.storeId;
+      }
+      _fetchCustomers();
+      return;
+    }
+
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
@@ -54,6 +76,44 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
 
   Future<void> _fetchCustomers([String query = '']) async {
     setState(() => _isLoading = true);
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      var localQuery = isar.customerLocals.filter().isActiveEqualTo(true);
+
+      if (query.isNotEmpty) {
+        final q = query.toLowerCase();
+        localQuery = localQuery.group((qFilter) => 
+          qFilter.fullNameContains(q, caseSensitive: false)
+                 .or()
+                 .phoneContains(q, caseSensitive: false)
+        );
+      }
+
+      final response = await localQuery.findAll();
+      final mapped = response.map((c) => {
+        'id': c.supabaseId,
+        'full_name': c.fullName,
+        'phone': c.phone,
+        'address': c.address,
+        'email': c.email,
+        'balance': c.balance,
+        'is_active': c.isActive,
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          if (_showOnlyWithDebt) {
+            _customers = mapped.where((c) => (c['balance'] as num? ?? 0) > 0).toList();
+          } else {
+            _customers = mapped;
+          }
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     try {
       var queryBuilder = Supabase.instance.client
           .from('customers')
@@ -85,6 +145,68 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   // تحديث استعلام التاريخ لجلب الفواتير والمدفوعات الفعلية
   Future<void> _fetchCustomerHistory(String customerId) async {
     setState(() => _isLoadingHistory = true);
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      final localInvoices = await isar.invoiceLocals
+          .filter()
+          .customerIdEqualTo(customerId)
+          .typeEqualTo('out')
+          .findAll();
+          
+      final localPayments = await isar.paymentLocals
+          .filter()
+          .customerIdEqualTo(customerId)
+          .findAll();
+
+      final profiles = await isar.userProfileLocals.where().findAll();
+      final profileMap = {for (var p in profiles) p.supabaseId: p};
+
+      final mappedInvoices = localInvoices.map((inv) {
+        final profile = profileMap[inv.userId];
+        return {
+          'id': inv.supabaseId,
+          'invoice_number': inv.invoiceNumber,
+          'total_amount': inv.totalAmount,
+          'paid_amount': inv.paidAmount,
+          'status': inv.status,
+          'type': inv.type,
+          'created_at': inv.createdAt?.toIso8601String(),
+          'user_profiles': profile != null ? {'full_name': profile.fullName} : null,
+        };
+      }).toList();
+
+      final mappedPayments = localPayments.map((p) {
+        final profile = profileMap[p.userId];
+        return {
+          'id': p.supabaseId,
+          'amount': p.amount,
+          'payment_method': p.paymentMethod,
+          'created_at': p.createdAt?.toIso8601String(),
+          'user_profiles': profile != null ? {'full_name': profile.fullName} : null,
+        };
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _invoices = mappedInvoices;
+          _payments = mappedPayments;
+          
+          // Recompute balance locally if needed
+          double totalInvoiced = mappedInvoices.fold(0, (sum, inv) => sum + (inv['total_amount'] as num).toDouble());
+          double totalPaid = mappedPayments.fold(0, (sum, p) => sum + (p['amount'] as num).toDouble());
+          _currentBalance = totalInvoiced - totalPaid;
+
+          if (_selectedCustomer != null) {
+            _selectedCustomer!['balance'] = _currentBalance;
+          }
+          _isLoadingHistory = false;
+        });
+      }
+      return;
+    }
+
     try {
       var invoicesQuery = Supabase.instance.client
           .from('invoices')
@@ -140,6 +262,23 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   }
 
   Future<void> _fetchGlobalBalance(String customerId) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final customer = await isar.customerLocals
+          .filter()
+          .supabaseIdEqualTo(customerId)
+          .findFirst();
+      if (customer != null && mounted) {
+        setState(() {
+          _currentBalance = customer.balance;
+          if (_selectedCustomer != null) {
+            _selectedCustomer!['balance'] = _currentBalance;
+          }
+        });
+      }
+      return;
+    }
+
     try {
       final balanceRes = await Supabase.instance.client
           .from('customers')

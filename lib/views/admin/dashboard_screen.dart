@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
+import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/store_local.dart';
+import '../../local_db/collections/transaction_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/customer_local.dart';
+import '../../local_db/collections/supplier_local.dart';
+import '../../local_db/collections/inventory_local.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,9 +20,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
-  // ══════════════════════════════════════════
-  // المنطق — لم يتغير أي شيء
-  // ══════════════════════════════════════════
+  
   bool _isLoading = true;
   List<dynamic> _stores = [];
   String? _selectedStoreId;
@@ -51,6 +58,21 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _fetchStores() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final res = await isar.storeLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+      if (mounted) {
+        setState(() {
+          _stores = res.map((s) => {'id': s.supabaseId, 'name': s.name}).toList();
+          _selectedStoreId = null;
+        });
+      }
+      return;
+    }
+
     try {
       final res = await Supabase.instance.client
           .from('stores')
@@ -71,6 +93,74 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _fetchDashboardStats() async {
     setState(() => _isLoading = true);
     _animController.reset();
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final today = DateTime.now();
+      final startOfDay = DateTime(today.year, today.month, today.day);
+
+      // 1. Transactions stats
+      var transQuery = isar.transactionLocals
+          .filter()
+          .typeEqualTo('out')
+          .createdAtGreaterThan(startOfDay.subtract(const Duration(seconds: 1)));
+      
+      if (_selectedStoreId != null) {
+        transQuery = transQuery.storeIdEqualTo(_selectedStoreId!);
+      }
+      
+      final transRes = await transQuery.findAll();
+      final variants = await isar.productVariantLocals.where().findAll();
+      final variantMap = {for (var v in variants) v.supabaseId: v};
+
+      double sales = 0;
+      double profit = 0;
+      for (var t in transRes) {
+        double totalPrice = t.totalPrice;
+        int qty = t.quantity;
+        final v = variantMap[t.variantId];
+        double buyPrice = v?.buyPrice ?? 0.0;
+        
+        sales += totalPrice;
+        profit += (totalPrice - (buyPrice * qty));
+      }
+
+      // 2. Customer Debt & Count
+      final customers = await isar.customerLocals.filter().isActiveEqualTo(true).findAll();
+      double totalCustDebt = customers.fold(0.0, (sum, c) => sum + c.balance);
+
+      // 3. Supplier Debt & Count
+      final suppliers = await isar.supplierLocals.filter().isActiveEqualTo(true).findAll();
+      double totalSuppDebt = suppliers.fold(0.0, (sum, s) => sum + s.balance);
+
+      // 4. Stock Value
+      var invQuery = isar.inventoryLocals.filter().quantityGreaterThan(0);
+      if (_selectedStoreId != null) {
+        invQuery = invQuery.and().storeIdEqualTo(_selectedStoreId!);
+      }
+      final inventory = await invQuery.findAll();
+      double totalStockVal = 0;
+      for (var inv in inventory) {
+        final v = variantMap[inv.variantId];
+        totalStockVal += (inv.quantity * (v?.buyPrice ?? 0.0));
+      }
+
+      if (mounted) {
+        setState(() {
+          _todaySales = sales;
+          _todayProfit = profit;
+          _customerDebt = totalCustDebt;
+          _supplierDebt = totalSuppDebt;
+          _stockValue = totalStockVal;
+          _activeCustomers = customers.length;
+          _activeSuppliers = suppliers.length;
+          _isLoading = false;
+        });
+        _animController.forward();
+      }
+      return;
+    }
+
     try {
       final today = DateTime.now();
       final startOfDay =
@@ -146,17 +236,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  // ══════════════════════════════════════════
-  // ألوان الثيم
-  // ══════════════════════════════════════════
+  
   static const _darkBg   = Color(0xFF0F0F1A);
   static const _cardBg   = Color(0xFF1A1A2E);
   static const _gold     = Color(0xFFD4A843);
   static const _goldLight= Color(0xFFF0C96B);
 
-  // ══════════════════════════════════════════
-  // build
-  // ══════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,9 +263,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // HEADER
-  // ══════════════════════════════════════════
+
   Widget _buildHeader() {
     final now = DateTime.now();
     final days   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -199,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       ),
       child: Row(
         children: [
-          // أيقونة
+      
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
@@ -225,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const Spacer(),
 
-          // ── فلتر المتاجر (لم يتغير) ──
+      
           Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -262,7 +346,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(width: 8),
 
-          // زر تحديث
+         
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
@@ -282,15 +366,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // BODY — بدون scroll، يملأ الشاشة
-  // ══════════════════════════════════════════
+ 
   Widget _buildBody() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // ── صف 1: 4 بطاقات مالية ──────────
+        
           Expanded(
             flex: 2,
             child: Row(
@@ -335,7 +417,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 14),
 
-          // ── فاصل ذهبي ─────────────────────
+        
           Row(
             children: [
               Expanded(child: Container(height: 0.5,
@@ -351,12 +433,12 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 14),
 
-          // ── صف 2: 3 بطاقات + منحنى ────────
+     
           Expanded(
             flex: 3,
             child: Row(
               children: [
-                // بطاقة المخزون
+             
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
@@ -369,7 +451,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
 
-                // بطاقة العملاء
+         
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
@@ -383,7 +465,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
 
-                // بطاقة الموردين
+            
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
@@ -397,7 +479,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
 
-                // منحنى بياني placeholder
                 Expanded(
                   flex: 4,
                   child: _buildChartPlaceholder(),
@@ -410,9 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // بطاقة KPI صغيرة — الصف الأول
-  // ══════════════════════════════════════════
+ 
   Widget _buildKpiCard({
     required String title,
     required String subtitle,
@@ -498,9 +577,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // بطاقة كبيرة — الصف الثاني
-  // ══════════════════════════════════════════
+  
   Widget _buildStatBigCard({
     required String title,
     required String value,
@@ -571,9 +648,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // منحنى بياني — placeholder جاهز للربط
-  // ══════════════════════════════════════════
+ 
   Widget _buildChartPlaceholder() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -623,7 +698,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 16),
 
-          // منحنى مرسوم يدوياً بـ CustomPaint
+    
           Expanded(
             child: _MiniLineChart(
               goldColor: _gold,
@@ -632,7 +707,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
 
           const SizedBox(height: 12),
-          // محاور X — أيام الأسبوع
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Auj']
@@ -646,9 +721,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ══════════════════════════════════════════
-  // Shimmer
-  // ══════════════════════════════════════════
+
   Widget _buildShimmer() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -681,9 +754,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 }
 
-// ══════════════════════════════════════════
-// منحنى بياني بـ CustomPaint
-// ══════════════════════════════════════════
+
 class _MiniLineChart extends StatelessWidget {
   final Color goldColor;
   final Color accentColor;
@@ -693,7 +764,7 @@ class _MiniLineChart extends StatelessWidget {
     required this.accentColor,
   });
 
-  // بيانات placeholder — استبدلها ببيانات Supabase لاحقاً
+  
   static const _points = [0.3, 0.5, 0.4, 0.7, 0.6, 0.85, 1.0];
 
   @override
@@ -747,13 +818,13 @@ class _LinePainter extends CustomPainter {
     final h = size.height;
     final step = w / (points.length - 1);
 
-    // نقاط المنحنى
+    
     final coords = <Offset>[];
     for (int i = 0; i < points.length; i++) {
       coords.add(Offset(i * step, h - (points[i] * h)));
     }
 
-    // رسم المنحنى الناعم
+   
     path.moveTo(coords[0].dx, coords[0].dy);
     fillPath.moveTo(coords[0].dx, h);
     fillPath.lineTo(coords[0].dx, coords[0].dy);
@@ -773,7 +844,7 @@ class _LinePainter extends CustomPainter {
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, linePaint);
 
-    // نقطة آخر قيمة (اليوم) مع دائرة ذهبية
+  
     final last = coords.last;
     canvas.drawCircle(last, 5, dotPaint);
     canvas.drawCircle(last, 3, Paint()..color = Colors.white);
@@ -783,9 +854,7 @@ class _LinePainter extends CustomPainter {
   bool shouldRepaint(_LinePainter old) => false;
 }
 
-// ══════════════════════════════════════════
-// Shimmer Box
-// ══════════════════════════════════════════
+
 class _ShimmerBox extends StatefulWidget {
   @override
   State<_ShimmerBox> createState() => _ShimmerBoxState();

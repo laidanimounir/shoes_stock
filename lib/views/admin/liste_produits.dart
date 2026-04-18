@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
+import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/product_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/supplier_local.dart';
+import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/store_local.dart';
 
 class ListeProduitsScreen extends StatefulWidget {
   final VoidCallback? onAddProduct;
@@ -45,6 +53,75 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
   Future<void> _fetchProducts() async {
     setState(() => _isLoading = true);
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      final localProducts = await isar.productLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+          
+      final localSuppliers = await isar.supplierLocals.where().findAll();
+      final supplierMap = {for (var s in localSuppliers) s.supabaseId: s};
+      
+      final localVariants = await isar.productVariantLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+          
+      final localInventory = await isar.inventoryLocals.where().findAll();
+      final localStores = await isar.storeLocals.where().findAll();
+      final storeMap = {for (var st in localStores) st.supabaseId: st};
+
+      final results = localProducts.map((p) {
+        final supplier = supplierMap[p.supplierId];
+        final variants = localVariants
+            .where((v) => v.productId == p.supabaseId)
+            .map((v) {
+              final invs = localInventory
+                  .where((inv) => inv.variantId == v.supabaseId)
+                  .map((inv) {
+                    final store = storeMap[inv.storeId];
+                    return {
+                      'quantity': inv.quantity,
+                      'store_id': inv.storeId,
+                      'stores': store != null ? {'name': store.name} : null,
+                    };
+                  }).toList();
+
+              return {
+                'id': v.supabaseId,
+                'size': v.size,
+                'color': v.color,
+                'barcode': v.barcode,
+                'sell_price': v.sellPrice,
+                'buy_price': v.buyPrice,
+                'is_active': v.isActive,
+                'inventory': invs,
+              };
+            }).toList();
+
+        return {
+          'id': p.supabaseId,
+          'name': p.name,
+          'description': p.description,
+          'image_url': p.imageUrl,
+          'created_at': p.createdAt?.toIso8601String(),
+          'suppliers': supplier != null ? {'company_name': supplier.companyName} : null,
+          'product_variants': variants,
+        };
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _products = results;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     try {
       final res = await Supabase.instance.client
           .from('products')

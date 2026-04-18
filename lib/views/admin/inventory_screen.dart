@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/store_local.dart';
+import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/product_local.dart';
+import '../../local_db/collections/transaction_local.dart';
+import '../../local_db/collections/user_profile_local.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -46,6 +55,29 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _fetchStores() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final res = await isar.storeLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+          
+      if (mounted) {
+        setState(() {
+          _stores = res.map((s) => {'id': s.supabaseId, 'name': s.name}).toList();
+          if (_stores.isNotEmpty) {
+            _selectedStoreId = _stores.first['id'];
+          }
+        });
+        if (_selectedStoreId != null) {
+          _fetchInventoryData();
+        } else {
+          setState(() => _isLoading = false);
+        }
+      }
+      return;
+    }
+
     try {
       final res = await Supabase.instance.client
           .from('stores')
@@ -126,12 +158,136 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Future<void> _fetchInventoryData() async {
     setState(() => _isLoading = true);
+
+    if (AppSession.isOfflineMode) {
+      if (_selectedStoreId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final isar = await IsarService.getInstance();
+      
+      final localInventory = await isar.inventoryLocals
+          .filter()
+          .storeIdEqualTo(_selectedStoreId!)
+          .findAll();
+          
+      final localVariants = await isar.productVariantLocals.where().findAll();
+      final localProducts = await isar.productLocals.where().findAll();
+      
+      final variantMap = {for (var v in localVariants) v.supabaseId: v};
+      final productMap = {for (var p in localProducts) p.supabaseId: p};
+
+      final enrichedData = localInventory.map((item) {
+        final variant = variantMap[item.variantId];
+        if (variant == null) return null;
+        
+        final product = productMap[variant.productId];
+        if (product == null) return null;
+
+        return {
+          'id': item.supabaseId,
+          'quantity': item.quantity,
+          'variant_id': item.variantId,
+          'product_variants': {
+            'id': variant.supabaseId,
+            'size': variant.size,
+            'color': variant.color,
+            'barcode': variant.barcode,
+            'buy_price': variant.buyPrice,
+            'products': {
+              'name': product.name,
+              'image_url': product.imageUrl,
+            }
+          }
+        };
+      }).where((item) => item != null).map((item) => item!).toList();
+
+      if (mounted) {
+        setState(() {
+          _inventoryItems = enrichedData;
+          _totalProducts = enrichedData.length;
+          _totalStock = 0;
+          _lowStockCount = 0;
+          _totalValue = 0;
+          _lowStockAlerts.clear();
+
+          for (var item in enrichedData) {
+            final qty = (item['quantity'] as int?) ?? 0;
+            final buyPrice = (item['product_variants']['buy_price'] as num?)?.toDouble() ?? 0.0;
+            
+            _totalStock += qty;
+            _totalValue += (qty * buyPrice);
+            
+            if (qty < 3) {
+              _lowStockCount++;
+              _lowStockAlerts.add(item);
+            }
+          }
+        });
+      }
+      
+      await _fetchRecentMovements();
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
     _setupRealtimeStreams();
     await _fetchRecentMovements();
     if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _fetchRecentMovements() async {
+    if (_selectedStoreId == null) return;
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      final localTransactions = await isar.transactionLocals
+          .filter()
+          .storeIdEqualTo(_selectedStoreId!)
+          .findAll();
+          
+      // Sort manually as Isar filter doesn't support complex sorting without indices
+      localTransactions.sort((a, b) => (b.createdAt ?? DateTime.now()).compareTo(a.createdAt ?? DateTime.now()));
+      
+      final variants = await isar.productVariantLocals.where().findAll();
+      final products = await isar.productLocals.where().findAll();
+      final profiles = await isar.userProfileLocals.where().findAll();
+      
+      final variantMap = {for (var v in variants) v.supabaseId: v};
+      final productMap = {for (var p in products) p.supabaseId: p};
+      final profileMap = {for (var pr in profiles) pr.supabaseId: pr};
+
+      final results = localTransactions.take(20).map((mov) {
+        final variant = variantMap[mov.variantId];
+        final product = variant != null ? productMap[variant.productId] : null;
+        final profile = profileMap[mov.userId];
+
+        return {
+          'id': mov.supabaseId,
+          'type': mov.type,
+          'quantity': mov.quantity,
+          'created_at': mov.createdAt?.toIso8601String(),
+          'product_variants': {
+            'size': variant?.size,
+            'color': variant?.color,
+            'products': {
+              'name': product?.name ?? 'Inconnu',
+            }
+          },
+          'user_profiles': {
+            'full_name': profile?.fullName ?? 'Système',
+          }
+        };
+      }).toList();
+
+      if (mounted) {
+        setState(() => _recentMovements = results);
+      }
+      return;
+    }
+
     try {
       final res = await Supabase.instance.client
           .from('transactions')

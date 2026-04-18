@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/product_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/customer_local.dart';
+import '../../local_db/collections/store_local.dart';
+import '../../local_db/collections/shift_local.dart';
 import '../../services/shift_service.dart';
 import '../../models/shift_model.dart';
 import 'shift_dialog.dart';
@@ -95,6 +103,46 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   Future<void> _fetchInitialData() async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      _selectedStoreId = AppSession.currentStoreId;
+      if (_selectedStoreId != null) {
+        final store = await isar.storeLocals
+            .filter()
+            .supabaseIdEqualTo(_selectedStoreId!)
+            .findFirst();
+        _storeName = store?.name ?? 'Inconnu';
+
+        // Check for active shift
+        final shiftService = ShiftService();
+        final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
+        if (activeShift == null) {
+          if (mounted) {
+            await showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => ShiftDialog(storeId: _selectedStoreId!),
+            );
+          }
+        } else {
+          AppSession.currentShiftId = activeShift.id;
+        }
+      }
+
+      final customers = await isar.customerLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+      _customers = customers.map((c) => {'id': c.supabaseId, 'full_name': c.fullName}).toList();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      _searchProduct('');
+      return;
+    }
+
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
@@ -236,6 +284,59 @@ class _PosScreenState extends State<PosScreen> {
 
   Future<void> _searchProduct(String query) async {
     setState(() => _isSearching = true);
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      
+      final variants = await isar.productVariantLocals
+          .filter()
+          .isActiveEqualTo(true)
+          .findAll();
+          
+      final products = await isar.productLocals.where().findAll();
+      final inventory = await isar.inventoryLocals.where().findAll();
+
+      final productMap = {for (var p in products) p.supabaseId: p};
+
+      final results = variants.where((v) {
+        final p = productMap[v.productId];
+        if (p == null) return false;
+        if (query.isEmpty) return true;
+        
+        final q = query.toLowerCase();
+        return (v.barcode?.toLowerCase().contains(q) ?? false) || 
+               p.name.toLowerCase().contains(q);
+      }).map((v) {
+        final p = productMap[v.productId]!;
+        final invs = inventory
+            .where((inv) => inv.variantId == v.supabaseId)
+            .map((inv) => {
+                  'quantity': inv.quantity,
+                  'store_id': inv.storeId,
+                }).toList();
+
+        return {
+          'id': v.supabaseId,
+          'size': v.size,
+          'color': v.color,
+          'barcode': v.barcode,
+          'sell_price': v.sellPrice,
+          'products': {
+            'name': p.name,
+            'image_url': p.imageUrl,
+          },
+          'inventory': invs,
+        };
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _searchResults = results.take(20).toList();
+          _isSearching = false;
+        });
+      }
+      return;
+    }
 
     try {
       var queryBuilder = Supabase.instance.client
