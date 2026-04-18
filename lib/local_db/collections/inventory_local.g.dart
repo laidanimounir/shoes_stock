@@ -54,17 +54,25 @@ const InventoryLocalSchema = CollectionSchema(
   deserializeProp: _inventoryLocalDeserializeProp,
   idName: r'isarId',
   indexes: {
-    r'variantId_storeId': IndexSchema(
-      id: -2764703807858905050,
-      name: r'variantId_storeId',
-      unique: true,
+    r'variantId': IndexSchema(
+      id: 7553902369993061372,
+      name: r'variantId',
+      unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
           name: r'variantId',
           type: IndexType.hash,
           caseSensitive: true,
-        ),
+        )
+      ],
+    ),
+    r'storeId': IndexSchema(
+      id: 2730892149058446507,
+      name: r'storeId',
+      unique: false,
+      replace: false,
+      properties: [
         IndexPropertySchema(
           name: r'storeId',
           type: IndexType.hash,
@@ -161,95 +169,6 @@ void _inventoryLocalAttach(
   object.isarId = id;
 }
 
-extension InventoryLocalByIndex on IsarCollection<InventoryLocal> {
-  Future<InventoryLocal?> getByVariantIdStoreId(
-      String variantId, String storeId) {
-    return getByIndex(r'variantId_storeId', [variantId, storeId]);
-  }
-
-  InventoryLocal? getByVariantIdStoreIdSync(String variantId, String storeId) {
-    return getByIndexSync(r'variantId_storeId', [variantId, storeId]);
-  }
-
-  Future<bool> deleteByVariantIdStoreId(String variantId, String storeId) {
-    return deleteByIndex(r'variantId_storeId', [variantId, storeId]);
-  }
-
-  bool deleteByVariantIdStoreIdSync(String variantId, String storeId) {
-    return deleteByIndexSync(r'variantId_storeId', [variantId, storeId]);
-  }
-
-  Future<List<InventoryLocal?>> getAllByVariantIdStoreId(
-      List<String> variantIdValues, List<String> storeIdValues) {
-    final len = variantIdValues.length;
-    assert(storeIdValues.length == len,
-        'All index values must have the same length');
-    final values = <List<dynamic>>[];
-    for (var i = 0; i < len; i++) {
-      values.add([variantIdValues[i], storeIdValues[i]]);
-    }
-
-    return getAllByIndex(r'variantId_storeId', values);
-  }
-
-  List<InventoryLocal?> getAllByVariantIdStoreIdSync(
-      List<String> variantIdValues, List<String> storeIdValues) {
-    final len = variantIdValues.length;
-    assert(storeIdValues.length == len,
-        'All index values must have the same length');
-    final values = <List<dynamic>>[];
-    for (var i = 0; i < len; i++) {
-      values.add([variantIdValues[i], storeIdValues[i]]);
-    }
-
-    return getAllByIndexSync(r'variantId_storeId', values);
-  }
-
-  Future<int> deleteAllByVariantIdStoreId(
-      List<String> variantIdValues, List<String> storeIdValues) {
-    final len = variantIdValues.length;
-    assert(storeIdValues.length == len,
-        'All index values must have the same length');
-    final values = <List<dynamic>>[];
-    for (var i = 0; i < len; i++) {
-      values.add([variantIdValues[i], storeIdValues[i]]);
-    }
-
-    return deleteAllByIndex(r'variantId_storeId', values);
-  }
-
-  int deleteAllByVariantIdStoreIdSync(
-      List<String> variantIdValues, List<String> storeIdValues) {
-    final len = variantIdValues.length;
-    assert(storeIdValues.length == len,
-        'All index values must have the same length');
-    final values = <List<dynamic>>[];
-    for (var i = 0; i < len; i++) {
-      values.add([variantIdValues[i], storeIdValues[i]]);
-    }
-
-    return deleteAllByIndexSync(r'variantId_storeId', values);
-  }
-
-  Future<Id> putByVariantIdStoreId(InventoryLocal object) {
-    return putByIndex(r'variantId_storeId', object);
-  }
-
-  Id putByVariantIdStoreIdSync(InventoryLocal object, {bool saveLinks = true}) {
-    return putByIndexSync(r'variantId_storeId', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllByVariantIdStoreId(List<InventoryLocal> objects) {
-    return putAllByIndex(r'variantId_storeId', objects);
-  }
-
-  List<Id> putAllByVariantIdStoreIdSync(List<InventoryLocal> objects,
-      {bool saveLinks = true}) {
-    return putAllByIndexSync(r'variantId_storeId', objects,
-        saveLinks: saveLinks);
-  }
-}
-
 extension InventoryLocalQueryWhereSort
     on QueryBuilder<InventoryLocal, InventoryLocal, QWhere> {
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterWhere> anyIsarId() {
@@ -329,28 +248,28 @@ extension InventoryLocalQueryWhere
   }
 
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterWhereClause>
-      variantIdEqualToAnyStoreId(String variantId) {
+      variantIdEqualTo(String variantId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'variantId_storeId',
+        indexName: r'variantId',
         value: [variantId],
       ));
     });
   }
 
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterWhereClause>
-      variantIdNotEqualToAnyStoreId(String variantId) {
+      variantIdNotEqualTo(String variantId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
+              indexName: r'variantId',
               lower: [],
               upper: [variantId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
+              indexName: r'variantId',
               lower: [variantId],
               includeLower: false,
               upper: [],
@@ -358,13 +277,13 @@ extension InventoryLocalQueryWhere
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
+              indexName: r'variantId',
               lower: [variantId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
+              indexName: r'variantId',
               lower: [],
               upper: [variantId],
               includeUpper: false,
@@ -374,44 +293,44 @@ extension InventoryLocalQueryWhere
   }
 
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterWhereClause>
-      variantIdStoreIdEqualTo(String variantId, String storeId) {
+      storeIdEqualTo(String storeId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'variantId_storeId',
-        value: [variantId, storeId],
+        indexName: r'storeId',
+        value: [storeId],
       ));
     });
   }
 
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterWhereClause>
-      variantIdEqualToStoreIdNotEqualTo(String variantId, String storeId) {
+      storeIdNotEqualTo(String storeId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
-              lower: [variantId],
-              upper: [variantId, storeId],
+              indexName: r'storeId',
+              lower: [],
+              upper: [storeId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
-              lower: [variantId, storeId],
+              indexName: r'storeId',
+              lower: [storeId],
               includeLower: false,
-              upper: [variantId],
+              upper: [],
             ));
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
-              lower: [variantId, storeId],
+              indexName: r'storeId',
+              lower: [storeId],
               includeLower: false,
-              upper: [variantId],
+              upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'variantId_storeId',
-              lower: [variantId],
-              upper: [variantId, storeId],
+              indexName: r'storeId',
+              lower: [],
+              upper: [storeId],
               includeUpper: false,
             ));
       }

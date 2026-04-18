@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
 import '../core/app_session.dart';
 import '../core/sync_engine.dart';
 import '../local_db/isar_service.dart';
@@ -109,6 +110,7 @@ class InvoiceService {
       final inv = await isar.inventoryLocals
           .filter()
           .variantIdEqualTo(item['variant_id'] as String)
+          .and()
           .storeIdEqualTo(storeId)
           .findFirst();
       if (inv != null) {

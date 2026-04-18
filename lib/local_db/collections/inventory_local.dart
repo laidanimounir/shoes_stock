@@ -8,9 +8,10 @@ class InventoryLocal {
 
   late String supabaseId;
 
-  @Index(composite: [CompositeIndex('storeId')], unique: true)
+  @Index()
   late String variantId;
 
+  @Index()
   late String storeId;
   int quantity = 0;
   DateTime? createdAt;
