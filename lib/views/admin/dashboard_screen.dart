@@ -35,10 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    );
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _initDashboard();
   }
 
@@ -74,7 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _fetchDashboardStats() async {
     setState(() => _isLoading = true);
     _animController.reset();
-
     try {
       final today = DateTime.now();
       final startOfDay =
@@ -85,24 +81,20 @@ class _DashboardScreenState extends State<DashboardScreen>
           .select('quantity, total_price, product_variants(buy_price)')
           .eq('type', 'out')
           .gte('created_at', startOfDay);
-
       if (_selectedStoreId != null) {
         transQuery = transQuery.eq('store_id', _selectedStoreId!);
       }
-
       final transRes = await transQuery;
 
       double sales = 0;
       double profit = 0;
-
       for (var t in transRes) {
         double totalPrice = (t['total_price'] as num?)?.toDouble() ?? 0.0;
         int qty = (t['quantity'] as num?)?.toInt() ?? 0;
         double buyPrice =
             (t['product_variants']?['buy_price'] as num?)?.toDouble() ?? 0.0;
         sales += totalPrice;
-        double cost = buyPrice * qty;
-        profit += (totalPrice - cost);
+        profit += (totalPrice - (buyPrice * qty));
       }
 
       final custRes = await Supabase.instance.client
@@ -123,11 +115,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           .from('inventory')
           .select('quantity, product_variants(buy_price)')
           .gt('quantity', 0);
-
       if (_selectedStoreId != null) {
         invQuery = invQuery.eq('store_id', _selectedStoreId!);
       }
-
       final invRes = await invQuery;
       double stockVal = 0;
       for (var i in invRes) {
@@ -159,13 +149,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   // ══════════════════════════════════════════
   // ألوان الثيم
   // ══════════════════════════════════════════
-  static const _darkBg = Color(0xFF0F0F1A);
-  static const _cardBg = Color(0xFF1A1A2E);
-  static const _gold = Color(0xFFD4A843);
-  static const _goldLight = Color(0xFFF0C96B);
+  static const _darkBg   = Color(0xFF0F0F1A);
+  static const _cardBg   = Color(0xFF1A1A2E);
+  static const _gold     = Color(0xFFD4A843);
+  static const _goldLight= Color(0xFFF0C96B);
 
   // ══════════════════════════════════════════
-  // البناء الرئيسي
+  // build
   // ══════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
@@ -175,96 +165,92 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           _buildHeader(),
           Expanded(
-            child: _isLoading ? _buildShimmer() : _buildBody(),
+            child: _isLoading
+                ? _buildShimmer()
+                : FadeTransition(
+                    opacity: _fadeAnim,
+                    child: _buildBody(),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  // ── رأس الصفحة ────────────────────────────
+  // ══════════════════════════════════════════
+  // HEADER
+  // ══════════════════════════════════════════
   Widget _buildHeader() {
     final now = DateTime.now();
-    final days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    final months = [
-      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
-      'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
-    ];
+    final days   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    final months = ['Jan','Fév','Mar','Avr','Mai','Jun',
+                    'Jul','Aoû','Sep','Oct','Nov','Déc'];
     final dateStr =
         '${days[now.weekday % 7]} ${now.day} ${months[now.month - 1]} ${now.year}';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(28, 20, 20, 20),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: _cardBg,
         border: Border(
-          bottom: BorderSide(color: _gold.withValues(alpha: 0.3), width: 1),
+          bottom: BorderSide(color: _gold.withValues(alpha: 0.25), width: 0.8),
         ),
       ),
       child: Row(
         children: [
-          // شعار + عنوان
+          // أيقونة
           Container(
-            width: 40,
-            height: 40,
+            width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _gold.withValues(alpha: 0.15),
-              border: Border.all(color: _gold, width: 1.5),
+              color: _gold.withValues(alpha: 0.12),
+              border: Border.all(color: _gold, width: 1.2),
             ),
-            child: const Icon(Icons.storefront_rounded,
-                color: _gold, size: 20),
+            child: const Icon(Icons.storefront_rounded, color: _gold, size: 18),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Tableau de Bord',
-                style: GoogleFonts.playfairDisplay(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                dateStr,
-                style: GoogleFonts.raleway(
-                  color: _gold,
-                  fontSize: 12,
-                  letterSpacing: 1,
-                ),
-              ),
+              Text('Tableau de Bord',
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 16,
+                      fontWeight: FontWeight.bold)),
+              Text(dateStr,
+                  style: GoogleFonts.raleway(
+                      color: _gold, fontSize: 11, letterSpacing: 0.8)),
             ],
           ),
           const Spacer(),
-          // فلتر المتاجر — لم يتغير
+
+          // ── فلتر المتاجر (لم يتغير) ──
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                  color: _gold.withValues(alpha: 0.3), width: 0.8),
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _gold.withValues(alpha: 0.25), width: 0.8),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String?>(
                 value: _selectedStoreId,
                 dropdownColor: _cardBg,
-                icon: const Icon(Icons.store_outlined, color: _gold, size: 18),
-                style: GoogleFonts.raleway(
-                    color: Colors.white, fontWeight: FontWeight.w600),
+                icon: const Icon(Icons.store_outlined, color: _gold, size: 16),
+                style: GoogleFonts.raleway(color: Colors.white, fontSize: 13,
+                    fontWeight: FontWeight.w600),
                 items: [
                   DropdownMenuItem(
                     value: null,
                     child: Text('Tous les magasins',
-                        style: GoogleFonts.raleway(color: Colors.white70)),
+                        style: GoogleFonts.raleway(color: Colors.white70, fontSize: 13)),
                   ),
                   ..._stores.map((s) => DropdownMenuItem(
                         value: s['id'] as String?,
                         child: Text(s['name'],
-                            style:
-                                GoogleFonts.raleway(color: Colors.white)),
+                            style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
                       )),
                 ],
                 onChanged: (val) {
@@ -274,17 +260,19 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
+
           // زر تحديث
           Container(
+            width: 36, height: 36,
             decoration: BoxDecoration(
-              color: _gold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: _gold.withValues(alpha: 0.4), width: 0.8),
+              color: _gold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _gold.withValues(alpha: 0.35), width: 0.8),
             ),
             child: IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: _gold, size: 20),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.refresh_rounded, color: _gold, size: 18),
               onPressed: _fetchDashboardStats,
               tooltip: 'Actualiser',
             ),
@@ -294,100 +282,213 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ── المحتوى الرئيسي ──────────────────────
+  // ══════════════════════════════════════════
+  // BODY — بدون scroll، يملأ الشاشة
+  // ══════════════════════════════════════════
   Widget _buildBody() {
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Indicateurs Financiers', Icons.bar_chart_rounded),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // ── صف 1: 4 بطاقات مالية ──────────
+          Expanded(
+            flex: 2,
+            child: Row(
               children: [
                 _buildKpiCard(
                   title: "Chiffre d'affaires",
                   subtitle: "Aujourd'hui",
-                  value: _todaySales,
+                  value: '${_todaySales.toStringAsFixed(0)} DA',
                   icon: Icons.point_of_sale_rounded,
-                  gradientColors: [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
+                  accentColor: const Color(0xFF1E88E5),
+                  topColor: const Color(0xFF1565C0),
                 ),
+                const SizedBox(width: 14),
                 _buildKpiCard(
                   title: 'Bénéfice Net',
                   subtitle: "Aujourd'hui",
-                  value: _todayProfit,
+                  value: '+${_todayProfit.toStringAsFixed(0)} DA',
                   icon: Icons.trending_up_rounded,
-                  gradientColors: [const Color(0xFF1B5E20), const Color(0xFF43A047)],
-                  isProfit: true,
+                  accentColor: const Color(0xFF43A047),
+                  topColor: const Color(0xFF1B5E20),
                 ),
+                const SizedBox(width: 14),
                 _buildKpiCard(
                   title: 'Créances Clients',
                   subtitle: 'Crédits en cours',
-                  value: _customerDebt,
+                  value: '${_customerDebt.toStringAsFixed(0)} DA',
                   icon: Icons.account_balance_wallet_rounded,
-                  gradientColors: [const Color(0xFFE65100), const Color(0xFFFB8C00)],
+                  accentColor: const Color(0xFFFB8C00),
+                  topColor: const Color(0xFFE65100),
                 ),
+                const SizedBox(width: 14),
                 _buildKpiCard(
                   title: 'Dettes Fournisseurs',
                   subtitle: 'À régler',
-                  value: _supplierDebt,
+                  value: '${_supplierDebt.toStringAsFixed(0)} DA',
                   icon: Icons.money_off_rounded,
-                  gradientColors: [const Color(0xFFB71C1C), const Color(0xFFE53935)],
+                  accentColor: const Color(0xFFE53935),
+                  topColor: const Color(0xFFB71C1C),
                 ),
               ],
             ),
-            const SizedBox(height: 36),
-            // فاصل ذهبي
+          ),
+          const SizedBox(height: 14),
+
+          // ── فاصل ذهبي ─────────────────────
+          Row(
+            children: [
+              Expanded(child: Container(height: 0.5,
+                  color: _gold.withValues(alpha: 0.2))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Icon(Icons.auto_awesome,
+                    color: _gold.withValues(alpha: 0.5), size: 13),
+              ),
+              Expanded(child: Container(height: 0.5,
+                  color: _gold.withValues(alpha: 0.2))),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // ── صف 2: 3 بطاقات + منحنى ────────
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                // بطاقة المخزون
+                Expanded(
+                  flex: 2,
+                  child: _buildStatBigCard(
+                    title: 'Valeur du Stock',
+                    value: '${_stockValue.toStringAsFixed(0)} DA',
+                    icon: Icons.inventory_rounded,
+                    accentColor: const Color(0xFF00897B),
+                    topColor: const Color(0xFF00695C),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // بطاقة العملاء
+                Expanded(
+                  flex: 2,
+                  child: _buildStatBigCard(
+                    title: 'Clients Actifs',
+                    value: '$_activeCustomers',
+                    icon: Icons.people_rounded,
+                    accentColor: const Color(0xFF7B1FA2),
+                    topColor: const Color(0xFF4A148C),
+                    isCount: true,
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // بطاقة الموردين
+                Expanded(
+                  flex: 2,
+                  child: _buildStatBigCard(
+                    title: 'Fournisseurs Actifs',
+                    value: '$_activeSuppliers',
+                    icon: Icons.local_shipping_rounded,
+                    accentColor: const Color(0xFF6D4C41),
+                    topColor: const Color(0xFF3E2723),
+                    isCount: true,
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // منحنى بياني placeholder
+                Expanded(
+                  flex: 4,
+                  child: _buildChartPlaceholder(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // بطاقة KPI صغيرة — الصف الأول
+  // ══════════════════════════════════════════
+  Widget _buildKpiCard({
+    required String title,
+    required String subtitle,
+    required String value,
+    required IconData icon,
+    required Color accentColor,
+    required Color topColor,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: _cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: accentColor.withValues(alpha: 0.2), width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: topColor.withValues(alpha: 0.15),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Container(
-                    height: 0.5,
-                    color: _gold.withValues(alpha: 0.3),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: GoogleFonts.raleway(
+                              color: Colors.white70, fontSize: 12,
+                              fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(subtitle,
+                          style: GoogleFonts.raleway(
+                              color: Colors.white30, fontSize: 10)),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(Icons.auto_awesome,
-                      color: _gold.withValues(alpha: 0.6), size: 16),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 0.5,
-                    color: _gold.withValues(alpha: 0.3),
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [topColor, accentColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: Icon(icon, color: Colors.white, size: 18),
                 ),
               ],
             ),
-            const SizedBox(height: 36),
-            _buildSectionTitle('Statistiques du Magasin', Icons.storefront_rounded),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildKpiCard(
-                  title: 'Valeur du Stock',
-                  subtitle: 'Global',
-                  value: _stockValue,
-                  icon: Icons.inventory_rounded,
-                  gradientColors: [const Color(0xFF00695C), const Color(0xFF00897B)],
-                ),
-                _buildStatCard(
-                  title: 'Clients Actifs',
-                  value: '$_activeCustomers',
-                  icon: Icons.people_rounded,
-                  gradientColors: [const Color(0xFF4A148C), const Color(0xFF7B1FA2)],
-                ),
-                _buildStatCard(
-                  title: 'Fournisseurs Actifs',
-                  value: '$_activeSuppliers',
-                  icon: Icons.local_shipping_rounded,
-                  gradientColors: [const Color(0xFF3E2723), const Color(0xFF6D4C41)],
+                Text(value,
+                    style: GoogleFonts.raleway(
+                        color: Colors.white, fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 8),
+                Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [accentColor, accentColor.withValues(alpha: 0.1)],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ],
             ),
@@ -397,46 +498,94 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ── عنوان القسم ──────────────────────────
-  Widget _buildSectionTitle(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: _gold, size: 20),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: GoogleFonts.playfairDisplay(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── بطاقة KPI مالية ──────────────────────
-  Widget _buildKpiCard({
+  // ══════════════════════════════════════════
+  // بطاقة كبيرة — الصف الثاني
+  // ══════════════════════════════════════════
+  Widget _buildStatBigCard({
     required String title,
-    required String subtitle,
-    required double value,
+    required String value,
     required IconData icon,
-    required List<Color> gradientColors,
-    bool isProfit = false,
+    required Color accentColor,
+    required Color topColor,
+    bool isCount = false,
   }) {
     return Container(
-      width: 260,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: gradientColors[1].withValues(alpha: 0.25), width: 0.8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withValues(alpha: 0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: topColor.withValues(alpha: 0.15),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // أيقونة كبيرة
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [topColor, accentColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: GoogleFonts.raleway(
+                      color: Colors.white54, fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              Text(value,
+                  style: GoogleFonts.raleway(
+                      color: Colors.white,
+                      fontSize: isCount ? 40 : 22,
+                      fontWeight: FontWeight.bold),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 10),
+              Container(
+                height: 2,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [accentColor, accentColor.withValues(alpha: 0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // منحنى بياني — placeholder جاهز للربط
+  // ══════════════════════════════════════════
+  Widget _buildChartPlaceholder() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _gold.withValues(alpha: 0.15), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: _gold.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -449,184 +598,200 @@ class _DashboardScreenState extends State<DashboardScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.raleway(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.raleway(
-                      color: Colors.white38,
-                      fontSize: 11,
-                    ),
-                  ),
+                  Text('Évolution des Ventes',
+                      style: GoogleFonts.playfairDisplay(
+                          color: Colors.white, fontSize: 14,
+                          fontWeight: FontWeight.bold)),
+                  Text('7 derniers jours',
+                      style: GoogleFonts.raleway(
+                          color: Colors.white38, fontSize: 11)),
                 ],
               ),
               Container(
-                width: 42,
-                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: _gold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _gold.withValues(alpha: 0.3), width: 0.8),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20),
+                child: Text('7J',
+                    style: GoogleFonts.raleway(
+                        color: _gold, fontSize: 11,
+                        fontWeight: FontWeight.w700)),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                isProfit ? '+${value.toStringAsFixed(0)}' : value.toStringAsFixed(0),
-                style: GoogleFonts.raleway(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Text(
-                  'DA',
-                  style: GoogleFonts.raleway(
-                    fontSize: 13,
-                    color: _goldLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradientColors[1].withValues(alpha: 0.8),
-                  gradientColors[1].withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(2),
+          const SizedBox(height: 16),
+
+          // منحنى مرسوم يدوياً بـ CustomPaint
+          Expanded(
+            child: _MiniLineChart(
+              goldColor: _gold,
+              accentColor: const Color(0xFF1E88E5),
             ),
           ),
-        ],
-      ),
-    );
-  }
 
-  // ── بطاقة إحصاء (بدون DA) ────────────────
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required List<Color> gradientColors,
-  }) {
-    return Container(
-      width: 260,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: gradientColors[1].withValues(alpha: 0.25), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors[0].withValues(alpha: 0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 12),
+          // محاور X — أيام الأسبوع
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.raleway(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            value,
-            style: GoogleFonts.raleway(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradientColors[1].withValues(alpha: 0.8),
-                  gradientColors[1].withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(2),
-            ),
+            children: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Auj']
+                .map((d) => Text(d,
+                    style: GoogleFonts.raleway(
+                        color: Colors.white30, fontSize: 10)))
+                .toList(),
           ),
         ],
       ),
     );
   }
 
-  // ── Shimmer أثناء التحميل ─────────────────
+  // ══════════════════════════════════════════
+  // Shimmer
+  // ══════════════════════════════════════════
   Widget _buildShimmer() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        children: List.generate(
-          7,
-          (_) => _ShimmerCard(),
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: List.generate(4, (i) => [
+                Expanded(child: _ShimmerBox()),
+                if (i < 3) const SizedBox(width: 14),
+              ]).expand((e) => e).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const SizedBox(height: 1),
+          const SizedBox(height: 14),
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: List.generate(4, (i) => [
+                Expanded(flex: i == 3 ? 4 : 2, child: _ShimmerBox()),
+                if (i < 3) const SizedBox(width: 14),
+              ]).expand((e) => e).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── بطاقة shimmer منفصلة ─────────────────────
-class _ShimmerCard extends StatefulWidget {
+// ══════════════════════════════════════════
+// منحنى بياني بـ CustomPaint
+// ══════════════════════════════════════════
+class _MiniLineChart extends StatelessWidget {
+  final Color goldColor;
+  final Color accentColor;
+
+  const _MiniLineChart({
+    required this.goldColor,
+    required this.accentColor,
+  });
+
+  // بيانات placeholder — استبدلها ببيانات Supabase لاحقاً
+  static const _points = [0.3, 0.5, 0.4, 0.7, 0.6, 0.85, 1.0];
+
   @override
-  State<_ShimmerCard> createState() => _ShimmerCardState();
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _LinePainter(
+        points: _points,
+        lineColor: accentColor,
+        fillColor: accentColor.withValues(alpha: 0.12),
+        dotColor: goldColor,
+      ),
+    );
+  }
 }
 
-class _ShimmerCardState extends State<_ShimmerCard>
+class _LinePainter extends CustomPainter {
+  final List<double> points;
+  final Color lineColor;
+  final Color fillColor;
+  final Color dotColor;
+
+  _LinePainter({
+    required this.points,
+    required this.lineColor,
+    required this.fillColor,
+    required this.dotColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.fill;
+
+    final dotPaint = Paint()
+      ..color = dotColor
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final fillPath = Path();
+
+    final w = size.width;
+    final h = size.height;
+    final step = w / (points.length - 1);
+
+    // نقاط المنحنى
+    final coords = <Offset>[];
+    for (int i = 0; i < points.length; i++) {
+      coords.add(Offset(i * step, h - (points[i] * h)));
+    }
+
+    // رسم المنحنى الناعم
+    path.moveTo(coords[0].dx, coords[0].dy);
+    fillPath.moveTo(coords[0].dx, h);
+    fillPath.lineTo(coords[0].dx, coords[0].dy);
+
+    for (int i = 0; i < coords.length - 1; i++) {
+      final cp1 = Offset((coords[i].dx + coords[i + 1].dx) / 2, coords[i].dy);
+      final cp2 = Offset((coords[i].dx + coords[i + 1].dx) / 2, coords[i + 1].dy);
+      path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
+          coords[i + 1].dx, coords[i + 1].dy);
+      fillPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
+          coords[i + 1].dx, coords[i + 1].dy);
+    }
+
+    fillPath.lineTo(coords.last.dx, h);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, linePaint);
+
+    // نقطة آخر قيمة (اليوم) مع دائرة ذهبية
+    final last = coords.last;
+    canvas.drawCircle(last, 5, dotPaint);
+    canvas.drawCircle(last, 3, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_LinePainter old) => false;
+}
+
+// ══════════════════════════════════════════
+// Shimmer Box
+// ══════════════════════════════════════════
+class _ShimmerBox extends StatefulWidget {
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
@@ -635,9 +800,8 @@ class _ShimmerCardState extends State<_ShimmerCard>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
   }
 
@@ -652,17 +816,13 @@ class _ShimmerCardState extends State<_ShimmerCard>
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) => Container(
-        width: 260,
-        height: 130,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           color: Color.lerp(
-            const Color(0xFF1A1A2E),
-            const Color(0xFF252540),
-            _anim.value,
-          ),
+              const Color(0xFF1A1A2E), const Color(0xFF252545), _anim.value),
           border: Border.all(
-              color: const Color(0xFFD4A843).withValues(alpha: 0.1), width: 0.8),
+              color: const Color(0xFFD4A843).withValues(alpha: 0.08),
+              width: 0.8),
         ),
       ),
     );
