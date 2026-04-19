@@ -52,38 +52,43 @@ const PaymentLocalSchema = CollectionSchema(
       name: r'paymentMethod',
       type: IsarType.string,
     ),
-    r'shiftId': PropertySchema(
+    r'paymentType': PropertySchema(
       id: 7,
+      name: r'paymentType',
+      type: IsarType.string,
+    ),
+    r'shiftId': PropertySchema(
+      id: 8,
       name: r'shiftId',
       type: IsarType.string,
     ),
     r'storeId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'supplierId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'supplierId',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'userId',
       type: IsarType.string,
     )
@@ -127,6 +132,7 @@ int _paymentLocalEstimateSize(
     }
   }
   bytesCount += 3 + object.paymentMethod.length * 3;
+  bytesCount += 3 + object.paymentType.length * 3;
   {
     final value = object.shiftId;
     if (value != null) {
@@ -168,13 +174,14 @@ void _paymentLocalSerialize(
   writer.writeString(offsets[4], object.notes);
   writer.writeDateTime(offsets[5], object.paymentDate);
   writer.writeString(offsets[6], object.paymentMethod);
-  writer.writeString(offsets[7], object.shiftId);
-  writer.writeString(offsets[8], object.storeId);
-  writer.writeString(offsets[9], object.supabaseId);
-  writer.writeString(offsets[10], object.supplierId);
-  writer.writeBool(offsets[11], object.synced);
-  writer.writeDateTime(offsets[12], object.updatedAt);
-  writer.writeString(offsets[13], object.userId);
+  writer.writeString(offsets[7], object.paymentType);
+  writer.writeString(offsets[8], object.shiftId);
+  writer.writeString(offsets[9], object.storeId);
+  writer.writeString(offsets[10], object.supabaseId);
+  writer.writeString(offsets[11], object.supplierId);
+  writer.writeBool(offsets[12], object.synced);
+  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeString(offsets[14], object.userId);
 }
 
 PaymentLocal _paymentLocalDeserialize(
@@ -192,13 +199,14 @@ PaymentLocal _paymentLocalDeserialize(
   object.notes = reader.readStringOrNull(offsets[4]);
   object.paymentDate = reader.readDateTimeOrNull(offsets[5]);
   object.paymentMethod = reader.readString(offsets[6]);
-  object.shiftId = reader.readStringOrNull(offsets[7]);
-  object.storeId = reader.readStringOrNull(offsets[8]);
-  object.supabaseId = reader.readString(offsets[9]);
-  object.supplierId = reader.readStringOrNull(offsets[10]);
-  object.synced = reader.readBool(offsets[11]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[12]);
-  object.userId = reader.readStringOrNull(offsets[13]);
+  object.paymentType = reader.readString(offsets[7]);
+  object.shiftId = reader.readStringOrNull(offsets[8]);
+  object.storeId = reader.readStringOrNull(offsets[9]);
+  object.supabaseId = reader.readString(offsets[10]);
+  object.supplierId = reader.readStringOrNull(offsets[11]);
+  object.synced = reader.readBool(offsets[12]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[13]);
+  object.userId = reader.readStringOrNull(offsets[14]);
   return object;
 }
 
@@ -224,18 +232,20 @@ P _paymentLocalDeserializeProp<P>(
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
-    case 10:
       return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
     case 11:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 13:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 14:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1202,6 +1212,142 @@ extension PaymentLocalQueryFilter
   }
 
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'paymentType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'paymentType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'paymentType',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'paymentType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
+      paymentTypeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'paymentType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
       shiftIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2132,6 +2278,19 @@ extension PaymentLocalQuerySortBy
     });
   }
 
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> sortByPaymentType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paymentType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy>
+      sortByPaymentTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paymentType', Sort.desc);
+    });
+  }
+
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> sortByShiftId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shiftId', Sort.asc);
@@ -2320,6 +2479,19 @@ extension PaymentLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> thenByPaymentType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paymentType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy>
+      thenByPaymentTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paymentType', Sort.desc);
+    });
+  }
+
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> thenByShiftId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shiftId', Sort.asc);
@@ -2456,6 +2628,13 @@ extension PaymentLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PaymentLocal, PaymentLocal, QDistinct> distinctByPaymentType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'paymentType', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<PaymentLocal, PaymentLocal, QDistinct> distinctByShiftId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2552,6 +2731,12 @@ extension PaymentLocalQueryProperty
   QueryBuilder<PaymentLocal, String, QQueryOperations> paymentMethodProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'paymentMethod');
+    });
+  }
+
+  QueryBuilder<PaymentLocal, String, QQueryOperations> paymentTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'paymentType');
     });
   }
 

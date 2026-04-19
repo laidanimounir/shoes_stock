@@ -12,6 +12,8 @@ import 'collections/invoice_local.dart';
 import 'collections/payment_local.dart';
 import 'collections/transaction_local.dart';
 import 'collections/shift_local.dart';
+import 'collections/expense_category_local.dart';
+import 'collections/expense_local.dart';
 import 'collections/sync_queue_item.dart';
 import 'collections/sync_metadata.dart';
 
@@ -39,6 +41,8 @@ class IsarService {
         PaymentLocalSchema,
         TransactionLocalSchema,
         ShiftLocalSchema,
+        ExpenseCategoryLocalSchema,
+        ExpenseLocalSchema,
         SyncQueueItemSchema,
         SyncMetadataSchema,
       ],

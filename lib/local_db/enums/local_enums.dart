@@ -227,3 +227,57 @@ extension SyncOperationTypeExt on SyncOperationType {
     }
   }
 }
+
+// ── payment_method (text + CHECK constraint) ───────────────
+enum PaymentMethod { cash, bank, mobile }
+
+extension PaymentMethodExt on PaymentMethod {
+  String toSupabaseString() {
+    switch (this) {
+      case PaymentMethod.cash:
+        return 'cash';
+      case PaymentMethod.bank:
+        return 'bank';
+      case PaymentMethod.mobile:
+        return 'mobile';
+    }
+  }
+
+  static PaymentMethod fromString(String value) {
+    switch (value) {
+      case 'cash':
+        return PaymentMethod.cash;
+      case 'bank':
+        return PaymentMethod.bank;
+      case 'mobile':
+        return PaymentMethod.mobile;
+      default:
+        throw ArgumentError('Unknown PaymentMethod: $value');
+    }
+  }
+}
+
+// ── payment_type (text + CHECK constraint) ─────────────────
+enum PaymentType { invoice, debtRecovery }
+
+extension PaymentTypeExt on PaymentType {
+  String toSupabaseString() {
+    switch (this) {
+      case PaymentType.invoice:
+        return 'invoice';
+      case PaymentType.debtRecovery:
+        return 'debt_recovery';
+    }
+  }
+
+  static PaymentType fromString(String value) {
+    switch (value) {
+      case 'invoice':
+        return PaymentType.invoice;
+      case 'debt_recovery':
+        return PaymentType.debtRecovery;
+      default:
+        throw ArgumentError('Unknown PaymentType: $value');
+    }
+  }
+}

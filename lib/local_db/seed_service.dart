@@ -17,6 +17,8 @@ import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/payment_local.dart';
 import '../local_db/collections/transaction_local.dart';
 import '../local_db/collections/shift_local.dart';
+import '../local_db/collections/expense_category_local.dart';
+import '../local_db/collections/expense_local.dart';
 import '../local_db/collections/sync_metadata.dart';
 
 
@@ -139,6 +141,26 @@ class SeedService {
           .eq('store_id', storeId)
           .gte('created_at', thirtyDaysAgo),
       mapper: _mapTransaction,
+    );
+    
+    // ── 12. expense_categories ─────────────
+    await _seedCollection<ExpenseCategoryLocal>(
+      isar: isar,
+      name: 'expense_categories',
+      fetch: () => _client.from('expense_categories').select().eq('store_id', storeId),
+      mapper: _mapExpenseCategory,
+    );
+
+    // ── 13. expenses (last 30 days) ────────
+    await _seedCollection<ExpenseLocal>(
+      isar: isar,
+      name: 'expenses',
+      fetch: () => _client
+          .from('expenses')
+          .select()
+          .eq('store_id', storeId)
+          .gte('expense_date', thirtyDaysAgo),
+      mapper: _mapExpense,
     );
 
     await updateLastSyncAt();
@@ -313,6 +335,7 @@ class SeedService {
     ..userId = j['user_id'] as String?
     ..amount = (j['amount'] as num?)?.toDouble() ?? 0.0
     ..paymentMethod = j['payment_method'] as String? ?? 'cash'
+    ..paymentType = j['payment_type'] as String? ?? 'invoice'
     ..paymentDate = _parseDate(j['payment_date'])
     ..notes = j['notes'] as String?
     ..shiftId = j['shift_id'] as String?
@@ -337,6 +360,25 @@ class SeedService {
         ..createdAt = _parseDate(j['created_at'])
         ..updatedAt = _parseDate(j['updated_at'])
         ..synced = true; // came from server
+
+  ExpenseCategoryLocal _mapExpenseCategory(Map<String, dynamic> j) =>
+      ExpenseCategoryLocal()
+        ..supabaseId = j['id'] as String
+        ..name = j['name'] as String
+        ..storeId = j['store_id'] as String
+        ..createdAt = _parseDate(j['created_at']);
+
+  ExpenseLocal _mapExpense(Map<String, dynamic> j) => ExpenseLocal()
+    ..supabaseId = j['id'] as String
+    ..categoryId = j['category_id'] as String?
+    ..amount = (j['amount'] as num?)?.toDouble() ?? 0.0
+    ..description = j['description'] as String?
+    ..paymentMethod = j['payment_method'] as String? ?? 'cash'
+    ..storeId = j['store_id'] as String
+    ..userId = j['user_id'] as String?
+    ..expenseDate = _parseDate(j['expense_date']) ?? DateTime.now()
+    ..createdAt = _parseDate(j['created_at'])
+    ..synced = true; // came from server
 
   // ══════════════════════════════════════════
   // Date parser
