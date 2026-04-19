@@ -17,48 +17,53 @@ const CustomerLocalSchema = CollectionSchema(
   name: r'CustomerLocal',
   id: 7497983628150283357,
   properties: {
-    r'balance': PropertySchema(
+    r'address': PropertySchema(
       id: 0,
+      name: r'address',
+      type: IsarType.string,
+    ),
+    r'balance': PropertySchema(
+      id: 1,
       name: r'balance',
       type: IsarType.double,
     ),
     r'createdAt': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'email': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'email',
       type: IsarType.string,
     ),
     r'fullName': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'fullName',
       type: IsarType.string,
     ),
     r'imageUrl': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isActive': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'isActive',
       type: IsarType.bool,
     ),
     r'phone': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'phone',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -83,6 +88,12 @@ int _customerLocalEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.email;
     if (value != null) {
@@ -112,15 +123,16 @@ void _customerLocalSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDouble(offsets[0], object.balance);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.email);
-  writer.writeString(offsets[3], object.fullName);
-  writer.writeString(offsets[4], object.imageUrl);
-  writer.writeBool(offsets[5], object.isActive);
-  writer.writeString(offsets[6], object.phone);
-  writer.writeString(offsets[7], object.supabaseId);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeString(offsets[0], object.address);
+  writer.writeDouble(offsets[1], object.balance);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeString(offsets[3], object.email);
+  writer.writeString(offsets[4], object.fullName);
+  writer.writeString(offsets[5], object.imageUrl);
+  writer.writeBool(offsets[6], object.isActive);
+  writer.writeString(offsets[7], object.phone);
+  writer.writeString(offsets[8], object.supabaseId);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 CustomerLocal _customerLocalDeserialize(
@@ -130,16 +142,17 @@ CustomerLocal _customerLocalDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = CustomerLocal();
-  object.balance = reader.readDouble(offsets[0]);
-  object.createdAt = reader.readDateTimeOrNull(offsets[1]);
-  object.email = reader.readStringOrNull(offsets[2]);
-  object.fullName = reader.readString(offsets[3]);
-  object.imageUrl = reader.readStringOrNull(offsets[4]);
-  object.isActive = reader.readBool(offsets[5]);
+  object.address = reader.readStringOrNull(offsets[0]);
+  object.balance = reader.readDouble(offsets[1]);
+  object.createdAt = reader.readDateTimeOrNull(offsets[2]);
+  object.email = reader.readStringOrNull(offsets[3]);
+  object.fullName = reader.readString(offsets[4]);
+  object.imageUrl = reader.readStringOrNull(offsets[5]);
+  object.isActive = reader.readBool(offsets[6]);
   object.isarId = id;
-  object.phone = reader.readStringOrNull(offsets[6]);
-  object.supabaseId = reader.readString(offsets[7]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
+  object.phone = reader.readStringOrNull(offsets[7]);
+  object.supabaseId = reader.readString(offsets[8]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
   return object;
 }
 
@@ -151,22 +164,24 @@ P _customerLocalDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
-    case 5:
-      return (reader.readBool(offset)) as P;
-    case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -268,6 +283,160 @@ extension CustomerLocalQueryWhere
 
 extension CustomerLocalQueryFilter
     on QueryBuilder<CustomerLocal, CustomerLocal, QFilterCondition> {
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'address',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'address',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      addressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
       balanceEqualTo(
     double value, {
@@ -1291,6 +1460,18 @@ extension CustomerLocalQueryLinks
 
 extension CustomerLocalQuerySortBy
     on QueryBuilder<CustomerLocal, CustomerLocal, QSortBy> {
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> sortByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> sortByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> sortByBalance() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'balance', Sort.asc);
@@ -1408,6 +1589,18 @@ extension CustomerLocalQuerySortBy
 
 extension CustomerLocalQuerySortThenBy
     on QueryBuilder<CustomerLocal, CustomerLocal, QSortThenBy> {
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByBalance() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'balance', Sort.asc);
@@ -1537,6 +1730,13 @@ extension CustomerLocalQuerySortThenBy
 
 extension CustomerLocalQueryWhereDistinct
     on QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> {
+  QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByAddress(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'address', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByBalance() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'balance');
@@ -1602,6 +1802,12 @@ extension CustomerLocalQueryProperty
   QueryBuilder<CustomerLocal, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<CustomerLocal, String?, QQueryOperations> addressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'address');
     });
   }
 

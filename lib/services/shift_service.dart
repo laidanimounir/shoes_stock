@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
 import '../models/shift_model.dart';
 import '../core/app_session.dart';
 import '../local_db/isar_service.dart';
@@ -116,9 +117,9 @@ class ShiftService {
 
   Future<ShiftSummary> closeShift(
     String shiftId,
-    double closingAmount,
+    double closingAmount, {
     String? notes,
-  ) async {
+  }) async {
     if (AppSession.isOfflineMode) {
       final isar = await IsarService.getInstance();
       final results = await isar.shiftLocals

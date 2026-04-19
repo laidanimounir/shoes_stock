@@ -10,6 +10,7 @@ class CustomerLocal {
   late String fullName;
   String? phone;
   String? email;
+  String? address;
   String? imageUrl;
   bool isActive = true;
   double balance = 0.0;

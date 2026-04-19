@@ -178,7 +178,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       final variantMap = {for (var v in localVariants) v.supabaseId: v};
       final productMap = {for (var p in localProducts) p.supabaseId: p};
 
-      final enrichedData = localInventory.map((item) {
+      final List<Map<String, dynamic>> enrichedData = localInventory.map((item) {
         final variant = variantMap[item.variantId];
         if (variant == null) return null;
         
@@ -201,7 +201,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             }
           }
         };
-      }).where((item) => item != null).map((item) => item!).toList();
+      }).where((item) => item != null).map((item) => item!).toList().cast<Map<String, dynamic>>();
 
       if (mounted) {
         setState(() {

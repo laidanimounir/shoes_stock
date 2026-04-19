@@ -224,6 +224,7 @@ class SeedService {
     ..fullName = j['full_name'] as String
     ..phone = j['phone'] as String?
     ..email = j['email'] as String?
+    ..address = j['address'] as String?
     ..imageUrl = j['image_url'] as String?
     ..isActive = j['is_active'] as bool? ?? true
     ..balance = (j['balance'] as num?)?.toDouble() ?? 0.0
