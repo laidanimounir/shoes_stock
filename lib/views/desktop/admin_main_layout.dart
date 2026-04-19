@@ -12,6 +12,8 @@ import '../admin/activity_logs_screen.dart';
 import '../admin/gestion_stores.dart';
 import '../admin/inventory_screen.dart';
 import '../admin/sales_history_screen.dart';
+import '../admin/expenses_screen.dart';
+import '../admin/debt_recovery_screen.dart';
 import '../../widgets/offline_banner.dart';
 
 class AdminMainLayout extends StatefulWidget {
@@ -43,6 +45,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
       const GestionEmployesScreen(),
       const ActivityLogsScreen(),
       const SalesHistoryScreen(),
+      const ExpensesScreen(),
+      const DebtRecoveryScreen(),
     ];
   }
 
@@ -66,6 +70,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     (Icons.badge_outlined, Icons.badge_rounded, 'Employés'),
     (Icons.history_outlined, Icons.history_rounded, "Journaux d'activité"),
     (Icons.history_edu_outlined, Icons.history_edu_rounded, 'Historique Ventes'),
+    (Icons.receipt_long_outlined, Icons.receipt_long, 'Dépenses'),
+    (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Recouvrement'),
   ];
 
   @override

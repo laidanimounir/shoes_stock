@@ -145,6 +145,12 @@ class SyncEngine {
         case SyncOperationType.processRefund:
           result = await _rpcProcessRefund(payload);
           break;
+        case SyncOperationType.createExpense:
+          result = await _rpcAddExpense(payload);
+          break;
+        case SyncOperationType.createDebtRecoveryPayment:
+          result = await _rpcAddDebtRecoveryPayment(payload);
+          break;
       }
 
       // ── Success ──
@@ -226,6 +232,21 @@ class SyncEngine {
     final res = await _client.rpc('process_refund', params: p);
     // process_refund returns a UUID string directly
     if (res is String) return {'id': res};
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _rpcAddExpense(
+      Map<String, dynamic> p) async {
+    final res = await _client.rpc('add_expense', params: p);
+    // add_expense returns a UUID string directly
+    if (res is String) return {'id': res};
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _rpcAddDebtRecoveryPayment(
+      Map<String, dynamic> p) async {
+    await _client.rpc('add_debt_recovery_payment', params: p);
+    // add_debt_recovery_payment returns void
     return null;
   }
 

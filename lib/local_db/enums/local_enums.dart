@@ -188,6 +188,8 @@ enum SyncOperationType {
   openShift,
   closeShift,
   processRefund,
+  createExpense,
+  createDebtRecoveryPayment,
 }
 
 extension SyncOperationTypeExt on SyncOperationType {
@@ -205,6 +207,10 @@ extension SyncOperationTypeExt on SyncOperationType {
         return 'close_shift';
       case SyncOperationType.processRefund:
         return 'process_refund';
+      case SyncOperationType.createExpense:
+        return 'create_expense';
+      case SyncOperationType.createDebtRecoveryPayment:
+        return 'create_debt_recovery_payment';
     }
   }
 
@@ -222,6 +228,10 @@ extension SyncOperationTypeExt on SyncOperationType {
         return SyncOperationType.closeShift;
       case 'process_refund':
         return SyncOperationType.processRefund;
+      case 'create_expense':
+        return SyncOperationType.createExpense;
+      case 'create_debt_recovery_payment':
+        return SyncOperationType.createDebtRecoveryPayment;
       default:
         throw ArgumentError('Unknown SyncOperationType: $value');
     }
