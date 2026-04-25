@@ -324,7 +324,7 @@ Shoes_Stock/
 | **Phase B** | `offline_banner`, `login_screen`, `admin_main_layout`, `employee_main_layout`, `shift_dialog`, `close_shift_screen`, `end_of_day_report`, `activity_logs_screen`, `sales_history_screen` | ✅ مكتمل |
 | **Phase C1** | `refund_modal`, `dashboard_screen`, `ajouter_produit` | ✅ مكتمل |
 | **Phase C2** | `debt_recovery_screen`, `expenses_screen`, `gestion_employes` | ✅ **مكتمل 25 أبريل 2026** |
-| **Phase C3** | `gestion_stores`, `achat_fournisseur`, `inventory_screen`, `liste_produits`, `gestion_fournisseurs`, `gestion_clients`, `pos_screen` | 🔲 **التالي** |
+| **Phase C3** | `gestion_stores`, `achat_fournisseur`, `inventory_screen`, `liste_produits`, `gestion_fournisseurs`, `gestion_clients`, `pos_screen` | ✅ **مكتمل 25 أبريل 2026** |
 | **Phase C4** | `owner_dashboard` (~215 سلسلة) | 🔲 معلّق |
 
 **تفاصيل البنية التقنية للتعريب:**
@@ -340,7 +340,7 @@ Shoes_Stock/
 
 | الأولوية | الوحدة | الوصف | الحالة |
 |---|---|---|---|
-| 🔴 عالية | **Bilingual UI C3** | POS + Inventory + Clients + Suppliers + Stores | 🔲 التالي |
+| 🔴 عالية | **Bilingual UI C3** | POS + Inventory + Clients + Suppliers + Stores | ✅ مكتمل |
 | 🔴 عالية | **Bilingual UI C4** | Mobile owner dashboard (~215 سلسلة) | 🔲 التالي |
 | 🔴 عالية | **Receipt Printing** | طابعة حرارية 80mm + توليد PDF للفواتير | 🔲 معلّق |
 | 🔴 عالية | **Low Stock Alerts** | حد أدنى للمخزون لكل متغير + لوحة إعادة الطلب | 🔲 معلّق |
@@ -534,5 +534,5 @@ dev_dependencies:
 
 *آخر تحديث: 25 أبريل 2026*  
 *v1: إنتاج ✅ | v2: مكتمل ✅ | v3: مكتمل ✅ | v4: قيد التطوير 🔧*  
-*الجلسة الحالية: C3 → C4 → طباعة الفواتير → تنبيهات المخزون*  
+*الجلسة الحالية: C4 → طباعة الفواتير → تنبيهات المخزون*  
 *الأولوية الأمنية: JWT Edge Functions → 28 FK Indexes → RLS search_path*
