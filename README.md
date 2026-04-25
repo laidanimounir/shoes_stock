@@ -525,6 +525,22 @@ dev_dependencies:
 
 ---
 
+
+Offline & Local Database Strategy
+Why Isar + Supabase?
+ShoeStock uses a dual-database architecture combining Supabase as the cloud backend and Isar as the local database for offline support. Supabase handles real-time data sharing across multiple stores and devices, while Isar ensures the app remains fully functional without an internet connection.
+Isar was chosen over other local database solutions (such as SQLite via sqflite or drift) for three main reasons. First, performance — Isar reads and writes Dart objects natively without SQL parsing or manual mapping, making it significantly faster on low-end Android devices commonly used in retail environments. Second, reactivity — Isar's built-in watchLazy() streams allow the UI to update automatically when local data changes, without any additional state management overhead. Third, developer experience — defining data models as plain Dart classes with @collection annotations eliminates boilerplate and keeps the codebase consistent with Dart idioms.
+When the device is online, all write operations are persisted to Isar first, then synced to Supabase. When offline, operations are queued locally and synced automatically upon reconnection. This approach guarantees zero data loss and a seamless experience for store employees regardless of network conditions.
+
+
+ستراتيجية قاعدة البيانات المحلية والمزامنة
+لماذا Isar مع Supabase؟
+يعتمد تطبيق ShoeStock على معمارية ثنائية تجمع بين Supabase كقاعدة بيانات سحابية وIsar كقاعدة بيانات محلية لدعم العمل بدون إنترنت. يتولى Supabase مشاركة البيانات في الوقت الفعلي بين المتاجر والأجهزة المختلفة، بينما يضمن Isar استمرار عمل التطبيق بكامل وظائفه حتى في غياب الاتصال بالشبكة.
+تم اختيار Isar على حساب بدائل أخرى كـ SQLite عبر مكتبتَي sqflite أو drift لثلاثة أسباب رئيسية. أولاً، الأداء — يخزن Isar كائنات Dart مباشرةً دون الحاجة إلى تحليل SQL أو تحويل يدوي للبيانات، مما يجعله أسرع بشكل ملحوظ على أجهزة Android المتوسطة والمنخفضة المواصفات الشائعة في بيئات نقاط البيع. ثانياً، التفاعلية — توفر Isar دعماً مدمجاً لـ watchLazy() يتيح تحديث واجهة المستخدم تلقائياً عند أي تغيير في البيانات المحلية، دون الحاجة إلى طبقات إضافية لإدارة الحالة. ثالثاً، سهولة التطوير — يُعرَّف نموذج البيانات كـ Dart class عادي باستخدام @collection، مما يقلل الكود المتكرر ويحافظ على اتساق قاعدة الكود مع أسلوب Dart.
+عند اتصال الجهاز بالإنترنت، تُحفظ جميع العمليات في Isar أولاً ثم تُزامَن مع Supabase فوراً. وعند انقطاع الاتصال، تُوضع العمليات في قائمة انتظار محلية وتُرسَل تلقائياً عند عودة الشبكة. يضمن هذا النهج عدم ضياع أي بيانات ويوفر تجربة سلسة لموظفي المتاجر بصرف النظر عن حالة الاتصال.
+
+
+
 ## 👤 المطور الرئيسي
 
 **Lead Systems Architect & Digital Transformation Consultant**  
