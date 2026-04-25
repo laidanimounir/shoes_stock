@@ -7,6 +7,7 @@ import '../../local_db/collections/supplier_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
 import '../../local_db/collections/user_profile_local.dart';
+import '../../core/app_strings.dart';
 
 class GestionFournisseursScreen extends StatefulWidget {
   const GestionFournisseursScreen({super.key});
@@ -125,7 +126,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isEdit ? 'Modifier le Fournisseur' : 'Nouveau Fournisseur'),
+        title: Text(isEdit ? S.t('supp_edit') : S.t('supp_add')),
         content: Form(
           key: formKey,
           child: Column(
@@ -133,24 +134,24 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom de la société', prefixIcon: Icon(Icons.business), border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                decoration: InputDecoration(labelText: S.t('supp_company'), prefixIcon: const Icon(Icons.business), border: const OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: contactCtrl,
-                decoration: const InputDecoration(labelText: 'Nom du contact', prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: S.t('supp_contact'), prefixIcon: const Icon(Icons.person), border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone', prefixIcon: Icon(Icons.phone), border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: S.t('label_phone'), prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder()),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -175,18 +176,18 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                 _fetchSuppliers();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(isEdit ? 'Modifié avec succès.' : 'Ajouté avec succès.'),
+                    content: Text(isEdit ? S.t('msg_updated') : S.t('msg_saved')),
                     backgroundColor: Colors.green,
                   ));
                 }
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-            child: Text(isEdit ? 'Modifier' : 'Ajouter'),
+            child: Text(isEdit ? S.t('action_edit') : S.t('action_add')),
           ),
         ],
       ),
@@ -198,14 +199,14 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Archiver le fournisseur'),
-        content: const Text('Voulez-vous masquer ce fournisseur ? (Ses anciennes factures seront conservées).'),
+        title: Text(S.t('supp_archive_title')),
+        content: Text(S.t('supp_archive_msg')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-            child: const Text('Archiver'),
+            child: Text(S.t('action_archive')),
           ),
         ],
       ),
@@ -216,11 +217,11 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
      
       await Supabase.instance.client.from('suppliers').update({'is_active': false}).eq('id', id);
       _fetchSuppliers();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fournisseur archivé.'), backgroundColor: Colors.orange));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_archived')), backgroundColor: Colors.orange));
     } on PostgrestException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -234,14 +235,14 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Gestion des Fournisseurs'),
+        title: Text(S.t('supp_title')),
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
         
           Row(
             children: [
-              const Text("Seulement endettés", style: TextStyle(color: Colors.white)),
+              Text(S.t('supp_with_debt'), style: const TextStyle(color: Colors.white)),
               Switch(
                 value: _showOnlyWithDebt,
                 activeColor: Colors.orange,
@@ -255,13 +256,13 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
             ],
           ),
           if (_userRole == 'owner')
-            IconButton(icon: const Icon(Icons.add), tooltip: 'Ajouter', onPressed: () => _showAddEditDialog()),
+            IconButton(icon: const Icon(Icons.add), tooltip: S.t('action_add'), onPressed: () => _showAddEditDialog()),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _filteredSuppliers.isEmpty
-              ? Center(child: Text(_showOnlyWithDebt ? 'Aucun fournisseur avec des dettes.' : 'Aucun fournisseur.', style: const TextStyle(fontSize: 18, color: Colors.grey)))
+              ? Center(child: Text(_showOnlyWithDebt ? S.t('supp_no_debt') : S.t('supp_no_results'), style: const TextStyle(fontSize: 18, color: Colors.grey)))
               : ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: _filteredSuppliers.length,
@@ -276,13 +277,13 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-                        border: Border(left: BorderSide(color: hasDebt ? Colors.red : Colors.green, width: 6)), // مؤشر بصري للديون
+                        border: BorderDirectional(start: BorderSide(color: hasDebt ? Colors.red : Colors.green, width: 6)), // مؤشر بصري للديون
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         onTap: () => _openSupplierProfile(s), // فتح الملف التفصيلي
                         title: Text(s['company_name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        subtitle: Text('Contact: ${s['contact_name'] ?? '-'} • Tél: ${s['phone'] ?? '-'}'),
+                        subtitle: Text('${S.t('supp_contact_prefix')}${s['contact_name'] ?? '-'} • ${S.t('label_phone_short')}${s['phone'] ?? '-'}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -291,9 +292,9 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Text("Dettes (Crédit)", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text(S.t('supp_debt_credit'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                 Text(
-                                  '${balance.toStringAsFixed(2)} DA',
+                                  '${balance.toStringAsFixed(2)} ${S.t('misc_currency')}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -532,26 +533,26 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Nouveau Versement'),
+        title: Text(S.t('supp_new_payment')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Dette actuelle: ${_currentBalance.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("${S.t('supp_current_debt')}${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Montant versé', border: OutlineInputBorder(), prefixIcon: Icon(Icons.euro)),
+              decoration: InputDecoration(labelText: S.t('supp_payment_amount'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.euro)),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: notesCtrl,
-              decoration: const InputDecoration(labelText: 'Notes / Motif', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: S.t('supp_payment_notes'), border: const OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () async {
               final amount = double.tryParse(amountCtrl.text);
@@ -566,19 +567,19 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
                   'user_id': user?.id,
                   'amount': amount,
                   'payment_method': 'cash',
-                  'notes': notesCtrl.text.isEmpty ? 'Versement manuel' : notesCtrl.text,
+                  'notes': notesCtrl.text.isEmpty ? S.t('supp_manual_payment') : notesCtrl.text,
                 });
                 
                 _fetchProfileData();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Versement enregistré.'), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_payment_recorded')), backgroundColor: Colors.green));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            child: const Text('Confirmer le paiement', style: TextStyle(color: Colors.white)),
+            child: Text(S.t('debt_confirm_payment'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -597,9 +598,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white60,
           indicatorColor: Colors.orange,
-          tabs: const [
-            Tab(icon: Icon(Icons.receipt), text: "Factures d'achat"),
-            Tab(icon: Icon(Icons.payments), text: "Historique des Versements"),
+          tabs: [
+            Tab(icon: const Icon(Icons.receipt), text: S.t('supp_tabs_purchases')),
+            Tab(icon: const Icon(Icons.payments), text: S.t('supp_tabs_payments')),
           ],
         ),
       ),
@@ -616,13 +617,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         onPressed: _showAddPaymentDialog,
         backgroundColor: Colors.orange,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Verser un montant", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: Text(S.t('supp_make_payment'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ) : null,
     );
   }
 
   Widget _buildInvoicesTab() {
-    if (_invoices.isEmpty) return const Center(child: Text("Aucune facture d'achat pour ce fournisseur."));
+    if (_invoices.isEmpty) return Center(child: Text(S.t('supp_no_invoices')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _invoices.length,
@@ -637,13 +638,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Colors.teal, child: Icon(Icons.receipt, color: Colors.white)),
             title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • Par: ${inv['user_profiles']['full_name']}"),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}"),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text("Total: ${total.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("Payé: ${paid.toStringAsFixed(2)} DA", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
               ],
             ),
           ),
@@ -653,7 +654,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   }
 
   Widget _buildPaymentsTab() {
-    if (_payments.isEmpty) return const Center(child: Text("Aucun versement enregistré."));
+    if (_payments.isEmpty) return Center(child: Text(S.t('supp_no_payments')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _payments.length,
@@ -666,8 +667,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.monetization_on, color: Colors.white)),
-            title: Text("Versement de ${amount.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • Motif: ${pay['notes']}"),
+            title: Text("${S.t('supp_payment_of')}${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('supp_reason')}${pay['notes']}"),
           ),
         );
       },

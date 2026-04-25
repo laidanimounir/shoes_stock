@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
+import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -182,7 +183,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Modifier: ${variant['size']} - ${variant['color']}'),
+        title: Text('${S.t('prod_edit_variant')}${variant['size']} - ${variant['color']}'),
         content: Form(
           key: formKey,
           child: Column(
@@ -190,7 +191,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             children: [
               TextFormField(
                 controller: barcodeCtrl,
-                decoration: const InputDecoration(labelText: 'Code-barres', border: OutlineInputBorder(), prefixIcon: Icon(Icons.qr_code)),
+                decoration: InputDecoration(labelText: S.t('prod_barcode'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.qr_code)),
               ),
               const SizedBox(height: 16),
               Row(
@@ -199,7 +200,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     child: TextFormField(
                       controller: buyPriceCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Prix Achat (DA)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.arrow_downward, color: Colors.orange)),
+                      decoration: InputDecoration(labelText: S.t('prod_buy_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_downward, color: Colors.orange)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -207,20 +208,20 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     child: TextFormField(
                       controller: sellPriceCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Prix Vente (DA)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.arrow_upward, color: Colors.green)),
+                      decoration: InputDecoration(labelText: S.t('prod_sell_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_upward, color: Colors.green)),
                     ),
                   ),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: Text('Note: Les anciennes factures garderont l\'ancien prix.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(S.t('prod_price_note'), style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
               )
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -232,15 +233,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 }).eq('id', variant['id']);
                 
                 _fetchProducts();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Variante mise à jour avec succès.'), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_variant_updated')), backgroundColor: Colors.green));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            child: const Text('Enregistrer', style: TextStyle(color: Colors.white)),
+            child: Text(S.t('action_save'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -252,14 +253,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Archiver cette variante ?'),
-        content: const Text('Elle ne sera plus disponible pour la vente, mais restera dans les anciennes factures.'),
+        title: Text(S.t('prod_archive_variant_title')),
+        content: Text(S.t('prod_archive_variant_msg')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Archiver', style: TextStyle(color: Colors.white)),
+            child: Text(S.t('action_archive'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -282,14 +283,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Archiver TOUT le produit ?'),
-        content: const Text('Le produit et toutes ses variantes seront masqués du catalogue.'),
+        title: Text(S.t('prod_archive_title')),
+        content: Text(S.t('prod_archive_msg')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Archiver le produit', style: TextStyle(color: Colors.white)),
+            child: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -318,13 +319,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Catalogue des Produits'),
+        title: Text(S.t('prod_catalog_title')),
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Actualiser',
+            tooltip: S.t('action_refresh'),
             onPressed: _fetchProducts,
           ),
         ],
@@ -333,7 +334,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         onPressed: widget.onAddProduct,
         backgroundColor: Colors.teal,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Ajouter un Produit', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -354,18 +355,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           ),
                           child: TextField(
                             controller: _searchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Rechercher un produit ou fournisseur...',
-                              prefixIcon: Icon(Icons.search),
+                            decoration: InputDecoration(
+                              hintText: S.t('prod_search_hint'),
+                              prefixIcon: const Icon(Icons.search),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(16),
                             ),
                             onChanged: (val) => setState(() => _searchQuery = val),
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
-                      _buildMiniStat('Produits Actifs', '${_filteredProducts.length}', Icons.category, Colors.blue),
+                      _buildMiniStat(S.t('prod_active_count'), '${_filteredProducts.length}', Icons.category, Colors.blue),
                     ],
                   ),
                 ),
@@ -373,13 +374,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               
                 Expanded(
                   child: _filteredProducts.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
-                              SizedBox(height: 16),
-                              Text('Aucun produit trouvé', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                              const Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
+                              const SizedBox(height: 16),
+                              Text(S.t('prod_no_results'), style: const TextStyle(fontSize: 20, color: Colors.grey)),
                             ],
                           ),
                         )
@@ -392,7 +393,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             final allVariants = product['product_variants'] as List<dynamic>? ?? [];
                             final activeVariants = allVariants.where((v) => v['is_active'] == true).toList();
                             
-                            final supplierName = product['suppliers']?['company_name'] ?? 'Sans fournisseur';
+                            final supplierName = product['suppliers']?['company_name'] ?? S.t('prod_no_supplier');
                             final totalStock = _getTotalStock(activeVariants);
                             final imageUrl = product['image_url'];
 
@@ -427,7 +428,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     const SizedBox(width: 16),
                                     Icon(Icons.style, size: 14, color: Colors.grey[600]),
                                     const SizedBox(width: 4),
-                                    Text('${activeVariants.length} variantes', style: TextStyle(color: Colors.grey[600])),
+                                    Text('${activeVariants.length} ${S.t('prod_variants_count')}', style: TextStyle(color: Colors.grey[600])),
                                     const SizedBox(width: 16),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -437,7 +438,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         border: Border.all(color: totalStock > 0 ? Colors.green : Colors.red),
                                       ),
                                       child: Text(
-                                        'Stock: $totalStock',
+                                        '${S.t('prod_stock_label')}$totalStock',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -449,9 +450,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 ),
                                 children: [
                                   if (activeVariants.isEmpty)
-                                    const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Text('Aucune variante active.', style: TextStyle(color: Colors.grey)),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Text(S.t('prod_no_active_variants'), style: const TextStyle(color: Colors.grey)),
                                     )
                                   else
                                     Container(
@@ -462,13 +463,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                                             decoration: BoxDecoration(color: Colors.teal[50]),
-                                            child: const Row(
+                                            child: Row(
                                               children: [
-                                                Expanded(flex: 2, child: Text('Détails', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                Expanded(flex: 2, child: Text('Code-barres', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                Expanded(flex: 3, child: Text('Achat / Vente (Marge)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                Expanded(flex: 1, child: Text('Stock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue))),
-                                                SizedBox(width: 80, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue))),
+                                                SizedBox(width: 80, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                               ],
                                             ),
                                           ),
@@ -502,16 +503,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       mainAxisAlignment: MainAxisAlignment.center,
                                                       children: [
-                                                        Text('A: $buyPrice DA', style: const TextStyle(fontSize: 12, color: Colors.orange)),
-                                                        Text('V: $sellPrice DA', style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
-                                                        Text('Marge: +$margin DA', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                                                        Text('${S.t('prod_buy_short')}$buyPrice ${S.t('misc_currency')}', style: const TextStyle(fontSize: 12, color: Colors.orange)),
+                                                        Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}', style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                        Text('${S.t('prod_margin_short')}$margin ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11, color: Colors.teal)),
                                                       ],
                                                     ),
                                                   ),
                                                   Expanded(
                                                     flex: 1,
                                                     child: Tooltip(
-                                                      message: storeInfo.isEmpty ? 'Pas en stock' : storeInfo,
+                                                      message: storeInfo.isEmpty ? S.t('prod_out_of_stock') : storeInfo,
                                                       child: Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                         decoration: BoxDecoration(
@@ -534,12 +535,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                         if (_userRole == 'owner') ...[
                                                           IconButton(
                                                             icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                                                            tooltip: 'Modifier Prix/Code',
+                                                            tooltip: S.t('prod_edit_price_code'),
                                                             onPressed: () => _showEditVariantDialog(v),
                                                           ),
                                                           IconButton(
                                                             icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                            tooltip: 'Archiver cette variante',
+                                                            tooltip: S.t('prod_archive_variant'),
                                                             onPressed: () => _archiveVariant(v['id']),
                                                           ),
                                                         ]
@@ -558,11 +559,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Align(
-                                        alignment: Alignment.centerRight,
+                                        alignment: AlignmentDirectional.centerEnd,
                                         child: TextButton.icon(
                                           onPressed: () => _archiveProduct(product['id']),
                                           icon: const Icon(Icons.archive, color: Colors.red, size: 18),
-                                          label: const Text('Archiver TOUT le produit', style: TextStyle(color: Colors.red)),
+                                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
                                         ),
                                       ),
                                     )

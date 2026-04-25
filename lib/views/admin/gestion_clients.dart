@@ -7,6 +7,7 @@ import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
 import '../../local_db/collections/user_profile_local.dart';
+import '../../core/app_strings.dart';
 
 class GestionClientsScreen extends StatefulWidget {
   const GestionClientsScreen({super.key});
@@ -308,7 +309,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isEdit ? 'Modifier le Client' : 'Nouveau Client'),
+        title: Text(isEdit ? S.t('cust_edit') : S.t('cust_add')),
         content: Form(
           key: formKey,
           child: Column(
@@ -316,24 +317,24 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom complet', prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                decoration: InputDecoration(labelText: S.t('cust_full_name'), prefixIcon: const Icon(Icons.person), border: const OutlineInputBorder()),
+                validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone', prefixIcon: Icon(Icons.phone), border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: S.t('cust_phone'), prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: emailCtrl,
-                decoration: const InputDecoration(labelText: 'Adresse e-mail', prefixIcon: Icon(Icons.email), border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: S.t('cust_email'), prefixIcon: const Icon(Icons.email), border: const OutlineInputBorder()),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -387,14 +388,14 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Archiver le client'),
-        content: const Text('Voulez-vous masquer ce client ? (Ses factures seront conservées).'),
+        title: Text(S.t('cust_archive_title')),
+        content: Text(S.t('cust_archive_msg')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-            child: const Text('Archiver'),
+            child: Text(S.t('action_archive')),
           ),
         ],
       ),
@@ -405,11 +406,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
       await Supabase.instance.client.from('customers').update({'is_active': false}).eq('id', id);
       if (_selectedCustomer?['id'] == id) setState(() => _selectedCustomer = null);
       _fetchCustomers(_searchController.text);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Client archivé.'), backgroundColor: Colors.orange));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('cust_archived')), backgroundColor: Colors.orange));
     } on PostgrestException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -428,26 +429,26 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Recevoir un paiement'),
+        title: Text(S.t('cust_receive_payment')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Crédit (Dette) du client: ${_currentBalance.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("${S.t('pos_credit')}: ${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Montant reçu', border: OutlineInputBorder(), prefixIcon: Icon(Icons.euro)),
+              decoration: InputDecoration(labelText: S.t('cust_payment_amount'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.euro)),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: notesCtrl,
-              decoration: const InputDecoration(labelText: 'Notes / Motif', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: S.t('cust_payment_notes'), border: const OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () async {
               final amount = double.tryParse(amountCtrl.text);
@@ -461,20 +462,20 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                   'user_id': user?.id,
                   'amount': amount,
                   'payment_method': 'cash',
-                  'notes': notesCtrl.text.isEmpty ? 'Versement manuel (Client)' : notesCtrl.text,
+                  'notes': notesCtrl.text.isEmpty ? S.t('cust_manual_payment') : notesCtrl.text,
                 });
                 
                 _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
                 _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paiement enregistré avec succès.'), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_payment_recorded')), backgroundColor: Colors.green));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-            child: const Text('Confirmer', style: TextStyle(color: Colors.white)),
+            child: Text(S.t('action_confirm'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -493,7 +494,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Gestion des Clients & Crédits'),
+        title: Text(S.t('cust_title_full')),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
       ),
@@ -516,10 +517,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                             Expanded(
                               child: TextField(
                                 controller: _searchController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Rechercher un client...',
-                                  prefixIcon: Icon(Icons.search),
-                                  border: OutlineInputBorder(),
+                                decoration: InputDecoration(
+                                  hintText: S.t('cust_search_hint'),
+                                  prefixIcon: const Icon(Icons.search),
+                                  border: const OutlineInputBorder(),
                                   isDense: true,
                                 ),
                                 onChanged: (val) => _fetchCustomers(val),
@@ -530,7 +531,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                               onPressed: () => _showAddEditCustomerDialog(),
                               icon: const Icon(Icons.person_add_alt_1),
                               color: Colors.indigo,
-                              tooltip: 'Ajouter un client',
+                              tooltip: S.t('cust_add_tooltip'),
                             )
                           ],
                         ),
@@ -538,7 +539,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Text("Endettés", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                            Text(S.t('cust_with_debt'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
                             Switch(
                               value: _showOnlyWithDebt,
                               activeColor: Colors.orange,
@@ -559,7 +560,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                     child: _isLoading 
                       ? const Center(child: CircularProgressIndicator())
                       : _customers.isEmpty 
-                        ? const Center(child: Text("Aucun client trouvé.", style: TextStyle(color: Colors.grey)))
+                        ? Center(child: Text(S.t('cust_no_results'), style: const TextStyle(color: Colors.grey)))
                         : ListView.separated(
                           itemCount: _customers.length,
                           separatorBuilder: (_, _) => const Divider(height: 1),
@@ -576,10 +577,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                                 backgroundColor: isSelected ? Colors.indigo : Colors.grey[200],
                                 child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
                               ),
-                              title: Text(c['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text(c['phone'] ?? c['email'] ?? 'Aucun contact'),
+                              title: Text(c['full_name'] ?? S.t('misc_unknown'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(c['phone'] ?? c['email'] ?? S.t('misc_no_phone')),
                               trailing: hasDebt 
-                                  ? Text('${balance.toStringAsFixed(2)} DA', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                                  ? Text('${balance.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
                                   : const Icon(Icons.check_circle, color: Colors.green, size: 16),
                               onTap: () => _selectCustomer(c),
                             );
@@ -595,10 +596,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           Expanded(
             flex: 6,
             child: Container(
-              margin: const EdgeInsets.only(top: 16, bottom: 16, right: 16),
+              margin: const EdgeInsetsDirectional.only(top: 16, bottom: 16, end: 16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
               child: _selectedCustomer == null
-                  ? const Center(child: Text("Sélectionnez un client pour voir les détails", style: TextStyle(color: Colors.grey, fontSize: 18)))
+                  ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: Colors.grey, fontSize: 18)))
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -660,9 +661,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                           controller: _tabController,
                           labelColor: Colors.indigo,
                           indicatorColor: Colors.indigo,
-                          tabs: const [
-                            Tab(icon: Icon(Icons.shopping_bag), text: "Factures de Vente"),
-                            Tab(icon: Icon(Icons.account_balance_wallet), text: "Paiements & Versements"),
+                          tabs: [
+                            Tab(icon: const Icon(Icons.shopping_bag), text: S.t('cust_tabs_invoices')),
+                            Tab(icon: const Icon(Icons.account_balance_wallet), text: S.t('cust_tabs_payments')),
                           ],
                         ),
                         
@@ -685,7 +686,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                           child: ElevatedButton.icon(
                             onPressed: _showAddPaymentDialog,
                             icon: const Icon(Icons.payments),
-                            label: const Text("Enregistrer un paiement (Versement)", style: TextStyle(fontSize: 16)),
+                            label: Text(S.t('cust_register_payment_btn'), style: const TextStyle(fontSize: 16)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
@@ -703,7 +704,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   }
 
   Widget _buildInvoicesTab() {
-    if (_invoices.isEmpty) return const Center(child: Text("Aucun achat enregistré."));
+    if (_invoices.isEmpty) return Center(child: Text(S.t('cust_no_purchases')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _invoices.length,
@@ -720,13 +721,13 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           child: ListTile(
             leading: CircleAvatar(backgroundColor: Colors.indigo[50], child: const Icon(Icons.shopping_bag, color: Colors.indigo)),
             title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • Vendu par: ${inv['user_profiles']['full_name']}"),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}"),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text("Total: ${total.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("Payé: ${paid.toStringAsFixed(2)} DA", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
               ],
             ),
           ),
@@ -736,7 +737,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   }
 
   Widget _buildPaymentsTab() {
-    if (_payments.isEmpty) return const Center(child: Text("Aucun versement enregistré."));
+    if (_payments.isEmpty) return Center(child: Text(S.t('cust_no_payments')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _payments.length,
@@ -751,8 +752,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
           child: ListTile(
             leading: CircleAvatar(backgroundColor: Colors.green[50], child: const Icon(Icons.check_circle, color: Colors.green)),
-            title: Text("Paiement de ${amount.toStringAsFixed(2)} DA", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • Motif: ${pay['notes']}"),
+            title: Text("${S.t('cust_payment_of')} ${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('label_notes')}: ${pay['notes']}"),
           ),
         );
       },

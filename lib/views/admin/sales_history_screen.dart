@@ -185,7 +185,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              "${s['total_price']} DA",
+                              "${s['total_price']} ${S.t('misc_currency')}",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,

@@ -382,7 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _buildKpiCard(
                   title: S.t('dash_revenue'),
                   subtitle: S.t('dash_today'),
-                  value: '${_todaySales.toStringAsFixed(0)} DA',
+                  value: '${_todaySales.toStringAsFixed(0)} ${S.t('misc_currency')}',
                   icon: Icons.point_of_sale_rounded,
                   accentColor: const Color(0xFF1E88E5),
                   topColor: const Color(0xFF1565C0),
@@ -391,7 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _buildKpiCard(
                   title: S.t('dash_net_profit'),
                   subtitle: S.t('dash_today'),
-                  value: '+${_todayProfit.toStringAsFixed(0)} DA',
+                  value: '+${_todayProfit.toStringAsFixed(0)} ${S.t('misc_currency')}',
                   icon: Icons.trending_up_rounded,
                   accentColor: const Color(0xFF43A047),
                   topColor: const Color(0xFF1B5E20),
@@ -400,7 +400,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _buildKpiCard(
                   title: S.t('dash_customer_debt'),
                   subtitle: S.t('dash_credits_in_progress'),
-                  value: '${_customerDebt.toStringAsFixed(0)} DA',
+                  value: '${_customerDebt.toStringAsFixed(0)} ${S.t('misc_currency')}',
                   icon: Icons.account_balance_wallet_rounded,
                   accentColor: const Color(0xFFFB8C00),
                   topColor: const Color(0xFFE65100),
@@ -409,7 +409,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _buildKpiCard(
                   title: S.t('dash_supplier_debt'),
                   subtitle: S.t('dash_to_settle'),
-                  value: '${_supplierDebt.toStringAsFixed(0)} DA',
+                  value: '${_supplierDebt.toStringAsFixed(0)} ${S.t('misc_currency')}',
                   icon: Icons.money_off_rounded,
                   accentColor: const Color(0xFFE53935),
                   topColor: const Color(0xFFB71C1C),
@@ -445,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   flex: 2,
                   child: _buildStatBigCard(
                     title: S.t('dash_stock_value'),
-                    value: '${_stockValue.toStringAsFixed(0)} DA',
+                    value: '${_stockValue.toStringAsFixed(0)} ${S.t('misc_currency')}',
                     icon: Icons.inventory_rounded,
                     accentColor: const Color(0xFF00897B),
                     topColor: const Color(0xFF00695C),
@@ -712,8 +712,15 @@ class _DashboardScreenState extends State<DashboardScreen>
           
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Auj']
-                .map((d) => Text(d,
+            children: [
+              S.t('dash_day_mon'),
+              S.t('dash_day_tue'),
+              S.t('dash_day_wed'),
+              S.t('dash_day_thu'),
+              S.t('dash_day_fri'),
+              S.t('dash_day_sat'),
+              S.t('dash_day_today'),
+            ].map((d) => Text(d,
                     style: GoogleFonts.raleway(
                         color: Colors.white30, fontSize: 10)))
                 .toList(),

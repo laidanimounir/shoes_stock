@@ -105,7 +105,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                   itemBuilder: (context, index) {
                     final log = _logs[index];
                     final date = DateTime.parse(log['created_at']);
-                    final userName = log['user_profiles']?['full_name'] ?? 'Inconnu';
+                    final userName = log['user_profiles']?['full_name'] ?? S.t('misc_unknown');
                     final role = log['user_profiles']?['role'] ?? '';
                     final action = log['action_type'];
                     

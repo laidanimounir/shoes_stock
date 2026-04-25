@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_session.dart';
+import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../local_db/collections/inventory_local.dart';
@@ -321,7 +322,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Tableau de Bord: Inventaire & Flux"),
+        title: Text(S.t('inv_dashboard_title')),
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
@@ -358,7 +359,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Actualiser',
+            tooltip: S.t('action_refresh'),
             onPressed: _fetchInventoryData,
           ),
         ],
@@ -366,13 +367,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _stores.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.warehouse_outlined, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text("Aucun magasin. Ajoutez d'abord un magasin.", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      const Icon(Icons.warehouse_outlined, size: 80, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(S.t('inv_no_store_msg'), style: const TextStyle(fontSize: 18, color: Colors.grey)),
                     ],
                   ),
                 )
@@ -391,10 +392,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               spacing: 12,
                               runSpacing: 12,
                               children: [
-                                _buildStatCard('Total Produits', '$_totalProducts', Icons.category, Colors.blue),
-                                _buildStatCard('Stock Total', '$_totalStock unités', Icons.inventory_2, Colors.green),
-                                _buildStatCard('Valeur (Achat)', '${_totalValue.toStringAsFixed(2)} DA', Icons.account_balance_wallet, Colors.orange),
-                                _buildStatCard('Stock Faible', '$_lowStockCount', Icons.warning_amber, Colors.red),
+                                _buildStatCard(S.t('inv_stat_total_products'), '$_totalProducts', Icons.category, Colors.blue),
+                                _buildStatCard(S.t('inv_stat_total_stock'), '$_totalStock ${S.t('inv_units')}', Icons.inventory_2, Colors.green),
+                                _buildStatCard(S.t('inv_stat_total_value'), '${_totalValue.toStringAsFixed(2)} ${S.t('misc_currency')}', Icons.account_balance_wallet, Colors.orange),
+                                _buildStatCard(S.t('inv_stat_low_stock'), '$_lowStockCount', Icons.warning_amber, Colors.red),
                               ],
                             ),
                           ),
@@ -408,14 +409,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                               ),
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Rechercher un produit (Nom, Code-barres, Taille, Couleur)...',
-                                  prefixIcon: Icon(Icons.search),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(16),
-                                ),
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: S.t('inv_search_hint'),
+                                    prefixIcon: const Icon(Icons.search),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.all(16),
+                                  ),
                                 onChanged: (val) => setState(() => _searchQuery = val),
                               ),
                             ),
@@ -432,13 +433,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                               ),
                               child: _filteredInventory.isEmpty
-                                  ? const Center(
+                                  ? Center(
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
-                                          SizedBox(height: 12),
-                                          Text('Aucun produit dans ce magasin', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                          const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+                                          const SizedBox(height: 12),
+                                          Text(S.t('inv_no_products'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
                                         ],
                                       ),
                                     )
@@ -470,11 +471,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                                 : Icon(Icons.image_not_supported, color: isLow ? Colors.red : Colors.teal),
                                           ),
                                           title: Text(
-                                            product['name'] ?? 'Inconnu',
+                                            product['name'] ?? S.t('misc_unknown'),
                                             style: const TextStyle(fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
-                                            'Taille: ${variant['size'] ?? '-'} | Couleur: ${variant['color'] ?? '-'} | Code-barres: ${variant['barcode'] ?? '-'}',
+                                            '${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'} | ${S.t('prod_barcode')}: ${variant['barcode'] ?? '-'}',
                                             style: const TextStyle(fontSize: 12),
                                           ),
                                           trailing: Container(
@@ -533,10 +534,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                 children: [
                                   const Icon(Icons.warning_amber_rounded, color: Colors.red),
                                   const SizedBox(width: 8),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
-                                      'Alertes Stock Faible (< 3)',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
+                                      S.t('inv_low_stock_alerts'),
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
                                     ),
                                   ),
                                   Chip(
@@ -551,7 +552,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             SizedBox(
                               height: 250,
                               child: _lowStockAlerts.isEmpty
-                                  ? const Center(child: Text('Aucune alerte. Le stock est bon!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))
+                                  ? Center(child: Text(S.t('inv_no_alerts'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _lowStockAlerts.length,
@@ -559,7 +560,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       itemBuilder: (context, index) {
                                         final alert = _lowStockAlerts[index];
                                         final variant = alert['product_variants'] ?? {};
-                                        final name = variant['products']?['name'] ?? 'Inconnu';
+                                        final name = variant['products']?['name'] ?? S.t('misc_unknown');
                                         final size = variant['size'] ?? '-';
                                         final qty = alert['quantity'] ?? 0;
                                         return ListTile(
@@ -570,7 +571,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             child: Text('$qty', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                                           ),
                                           title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                                          subtitle: Text('Taille: $size', style: const TextStyle(fontSize: 11)),
+                                          subtitle: Text('${S.t('prod_size')}: $size', style: const TextStyle(fontSize: 11)),
                                         );
                                       },
                                     ),
@@ -580,13 +581,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               color: Colors.indigo[50],
-                              child: const Row(
+                              child: Row(
                                 children: [
-                                  Icon(Icons.swap_vert, color: Colors.indigo),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.swap_vert, color: Colors.indigo),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Derniers Flux (Entrées / Sorties)',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 16),
+                                    S.t('inv_recent_movements'),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 16),
                                   ),
                                 ],
                               ),
@@ -594,7 +595,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         
                             Expanded(
                               child: _recentMovements.isEmpty
-                                  ? const Center(child: Text('Aucun mouvement récent', style: TextStyle(color: Colors.grey)))
+                                  ? Center(child: Text(S.t('inv_no_movements'), style: const TextStyle(color: Colors.grey)))
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(8),
                                       itemCount: _recentMovements.length,
@@ -602,9 +603,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       itemBuilder: (context, index) {
                                         final mov = _recentMovements[index];
                                         final isIn = mov['type'] == 'in';
-                                        final productName = mov['product_variants']?['products']?['name'] ?? 'Inconnu';
+                                        final productName = mov['product_variants']?['products']?['name'] ?? S.t('misc_unknown');
                                         final size = mov['product_variants']?['size'] ?? '-';
-                                        final userName = mov['user_profiles']?['full_name'] ?? 'Système';
+                                        final userName = mov['user_profiles']?['full_name'] ?? S.t('misc_system');
                                         final date = DateTime.tryParse(mov['created_at'] ?? '');
                                         final qty = mov['quantity'] ?? 0;
 
@@ -624,7 +625,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
-                                            '${isIn ? "Acheté" : "Vendu"} par $userName • ${date != null ? timeago.format(date, locale: 'fr') : ''}',
+                                            '${isIn ? S.t('inv_mov_in') : S.t('inv_mov_out')} ${S.t('misc_by')} $userName • ${date != null ? timeago.format(date, locale: AppSession.locale.value == 'ar' ? 'ar' : 'fr') : ''}',
                                             style: const TextStyle(fontSize: 11),
                                           ),
                                           trailing: Text(

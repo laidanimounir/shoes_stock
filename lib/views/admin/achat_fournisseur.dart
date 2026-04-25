@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/app_strings.dart';
 
 class AchatFournisseurScreen extends StatefulWidget {
   const AchatFournisseurScreen({super.key});
@@ -85,7 +86,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     
     if (qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La quantité doit être supérieure à 0.'), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('buy_qty_invalid')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -111,7 +112,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   void _showPaymentDialog() {
     if (_purchaseItems.isEmpty || _selectedStoreId == null || _selectedSupplierId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs et ajouter des articles.'), backgroundColor: Colors.orange),
+        SnackBar(content: Text(S.t('buy_fill_fields')), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -124,11 +125,11 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.account_balance_wallet, color: Colors.deepPurple),
-              SizedBox(width: 8),
-              Text('Validation et Paiement'),
+              const Icon(Icons.account_balance_wallet, color: Colors.deepPurple),
+              const SizedBox(width: 8),
+              Text(S.t('buy_validation_title')),
             ],
           ),
           content: Column(
@@ -141,8 +142,8 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total de la facture :', style: TextStyle(fontSize: 16)),
-                    Text('${totalAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                    Text(S.t('buy_total_invoice'), style: const TextStyle(fontSize: 16)),
+                    Text('${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
                   ],
                 ),
               ),
@@ -150,23 +151,23 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               TextFormField(
                 controller: paymentController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Montant payé au fournisseur',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.payments_outlined),
+                decoration: InputDecoration(
+                  labelText: S.t('buy_amount_paid'),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.payments_outlined),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Note: Si vous payez moins que le total, le reste sera automatiquement ajouté aux dettes (crédit) du fournisseur.',
-                style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
+              Text(
+                S.t('buy_payment_note'),
+                style: const TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(S.t('action_cancel')),
             ),
             ElevatedButton(
               onPressed: () {
@@ -175,7 +176,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                 _processPurchaseTransaction(totalAmount, paid); // تنفيذ العملية
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
-              child: const Text('Confirmer l\'achat'),
+              child: Text(S.t('buy_confirm')),
             ),
           ],
         );
@@ -216,8 +217,8 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Facture enregistrée ! Stocks et comptes mis à jour automatiquement.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(S.t('buy_success')),
           backgroundColor: Colors.green,
         ));
         setState(() {
@@ -228,7 +229,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -245,7 +246,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Achat / Approvisionnement'),
+        title: Text(S.t('buy_title')),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -269,14 +270,14 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text('Ajouter des articles', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                          Text(S.t('buy_add_items'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
                           const SizedBox(height: 24),
 
                           // Supplier
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             value: _selectedSupplierId,
-                            decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder(), prefixIcon: Icon(Icons.local_shipping)),
+                            decoration: InputDecoration(labelText: S.t('suppliers_title'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.local_shipping)),
                             items: _suppliers.map<DropdownMenuItem<String>>((s) {
                               return DropdownMenuItem(value: s['id'], child: Text(s['company_name']));
                             }).toList(),
@@ -288,16 +289,16 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           if (_userRole == 'employee')
                             TextFormField(
                               readOnly: true,
-                              decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                              decoration: InputDecoration(labelText: S.t('buy_store_receiving'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
                               initialValue: _stores.where((s) => s['id'] == _userStoreId).isNotEmpty
                                   ? _stores.firstWhere((s) => s['id'] == _userStoreId)['name']
-                                  : 'Mon magasin',
+                                  : S.t('buy_my_store'),
                             )
                           else
                             DropdownButtonFormField<String>(
                               isExpanded: true,
                               value: _selectedStoreId,
-                              decoration: const InputDecoration(labelText: 'Magasin de réception', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                              decoration: InputDecoration(labelText: S.t('buy_store_receiving'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
                               items: _stores.map<DropdownMenuItem<String>>((s) {
                                 return DropdownMenuItem(value: s['id'], child: Text(s['name']));
                               }).toList(),
@@ -309,7 +310,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             value: _selectedVariantId,
-                            decoration: const InputDecoration(labelText: 'Produit (Variante)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.category)),
+                            decoration: InputDecoration(labelText: S.t('buy_product_variant'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.category)),
                             items: _variants.map<DropdownMenuItem<String>>((v) {
                               final name = v['products']['name'];
                               return DropdownMenuItem(
@@ -338,7 +339,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 child: TextFormField(
                                   controller: _qtyController,
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Quantité', border: OutlineInputBorder(), prefixIcon: Icon(Icons.numbers)),
+                                  decoration: InputDecoration(labelText: S.t('label_quantity'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.numbers)),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -346,7 +347,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 child: TextFormField(
                                   controller: _priceController,
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Prix unitaire (DA)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.attach_money)),
+                                  decoration: InputDecoration(labelText: '${S.t('label_unit_price')} (${S.t('misc_currency')})', border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.attach_money)),
                                 ),
                               ),
                             ],
@@ -356,7 +357,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           ElevatedButton.icon(
                             onPressed: _addItemToList,
                             icon: const Icon(Icons.add),
-                            label: const Text('Ajouter à la liste'),
+                            label: Text(S.t('action_add_to_list')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple[50],
                               foregroundColor: Colors.deepPurple,
@@ -386,16 +387,16 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             children: [
                               const Icon(Icons.receipt_long, color: Colors.deepPurple),
                               const SizedBox(width: 12),
-                              const Expanded(child: Text('Bon d\'achat', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple))),
-                              Chip(label: Text('${_purchaseItems.length} articles'), backgroundColor: Colors.deepPurple[50]),
+                              Expanded(child: Text(S.t('buy_receipt'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple))),
+                              Chip(label: Text('${_purchaseItems.length} ${S.t('buy_items')}'), backgroundColor: Colors.deepPurple[50]),
                             ],
                           ),
                           const Divider(height: 32),
 
                           if (_purchaseItems.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 48),
-                              child: Center(child: Text('Aucun article ajouté.', style: TextStyle(color: Colors.grey, fontSize: 16))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 48),
+                              child: Center(child: Text(S.t('buy_no_items'), style: const TextStyle(color: Colors.grey, fontSize: 16))),
                             )
                           else
                             ..._purchaseItems.asMap().entries.map((entry) {
@@ -409,7 +410,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                     child: Text('${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
                                   ),
                                   title: Text(item.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text('Qté: ${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} DA = ${(item.quantity * item.unitPrice).toStringAsFixed(2)} DA'),
+                                  subtitle: Text('${S.t('label_qty_short')} ${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} ${S.t('misc_currency')} = ${(item.quantity * item.unitPrice).toStringAsFixed(2)} ${S.t('misc_currency')}'),
                                   trailing: IconButton(
                                     icon: const Icon(Icons.close, color: Colors.red),
                                     onPressed: () => setState(() => _purchaseItems.removeAt(i)),
@@ -423,9 +424,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Total:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                Text(S.t('label_total'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                                 Text(
-                                  '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} DA',
+                                  '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} ${S.t('misc_currency')}',
                                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
                                 ),
                               ],
@@ -438,7 +439,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 icon: _isSubmitting
                                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                                     : const Icon(Icons.check_circle),
-                                label: const Text('Valider et Payer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                label: Text(S.t('buy_validate_pay'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
                               ),
                             ),

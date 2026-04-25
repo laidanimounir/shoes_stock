@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
+import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
@@ -112,7 +113,7 @@ class _PosScreenState extends State<PosScreen> {
             .filter()
             .supabaseIdEqualTo(_selectedStoreId!)
             .findFirst();
-        _storeName = store?.name ?? 'Inconnu';
+        _storeName = store?.name ?? S.t('misc_unknown');
 
         // Check for active shift
         final shiftService = ShiftService();
@@ -160,7 +161,7 @@ class _PosScreenState extends State<PosScreen> {
               .select('name')
               .eq('id', _selectedStoreId!)
               .maybeSingle();
-          _storeName = storeRes?['name'] ?? 'Inconnu';
+          _storeName = storeRes?['name'] ?? S.t('misc_unknown');
 
           // Check for active shift
           final shiftService = ShiftService();
@@ -186,14 +187,14 @@ class _PosScreenState extends State<PosScreen> {
                 context: context,
                 barrierDismissible: false,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Caisse non clôturée / وردية غير مغلقة'),
-                  content: Text('Une caisse du $dateStr n\'a pas été clôturée.\nهناك وردية من تاريخ $dateStr لم يتم إغلاقها.'),
+                  title: Text(S.t('shift_previous_unclosed')),
+                  content: Text(S.t('shift_previous_unclosed_msg').replaceAll('{date}', dateStr)),
                   actions: [
                     TextButton(
                       onPressed: () {
                         Navigator.of(ctx).pop();
                       },
-                      child: const Text('Ignorer / تجاهل', style: TextStyle(color: Colors.grey)),
+                      child: Text(S.t('shift_ignore'), style: const TextStyle(color: Colors.grey)),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -201,7 +202,7 @@ class _PosScreenState extends State<PosScreen> {
                         Navigator.of(ctx).pop();
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                      child: const Text('Clôturer l\'ancienne / إغلاق القديمة'),
+                      child: Text(S.t('shift_close_old')),
                     ),
                   ],
                 ),
@@ -371,8 +372,8 @@ class _PosScreenState extends State<PosScreen> {
 
   void _addToCart(dynamic variantData) {
     if (_selectedStoreId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Veuillez sélectionner un magasin."),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(S.t('pos_select_store_first')),
         backgroundColor: Colors.red,
       ));
       return;
@@ -387,8 +388,8 @@ class _PosScreenState extends State<PosScreen> {
     }
     
     if (availability <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Attention: Stock épuisé pour ce magasin."),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(S.t('pos_stock_empty_warning')),
         backgroundColor: Colors.orange,
       ));
     }
@@ -431,8 +432,8 @@ class _PosScreenState extends State<PosScreen> {
     
     for (var item in _cart) {
       if (item.unitPrice <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Veuillez saisir un prix unitaire valide pour chaque article."),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(S.t('pos_invalid_price')),
           backgroundColor: Colors.red,
         ));
         return;
@@ -448,11 +449,11 @@ class _PosScreenState extends State<PosScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.point_of_sale, color: Colors.indigo),
-              SizedBox(width: 8),
-              Text('Encaissement'),
+              const Icon(Icons.point_of_sale, color: Colors.indigo),
+              const SizedBox(width: 8),
+              Text(S.t('pos_cashout_title')),
             ],
           ),
           content: Column(
@@ -465,33 +466,33 @@ class _PosScreenState extends State<PosScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total à payer :', style: TextStyle(fontSize: 18)),
-                    Text('${totalAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    Text(S.t('pos_total_to_pay_lbl'), style: const TextStyle(fontSize: 18)),
+                    Text('${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
               if (isWalkInCustomer)
-                const Text(
-                  'Client Comptoir : Le paiement complet est exigé (Pas de crédit possible).',
-                  style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                Text(
+                  S.t('pos_walkin_warning'),
+                  style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
                 )
               else
                 TextFormField(
                   controller: paymentController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Montant encaissé (DA)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.payments),
+                  decoration: InputDecoration(
+                    labelText: '${S.t('pos_amount_received')} (${S.t('misc_currency')})',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.payments),
                   ),
                 ),
               if (!isWalkInCustomer)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Le reste sera ajouté aux dettes (crédit) du client.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    S.t('pos_credit_note'),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ),
             ],
@@ -499,7 +500,7 @@ class _PosScreenState extends State<PosScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler', style: TextStyle(color: Colors.red)),
+              child: Text(S.t('action_cancel'), style: const TextStyle(color: Colors.red)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -511,7 +512,7 @@ class _PosScreenState extends State<PosScreen> {
                 _processPayment(totalAmount, paidAmount);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-              child: const Text('Valider la Vente', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(S.t('pos_validate_sale'), style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -544,8 +545,8 @@ class _PosScreenState extends State<PosScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Vente enregistrée ! Facture et stocks mis à jour."),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(S.t('pos_sale_success')),
           backgroundColor: Colors.green,
         ));
         setState(() {
@@ -558,7 +559,7 @@ class _PosScreenState extends State<PosScreen> {
       if (mounted) {
         setState(() => _isProcessingPayment = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+          content: Text(e.code == '42501' ? S.t('pos_access_denied') : '${S.t('pos_error')} ${e.message}'),
           backgroundColor: Colors.red,
         ));
       }
@@ -566,7 +567,7 @@ class _PosScreenState extends State<PosScreen> {
       if (mounted) {
         setState(() => _isProcessingPayment = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Erreur système: $e"),
+          content: Text("${S.t('pos_system_error')} $e"),
           backgroundColor: Colors.red,
         ));
       }
@@ -575,7 +576,7 @@ class _PosScreenState extends State<PosScreen> {
 
 
   Widget _buildTodaySalesTab() {
-    if (_selectedStoreId == null) return const Center(child: Text("Magasin non sélectionné"));
+    if (_selectedStoreId == null) return Center(child: Text(S.t('pos_no_store_selected')));
     
     final now = DateTime.now();
     final startOfTodayUTC = DateTime(now.year, now.month, now.day)
@@ -600,13 +601,13 @@ class _PosScreenState extends State<PosScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Erreur: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+          return Center(child: Text('${S.t('pos_error')} ${snapshot.error}', style: const TextStyle(color: Colors.red)));
         }
         
         final sales = snapshot.data ?? [];
         if (sales.isEmpty) {
-          return const Center(
-            child: Text("Aucune facture enregistrée aujourd'hui.", style: TextStyle(fontSize: 18, color: Colors.grey)),
+          return Center(
+            child: Text(S.t('pos_no_today_invoices'), style: const TextStyle(fontSize: 18, color: Colors.grey)),
           );
         }
 
@@ -617,7 +618,7 @@ class _PosScreenState extends State<PosScreen> {
             final sale = sales[index];
             final time = DateTime.parse(sale['created_at']).toLocal();
             final formattedTime = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-            final customerName = sale['customers']?['full_name'] ?? 'Client Comptoir';
+            final customerName = sale['customers']?['full_name'] ?? S.t('pos_walkin_client');
             final total = (sale['total_amount'] as num).toDouble();
             final paid = (sale['paid_amount'] as num).toDouble();
             final bool hasDebt = paid < total;
@@ -629,15 +630,15 @@ class _PosScreenState extends State<PosScreen> {
                   backgroundColor: hasDebt ? Colors.orange[50] : Colors.green[50],
                   child: Icon(hasDebt ? Icons.pending_actions : Icons.check_circle, color: hasDebt ? Colors.orange : Colors.green),
                 ),
-                title: Text('Facture: ${sale['invoice_number']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('Client: $customerName • Heure: $formattedTime\nStatut: ${hasDebt ? 'Crédit (Non soldé)' : 'Payé'}'),
+                title: Text('${S.t('pos_invoice')} ${sale['invoice_number']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('${S.t('pos_client')} $customerName • ${S.t('pos_time')} $formattedTime\n${S.t('pos_status')} ${hasDebt ? S.t('pos_credit_unpaid') : S.t('pos_paid')}'),
                 isThreeLine: true,
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('$total DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    if (hasDebt) Text('Reste: ${total - paid} DA', style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text('$total ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (hasDebt) Text('${S.t('pos_remaining')} ${total - paid} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -655,16 +656,16 @@ class _PosScreenState extends State<PosScreen> {
       child: Scaffold(
         backgroundColor: Colors.blueGrey[50],
         appBar: AppBar(
-          title: const Text('Point de Vente (POS)'),
+          title: Text(S.t('pos_title')),
           backgroundColor: Colors.indigo[800],
           foregroundColor: Colors.white,
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white60,
             indicatorColor: Colors.white,
             tabs: [
-              Tab(icon: Icon(Icons.point_of_sale), text: 'Nouvelle Vente'),
-              Tab(icon: Icon(Icons.receipt_long), text: 'Factures du Jour'),
+              Tab(icon: const Icon(Icons.point_of_sale), text: S.t('pos_new_sale')),
+              Tab(icon: const Icon(Icons.receipt_long), text: S.t('pos_today_invoices')),
             ],
           ),
           actions: [
@@ -679,7 +680,7 @@ class _PosScreenState extends State<PosScreen> {
                 );
               },
               icon: const Icon(Icons.assessment, color: Colors.white),
-              label: const Text('Rapport / تقرير اليوم', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: Text(S.t('pos_report_btn'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(width: 8),
             if (_storeName != null)
@@ -721,11 +722,11 @@ class _PosScreenState extends State<PosScreen> {
                               child: TextField(
                                 controller: _searchController,
                                 style: const TextStyle(fontSize: 18),
-                                decoration: const InputDecoration(
-                                  hintText: 'Rechercher un produit ou scanner un code-barres...',
-                                  prefixIcon: Icon(Icons.search, size: 28),
+                                decoration: InputDecoration(
+                                  hintText: S.t('pos_search_hint'),
+                                  prefixIcon: const Icon(Icons.search, size: 28),
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(20),
+                                  contentPadding: const EdgeInsets.all(20),
                                 ),
                                 onChanged: _searchProduct,
                               ),
@@ -735,13 +736,13 @@ class _PosScreenState extends State<PosScreen> {
                               child: _isSearching
                                   ? const Center(child: CircularProgressIndicator())
                                   : _searchResults.isEmpty
-                                      ? const Center(
+                                      ? Center(
                                           child: Column(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
-                                              SizedBox(height: 16),
-                                              Text('Aucun produit trouvé', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                                              const Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
+                                              const SizedBox(height: 16),
+                                              Text(S.t('pos_no_products'), style: const TextStyle(fontSize: 20, color: Colors.grey)),
                                             ],
                                           ),
                                         )
@@ -785,20 +786,20 @@ class _PosScreenState extends State<PosScreen> {
                                                             maxLines: 1, overflow: TextOverflow.ellipsis,
                                                           ),
                                                           const SizedBox(height: 4),
-                                                          Text('Taille: ${item['size']} | Couleur: ${item['color']}', style: const TextStyle(color: Colors.black54)),
-                                                          Text('Code: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
+                                                          Text('${S.t('prod_size')}: ${item['size']} | ${S.t('prod_color')}: ${item['color']}', style: const TextStyle(color: Colors.black54)),
+                                                          Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
                                                         ],
                                                       ),
                                                     ),
                                                     Container(
                                                       color: Colors.indigo[50],
                                                       padding: const EdgeInsets.symmetric(vertical: 8),
-                                                      child: const Row(
+                                                      child: Row(
                                                         mainAxisAlignment: MainAxisAlignment.center,
                                                         children: [
-                                                          Icon(Icons.add_shopping_cart, color: Colors.indigo, size: 18),
-                                                          SizedBox(width: 8),
-                                                          Text("Ajouter", style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                                                          const Icon(Icons.add_shopping_cart, color: Colors.indigo, size: 18),
+                                                          const SizedBox(width: 8),
+                                                          Text(S.t('pos_add_btn'), style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
                                                         ],
                                                       ),
                                                     )
@@ -827,7 +828,7 @@ class _PosScreenState extends State<PosScreen> {
                                 children: [
                                   const Icon(Icons.shopping_cart, color: Colors.indigo, size: 28),
                                   const SizedBox(width: 12),
-                                  const Text("Panier", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                  Text(S.t('pos_cart_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                   const Spacer(),
                                   Chip(
                                     label: Text('${_cart.length}'), 
@@ -839,7 +840,7 @@ class _PosScreenState extends State<PosScreen> {
                             ),
                             Expanded(
                               child: _cart.isEmpty
-                                ? const Center(child: Text("Le panier est vide", style: TextStyle(color: Colors.grey, fontSize: 16)))
+                                ? Center(child: Text(S.t('pos_cart_empty'), style: const TextStyle(color: Colors.grey, fontSize: 16)))
                                 : ListView.separated(
                                     itemCount: _cart.length,
                                     separatorBuilder: (_, __) => const Divider(height: 1),
@@ -862,7 +863,7 @@ class _PosScreenState extends State<PosScreen> {
                                                     runSpacing: 8,
                                                     crossAxisAlignment: WrapCrossAlignment.center,
                                                     children: [
-                                                      const Text("Qté: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                                      Text(S.t('pos_qty_short'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                                       SizedBox(
                                                         width: 50,
                                                         child: TextFormField(
@@ -875,7 +876,7 @@ class _PosScreenState extends State<PosScreen> {
                                                           },
                                                         ),
                                                       ),
-                                                      const Text("Prix U: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                                      Text(S.t('pos_unit_price'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                                       SizedBox(
                                                         width: 70,
                                                         child: TextFormField(
@@ -902,7 +903,7 @@ class _PosScreenState extends State<PosScreen> {
                                                   onPressed: () => setState(() => _cart.removeAt(index)),
                                                 ),
                                                 const SizedBox(height: 8),
-                                                Text('${item.totalPrice.toStringAsFixed(2)} DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                                Text('${item.totalPrice.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                                               ],
                                             )
                                           ],
@@ -923,16 +924,16 @@ class _PosScreenState extends State<PosScreen> {
                                   DropdownButtonFormField<String?>(
                                     isExpanded: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Client (Optionnel)',
+                                      labelText: S.t('pos_client_optional'),
                                       prefixIcon: const Icon(Icons.person_outline, color: Colors.indigo),
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                     ),
                                     value: _selectedCustomerId,
                                     items: [
-                                      const DropdownMenuItem(
+                                      DropdownMenuItem(
                                         value: null,
-                                        child: Text('Client Comptoir (Passager)', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        child: Text(S.t('pos_walkin_client'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                       ),
                                       ..._customers.map((c) => DropdownMenuItem(
                                         value: c['id'] as String,
@@ -946,8 +947,8 @@ class _PosScreenState extends State<PosScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text("Total à payer", style: TextStyle(fontSize: 20, color: Colors.grey)),
-                                      Text('${_cartTotal.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                      Text(S.t('pos_total_to_pay'), style: const TextStyle(fontSize: 20, color: Colors.grey)),
+                                      Text('${_cartTotal.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                     ],
                                   ),
                                   const SizedBox(height: 24),
@@ -963,12 +964,12 @@ class _PosScreenState extends State<PosScreen> {
                                       ),
                                       child: _isProcessingPayment 
                                         ? const CircularProgressIndicator(color: Colors.white)
-                                        : const Row(
+                                        : Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(Icons.payments_outlined, size: 28),
-                                            SizedBox(width: 12),
-                                            Text("Payer", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                            const Icon(Icons.payments_outlined, size: 28),
+                                            const SizedBox(width: 12),
+                                            Text(S.t('pos_pay_btn'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                                           ],
                                         ),
                                     ),

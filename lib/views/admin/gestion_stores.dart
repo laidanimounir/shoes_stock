@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/app_strings.dart';
 
 class GestionStoresScreen extends StatefulWidget {
   const GestionStoresScreen({super.key});
@@ -68,7 +69,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
           children: [
             Icon(isEdit ? Icons.edit : Icons.add_business, color: Colors.indigo),
             const SizedBox(width: 12),
-            Text(isEdit ? 'Modifier Magasin' : 'Nouveau Magasin'),
+            Text(isEdit ? S.t('store_edit') : S.t('store_add')),
           ],
         ),
         content: Form(
@@ -78,19 +79,19 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
             child: TextFormField(
               controller: nameCtrl,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Nom du Magasin',
-                prefixIcon: Icon(Icons.warehouse),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: S.t('store_name'),
+                prefixIcon: const Icon(Icons.warehouse),
+                border: const OutlineInputBorder(),
               ),
-              validator: (v) => v!.trim().isEmpty ? 'Ce champ est obligatoire' : null,
+              validator: (v) => v!.trim().isEmpty ? S.t('msg_required') : null,
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler'),
+            child: Text(S.t('action_cancel')),
           ),
           ElevatedButton.icon(
             onPressed: () async {
@@ -111,28 +112,28 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                 _fetchStores();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(isEdit ? 'Magasin modifié avec succès.' : 'Magasin ajouté avec succès.'),
+                    content: Text(isEdit ? S.t('store_updated') : S.t('store_created')),
                     backgroundColor: Colors.green,
                   ));
                 }
               } on PostgrestException catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+                    content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'),
                     backgroundColor: Colors.red,
                   ));
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Erreur: $e'),
+                    content: Text('${S.t('msg_error')}: $e'),
                     backgroundColor: Colors.red,
                   ));
                 }
               }
             },
             icon: Icon(isEdit ? Icons.save : Icons.add),
-            label: Text(isEdit ? 'Enregistrer' : 'Ajouter'),
+            label: Text(isEdit ? S.t('action_save') : S.t('action_add')),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.indigo,
               foregroundColor: Colors.white,
@@ -149,18 +150,18 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red),
-            SizedBox(width: 12),
-            Text('Confirmer la suppression'),
+            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            const SizedBox(width: 12),
+            Text(S.t('action_confirm_delete')),
           ],
         ),
-        content: Text("Voulez-vous supprimer le magasin '${store['name']}'?\\n\\nLe magasin ne sera supprimé que s'il n'est pas lié à des employés ou à du stock."),
+        content: Text(S.t('store_delete_msg').replaceAll('{name}', store['name'])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(S.t('action_cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -168,7 +169,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Supprimer'),
+            child: Text(S.t('action_delete')),
           ),
         ],
       ),
@@ -183,22 +184,22 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
           .eq('id', store['id']);
       _fetchStores();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Magasin supprimé avec succès.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(S.t('store_deleted')),
           backgroundColor: Colors.green,
         ));
       }
     } on PostgrestException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+          content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Erreur: Impossible de supprimer le magasin (il peut être lié à d'autres données). $e"),
+          content: Text("${S.t('store_delete_error')} $e"),
           backgroundColor: Colors.red,
         ));
       }
@@ -237,17 +238,17 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Gestion des Magasins'),
+        title: Text(S.t('store_title')),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
           if (_userRole == 'owner')
             Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsetsDirectional.only(end: 16),
               child: ElevatedButton.icon(
                 onPressed: () => _showAddEditDialog(),
                 icon: const Icon(Icons.add_business, size: 20),
-                label: const Text('Nouveau Magasin', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(S.t('store_add'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.indigo[800],
@@ -266,21 +267,21 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                     children: [
                       Icon(Icons.warehouse_outlined, size: 100, color: Colors.grey[400]),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Aucun magasin pour le moment',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
+                      Text(
+                        S.t('store_no_results_yet'),
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Ajoutez votre premier magasin pour commencer',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      Text(
+                        S.t('store_add_first'),
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const SizedBox(height: 32),
                       if (_userRole == 'owner')
                         ElevatedButton.icon(
                           onPressed: () => _showAddEditDialog(),
                           icon: const Icon(Icons.add_business),
-                          label: const Text('Ajouter un magasin', style: TextStyle(fontSize: 18)),
+                          label: Text(S.t('store_add_btn'), style: const TextStyle(fontSize: 18)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo,
                             foregroundColor: Colors.white,
@@ -318,8 +319,8 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                   offset: const Offset(0, 4),
                                 ),
                               ],
-                              border: Border(
-                                left: BorderSide(color: Colors.indigo[700]!, width: 5),
+                              border: BorderDirectional(
+                                start: BorderSide(color: Colors.indigo[700]!, width: 5),
                               ),
                             ),
                             child: Padding(
@@ -350,8 +351,8 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                             if (val == 'delete') _deleteStore(store);
                                           },
                                           itemBuilder: (ctx) => [
-                                            const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, color: Colors.orange, size: 20), SizedBox(width: 8), Text('Modifier')])),
-                                            const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, color: Colors.red, size: 20), SizedBox(width: 8), Text('Supprimer')])),
+                                            PopupMenuItem(value: 'edit', child: Row(children: [const Icon(Icons.edit, color: Colors.orange, size: 20), const SizedBox(width: 8), Text(S.t('action_edit'))])),
+                                            PopupMenuItem(value: 'delete', child: Row(children: [const Icon(Icons.delete, color: Colors.red, size: 20), const SizedBox(width: 8), Text(S.t('action_delete'))])),
                                           ],
                                         ),
                                     ],
@@ -361,13 +362,13 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                     children: [
                                       _buildStatBadge(
                                         Icons.people,
-                                        '${stats['employees']} employés',
+                                        '${stats['employees']} ${S.t('store_employees')}',
                                         Colors.blue,
                                       ),
                                       const SizedBox(width: 12),
                                       _buildStatBadge(
                                         Icons.inventory_2,
-                                        '${stats['totalStock']} unités',
+                                        '${stats['totalStock']} ${S.t('store_units')}',
                                         Colors.green,
                                       ),
                                     ],
