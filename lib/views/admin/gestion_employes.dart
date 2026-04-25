@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/app_strings.dart';
 
 class GestionEmployesScreen extends StatefulWidget {
   const GestionEmployesScreen({super.key});
@@ -89,8 +90,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
   Future<void> _createEmployee() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedStoreId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Veuillez sélectionner un magasin.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(S.t('pos_select_store')),
         backgroundColor: Colors.red,
       ));
       return;
@@ -117,7 +118,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
       if (response.status == 200 && response.data['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Employé créé avec succès !'), backgroundColor: Colors.green),
+            SnackBar(content: Text(S.t('emp_created')), backgroundColor: Colors.green),
           );
           _formKey.currentState!.reset();
           _emailController.clear();
@@ -135,9 +136,9 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
       }
     } catch (e) {
       if (mounted) {
-        String errorMessage = "Erreur: $e";
+        String errorMessage = "${S.t('msg_error')}: $e";
         if (e.toString().contains('already_exists')) {
-          errorMessage = "Cet e-mail est déjà utilisé.";
+          errorMessage = S.t('auth_email_exists');
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
@@ -153,19 +154,19 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmer la suppression'),
-        content: const Text('Voulez-vous vraiment supprimer cet employé ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            child: const Text('Supprimer'),
-          ),
-        ],
+      title: Text(S.t('emp_confirm_delete')),
+      content: Text(S.t('emp_delete_confirm_msg')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(S.t('action_cancel')),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+          child: Text(S.t('action_delete')),
+        ),
+      ],
       ),
     );
 
@@ -185,7 +186,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
       if (response.status == 200 && response.data['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Employé supprimé avec succès.'), backgroundColor: Colors.green),
+            SnackBar(content: Text(S.t('emp_deleted')), backgroundColor: Colors.green),
           );
           _fetchEmployees(); // Refresh the list
         }
@@ -214,7 +215,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Gestion des Employés'),
+        title: Text(S.t('emp_title')),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
@@ -242,38 +243,38 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          "Ajouter un employé",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                        Text(
+                          S.t('emp_add'),
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
                           controller: _nameController,
-                          decoration: const InputDecoration(labelText: 'Nom complet', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person)),
-                          validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
+                          decoration: InputDecoration(labelText: S.t('emp_name'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.person)),
+                          validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _emailController,
-                          decoration: const InputDecoration(labelText: 'Adresse e-mail', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email)),
+                          decoration: InputDecoration(labelText: S.t('emp_email'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.email)),
                           keyboardType: TextInputType.emailAddress,
-                          validator: (v) => v!.isEmpty || !v.contains('@') ? 'Email invalide' : null,
+                          validator: (v) => v!.isEmpty || !v.contains('@') ? S.t('auth_error_email') : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
-                          decoration: const InputDecoration(labelText: 'Mot de passe', border: OutlineInputBorder(), prefixIcon: Icon(Icons.lock)),
+                          decoration: InputDecoration(labelText: S.t('label_password'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.lock)),
                           obscureText: true,
                           // No password strength restrictions requested
-                          validator: (v) => v!.isEmpty ? 'Ce champ est requis' : null,
+                          validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
                         ),
                         const SizedBox(height: 16),
                         if (_stores.isNotEmpty)
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             initialValue: _selectedStoreId,
-                            decoration: const InputDecoration(labelText: 'Affecter au magasin', border: OutlineInputBorder(), prefixIcon: Icon(Icons.store)),
+                            decoration: InputDecoration(labelText: S.t('emp_assign_store'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
                             items: _stores.map((store) {
                               return DropdownMenuItem<String>(
                                 value: store['id'],
@@ -296,7 +297,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                             ),
                             child: _isLoading
                                 ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text('Créer l\'employé', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                : Text(S.t('emp_add_btn'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                         )
                       ],
@@ -310,7 +311,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
           Expanded(
             flex: 2,
             child: Container(
-              margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+              margin: const EdgeInsetsDirectional.only(top: 24, end: 24, bottom: 24),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -325,13 +326,13 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                     decoration: const BoxDecoration(
                       border: Border(bottom: BorderSide(color: Colors.black12)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Icon(Icons.people_alt, color: Colors.blueAccent),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          "Liste des employés",
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          S.t('emp_list_title'),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -340,22 +341,22 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                     child: _isLoadingEmployees
                         ? const Center(child: CircularProgressIndicator())
                         : _employees.isEmpty
-                            ? const Center(child: Text("Aucun employé trouvé."))
+                            ? Center(child: Text(S.t('emp_no_results')))
                             : ListView.separated(
                                 padding: const EdgeInsets.all(16),
                                 itemCount: _employees.length,
                                 separatorBuilder: (context, index) => const Divider(),
                                 itemBuilder: (context, index) {
                                   final emp = _employees[index];
-                                  final storeName = emp['stores']?['name'] ?? 'Aucun magasin';
+                                  final storeName = emp['stores']?['name'] ?? S.t('misc_no_store');
                                   
                                   return ListTile(
                                     leading: CircleAvatar(
                                       backgroundColor: Colors.blue[50],
                                       child: const Icon(Icons.person, color: Colors.blueAccent),
                                     ),
-                                    title: Text(emp['full_name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text('Magasin: $storeName\nAjouté le: ${emp['created_at'].toString().split('T')[0]}'),
+                                    title: Text(emp['full_name'] ?? S.t('misc_unknown'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    subtitle: Text('${S.t('label_store')} $storeName\n${S.t('label_added_on')} ${emp['created_at'].toString().split('T')[0]}'),
                                     isThreeLine: true,
                                     trailing: _userRole == 'owner' ? IconButton(
                                       icon: const Icon(Icons.delete_outline, color: Colors.red),

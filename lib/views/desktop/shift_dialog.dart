@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/shift_service.dart';
 import '../../core/app_session.dart';
+import '../../core/app_strings.dart';
 
 class ShiftDialog extends StatefulWidget {
   final String storeId;
@@ -35,10 +36,10 @@ class _ShiftDialogState extends State<ShiftDialog> {
             Navigator.of(context).pop(true);
           }
         } catch (fetchErr) {
-          _showError('Erreur de récupération de la caisse / خطأ في استرجاع الوردية');
+          _showError(S.t('shift_error_fetch'));
         }
       } else {
-        _showError('Erreur d\'ouverture de caisse / حدث خطأ أثناء فتح الوردية: $e');
+        _showError('${S.t('shift_error_open')}: $e');
       }
     } finally {
       if (mounted) {
@@ -58,12 +59,12 @@ class _ShiftDialogState extends State<ShiftDialog> {
   void _onOpenShiftPressed() {
     final text = _amountController.text.trim();
     if (text.isEmpty) {
-      _showError('Veuillez entrer un montant / الرجاء إدخال المبلغ');
+      _showError(S.t('shift_initial_amount_required'));
       return;
     }
     final amount = double.tryParse(text);
     if (amount == null || amount < 0) {
-      _showError('Montant invalide / مبلغ غير صحيح');
+      _showError(S.t('shift_error_amount'));
       return;
     }
     _handleShiftAction(amount);
@@ -72,27 +73,27 @@ class _ShiftDialogState extends State<ShiftDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Ouverture de caisse / فتح الوردية', textAlign: TextAlign.center),
+      title: Text(S.t('shift_open_title'), textAlign: TextAlign.center),
       content: SizedBox(
         width: 400,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Entrez le montant initial en caisse pour aujourd\'hui\nأدخل المبلغ الموجود في الصندوق لبدء يوم العمل',
+            Text(
+              S.t('shift_open_msg'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
+              style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Montant initial (DA) / المبلغ الابتدائي',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.money),
+              decoration: InputDecoration(
+                labelText: S.t('shift_initial_amount'),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.money),
               ),
             ),
             if (_isLoading) ...[
@@ -105,7 +106,7 @@ class _ShiftDialogState extends State<ShiftDialog> {
       actions: [
         OutlinedButton(
           onPressed: _isLoading ? null : () => _handleShiftAction(0),
-          child: const Text('Sans caisse / بدون وردية'),
+          child: Text(S.t('shift_no_caisse')),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _onOpenShiftPressed,
@@ -113,7 +114,7 @@ class _ShiftDialogState extends State<ShiftDialog> {
             backgroundColor: Colors.indigo,
             foregroundColor: Colors.white,
           ),
-          child: const Text('Ouvrir la caisse / فتح الوردية'),
+          child: Text(S.t('shift_open_btn')),
         ),
       ],
       actionsAlignment: MainAxisAlignment.spaceBetween,

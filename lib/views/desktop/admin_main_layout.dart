@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/app_strings.dart';
 import '../admin/dashboard_screen.dart';
 import '../admin/ajouter_produit.dart';
 import '../admin/liste_produits.dart';
@@ -58,20 +59,20 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
   static const _goldLight = Color(0xFFF0C96B);
 
 
-  static const _destinations = [
-    (Icons.dashboard_outlined, Icons.dashboard_rounded, 'Tableau de Bord'),
-    (Icons.warehouse_outlined, Icons.warehouse_rounded, 'Magasins'),
-    (Icons.inventory_outlined, Icons.inventory_rounded, 'Inventaire'),
-    (Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Produits'),
-    (Icons.add_box_outlined, Icons.add_box_rounded, 'Ajouter Produit'),
-    (Icons.people_outline, Icons.people_rounded, 'Clients'),
-    (Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Fournisseurs'),
-    (Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Achats'),
-    (Icons.badge_outlined, Icons.badge_rounded, 'Employés'),
-    (Icons.history_outlined, Icons.history_rounded, "Journaux d'activité"),
-    (Icons.history_edu_outlined, Icons.history_edu_rounded, 'Historique Ventes'),
-    (Icons.receipt_long_outlined, Icons.receipt_long, 'Dépenses'),
-    (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Recouvrement'),
+  static List<(IconData, IconData, String)> get _destinations => [
+    (Icons.dashboard_outlined, Icons.dashboard_rounded, S.t('nav_dashboard')),
+    (Icons.warehouse_outlined, Icons.warehouse_rounded, S.t('nav_stores')),
+    (Icons.inventory_outlined, Icons.inventory_rounded, S.t('nav_inventory')),
+    (Icons.inventory_2_outlined, Icons.inventory_2_rounded, S.t('nav_products')),
+    (Icons.add_box_outlined, Icons.add_box_rounded, S.t('nav_add_product')),
+    (Icons.people_outline, Icons.people_rounded, S.t('nav_clients')),
+    (Icons.local_shipping_outlined, Icons.local_shipping_rounded, S.t('nav_suppliers')),
+    (Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, S.t('nav_purchases')),
+    (Icons.badge_outlined, Icons.badge_rounded, S.t('nav_employees')),
+    (Icons.history_outlined, Icons.history_rounded, S.t('nav_activity')),
+    (Icons.history_edu_outlined, Icons.history_edu_rounded, S.t('nav_sales')),
+    (Icons.receipt_long_outlined, Icons.receipt_long, S.t('nav_expenses')),
+    (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, S.t('nav_recovery')),
   ];
 
   @override
@@ -96,8 +97,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              border: Border(
-                right: BorderSide(
+              border: BorderDirectional(
+                end: BorderSide(
                   color: Color(0x44D4A843),
                   width: 1,
                 ),
@@ -107,7 +108,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               children: [
        
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -244,7 +245,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Administrateur',
+                                        S.t('label_role_admin'),
                                         style: GoogleFonts.raleway(
                                           color: _gold,
                                           fontSize: 10,
@@ -301,7 +302,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                       icon: const Icon(Icons.logout_rounded,
                           size: 16, color: Colors.redAccent),
                       label: Text(
-                        'Déconnexion',
+                        S.t('auth_logout'),
                         style: GoogleFonts.raleway(
                           color: Colors.redAccent,
                           fontSize: 13,

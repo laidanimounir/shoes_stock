@@ -10,6 +10,7 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/supplier_local.dart';
 import '../../local_db/collections/inventory_local.dart';
+import '../../core/app_strings.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -266,11 +267,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildHeader() {
     final now = DateTime.now();
-    final days   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-    final months = ['Jan','Fév','Mar','Avr','Mai','Jun',
-                    'Jul','Aoû','Sep','Oct','Nov','Déc'];
-    final dateStr =
-        '${days[now.weekday % 7]} ${now.day} ${months[now.month - 1]} ${now.year}';
+    final daysKeys = ['day_sun', 'day_mon', 'day_tue', 'day_wed', 'day_thu', 'day_fri', 'day_sat'];
+    // now.weekday is 1 (Mon) to 7 (Sun). daysKeys is 0 (Sun) to 6 (Sat).
+    final dayKey = daysKeys[now.weekday % 7];
+    final monthKey = 'month_${now.month}';
+    
+    final dateStr = '${S.t(dayKey)} ${now.day} ${S.t(monthKey)} ${now.year}';
 
     return Container(
       height: 64,
@@ -298,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tableau de Bord',
+              Text(S.t('dash_title'),
                   style: GoogleFonts.playfairDisplay(
                       color: Colors.white, fontSize: 16,
                       fontWeight: FontWeight.bold)),
@@ -328,7 +330,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 items: [
                   DropdownMenuItem(
                     value: null,
-                    child: Text('Tous les magasins',
+                    child: Text(S.t('inv_all_stores'),
                         style: GoogleFonts.raleway(color: Colors.white70, fontSize: 13)),
                   ),
                   ..._stores.map((s) => DropdownMenuItem(
@@ -358,7 +360,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.refresh_rounded, color: _gold, size: 18),
               onPressed: _fetchDashboardStats,
-              tooltip: 'Actualiser',
+              tooltip: S.t('action_refresh'),
             ),
           ),
         ],
@@ -378,8 +380,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Row(
               children: [
                 _buildKpiCard(
-                  title: "Chiffre d'affaires",
-                  subtitle: "Aujourd'hui",
+                  title: S.t('dash_revenue'),
+                  subtitle: S.t('dash_today'),
                   value: '${_todaySales.toStringAsFixed(0)} DA',
                   icon: Icons.point_of_sale_rounded,
                   accentColor: const Color(0xFF1E88E5),
@@ -387,8 +389,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
                 _buildKpiCard(
-                  title: 'Bénéfice Net',
-                  subtitle: "Aujourd'hui",
+                  title: S.t('dash_net_profit'),
+                  subtitle: S.t('dash_today'),
                   value: '+${_todayProfit.toStringAsFixed(0)} DA',
                   icon: Icons.trending_up_rounded,
                   accentColor: const Color(0xFF43A047),
@@ -396,8 +398,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
                 _buildKpiCard(
-                  title: 'Créances Clients',
-                  subtitle: 'Crédits en cours',
+                  title: S.t('dash_customer_debt'),
+                  subtitle: S.t('dash_credits_in_progress'),
                   value: '${_customerDebt.toStringAsFixed(0)} DA',
                   icon: Icons.account_balance_wallet_rounded,
                   accentColor: const Color(0xFFFB8C00),
@@ -405,8 +407,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(width: 14),
                 _buildKpiCard(
-                  title: 'Dettes Fournisseurs',
-                  subtitle: 'À régler',
+                  title: S.t('dash_supplier_debt'),
+                  subtitle: S.t('dash_to_settle'),
                   value: '${_supplierDebt.toStringAsFixed(0)} DA',
                   icon: Icons.money_off_rounded,
                   accentColor: const Color(0xFFE53935),
@@ -442,7 +444,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
-                    title: 'Valeur du Stock',
+                    title: S.t('dash_stock_value'),
                     value: '${_stockValue.toStringAsFixed(0)} DA',
                     icon: Icons.inventory_rounded,
                     accentColor: const Color(0xFF00897B),
@@ -455,7 +457,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
-                    title: 'Clients Actifs',
+                    title: S.t('dash_active_cust'),
                     value: '$_activeCustomers',
                     icon: Icons.people_rounded,
                     accentColor: const Color(0xFF7B1FA2),
@@ -469,7 +471,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 2,
                   child: _buildStatBigCard(
-                    title: 'Fournisseurs Actifs',
+                    title: S.t('dash_active_supp'),
                     value: '$_activeSuppliers',
                     icon: Icons.local_shipping_rounded,
                     accentColor: const Color(0xFF6D4C41),
@@ -673,11 +675,11 @@ class _DashboardScreenState extends State<DashboardScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Évolution des Ventes',
+                  Text(S.t('dash_evolution'),
                       style: GoogleFonts.playfairDisplay(
                           color: Colors.white, fontSize: 14,
                           fontWeight: FontWeight.bold)),
-                  Text('7 derniers jours',
+                  Text(S.t('dash_7days'),
                       style: GoogleFonts.raleway(
                           color: Colors.white38, fontSize: 11)),
                 ],

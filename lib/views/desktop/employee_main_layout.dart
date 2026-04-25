@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/app_strings.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/ajouter_produit.dart';
 import '../admin/liste_produits.dart';
@@ -56,7 +57,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
             'Employé';
     final initials = employeeName.isNotEmpty
         ? employeeName[0].toUpperCase()
-        : 'E';
+        : S.t('label_role_employee')[0].toUpperCase();
 
     return Scaffold(
       backgroundColor: _darkBg,
@@ -71,8 +72,8 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              border: Border(
-                right: BorderSide(
+              border: BorderDirectional(
+                end: BorderSide(
                   color: Color(0x33D4A843),
                   width: 1,
                 ),
@@ -82,7 +83,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
               children: [
               
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -154,7 +155,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                               color: _gold.withValues(alpha: 0.4), width: 0.8),
                         ),
                         child: Text(
-                          'Espace Employé',
+                          S.t('label_role_employee'),
                           style: GoogleFonts.raleway(
                             color: _gold,
                             fontSize: 11,
@@ -174,19 +175,19 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                     child: Column(
                       children: [
                         _buildNavItem(0, Icons.point_of_sale_outlined,
-                            Icons.point_of_sale_rounded, 'Point de Vente'),
+                            Icons.point_of_sale_rounded, S.t('nav_pos')),
                         _buildNavItem(1, Icons.inventory_2_outlined,
-                            Icons.inventory_2_rounded, 'Produits'),
+                            Icons.inventory_2_rounded, S.t('nav_products')),
                         _buildNavItem(2, Icons.add_box_outlined,
-                            Icons.add_box_rounded, 'Ajouter Produit'),
+                            Icons.add_box_rounded, S.t('nav_add_product')),
                         _buildNavItem(3, Icons.people_outline,
-                            Icons.people_rounded, 'Clients'),
+                            Icons.people_rounded, S.t('nav_clients')),
                         _buildNavItem(4, Icons.local_shipping_outlined,
-                            Icons.local_shipping_rounded, 'Fournisseurs'),
+                            Icons.local_shipping_rounded, S.t('nav_suppliers')),
                         _buildNavItem(5, Icons.shopping_bag_outlined,
-                            Icons.shopping_bag_rounded, 'Achats'),
+                            Icons.shopping_bag_rounded, S.t('nav_purchases')),
                         _buildNavItem(6, Icons.history_edu_outlined,
-                            Icons.history_edu_rounded, 'Mes Ventes'),
+                            Icons.history_edu_rounded, S.t('nav_my_sales')),
                       ],
                     ),
                   ),
@@ -222,7 +223,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                           },
                           icon: const Icon(Icons.assessment_rounded, size: 18),
                           label: Text(
-                            'تقرير اليوم',
+                            S.t('label_daily_report'),
                             style: GoogleFonts.raleway(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -249,7 +250,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                           icon: const Icon(Icons.logout_rounded,
                               size: 16, color: Colors.redAccent),
                           label: Text(
-                            'Déconnexion',
+                            S.t('auth_logout'),
                             style: GoogleFonts.raleway(
                               color: Colors.redAccent,
                               fontSize: 13,

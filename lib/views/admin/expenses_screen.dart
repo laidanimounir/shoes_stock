@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_session.dart';
+import '../../core/app_strings.dart';
 import '../../services/expense_service.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -92,7 +93,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('Nouvelle Dépense', style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_add'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -101,10 +102,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 children: [
                   DropdownButtonFormField<String>(
                     value: selectedCatId,
-                    decoration: const InputDecoration(
-                      labelText: 'Catégorie',
-                      prefixIcon: Icon(Icons.category),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: S.t('exp_category'),
+                      prefixIcon: const Icon(Icons.category),
+                      border: const OutlineInputBorder(),
                     ),
                     items: _categories
                         .map((c) => DropdownMenuItem(
@@ -113,45 +114,45 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             ))
                         .toList(),
                     onChanged: (v) => setDialogState(() => selectedCatId = v),
-                    validator: (v) => v == null ? 'Requis' : null,
+                    validator: (v) => v == null ? S.t('msg_required') : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: amountCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Montant (DA)',
-                      prefixIcon: Icon(Icons.attach_money),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: S.t('exp_amount'),
+                      prefixIcon: const Icon(Icons.attach_money),
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Requis';
-                      if (double.tryParse(v) == null || double.parse(v) <= 0) return 'Montant invalide';
+                      if (v == null || v.isEmpty) return S.t('msg_required');
+                      if (double.tryParse(v) == null || double.parse(v) <= 0) return S.t('msg_invalid_amount');
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: descCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      prefixIcon: Icon(Icons.description),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: S.t('label_description'),
+                      prefixIcon: const Icon(Icons.description),
+                      border: const OutlineInputBorder(),
                     ),
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: selectedMethod,
-                    decoration: const InputDecoration(
-                      labelText: 'Méthode de paiement',
-                      prefixIcon: Icon(Icons.payment),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: S.t('label_method'),
+                      prefixIcon: const Icon(Icons.payment),
+                      border: const OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'cash', child: Text('Espèces')),
-                      DropdownMenuItem(value: 'bank', child: Text('Virement bancaire')),
-                      DropdownMenuItem(value: 'mobile', child: Text('Mobile')),
+                    items: [
+                      DropdownMenuItem(value: 'cash', child: Text(S.t('label_cash'))),
+                      DropdownMenuItem(value: 'bank', child: Text(S.t('label_bank'))),
+                      DropdownMenuItem(value: 'mobile', child: Text(S.t('label_mobile'))),
                     ],
                     onChanged: (v) => setDialogState(() => selectedMethod = v ?? 'cash'),
                   ),
@@ -163,7 +164,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                       style: GoogleFonts.raleway(fontWeight: FontWeight.w600),
                     ),
-                    subtitle: const Text('Date de la dépense'),
+                    subtitle: Text(S.t('exp_date')),
                     trailing: TextButton(
                       onPressed: () async {
                         final picked = await showDatePicker(
@@ -176,7 +177,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           setDialogState(() => selectedDate = picked);
                         }
                       },
-                      child: const Text('Changer'),
+                      child: Text(S.t('exp_change_date')),
                     ),
                   ),
                 ],
@@ -186,7 +187,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler'),
+              child: Text(S.t('action_cancel')),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -205,7 +206,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   _loadData();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Dépense enregistrée.'), backgroundColor: Colors.green),
+                      SnackBar(content: Text(S.t('exp_recorded')), backgroundColor: Colors.green),
                     );
                   }
                 } catch (e) {
@@ -217,7 +218,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-              child: const Text('Enregistrer'),
+              child: Text(S.t('action_save')),
             ),
           ],
         ),
@@ -236,7 +237,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('Catégories de Dépenses', style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_category_title'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: 400,
             child: Column(
@@ -247,9 +248,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     Expanded(
                       child: TextField(
                         controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          hintText: 'Nom de la catégorie',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          hintText: S.t('exp_category_hint'),
+                          border: const OutlineInputBorder(),
                           isDense: true,
                         ),
                       ),
@@ -270,13 +271,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red),
                             );
                           }
                         }
                       },
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-                      child: const Text('Ajouter'),
+                      child: Text(S.t('action_add')),
                     ),
                   ],
                 ),
@@ -285,7 +286,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 SizedBox(
                   height: 200,
                   child: _categories.isEmpty
-                      ? const Center(child: Text('Aucune catégorie.', style: TextStyle(color: Colors.grey)))
+                      ? Center(child: Text(S.t('misc_no_results'), style: const TextStyle(color: Colors.grey)))
                       : ListView.separated(
                           itemCount: _categories.length,
                           separatorBuilder: (_, __) => const Divider(height: 1),
@@ -303,7 +304,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_close'))),
           ],
         ),
       ),
@@ -350,11 +351,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   String _methodLabel(String? method) {
     switch (method) {
       case 'bank':
-        return 'Virement';
+        return S.t('label_bank');
       case 'mobile':
-        return 'Mobile';
+        return S.t('label_mobile');
       default:
-        return 'Espèces';
+        return S.t('label_cash');
     }
   }
 
@@ -367,13 +368,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Gestion des Dépenses', style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+        title: Text(S.t('exp_title'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.category),
-            tooltip: 'Gérer les catégories',
+            tooltip: S.t('exp_manage_categories'),
             onPressed: _showCategoryManagerDialog,
           ),
           const SizedBox(width: 8),
@@ -384,7 +385,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text('Dépense', style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+        label: Text(S.t('exp_add'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -395,13 +396,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      _buildStatCard('Total du mois', '${_totalMonth.toStringAsFixed(2)} DA',
+                      _buildStatCard(S.t('exp_month_total'), '${_totalMonth.toStringAsFixed(2)} DA',
                           Icons.trending_down, Colors.red),
                       const SizedBox(width: 12),
-                      _buildStatCard('Nombre', '$_countMonth dépenses',
+                      _buildStatCard(S.t('exp_count'), '$_countMonth ${S.t('exp_expenses_label')}',
                           Icons.receipt_long, Colors.indigo),
                       const SizedBox(width: 12),
-                      _buildStatCard('Plus grande', '${_maxExpense.toStringAsFixed(2)} DA',
+                      _buildStatCard(S.t('exp_max'), '${_maxExpense.toStringAsFixed(2)} DA',
                           Icons.arrow_upward, Colors.orange),
                     ],
                   ),
@@ -418,7 +419,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         label: Text(
                           _dateFrom != null
                               ? '${_dateFrom!.day}/${_dateFrom!.month} → ${_dateTo!.day}/${_dateTo!.month}'
-                              : 'Période',
+                              : S.t('exp_period'),
                           style: GoogleFonts.raleway(fontSize: 13),
                         ),
                       ),
@@ -440,7 +441,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             spacing: 8,
                             children: [
                               FilterChip(
-                                label: const Text('Toutes'),
+                                label: Text(S.t('exp_all_categories')),
                                 selected: _filterCategoryId == null,
                                 selectedColor: Colors.indigo[100],
                                 onSelected: (_) {
@@ -477,7 +478,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             children: [
                               Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
                               const SizedBox(height: 12),
-                              Text('Aucune dépense enregistrée.',
+                              Text(S.t('exp_no_results'),
                                   style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
                             ],
                           ),
@@ -488,7 +489,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           itemBuilder: (context, index) {
                             final e = _expenses[index];
                             final amount = (e['amount'] as num?)?.toDouble() ?? 0;
-                            final catName = e['expense_categories']?['name'] as String? ?? 'Sans catégorie';
+                            final catName = e['expense_categories']?['name'] as String? ?? S.t('exp_no_category');
                             final desc = e['description'] as String? ?? '';
                             final method = e['payment_method'] as String? ?? 'cash';
                             final dateStr = e['expense_date'] as String? ?? '';

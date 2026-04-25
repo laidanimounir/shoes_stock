@@ -16,6 +16,7 @@ import 'collections/expense_category_local.dart';
 import 'collections/expense_local.dart';
 import 'collections/sync_queue_item.dart';
 import 'collections/sync_metadata.dart';
+import 'collections/settings_local.dart';
 
 /// Central Isar database service.
 /// Opens one shared instance with all 13 collections registered.
@@ -45,6 +46,7 @@ class IsarService {
         ExpenseLocalSchema,
         SyncQueueItemSchema,
         SyncMetadataSchema,
+        SettingsLocalSchema,
       ],
       directory: dir.path,
       name: 'shoestock_local',

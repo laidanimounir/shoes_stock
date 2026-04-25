@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../desktop/refund_modal.dart';
 import '../../core/app_session.dart';
 import '../desktop/end_of_day_report.dart';
+import '../../core/app_strings.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -81,7 +82,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           border: Border.all(color: Colors.red.shade400),
         ),
         child: Text(
-          'Remboursé ↩ / مُرجَع',
+          S.t('label_refunded_badge'),
           style: TextStyle(
             color: Colors.red.shade700,
             fontSize: 11,
@@ -99,7 +100,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           border: Border.all(color: Colors.green.shade400),
         ),
         child: Text(
-          'Payé ✓',
+          S.t('label_paid_badge'),
           style: TextStyle(
             color: Colors.green.shade700,
             fontSize: 11,
@@ -116,7 +117,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Historique des Ventes'),
+        title: Text(S.t('nav_sales')),
         backgroundColor: Colors.indigo[700],
         foregroundColor: Colors.white,
         actions: [
@@ -131,7 +132,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               );
             },
             icon: const Icon(Icons.assessment, color: Colors.white),
-            label: const Text('Rapport / تقرير اليوم', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            label: Text(S.t('label_daily_report'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 8),
           if (_userRole == 'owner')
@@ -142,9 +143,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 style: const TextStyle(color: Colors.white),
                 underline: const SizedBox(),
                 value: _filterStoreId,
-                hint: const Text("Tous les Magasins", style: TextStyle(color: Colors.white70)),
+                hint: Text(S.t('label_all_stores'), style: const TextStyle(color: Colors.white70)),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text("Tous les Magasins")),
+                  DropdownMenuItem(value: null, child: Text(S.t('label_all_stores'))),
                   ..._stores.map((s) => DropdownMenuItem(value: s['id'] as String, child: Text(s['name'] as String))),
                 ],
                 onChanged: (val) {
@@ -158,7 +159,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _sales.isEmpty
-              ? const Center(child: Text("Aucune vente trouvée."))
+              ? Center(child: Text(S.t('label_no_data')))
               : ListView.builder(
                   padding: const EdgeInsets.all(24),
                   itemCount: _sales.length,
@@ -177,8 +178,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           ],
                         ),
                         subtitle: Text(
-                          "Facture: ${s['invoice_number']}\n"
-                          "Client: ${s['customers']?['full_name'] ?? 'Passager'} | Magasin: ${s['stores']['name']}",
+                          "${S.t('label_invoice')}: ${s['invoice_number']}\n"
+                          "${S.t('label_client')}: ${s['customers']?['full_name'] ?? S.t('label_guest')} | ${S.t('label_store')}: ${s['stores']['name']}",
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -196,7 +197,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.assignment_return, color: Colors.red),
-                                tooltip: "إرجاع",
+                                tooltip: S.t('label_return'),
                                 onPressed: () async {
                                   final result = await showDialog(
                                     context: context,

@@ -3,6 +3,7 @@ import '../../services/shift_service.dart';
 import '../../core/app_session.dart';
 import '../../models/shift_model.dart';
 import '../auth/login_screen.dart';
+import '../../core/app_strings.dart';
 
 class CloseShiftScreen extends StatefulWidget {
   final ShiftModel shift;
@@ -45,7 +46,7 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
     final closingText = _closingController.text.trim();
     if (closingText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء إدخال المبلغ الفعلي'), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('shift_actual_amount_required')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -53,7 +54,7 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
     final closing = double.tryParse(closingText);
     if (closing == null || closing < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء إدخال مبلغ صحيح'), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('shift_error_amount')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -74,16 +75,16 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: const Text('ملخص الوردية', textAlign: TextAlign.center),
+            title: Text(S.t('shift_summary'), textAlign: TextAlign.center),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('المبلغ الابتدائي: ${summary.opening} DA'),
-                Text('إجمالي المبيعات: ${summary.sales} DA'),
-                Text('المبلغ المتوقع: ${summary.expected} DA'),
-                Text('المبلغ الفعلي: ${summary.closing} DA'),
+                Text('${S.t('shift_initial_amount')}: ${summary.opening} DA'),
+                Text('${S.t('shift_total_sales')}: ${summary.sales} DA'),
+                Text('${S.t('shift_expected_amount')}: ${summary.expected} DA'),
+                Text('${S.t('shift_actual_amount')}: ${summary.closing} DA'),
                 Text(
-                  'الفرق: ${summary.discrepancy > 0 ? "+" : ""}${summary.discrepancy} DA',
+                  '${S.t('shift_discrepancy')}: ${summary.discrepancy > 0 ? "+" : ""}${summary.discrepancy} DA',
                   style: TextStyle(
                     color: summary.discrepancy == 0 ? Colors.green : (summary.discrepancy > 0 ? Colors.green : Colors.red),
                     fontWeight: FontWeight.bold,
@@ -100,7 +101,7 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
                     (route) => false,
                   );
                 },
-                child: const Text('موافق وخروج'),
+                child: Text(S.t('shift_ok_exit')),
               ),
             ],
           ),
@@ -127,7 +128,7 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
     return Scaffold(
       backgroundColor: Colors.indigo[50],
       appBar: AppBar(
-        title: const Text('إغلاق الوردية'),
+        title: Text(S.t('shift_close_title')),
         centerTitle: true,
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
@@ -148,22 +149,22 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
                     const Icon(Icons.lock_clock, size: 64, color: Colors.indigo),
                     const SizedBox(height: 24),
                     ListTile(
-                      title: const Text('المبلغ الابتدائي'),
+                      title: Text(S.t('shift_initial_amount')),
                       trailing: Text('${widget.shift.openingAmount} DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                     const Divider(),
                     ListTile(
-                      title: const Text('المبلغ المتوقع (الافتراضي بدون مبيعات في هذه الشاشة)'),
+                      title: Text(S.t('shift_expected_amount')),
                       trailing: Text('$expectedAmount DA', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.indigo)),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _closingController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'المبلغ الفعلي في الصندوق (DA)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.account_balance_wallet),
+                      decoration: InputDecoration(
+                        labelText: S.t('shift_actual_amount'),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.account_balance_wallet),
                       ),
                       onChanged: _calculateDiscrepancy,
                     ),
@@ -182,7 +183,9 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              _discrepancy == 0 ? 'مطابق ✓' : (_discrepancy > 0 ? 'فائض' : 'عجز'),
+                              _discrepancy == 0 
+                                ? S.t('shift_matched') 
+                                : (_discrepancy > 0 ? S.t('shift_surplus') : S.t('shift_deficit')),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -204,10 +207,10 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'ملاحظات (اختياري)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.notes),
+                      decoration: InputDecoration(
+                        labelText: S.t('shift_notes'),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.notes),
                       ),
                       maxLines: 3,
                     ),
@@ -223,7 +226,7 @@ class _CloseShiftScreenState extends State<CloseShiftScreen> {
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('إغلاق الوردية', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            : Text(S.t('shift_close_btn'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

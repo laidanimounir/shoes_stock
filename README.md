@@ -69,10 +69,13 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 | `product_variants` | Size/color/barcode variants | v1 |
 | `inventory` | Stock levels per variant per store | v1 |
 | `invoices` | Sales invoices (paid/partial/unpaid/refunded/returned/cancelled) | v1 |
-| `payments` | Payment records linked to invoices | v1 |
+| `payments` | Payment records + `payment_type` enum (invoice / debt_recovery) | v1 → **v4** ✅ |
 | `transactions` | Financial ledger (`transaction_type` enum: in/out/return) | v1 |
 | `activity_logs` | Full audit trail | v1 |
 | `shifts` | Cash register shift tracking per cashier | **v2** ✅ |
+| `expense_categories` | Operational expense categories per store | **v4** ✅ |
+| `expenses` | Operational expenses (rent, utilities, salaries…) with RLS | **v4** ✅ |
+| `settings` | User preferences — locale persistence (AR/FR) | **v4** ✅ |
 
 ### Active RPC Functions / Aktive RPC-Funktionen
 
@@ -89,6 +92,8 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 | `close_shift` | Close shift + discrepancy calculation | **v2** ✅ |
 | `get_active_shift` | Fetch current open shift (today only) | **v2** ✅ |
 | `process_refund` | Atomic: reversal + restock + ledger + explicit user_id | **v2 → v3 fixed** ✅ |
+| `add_expense` | Atomic: insert operational expense record | **v4** ✅ |
+| `add_debt_recovery_payment` | Payment without invoice — reduces customer balance | **v4** ✅ |
 
 ### ⚠️ Critical Notes / Kritische Hinweise
 
@@ -96,10 +101,13 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 - `handle_inventory_transaction` fires on every INSERT/UPDATE/DELETE on `transactions` — **never manually UPDATE inventory in any RPC**
 - `process_sale` exists as a single overload only (v1 without `p_shift_id` was dropped in v3)
 - `process_refund` explicitly sets `user_id = auth.uid()` with authentication guard
+- `expenses` table is intentionally separate from `transactions` — mixing operational costs into the inventory ledger would corrupt stock audit trails
+- `payment_type` on `payments` distinguishes invoice settlements from open-account debt recovery
 
 **🇩🇪 Deutsch:**
 - `handle_inventory_transaction` wird bei jedem INSERT/UPDATE/DELETE in `transactions` ausgelöst — **niemals manuell inventory in einem RPC aktualisieren**
 - `process_sale` existiert nur als einzelne Überladung (v1 ohne `p_shift_id` wurde in v3 gelöscht)
+- `expenses` ist bewusst von `transactions` getrennt — Betriebskosten dürfen das Inventar-Ledger nicht beeinflussen
 
 ***
 
@@ -159,13 +167,13 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 |---|---|---|
 | `StoreLocal` | `stores` | — |
 | `UserProfileLocal` | `user_profiles` | — |
-| `CustomerLocal` | `customers` | — |
+| `CustomerLocal` | `customers` + `address` field | — |
 | `SupplierLocal` | `suppliers` | — |
 | `ProductLocal` | `products` | — |
 | `ProductVariantLocal` | `product_variants` + `@Index(barcode)` | — |
 | `InventoryLocal` | `inventory` + composite index | — |
 | `InvoiceLocal` | `invoices` | ✅ |
-| `PaymentLocal` | `payments` | ✅ |
+| `PaymentLocal` | `payments` + `paymentType` field | ✅ |
 | `TransactionLocal` | `transactions` | ✅ |
 | `ShiftLocal` | `shifts` | ✅ |
 | `SyncQueueItem` | Queue — operationType, payloadJson, retryCount | — |
@@ -178,28 +186,77 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 
 **🇬🇧 English:**
 - **`ConnectivityService`** — Singleton monitoring network state. Auto-triggers `SyncEngine.syncPending()` on reconnect
-- **`SeedService`** — Downloads 11 tables from Supabase into Isar on first offline login (FK-safe order, 30-day window for transactional data)
+- **`SeedService`** — Downloads 13 tables from Supabase into Isar on first offline login (FK-safe order, 30-day window for transactional data)
 - **`SyncEngine`** — Replays `SyncQueueItem` queue against Supabase RPCs. Retry logic: max 3 attempts per item, then marks `failed`
 - **`InvoiceService`** — Offline-aware service: if online → Supabase RPC directly / if offline → Isar + SyncQueue enqueue
 
 **🇩🇪 Deutsch:**
 - **`ConnectivityService`** — Netzwerküberwachung, automatische Synchronisierungsauslösung bei Wiederverbindung
-- **`SeedService`** — Lädt 11 Tabellen beim ersten Offline-Login in FK-sicherer Reihenfolge
+- **`SeedService`** — Lädt 13 Tabellen beim ersten Offline-Login in FK-sicherer Reihenfolge
 - **`SyncEngine`** — Wiederholt ausstehende Operationen mit max. 3 Versuchen
 - **`InvoiceService`** — Offline-bewusster Dienst mit automatischer Weiterleitung
 
 #### 🖥️ UI Integration / UI-Integration
 
 **🇬🇧 English:**
-- **Mode Selection Dialog** — After login: choose "En ligne" (Online) or "Hors ligne" (Offline)
+- **Mode Selection Dialog** — After login: choose "Online" or "Offline"
 - **OfflineBanner** — Persistent top banner showing connection status + pending sync count + manual sync button
 - **POS Screen** — Refactored to use `InvoiceService` — sells offline seamlessly
 - **AppSession** — Extended with `isOfflineMode`, `pendingSync`, `currentUserId`
 
 **🇩🇪 Deutsch:**
-- **Modusauswahldialog** — Nach dem Login: "En ligne" oder "Hors ligne" wählen
+- **Modusauswahldialog** — Nach dem Login: Online oder Offline wählen
 - **OfflineBanner** — Dauerhaftes Banner mit Verbindungsstatus und ausstehenden Synchronisierungen
 - **POS-Bildschirm** — Umstrukturiert für nahtlosen Offline-Verkauf
+
+***
+
+### v4 — Expense Management, Debt Recovery & Bilingual UI *(In Progress — April 19, 2026)*
+
+#### 💸 Expense & Debt Recovery Module ✅
+
+**🇬🇧 English:**
+- **`expense_categories` table** — Store-scoped operational expense categories with RLS
+- **`expenses` table** — Full expense tracking (amount, category, payment method, date) with RLS
+- **`add_expense` RPC** — Atomic server-side expense insertion
+- **`add_debt_recovery_payment` RPC** — Account-level payment that reduces customer balance without invoice reference
+- **`ExpenseService`** — Offline-aware: online → RPC / offline → Isar + SyncQueue (`createExpense`)
+- **`DebtRecoveryService`** — Offline-aware: online → RPC / offline → Isar + SyncQueue (`createDebtRecoveryPayment`)
+- **`ExpensesScreen`** — Monthly stats (total, count, max) + category filter chips + add/category dialogs
+- **`DebtRecoveryScreen`** — Master-detail: customer list sorted by debt + payment history tabs + inline payment dialog with balance preview
+- **`SyncOperationType`** — Extended with `createExpense` + `createDebtRecoveryPayment`
+- **Admin nav** — Registered at indices 11 (`Dépenses`) and 12 (`Recouvrement`)
+
+**🇩🇪 Deutsch:**
+- Vollständiges Ausgaben- und Schuldenrückzahlungsmodul mit Offline-Unterstützung
+- Atomare RPCs für Serverintegrität
+- Master-Detail-UI für Kundenschulden mit Echtzeit-Saldovorschau
+
+#### 🌍 Arabic / French Bilingual UI *(In Progress)*
+
+**🇬🇧 English:**
+
+| Phase | Scope | Status |
+|---|---|---|
+| **Phase A** — Infrastructure | `app_strings.dart` (~280 keys AR/FR) + `SettingsLocal` Isar + `AppSession.locale` ValueNotifier + `main.dart` rebuild wrapper | ✅ Complete |
+| **Phase B** — Core screens | `offline_banner`, `login_screen` (AR/FR toggle), `admin_main_layout` (RTL + BorderDirectional), `employee_main_layout`, `shift_dialog`, `close_shift_screen`, `end_of_day_report`, `activity_logs_screen`, `sales_history_screen` | ✅ Complete |
+| **Phase C1** — Admin screens | `refund_modal`, `dashboard_screen` (dynamic Arabic dates), `ajouter_produit` | ✅ Complete |
+| **Phase C2** — Admin screens | `debt_recovery_screen`, `expenses_screen`, `gestion_employes` | ⚠️ Build errors under fix |
+| **Phase C3** — Admin screens | `gestion_stores`, `achat_fournisseur`, `inventory_screen`, `liste_produits`, `gestion_fournisseurs`, `gestion_clients`, `pos_screen` | 🔲 Pending |
+| **Phase C4** — Mobile | `owner_dashboard` (~215 strings) | 🔲 Pending |
+
+**Architecture:**
+- `AppSession.locale` — `ValueNotifier<String>` wrapping `MaterialApp` for full widget tree rebuild on language switch
+- `S.t('key')` — Static accessor usable anywhere without `BuildContext`
+- `SettingsLocal` — Isar singleton (id=1) persisting locale across restarts
+- Default language: **Arabic** — app launches in AR on first install
+- RTL layout: Flutter handles 90% automatically via `Locale('ar')`. Manual fixes applied to `EdgeInsetsDirectional`, `BorderDirectional`, and direction-sensitive icons
+- Fonts: `GoogleFonts.cairo()` (body) + `GoogleFonts.amiri()` (headings) for Arabic — `GoogleFonts.raleway()` + `GoogleFonts.playfairDisplay()` for French
+
+**Known issue being resolved:**
+- `app_strings.dart` — syntax error near line 932 (unclosed map entry)
+- `login_screen.dart` — unclosed bracket in SnackBar construction
+- 3 `const` conflicts in `gestion_employes`, `debt_recovery_screen`, `end_of_day_report`
 
 ***
 
@@ -207,23 +264,31 @@ Das System arbeitet auf einer Dual-Plattform-Logik:
 
 **🇬🇧 English:**
 
-| Priority | Module | Description |
-|---|---|---|
-| 🔴 High | **Expense & Debt Recovery** | Operational costs tracking + debt repayment dashboard |
-| 🟡 Medium | **Arabic Multilingual UI** | Full RTL Arabic interface — Desktop + Mobile |
-| 🟡 Medium | **Mobile Audit Tool** | Complete Android/iOS warehouse audit screens |
-| 🟢 Future | **Multi-branch Reporting** | Cross-store financial consolidation |
-| 🟢 Future | **Employee Performance** | Sales per cashier, shift productivity |
+| Priority | Module | Description | Status |
+|---|---|---|---|
+| 🔴 High | **Bilingual UI C2 fix** | Fix 5 build errors blocking Phase C2 | 🔧 In fix |
+| 🔴 High | **Bilingual UI C3** | POS + Inventory + Clients + Suppliers + Stores | 🔲 Next |
+| 🔴 High | **Bilingual UI C4** | Mobile owner dashboard | 🔲 Next |
+| 🔴 High | **Receipt Printing** | Thermal printer (80mm) + PDF invoice generation | 🔲 Pending |
+| 🔴 High | **Low Stock Alerts** | Minimum threshold per variant + reorder dashboard | 🔲 Pending |
+| 🟡 Medium | **Analytics Dashboard** | Sales trends, top products, margin analysis charts | 🔲 Pending |
+| 🟡 Medium | **Mobile Audit Tool** | Complete Android/iOS warehouse audit screens | 🔲 Pending |
+| 🟢 Future | **Multi-branch Reporting** | Cross-store financial consolidation | 🔲 Pending |
+| 🟢 Future | **Employee Performance** | Sales per cashier, shift productivity | 🔲 Pending |
 
 **🇩🇪 Deutsch:**
 
-| Priorität | Modul | Beschreibung |
-|---|---|---|
-| 🔴 Hoch | **Ausgaben- und Schuldenmanagement** | Betriebskostenverfolgung + Schuldenrückzahlungs-Dashboard |
-| 🟡 Mittel | **Mehrsprachige UI (Arabisch)** | Vollständige RTL-arabische Oberfläche |
-| 🟡 Mittel | **Mobiles Audit-Tool** | Vollständige Android/iOS-Lagerprüfungsbildschirme |
-| 🟢 Zukunft | **Filialübergreifendes Reporting** | Konsolidiertes Finanzdashboard |
-| 🟢 Zukunft | **Mitarbeiterleistungsverfolgung** | Verkäufe pro Kassierer, Schichtproduktivität |
+| Priorität | Modul | Beschreibung | Status |
+|---|---|---|---|
+| 🔴 Hoch | **Zweisprachige UI C2-Fix** | 5 Build-Fehler beheben | 🔧 In Bearbeitung |
+| 🔴 Hoch | **Zweisprachige UI C3** | POS + Inventar + Kunden + Lieferanten | 🔲 Ausstehend |
+| 🔴 Hoch | **Zweisprachige UI C4** | Mobiles Eigentümer-Dashboard | 🔲 Ausstehend |
+| 🔴 Hoch | **Belegdruck** | Thermodrucker (80mm) + PDF-Rechnungsgenerierung | 🔲 Ausstehend |
+| 🔴 Hoch | **Mindestbestandsalarm** | Schwellenwert pro Variante + Nachbestellübersicht | 🔲 Ausstehend |
+| 🟡 Mittel | **Analyse-Dashboard** | Verkaufstrends, Topprodukte, Margenanalyse | 🔲 Ausstehend |
+| 🟡 Mittel | **Mobiles Audit-Tool** | Vollständige Android/iOS-Lagerprüfungsbildschirme | 🔲 Ausstehend |
+| 🟢 Zukunft | **Filialübergreifendes Reporting** | Konsolidiertes Finanzdashboard | 🔲 Ausstehend |
+| 🟢 Zukunft | **Mitarbeiterleistungsverfolgung** | Verkäufe pro Kassierer, Schichtproduktivität | 🔲 Ausstehend |
 
 ***
 
@@ -256,6 +321,10 @@ dependencies:
   isar_flutter_libs: ^3.1.0+1
   connectivity_plus: ^6.0.5
   path_provider: ^2.1.2
+  google_fonts: latest
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 dev_dependencies:
   isar_generator: ^3.1.0+1
@@ -264,54 +333,69 @@ dev_dependencies:
 
 ### Project Structure / Projektstruktur
 
-```
-lib/
 ├── core/
-│   ├── app_session.dart              # Global session (shift, store, user, online/offline)
-│   ├── connectivity_service.dart     # ✅ v3 — internet monitoring + auto-sync trigger
-│   └── sync_engine.dart              # ✅ v3 — queue-based sync with retry logic
-├── local_db/                         # ✅ v3
-│   ├── collections/
-│   │   ├── store_local.dart
-│   │   ├── user_profile_local.dart
-│   │   ├── customer_local.dart
-│   │   ├── supplier_local.dart
-│   │   ├── product_local.dart
-│   │   ├── product_variant_local.dart
-│   │   ├── inventory_local.dart
-│   │   ├── invoice_local.dart
-│   │   ├── payment_local.dart
-│   │   ├── transaction_local.dart
-│   │   ├── shift_local.dart
-│   │   ├── sync_queue_item.dart
-│   │   └── sync_metadata.dart
-│   ├── enums/
-│   │   └── local_enums.dart
-│   ├── isar_service.dart
-│   └── seed_service.dart
+│ ├── app_session.dart # Global session + locale ValueNotifier (v4)
+│ ├── app_strings.dart # ✅ v4 — ~280 AR/FR translation keys
+│ ├── connectivity_service.dart # ✅ v3 — internet monitoring + auto-sync trigger
+│ └── sync_engine.dart # ✅ v3+v4 — queue sync + expense/debt operations
+├── local_db/ # ✅ v3+v4
+│ ├── collections/
+│ │ ├── store_local.dart
+│ │ ├── user_profile_local.dart
+│ │ ├── customer_local.dart # + address field (v4 fix)
+│ │ ├── supplier_local.dart
+│ │ ├── product_local.dart
+│ │ ├── product_variant_local.dart
+│ │ ├── inventory_local.dart
+│ │ ├── invoice_local.dart
+│ │ ├── payment_local.dart # + paymentType field (v4)
+│ │ ├── transaction_local.dart
+│ │ ├── shift_local.dart
+│ │ ├── expense_category_local.dart # ✅ v4
+│ │ ├── expense_local.dart # ✅ v4 — synced flag
+│ │ ├── settings_local.dart # ✅ v4 — locale persistence
+│ │ ├── sync_queue_item.dart
+│ │ └── sync_metadata.dart
+│ ├── enums/
+│ │ └── local_enums.dart # + PaymentMethod + PaymentType + createExpense + createDebtRecoveryPayment (v4)
+│ ├── isar_service.dart
+│ └── seed_service.dart # + expense_categories + expenses seeding (v4)
 ├── models/
-│   └── shift_model.dart
+│ └── shift_model.dart
 ├── services/
-│   ├── invoice_service.dart          # ✅ v3 — offline-aware sale processing
-│   ├── shift_service.dart
-│   └── refund_service.dart
+│ ├── invoice_service.dart # ✅ v3 — offline-aware sale processing
+│ ├── shift_service.dart # ✅ v4 fix — isar.dart import + named notes param
+│ ├── refund_service.dart
+│ ├── expense_service.dart # ✅ v4 — offline-aware expense management
+│ └── debt_recovery_service.dart # ✅ v4 — offline-aware debt recovery
 └── views/
-    ├── auth/
-    │   └── login_screen.dart         # ✅ v3 — online/offline mode selection
-    ├── desktop/
-    │   ├── pos_screen.dart           # ✅ v3 — uses InvoiceService
-    │   ├── shift_dialog.dart         # ✅ v2
-    │   ├── close_shift_screen.dart   # ✅ v2
-    │   ├── end_of_day_report.dart    # ✅ v2
-    │   └── refund_modal.dart         # ✅ v2
-    ├── admin/
-    │   └── sales/
-    │       └── sales_history_screen.dart
-    ├── mobile/
-    │   └── owner_dashboard/
-    └── widgets/
-        └── offline_banner.dart       # ✅ v3 — persistent sync status banner
-```
+├── auth/
+│ └── login_screen.dart # ✅ v3+v4 — mode selection + AR/FR toggle
+├── desktop/
+│ ├── pos_screen.dart # ✅ v3 — uses InvoiceService | 🔲 i18n C3
+│ ├── shift_dialog.dart # ✅ v2+v4i18n
+│ ├── close_shift_screen.dart # ✅ v2+v4i18n
+│ ├── end_of_day_report.dart # ✅ v2+v4i18n
+│ └── refund_modal.dart # ✅ v2+v4i18n C1
+├── admin/
+│ ├── dashboard_screen.dart # ✅ v4i18n C1 — dynamic Arabic dates
+│ ├── ajouter_produit.dart # ✅ v4i18n C1
+│ ├── expenses_screen.dart # ✅ v4 — ⚠️ i18n C2 build fix pending
+│ ├── debt_recovery_screen.dart # ✅ v4 — ⚠️ i18n C2 build fix pending
+│ ├── gestion_employes.dart # ⚠️ i18n C2 build fix pending
+│ ├── gestion_clients.dart # 🔲 i18n C3
+│ ├── gestion_fournisseurs.dart # 🔲 i18n C3
+│ ├── gestion_stores.dart # 🔲 i18n C3
+│ ├── liste_produits.dart # 🔲 i18n C3
+│ ├── inventory_screen.dart # ✅ v4 fix (casting) | 🔲 i18n C3
+│ ├── achat_fournisseur.dart # 🔲 i18n C3
+│ ├── sales_history_screen.dart # ✅ v4i18n B
+│ └── activity_logs_screen.dart # ✅ v4i18n B
+├── mobile/
+│ └── owner_dashboard/ # 🔲 i18n C4
+└── widgets/
+└── offline_banner.dart # ✅ v3+v4i18n B
+
 
 ***
 
@@ -322,10 +406,9 @@ lib/
 
 ***
 
-*Last updated: April 18, 2026*
-*v1: Production ✅ | v2: Complete ✅ | v3: Complete ✅*
-*Next milestone: Expense & Debt Recovery Module*
-
+*Last updated: April 19, 2026*
+*v1: Production ✅ | v2: Complete ✅ | v3: Complete ✅ | v4: In Progress 🔧*
+*Current session: Fixing i18n Phase C2 build errors → then C3 → C4 → Receipt Printing → Low Stock Alerts*
 
 
 

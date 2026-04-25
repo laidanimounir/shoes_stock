@@ -8,6 +8,7 @@ import '../../local_db/isar_service.dart';
 import '../../local_db/collections/shift_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/user_profile_local.dart';
+import '../../core/app_strings.dart';
 
 class EndOfDayReport extends StatefulWidget {
   final DateTime date;
@@ -134,13 +135,13 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
   Future<void> _closeShift() async {
     final closingText = _actualAmountController.text.trim();
     if (closingText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez entrer le montant réel / الرجاء إدخال المبلغ الفعلي'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('shift_actual_amount_required')), backgroundColor: Colors.red));
       return;
     }
 
     final closing = double.tryParse(closingText);
     if (closing == null || closing < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Montant invalide / مبلغ غير صحيح'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('shift_error_amount')), backgroundColor: Colors.red));
       return;
     }
 
@@ -155,7 +156,7 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
       AppSession.currentShiftId = null;
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Caisse clôturée avec succès / تم إغلاق الوردية'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('shift_close_success')), backgroundColor: Colors.green));
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -179,7 +180,7 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
         children: [
           const Icon(Icons.assessment, size: 48, color: Colors.indigo),
           const SizedBox(height: 8),
-          const Text('Rapport du jour / تقرير اليوم', textAlign: TextAlign.center),
+          Text(S.t('label_daily_report'), textAlign: TextAlign.center),
           Text(formattedDate, style: const TextStyle(fontSize: 16, color: Colors.grey)),
         ],
       ),
@@ -194,7 +195,7 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Fermer / إغلاق', style: TextStyle(color: Colors.grey)),
+          child: Text(S.t('label_close'), style: const TextStyle(color: Colors.grey)),
         ),
       ],
     );
@@ -207,11 +208,11 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildRow('Montant initial / المبلغ الابتدائي', '$_openingAmount DA', Colors.black87),
+        _buildRow(S.t('shift_initial_amount'), '$_openingAmount DA', Colors.black87),
         const Divider(),
-        _buildRow('Total ventes / مجموع المبيعات', '$_totalSales DA', Colors.green),
+        _buildRow(S.t('shift_total_sales'), '$_totalSales DA', Colors.green),
         const Divider(),
-        _buildRow('Montant attendu / المبلغ المتوقع', '$expected DA', Colors.indigo, isBold: true),
+        _buildRow(S.t('shift_expected_amount'), '$expected DA', Colors.indigo, isBold: true),
         
         const SizedBox(height: 24),
         Container(
@@ -220,13 +221,13 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Clôturer la caisse / إغلاق الوردية', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
+              Text(S.t('shift_close_title'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _actualAmountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Montant réel en caisse / المبلغ الفعلي',
+                decoration: InputDecoration(
+                  labelText: S.t('shift_actual_amount'),
                   border: OutlineInputBorder(),
                   filled: true,
                   fillColor: Colors.white,
@@ -236,7 +237,7 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
               if (_hasInput) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Différence: ${_discrepancy > 0 ? "+" : ""}${_discrepancy.toStringAsFixed(2)} DA',
+                  '${S.t('shift_discrepancy')}: ${_discrepancy > 0 ? "+" : ""}${_discrepancy.toStringAsFixed(2)} DA',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _discrepancy == 0 ? Colors.green : (_discrepancy > 0 ? Colors.green : Colors.red),
@@ -247,9 +248,9 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes / ملاحظات (Optionnel)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: S.t('shift_notes'),
+                  border: const OutlineInputBorder(),
                   filled: true,
                   fillColor: Colors.white,
                 ),
@@ -259,7 +260,7 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
               ElevatedButton.icon(
                 onPressed: _isClosing ? null : _closeShift,
                 icon: _isClosing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.lock),
-                label: const Text('Clôturer / إغلاق'),
+                label: Text(S.t('shift_close_btn')),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               )
             ],
@@ -277,17 +278,17 @@ class _EndOfDayReportState extends State<EndOfDayReport> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(8)),
-          child: const Column(
+          child: Column(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 32),
-              SizedBox(height: 8),
-              Text('⚠️ Journée sans caisse ouverte', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-              Text('يوم بدون وردية', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 32),
+              const SizedBox(height: 8),
+              Text(S.t('shift_warning_no_caisse'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+              Text(S.t('shift_no_caisse'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
             ],
           ),
         ),
         const SizedBox(height: 24),
-        _buildRow('Total ventes enregistrées\nإجمالي المبيعات المسجلة', '$_totalSales DA', Colors.green, isBold: true),
+        _buildRow(S.t('shift_total_sales_recorded'), '$_totalSales DA', Colors.green, isBold: true),
       ],
     );
   }

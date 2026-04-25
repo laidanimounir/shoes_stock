@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/app_strings.dart';
 import '../../services/refund_service.dart';
 
 class RefundModal extends StatefulWidget {
@@ -74,7 +75,7 @@ class _RefundModalState extends State<RefundModal> {
     final selectedItems = _refundableItems.where((i) => i['selected']).toList();
     if (selectedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء تحديد عنصر واحد على الأقل للإرجاع'), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('refund_min_one_item')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -100,7 +101,7 @@ class _RefundModalState extends State<RefundModal> {
       // ignore: use_build_context_synchronously
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تمت عملية الإرجاع بنجاح. معرف: $refundId'), backgroundColor: Colors.green),
+        SnackBar(content: Text('${S.t('refund_success')} $refundId'), backgroundColor: Colors.green),
       );
       Navigator.of(context).pop(true); // Return true to indicate refresh
     } catch (e) {
@@ -119,16 +120,16 @@ class _RefundModalState extends State<RefundModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('إرجاع المشتريات', textAlign: TextAlign.center),
+      title: Text(S.t('refund_title'), textAlign: TextAlign.center),
       content: SizedBox(
         width: 500,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('الفاتورة الأصلية: ${widget.invoice['invoice_number'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('${S.t('refund_original_invoice')} ${widget.invoice['invoice_number'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            const Text('حدد العناصر التي سيتم إرجاعها:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.t('refund_select_items'), style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Flexible(
               child: ListView.builder(
@@ -145,8 +146,8 @@ class _RefundModalState extends State<RefundModal> {
                       title: Text('${item['name']} ${item['size']}'),
                       subtitle: Row(
                         children: [
-                          Text('السعر: ${item['unit_price']} DA | '),
-                          const Text('الكمية المرجعة: '),
+                          Text('${S.t('refund_unit_price')} ${item['unit_price']} DA | '),
+                          Text('${S.t('refund_quantity')} '),
                           SizedBox(
                             width: 60,
                             child: DropdownButton<int>(
@@ -173,7 +174,7 @@ class _RefundModalState extends State<RefundModal> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('إجمالي مبلغ الإرجاع:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text(S.t('refund_total_amount'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
                   Text('${_totalRefundAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
                 ],
               ),
@@ -192,12 +193,12 @@ class _RefundModalState extends State<RefundModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('إلغاء', style: TextStyle(color: Colors.grey)),
+          child: Text(S.t('action_cancel'), style: const TextStyle(color: Colors.grey)),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _processRefund,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-          child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('تأكيد الإرجاع'),
+          child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text(S.t('refund_confirm')),
         ),
       ],
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/app_strings.dart';
 
 class VariantFormData {
   String size = '';
@@ -141,13 +142,13 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     for (var v in _variants) {
       if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty || v.buyPrice.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez remplir tous les champs des variantes (y compris les prix).'), backgroundColor: Colors.red),
+          SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Colors.red),
         );
         return;
       }
       if (double.tryParse(v.sellPrice) == null || double.tryParse(v.buyPrice) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez entrer des prix valides.'), backgroundColor: Colors.red),
+          SnackBar(content: Text(S.t('msg_invalid')), backgroundColor: Colors.red),
         );
         return;
       }
@@ -155,7 +156,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
     if (_selectedStoreId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner un magasin.'), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('pos_select_store')), backgroundColor: Colors.red),
       );
       return;
     }
@@ -201,7 +202,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produit ajouté avec succès !'), backgroundColor: Colors.green),
+          SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Colors.green),
         );
        
         _formKey.currentState!.reset();
@@ -217,7 +218,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     } on PostgrestException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -257,7 +258,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Ajouter un Produit (Chaussure)'),
+        title: Text(S.t('prod_add_title')),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
@@ -289,12 +290,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                             ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
                             : _imageBytes != null
                               ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.memory(_imageBytes!, fit: BoxFit.cover))
-                              : const Column(
+                              : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
-                                    SizedBox(height: 8),
-                                    Text('Ajouter une photo', style: TextStyle(color: Colors.grey)),
+                                    const Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
+                                    const SizedBox(height: 8),
+                                    Text(S.t('prod_image'), style: const TextStyle(color: Colors.grey)),
                                   ],
                                 ),
                         ),
@@ -307,28 +308,28 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           children: [
                             TextFormField(
                               controller: _nameController,
-                              decoration: const InputDecoration(labelText: 'Nom du Produit', border: OutlineInputBorder()),
-                              validator: (v) => v!.isEmpty ? 'Requis' : null,
+                              decoration: InputDecoration(labelText: S.t('prod_name'), border: const OutlineInputBorder()),
+                              validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _descController,
                               maxLines: 3,
-                              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+                                decoration: InputDecoration(labelText: S.t('label_description'), border: const OutlineInputBorder()),
                             ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder()),
+                                    decoration: InputDecoration(labelText: S.t('label_supplier'), border: const OutlineInputBorder()),
                                     value: _selectedSupplierId,
                                     items: _suppliers.map((s) => DropdownMenuItem<String>(
                                       value: s['id'],
                                       child: Text(s['company_name']),
                                     )).toList(),
                                     onChanged: (val) => setState(() => _selectedSupplierId = val),
-                                    hint: const Text('Sélectionnez...'),
+                                    hint: Text(S.t('misc_loading')),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -339,10 +340,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                         decoration: const InputDecoration(labelText: 'Magasin', border: OutlineInputBorder()),
                                         initialValue: _stores.where((s) => s['id'] == _userStoreId).isNotEmpty
                                             ? _stores.firstWhere((s) => s['id'] == _userStoreId)['name']
-                                            : 'Mon magasin',
+                                            : S.t('label_store'),
                                       )
                                     : DropdownButtonFormField<String>(
-                                        decoration: const InputDecoration(labelText: 'Magasin', border: OutlineInputBorder()),
+                                        decoration: InputDecoration(labelText: S.t('label_store'), border: const OutlineInputBorder()),
                                         value: _selectedStoreId,
                                         items: _stores.map((s) => DropdownMenuItem<String>(
                                           value: s['id'],
@@ -369,7 +370,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       ElevatedButton.icon(
                         onPressed: _addVariant,
                         icon: const Icon(Icons.add),
-                        label: const Text('Ajouter une Variante'),
+                        label: Text(S.t('prod_add_variant_btn')),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.teal[50], foregroundColor: Colors.teal),
                       )
                     ],
@@ -392,7 +393,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: TextFormField(
                                     initialValue: v.size,
-                                    decoration: const InputDecoration(labelText: 'Pointure (ex: 42)', isDense: true),
+                                    decoration: InputDecoration(labelText: S.t('prod_size'), isDense: true),
                                     onChanged: (val) => v.size = val,
                                   ),
                                 ),
@@ -400,7 +401,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Expanded(
                                   child: TextFormField(
                                     initialValue: v.color,
-                                    decoration: const InputDecoration(labelText: 'Couleur', isDense: true),
+                                    decoration: InputDecoration(labelText: S.t('prod_color'), isDense: true),
                                     onChanged: (val) => v.color = val,
                                   ),
                                 ),
@@ -409,7 +410,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   flex: 2,
                                   child: TextFormField(
                                     initialValue: v.barcode,
-                                    decoration: const InputDecoration(labelText: 'Code-barres', isDense: true),
+                                    decoration: InputDecoration(labelText: S.t('prod_barcode'), isDense: true),
                                     onChanged: (val) => v.barcode = val,
                                   ),
                                 ),
@@ -429,7 +430,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                     initialValue: v.buyPrice,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
-                                      labelText: "Prix d'achat (DA)",
+                                      labelText: S.t('prod_buy_price'),
                                       isDense: true,
                                       prefixIcon: const Icon(Icons.arrow_downward, color: Colors.orange, size: 18),
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange[200]!)),
@@ -444,7 +445,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                     initialValue: v.sellPrice,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
-                                      labelText: 'Prix de vente (DA)',
+                                      labelText: S.t('prod_sell_price'),
                                       isDense: true,
                                       prefixIcon: const Icon(Icons.arrow_upward, color: Colors.green, size: 18),
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green[200]!)),
@@ -469,7 +470,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     child: ElevatedButton(
                       onPressed: _saveProduct,
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-                      child: const Text('Enregistrer le produit et les variantes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: Text(S.t('action_save'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

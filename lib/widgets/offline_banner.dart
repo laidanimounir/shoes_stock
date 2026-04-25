@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_session.dart';
 import '../../core/connectivity_service.dart';
 import '../../core/sync_engine.dart';
+import '../../core/app_strings.dart';
 
 /// Persistent top banner shown when offline or when sync items are pending.
 /// Embed at the top of your main Column in each layout.
@@ -83,7 +84,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    _isOnline ? 'Mode Hors-ligne (connecté)' : 'Mode Hors-ligne',
+                    _isOnline ? S.t('offline_connected') : S.t('offline_mode'),
                     style: GoogleFonts.raleway(
                       color: Colors.white,
                       fontSize: 12,
@@ -105,7 +106,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
                                 color: Colors.greenAccent, size: 14),
                             const SizedBox(width: 4),
                             Text(
-                              'Synchronisé ✓',
+                              S.t('offline_synced'),
                               style: GoogleFonts.raleway(
                                 color: Colors.greenAccent,
                                 fontSize: 11,
@@ -119,7 +120,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '$count en attente',
+                            '$count ${S.t('offline_pending')}',
                             style: GoogleFonts.raleway(
                               color: Colors.white70,
                               fontSize: 11,
@@ -146,7 +147,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
                                     : const Icon(Icons.cloud_upload_outlined,
                                         color: Colors.white, size: 16),
                                 onPressed: _isSyncing ? null : _triggerSync,
-                                tooltip: 'Synchroniser maintenant',
+                                tooltip: S.t('offline_sync_now'),
                               ),
                             ),
                           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class ActivityLogsScreen extends StatefulWidget {
   const ActivityLogsScreen({super.key});
@@ -17,6 +19,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   void initState() {
     super.initState();
     timeago.setLocaleMessages('fr', timeago.FrMessages());
+    timeago.setLocaleMessages('ar', timeago.ArMessages());
     _fetchLogs();
   }
 
@@ -84,7 +87,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Journaux d\'activité'),
+        title: Text(S.t('nav_activity')),
         backgroundColor: Colors.blueGrey[800],
         foregroundColor: Colors.white,
         actions: [
@@ -94,7 +97,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _logs.isEmpty
-              ? const Center(child: Text('Aucune activité enregistrée.', style: TextStyle(fontSize: 18, color: Colors.grey)))
+              ? Center(child: Text(S.t('label_no_data'), style: const TextStyle(fontSize: 18, color: Colors.grey)))
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   itemCount: _logs.length,
@@ -130,7 +133,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                             children: [
                               TextSpan(text: userName, style: const TextStyle(fontWeight: FontWeight.bold)),
                               TextSpan(text: ' ($role) ', style: const TextStyle(color: Colors.grey, fontSize: 14)),
-                              const TextSpan(text: 'a effectué une action: '),
+                              TextSpan(text: ' ${S.t('label_performed_action')}'),
                               TextSpan(text: action, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
                             ],
                           ),
@@ -147,7 +150,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                                   const Icon(Icons.access_time, size: 14, color: Colors.grey),
                                   const SizedBox(width: 4),
                                   Text(
-                                    timeago.format(date, locale: 'fr'),
+                                    timeago.format(date, locale: AppSession.locale.value),
                                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                                   ),
                                   const SizedBox(width: 8),
