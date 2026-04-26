@@ -1,6 +1,6 @@
 # 👟 ShoeStock ERP & POS — نظام إدارة متكامل للأحذية
 
-> **الإصدار الحالي:** v4 (قيد التطوير) | **تاريخ آخر تحديث:** 25 أبريل 2026  
+**الإصدار الحالي:** v4.1 | **تاريخ آخر تحديث:** 26 أبريل 2026
 > **حالة Supabase:** ✅ `ACTIVE_HEALTHY` | **المنطقة:** `eu-west-3` (باريس)  
 > **Flutter SDK:** `3.41.7` (FVM) | **Dart SDK:** `^3.11.0`  
 > **Project ID:** `jluuobtzylejiahbelgp`
@@ -167,7 +167,7 @@ Shoes_Stock/
 │       │   ├── sales_history_screen.dart  (8.3 KB)  — i18n B ✅
 │       │   └── activity_logs_screen.dart  (6.8 KB)  — i18n B ✅
 │       ├── mobile/
-│       │   └── owner_dashboard.dart       (55.0 KB) — 🔲 i18n C4 (~215 سلسلة)
+│       │   └── owner_dashboard.dart       (58.2 KB) — i18n C4 ✅ v4.1 (RPCs + WhatsApp/SMS)
 │       └── widgets/
 │           └── offline_banner.dart        (6.2 KB)  — i18n B ✅
 ├── supabase/migrations/                   — 9 migration files
@@ -312,7 +312,8 @@ Shoes_Stock/
 - [x] `SyncOperationType` موسّع: `createExpense` + `createDebtRecoveryPayment`
 - [x] تسجيل Admin nav: index 11 (Dépenses) + index 12 (Recouvrement)
 - [x] البنية التحتية للتعريب (~280+ مفتاح AR/FR)
-- [x] **Phase C2 مكتمل (25 أبريل 2026)** — إصلاح أخطاء البناء في debt_recovery, expenses, gestion_employes
+- [x] **Phase C2 مكتمل (25 أبريل 2026)** — 
+- [x] **Phase C4 مكتمل (26 أبريل 2026)** — owner_dashboard مع RPCs مالية + WhatsApp/SMS
 
 ---
 
@@ -325,7 +326,7 @@ Shoes_Stock/
 | **Phase C1** | `refund_modal`, `dashboard_screen`, `ajouter_produit` | ✅ مكتمل |
 | **Phase C2** | `debt_recovery_screen`, `expenses_screen`, `gestion_employes` | ✅ **مكتمل 25 أبريل 2026** |
 | **Phase C3** | `gestion_stores`, `achat_fournisseur`, `inventory_screen`, `liste_produits`, `gestion_fournisseurs`, `gestion_clients`, `pos_screen` | ✅ **مكتمل 25 أبريل 2026** |
-| **Phase C4** | `owner_dashboard` (~215 سلسلة) | 🔲 معلّق |
+| **Phase C4** | `owner_dashboard` (~215 سلسلة) | ✅ **مكتمل 26 أبريل 2026** |
 
 **تفاصيل البنية التقنية للتعريب:**
 - `AppSession.locale` — `ValueNotifier<String>` يُغلّف `MaterialApp` لإعادة بناء كاملة عند تغيير اللغة
@@ -341,7 +342,7 @@ Shoes_Stock/
 | الأولوية | الوحدة | الوصف | الحالة |
 |---|---|---|---|
 | 🔴 عالية | **Bilingual UI C3** | POS + Inventory + Clients + Suppliers + Stores | ✅ مكتمل |
-| 🔴 عالية | **Bilingual UI C4** | Mobile owner dashboard (~215 سلسلة) | 🔲 التالي |
+| 🔴 عالية | **Bilingual UI C4** | Mobile owner dashboard | ✅ مكتمل 26 أبريل 2026 |
 | 🔴 عالية | **Receipt Printing** | طابعة حرارية 80mm + توليد PDF للفواتير | 🔲 معلّق |
 | 🔴 عالية | **Low Stock Alerts** | حد أدنى للمخزون لكل متغير + لوحة إعادة الطلب | 🔲 معلّق |
 | 🟡 متوسطة | **Analytics Dashboard** | اتجاهات المبيعات، أفضل المنتجات، تحليل الهامش | 🔲 معلّق |
@@ -505,7 +506,7 @@ dev_dependencies:
 | **ملف الترجمة** | `app_strings.dart` (43.5 KB / 934+ سطر) |
 | **Isar Collections** | 16 |
 | **Supabase Tables** | 14 (+ `settings` مفقود) |
-| **Supabase RPCs** | 14 دالة |
+| **Supabase RPCs** | 18 دالة (+4 v4.1) |
 | **Edge Functions** | 2 (⚠️ بدون JWT) |
 | **Migrations** | 9 |
 | **تنبيهات أمنية من Supabase** | 20 (12 search_path + 5 RLS مفتوح + 2 Storage + 1 auth) |
@@ -521,7 +522,7 @@ dev_dependencies:
 | **v1** | النظام الأساسي: POS + المخزون + الفواتير + المصادقة + متعدد الفروع | مارس 2026 | ✅ إنتاج |
 | **v2** | الشيفت + المرتجعات + تقرير نهاية اليوم | أبريل 2026 | ✅ مكتمل |
 | **v3** | Hybrid Offline/Online: Isar + SyncEngine + ConnectivityService + OfflineBanner | 18 أبريل 2026 | ✅ مكتمل |
-| **v4** | المصاريف + تحصيل الديون + التعريب AR/FR (A→B→C1→C2) | 25 أبريل 2026 | 🔧 قيد التطوير |
+| **v4** | المصاريف + تحصيل الديون + التعريب AR/FR (C1→C2→C3→C4) + owner_dashboard v4.1 | 26 أبريل 2026 | ✅ مكتمل |
 
 ---
 
