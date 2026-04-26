@@ -613,6 +613,13 @@ class S {
       'auth_logout_confirm': 'Voulez-vous vraiment vous déconnecter ?',
       'owner_role_label': 'Propriétaire',
 
+      // ── Contact / WhatsApp / SMS ──
+      'contact_whatsapp_msg': 'Bonjour {name}, ceci est un rappel que votre solde dû est de {amount}. Merci pour votre confiance.',
+      'contact_sms_msg': 'Bonjour {name}, votre solde dû: {amount}. Merci de régulariser. Cordialement.',
+      'contact_no_phone': 'Aucun numéro de téléphone pour ce client',
+      'contact_debt_list_title': 'Clients débiteurs',
+      'contact_send_reminder': 'Envoyer un rappel',
+
       // ── Dates ──
       'day_mon': 'Lun', 'day_tue': 'Mar', 'day_wed': 'Mer', 'day_thu': 'Jeu', 'day_fri': 'Ven', 'day_sat': 'Sam', 'day_sun': 'Dim',
       'month_1': 'Jan', 'month_2': 'Fév', 'month_3': 'Mar', 'month_4': 'Avr', 'month_5': 'Mai', 'month_6': 'Jun',
@@ -1206,6 +1213,13 @@ class S {
       'owner_store_comp_today': 'مقارنة المتاجر (اليوم)',
       'auth_logout_confirm': 'هل تريد حقاً تسجيل الخروج؟',
       'owner_role_label': 'المالك',
+
+      // ── Contact / WhatsApp / SMS ──
+      'contact_whatsapp_msg': 'مرحباً {name}، هذا تذكير بأن رصيدكم المستحق هو {amount}. شكراً لتعاملكم معنا.',
+      'contact_sms_msg': 'مرحباً {name}، رصيدكم المستحق: {amount}. نرجو التسوية في أقرب وقت. شكراً.',
+      'contact_no_phone': 'لا يوجد رقم هاتف لهذا العميل',
+      'contact_debt_list_title': 'العملاء المدينون',
+      'contact_send_reminder': 'إرسال تذكير',
 
       // ── Dates ──
       'day_mon': 'الإثنين', 'day_tue': 'الثلاثاء', 'day_wed': 'الأربعاء', 'day_thu': 'الخميس', 'day_fri': 'الجمعة', 'day_sat': 'السبت', 'day_sun': 'الأحد',

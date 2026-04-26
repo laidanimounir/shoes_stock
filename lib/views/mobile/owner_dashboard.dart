@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_strings.dart';
 
 class OwnerDashboard extends StatefulWidget {
@@ -23,6 +24,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   List<dynamic> _lowStockAlerts = [];
   List<dynamic> _recentActivities = [];
+  List<Map<String, dynamic>> _debtors = [];
 
   bool _isLoading = true;
   late final RealtimeChannel _dashboardSubscription;
@@ -79,46 +81,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   Future<void> _fetchGlobalFinancials() async {
     try {
-      final today = DateTime.now();
-      final todayStart = DateTime(today.year, today.month, today.day).toIso8601String();
-
-      final todayRes = await Supabase.instance.client
-          .from('transactions')
-          .select('quantity, total_price, product_variants(buy_price)')
-          .eq('type', 'out')
-          .gte('created_at', todayStart);
-
-      double todaySales = 0;
-      double todayProfit = 0;
-
-      for (var row in todayRes) {
-        double total = (row['total_price'] as num?)?.toDouble() ?? 0.0;
-        int qty = (row['quantity'] as num?)?.toInt() ?? 0;
-        double buyPrice = 0.0;
-        final pv = row['product_variants'];
-        if (pv != null) {
-          if (pv is Map) {
-            buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
-          } else if (pv is List && pv.isNotEmpty) {
-            buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
-          }
-        }
-        todaySales += total;
-        todayProfit += (total - (buyPrice * qty));
-      }
-
-      final custRes = await Supabase.instance.client.from('customers').select('balance').eq('is_active', true);
-      double cDebt = custRes.fold(0.0, (sum, c) => sum + ((c['balance'] as num?)?.toDouble() ?? 0.0));
-
-      final suppRes = await Supabase.instance.client.from('suppliers').select('balance').eq('is_active', true);
-      double sDebt = suppRes.fold(0.0, (sum, s) => sum + ((s['balance'] as num?)?.toDouble() ?? 0.0));
-
+      final res = await Supabase.instance.client.rpc('get_owner_financial_summary');
       if (mounted) {
         setState(() {
-          _salesToday = todaySales;
-          _profitToday = todayProfit;
-          _customerDebt = cDebt;
-          _supplierDebt = sDebt;
+          _salesToday = (res['today_revenue'] as num?)?.toDouble() ?? 0;
+          _profitToday = (res['today_profit'] as num?)?.toDouble() ?? 0;
+          _customerDebt = (res['customer_debt'] as num?)?.toDouble() ?? 0;
+          _supplierDebt = (res['supplier_debt'] as num?)?.toDouble() ?? 0;
+          _debtors = List<Map<String, dynamic>>.from(res['debtors'] ?? []);
         });
       }
     } catch (e) {
@@ -128,62 +98,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   Future<void> _fetchStorePerformance() async {
     try {
-      final today = DateTime.now();
-      final todayStart = DateTime(today.year, today.month, today.day).toIso8601String();
-      final stores = await Supabase.instance.client.from('stores').select('id, name').eq('is_active', true);
-      List<Map<String, dynamic>> tempPerformance = [];
-
-      for (var store in stores) {
-        final transRes = await Supabase.instance.client
-            .from('transactions')
-            .select('quantity, total_price, product_variants(buy_price)')
-            .eq('type', 'out')
-            .eq('store_id', store['id'])
-            .gte('created_at', todayStart);
-
-        double storeSales = 0;
-        double storeProfit = 0;
-        for (var row in transRes) {
-          double total = (row['total_price'] as num?)?.toDouble() ?? 0.0;
-          int qty = (row['quantity'] as num?)?.toInt() ?? 0;
-          double buyPrice = 0.0;
-          final pv = row['product_variants'];
-          if (pv != null) {
-            if (pv is Map) buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
-            else if (pv is List && pv.isNotEmpty) buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
-          }
-          storeSales += total;
-          storeProfit += (total - (buyPrice * qty));
-        }
-
-        final invRes = await Supabase.instance.client
-            .from('inventory')
-            .select('quantity, product_variants(buy_price)')
-            .eq('store_id', store['id'])
-            .gt('quantity', 0);
-
-        double stockValue = 0;
-        for (var i in invRes) {
-          int qty = (i['quantity'] as num?)?.toInt() ?? 0;
-          double buyPrice = 0.0;
-          final pv = i['product_variants'];
-          if (pv != null) {
-            if (pv is Map) buyPrice = (pv['buy_price'] as num?)?.toDouble() ?? 0.0;
-            else if (pv is List && pv.isNotEmpty) buyPrice = (pv[0]['buy_price'] as num?)?.toDouble() ?? 0.0;
-          }
-          stockValue += (qty * buyPrice);
-        }
-
-        tempPerformance.add({
-          'id': store['id'],
-          'name': store['name'],
-          'today_sales': storeSales,
-          'today_profit': storeProfit,
-          'stock_value': stockValue,
-        });
-      }
-
-      if (mounted) setState(() => _storePerformance = tempPerformance);
+      final res = await Supabase.instance.client.rpc('get_store_performance');
+      final list = List<Map<String, dynamic>>.from(res ?? []);
+      if (mounted) setState(() => _storePerformance = list);
     } catch (e) {
       debugPrint("Error store performance: $e");
     }
@@ -210,6 +127,106 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .limit(15);
       if (mounted) setState(() => _recentActivities = res);
     } catch (e) {}
+  }
+
+  // ─── WhatsApp / SMS ─────────────────────────────────────────
+  String _cleanPhone(String phone) {
+    String cleaned = phone.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
+    if (cleaned.startsWith('00213')) {
+      cleaned = '+213${cleaned.substring(5)}';
+    } else if (cleaned.startsWith('0')) {
+      cleaned = '+213${cleaned.substring(1)}';
+    } else if (!cleaned.startsWith('+')) {
+      cleaned = '+213$cleaned';
+    }
+    return cleaned;
+  }
+
+  Future<void> _sendWhatsApp(String name, String phone, double balance) async {
+    final cleanedPhone = _cleanPhone(phone).replaceAll('+', '');
+    final message = S.t('contact_whatsapp_msg')
+        .replaceAll('{name}', name)
+        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
+    final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _sendSMS(String name, String phone, double balance) async {
+    final cleanedPhone = _cleanPhone(phone);
+    final message = S.t('contact_sms_msg')
+        .replaceAll('{name}', name)
+        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
+    final url = Uri.parse('sms:$cleanedPhone?body=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
+  Widget _buildContactButtons(String? phone, String name, double balance) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.chat, color: Colors.green, size: 20),
+          tooltip: 'WhatsApp',
+          onPressed: () {
+            if (phone == null || phone.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
+              );
+              return;
+            }
+            _sendWhatsApp(name, phone, balance);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
+          tooltip: 'SMS',
+          onPressed: () {
+            if (phone == null || phone.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
+              );
+              return;
+            }
+            _sendSMS(name, phone, balance);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDebtorsList() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: _debtors.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final debtor = _debtors[index];
+          final name = debtor['full_name'] ?? '—';
+          final phone = debtor['phone'] as String?;
+          final balance = (debtor['balance'] as num?)?.toDouble() ?? 0;
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.orange[50],
+              child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold)),
+            ),
+            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            subtitle: Text("${balance.toStringAsFixed(0)} ${S.t('misc_currency')}",
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 12)),
+            trailing: _buildContactButtons(phone, name, balance),
+          );
+        },
+      ),
+    );
   }
 
   // ─── زر Inventory ───────────────────────────────────────────
@@ -416,6 +433,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  if (_debtors.isNotEmpty) ...[
+                    _buildSectionHeader(S.t('contact_debt_list_title'), Icons.people_outline, Colors.orange),
+                    _buildDebtorsList(),
+                  ],
                   const SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -793,79 +815,27 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
 
   Future<void> _fetchAnalytics() async {
     try {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
-      final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
-      final lastMonthStart = DateTime(now.year, now.month - 1, 1).toIso8601String();
-      final lastMonthEnd = DateTime(now.year, now.month, 1).toIso8601String();
+      // RPC 1: ملخص المبيعات + مقارنة المتاجر
+      final summary = await Supabase.instance.client.rpc('get_analytics_summary');
+      _salesToday = (summary['today_sales'] as num?)?.toDouble() ?? 0;
+      _salesThisMonth = (summary['this_month_sales'] as num?)?.toDouble() ?? 0;
+      _salesLastMonth = (summary['last_month_sales'] as num?)?.toDouble() ?? 0;
 
-      // مبيعات اليوم
-      final todayRes = await Supabase.instance.client
-          .from('transactions')
-          .select('total_price')
-          .eq('type', 'out')
-          .gte('created_at', todayStart);
-      _salesToday = todayRes.fold(0.0, (sum, r) => sum + ((r['total_price'] as num?)?.toDouble() ?? 0.0));
-
-      // مبيعات هذا الشهر
-      final monthRes = await Supabase.instance.client
-          .from('transactions')
-          .select('total_price')
-          .eq('type', 'out')
-          .gte('created_at', monthStart);
-      _salesThisMonth = monthRes.fold(0.0, (sum, r) => sum + ((r['total_price'] as num?)?.toDouble() ?? 0.0));
-
-      // مبيعات الشهر الماضي
-      final lastMonthRes = await Supabase.instance.client
-          .from('transactions')
-          .select('total_price')
-          .eq('type', 'out')
-          .gte('created_at', lastMonthStart)
-          .lt('created_at', lastMonthEnd);
-      _salesLastMonth = lastMonthRes.fold(0.0, (sum, r) => sum + ((r['total_price'] as num?)?.toDouble() ?? 0.0));
-
-      // أكثر المنتجات مبيعاً هذا الشهر
-      final topRes = await Supabase.instance.client
-          .from('transactions')
-          .select('quantity, product_variants(size, color, products(name))')
-          .eq('type', 'out')
-          .gte('created_at', monthStart);
-
-      Map<String, Map<String, dynamic>> productMap = {};
-      for (var row in topRes) {
-        final pv = row['product_variants'];
-        if (pv == null) continue;
-        final name = pv['products']?['name'] ?? '—';
-        final size = pv['size'] ?? '';
-        final key = '$name-$size';
-        final qty = (row['quantity'] as num?)?.toInt() ?? 0;
-        if (productMap.containsKey(key)) {
-          productMap[key]!['qty'] += qty;
-        } else {
-          productMap[key] = {'name': name, 'size': size, 'qty': qty};
-        }
+      // مقارنة المتاجر
+      final storeList = List<Map<String, dynamic>>.from(summary['store_comparison'] ?? []);
+      final maxSales = storeList.fold(0.0, (max, s) => (s['sales'] as num).toDouble() > max ? (s['sales'] as num).toDouble() : max);
+      for (var s in storeList) {
+        s['ratio'] = maxSales > 0 ? (s['sales'] as num).toDouble() / maxSales : 0.0;
       }
-      final sorted = productMap.values.toList()..sort((a, b) => (b['qty'] as int).compareTo(a['qty'] as int));
-      _topProducts = sorted.take(5).map((e) => Map<String, dynamic>.from(e)).toList();
+      _storeComparison = storeList;
 
-      // مقارنة الفروع اليوم
-      final stores = await Supabase.instance.client.from('stores').select('id, name').eq('is_active', true);
-      List<Map<String, dynamic>> storeData = [];
-      for (var store in stores) {
-        final storeRes = await Supabase.instance.client
-            .from('transactions')
-            .select('total_price')
-            .eq('type', 'out')
-            .eq('store_id', store['id'])
-            .gte('created_at', todayStart);
-        final sales = storeRes.fold(0.0, (sum, r) => sum + ((r['total_price'] as num?)?.toDouble() ?? 0.0));
-        storeData.add({'name': store['name'], 'sales': sales});
-      }
-      final maxSales = storeData.fold(0.0, (max, s) => (s['sales'] as double) > max ? s['sales'] as double : max);
-      for (var s in storeData) {
-        s['ratio'] = maxSales > 0 ? (s['sales'] as double) / maxSales : 0.0;
-      }
-      _storeComparison = storeData;
+      // RPC 2: Top 5 products
+      final topRes = await Supabase.instance.client.rpc('get_top_products_this_month');
+      _topProducts = List<Map<String, dynamic>>.from(topRes ?? []).map((e) => {
+        'name': e['product_name'],
+        'size': e['size'],
+        'qty': e['total_sold'],
+      }).toList();
 
       if (mounted) setState(() => _isLoading = false);
     } catch (e) {
