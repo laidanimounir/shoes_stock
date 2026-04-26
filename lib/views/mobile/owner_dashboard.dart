@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../core/app_strings.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -251,7 +252,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           child: Column(
             children: [
               AppBar(
-                title: const Text('Scanner (Mode Propriétaire)'),
+                title: Text(S.t('owner_scanner_title')),
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.indigo[900],
                 foregroundColor: Colors.white,
@@ -297,7 +298,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       if (mounted) Navigator.pop(context);
 
       if (res == null) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produit introuvable.'), backgroundColor: Colors.red));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_product_not_found')), backgroundColor: Colors.red));
         return;
       }
 
@@ -321,23 +322,23 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     if (res['products']['image_url'] != null)
                       Center(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(res['products']['image_url'], height: 120))),
                     const SizedBox(height: 16),
-                    Text('Taille: ${res['size']} | Couleur: ${res['color']} | Code: $barcode', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('${S.t('pos_size')}: ${res['size']} | ${S.t('pos_color')}: ${res['color']} | ${S.t('pos_code')}: $barcode', style: const TextStyle(fontWeight: FontWeight.bold)),
                     const Divider(height: 24),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
                       child: Column(
                         children: [
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Prix Achat:'), Text('$buyP DA', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_buy_price')), Text('$buyP ${S.t('misc_currency')}', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))]),
                           const SizedBox(height: 4),
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Prix Vente:'), Text('$sellP DA', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_sell_price')), Text('$sellP ${S.t('misc_currency')}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))]),
                           const Divider(),
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Marge Nette:'), Text('+$margin DA', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_net_margin')), Text('+$margin ${S.t('misc_currency')}', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold))]),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Stocks par magasin:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    Text(S.t('owner_stocks_per_store'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                     const SizedBox(height: 8),
                     ...inventory.map((inv) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
@@ -345,7 +346,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('• ${inv['stores']['name']}'),
-                          Text('${inv['quantity']} unités', style: TextStyle(fontWeight: FontWeight.bold, color: (inv['quantity'] as int) > 0 ? Colors.green : Colors.red)),
+                          Text('${inv['quantity']} ${S.t('inv_units')}', style: TextStyle(fontWeight: FontWeight.bold, color: (inv['quantity'] as int) > 0 ? Colors.green : Colors.red)),
                         ],
                       ),
                     )),
@@ -353,7 +354,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer'))
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(S.t('action_close')))
               ],
             );
           },
@@ -362,7 +363,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -372,7 +373,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Tableau de Bord Maître', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(S.t('owner_dash_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
         elevation: 0,
@@ -390,17 +391,17 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Text("Santé Financière (Aujourd'hui)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(S.t('owner_financial_health'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Expanded(child: _buildMetricCard("Chiffre d'Affaires", "${_salesToday.toStringAsFixed(0)} DA", Icons.point_of_sale, Colors.blue)),
+                        Expanded(child: _buildMetricCard(S.t('dash_revenue'), "${_salesToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.point_of_sale, Colors.blue)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard("Bénéfice Net", "+${_profitToday.toStringAsFixed(0)} DA", Icons.trending_up, Colors.green)),
+                        Expanded(child: _buildMetricCard(S.t('dash_net_profit'), "+${_profitToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.trending_up, Colors.green)),
                       ],
                     ),
                   ),
@@ -409,16 +410,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        Expanded(child: _buildMetricCard("Créances Clients", "${_customerDebt.toStringAsFixed(0)} DA", Icons.account_balance_wallet, Colors.orange)),
+                        Expanded(child: _buildMetricCard(S.t('dash_customer_debt'), "${_customerDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.account_balance_wallet, Colors.orange)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard("Dettes Fournisseurs", "${_supplierDebt.toStringAsFixed(0)} DA", Icons.money_off, Colors.red)),
+                        Expanded(child: _buildMetricCard(S.t('dash_supplier_debt'), "${_supplierDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.money_off, Colors.red)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 32),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Text("Performance par Magasin", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(S.t('owner_store_performance'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                   ),
                   SizedBox(
                     height: 200,
@@ -444,11 +445,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   ),
                   const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
-                    _buildSectionHeader("Alertes Stock Faible", Icons.warning_amber_rounded, Colors.red),
+                    _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Colors.red),
                     _buildLowStockList(),
                   ],
                   const SizedBox(height: 24),
-                  _buildSectionHeader("Activités Récentes", Icons.history, Colors.indigo),
+                  _buildSectionHeader(S.t('owner_recent_activities'), Icons.history, Colors.indigo),
                   _buildActivityList(),
                   const SizedBox(height: 80),
                 ],
@@ -474,18 +475,18 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               ),
               IconButton(
                 icon: const Icon(Icons.inventory_2_outlined),
-                tooltip: 'Inventaire',
+                tooltip: S.t('owner_inventory'),
                 onPressed: _showInventory, // ✅ مربوط
               ),
               const SizedBox(width: 40),
               IconButton(
                 icon: const Icon(Icons.analytics_outlined),
-                tooltip: 'Analytiques',
+                tooltip: S.t('owner_analytics'),
                 onPressed: _showAnalytics, // ✅ مربوط
               ),
               IconButton(
                 icon: const Icon(Icons.person_outline),
-                tooltip: 'Profil',
+                tooltip: S.t('owner_profile'),
                 onPressed: _showProfile, // ✅ مربوط
               ),
             ],
@@ -525,15 +526,15 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Ventes du jour", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("${store['today_sales'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(S.t('dash_today_sales'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text("${store['today_sales'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text("Bénéfice net", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("+${store['today_profit'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(S.t('dash_net_profit'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text("+${store['today_profit'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
             ],
@@ -542,8 +543,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Valeur du Stock:", style: TextStyle(color: Colors.white70, fontSize: 12)),
-              Text("${store['stock_value'].toStringAsFixed(0)} DA", style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(S.t('dash_stock_value'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              Text("${store['stock_value'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -606,11 +607,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           final alert = _lowStockAlerts[index];
           return ListTile(
             title: Text("${alert['product_variants']['products']['name']} (${alert['product_variants']['size']})", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Text("Magasin: ${alert['stores']['name']}", style: const TextStyle(fontSize: 12)),
+            subtitle: Text("${S.t('label_store')}: ${alert['stores']['name']}", style: const TextStyle(fontSize: 12)),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(12)),
-              child: Text("${alert['quantity']} restants", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+              child: Text("${alert['quantity']} ${S.t('owner_qty_remaining')}", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
             ),
           );
         },
@@ -701,7 +702,7 @@ class _InventorySheetState extends State<_InventorySheet> {
                   children: [
                     Icon(Icons.inventory_2, color: Colors.indigo[900], size: 22),
                     const SizedBox(width: 10),
-                    Text('Inventaire — Tous les Magasins',
+                    Text(S.t('owner_inv_all_stores'),
                         style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
                   ],
                 ),
@@ -712,7 +713,7 @@ class _InventorySheetState extends State<_InventorySheet> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _inventory.isEmpty
-                        ? const Center(child: Text('Aucun article en stock.'))
+                        ? Center(child: Text(S.t('owner_no_items_stock')))
                         : ListView.separated(
                             controller: scrollController,
                             itemCount: _inventory.length,
@@ -735,9 +736,9 @@ class _InventorySheetState extends State<_InventorySheet> {
                                     size: 20,
                                   ),
                                 ),
-                                title: Text('$productName  •  T$size',
+                                title: Text('$productName  •  ${S.t('pos_size')} $size',
                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                subtitle: Text('$storeName  |  Couleur: $color',
+                                subtitle: Text('$storeName  |  ${S.t('pos_color')}: $color',
                                     style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                                 trailing: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -745,7 +746,7 @@ class _InventorySheetState extends State<_InventorySheet> {
                                     color: isLow ? Colors.red[50] : Colors.green[50],
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text('$qty unités',
+                                  child: Text('$qty ${S.t('inv_units')}',
                                       style: TextStyle(
                                         color: isLow ? Colors.red : Colors.green[700],
                                         fontWeight: FontWeight.bold,
@@ -908,19 +909,19 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                       children: [
                         Icon(Icons.analytics, color: Colors.indigo[900], size: 22),
                         const SizedBox(width: 10),
-                        Text('Analytiques', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
+                        Text(S.t('owner_analytics'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
                       ],
                     ),
                     const SizedBox(height: 20),
 
                     // ── Section 1: Ventes ──
-                    _sectionTitle('Ventes', Icons.point_of_sale, Colors.blue),
+                    _sectionTitle(S.t('owner_sales_section'), Icons.point_of_sale, Colors.blue),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: _analyticsCard("Aujourd'hui", "${_salesToday.toStringAsFixed(0)} DA", Colors.blue)),
+                        Expanded(child: _analyticsCard(S.t('dash_today'), "${_salesToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Colors.blue)),
                         const SizedBox(width: 12),
-                        Expanded(child: _analyticsCard("Ce mois", "${_salesThisMonth.toStringAsFixed(0)} DA", Colors.indigo)),
+                        Expanded(child: _analyticsCard(S.t('dash_this_month'), "${_salesThisMonth.toStringAsFixed(0)} ${S.t('misc_currency')}", Colors.indigo)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -933,7 +934,7 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('vs Mois dernier (${_salesLastMonth.toStringAsFixed(0)} DA)',
+                          Text('${S.t('owner_vs_last_month')} (${_salesLastMonth.toStringAsFixed(0)} ${S.t('misc_currency')})',
                               style: TextStyle(color: Colors.grey[700], fontSize: 12)),
                           Row(
                             children: [
@@ -954,7 +955,7 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                     const SizedBox(height: 24),
 
                     // ── Section 2: Top Produits ──
-                    _sectionTitle('Top 5 Produits (ce mois)', Icons.star, Colors.orange),
+                    _sectionTitle(S.t('owner_top_5_products'), Icons.star, Colors.orange),
                     const SizedBox(height: 12),
                     ..._topProducts.asMap().entries.map((entry) {
                       final i = entry.key;
@@ -975,10 +976,10 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text('${p['name']}  T${p['size']}',
+                              child: Text('${p['name']}  ${S.t('pos_size')} ${p['size']}',
                                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                             ),
-                            Text('${p['qty']} vendus',
+                            Text('${p['qty']} ${S.t('owner_qty_sold')}',
                                 style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
                         ),
@@ -987,7 +988,7 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                     const SizedBox(height: 24),
 
                     // ── Section 3: Comparaison Magasins ──
-                    _sectionTitle("Comparaison Magasins (aujourd'hui)", Icons.storefront, Colors.purple),
+                    _sectionTitle(S.t('owner_store_comp_today'), Icons.storefront, Colors.purple),
                     const SizedBox(height: 12),
                     ..._storeComparison.map((store) {
                       return Padding(
@@ -999,7 +1000,7 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(store['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                Text('${(store['sales'] as double).toStringAsFixed(0)} DA',
+                                Text('${(store['sales'] as double).toStringAsFixed(0)} ${S.t('misc_currency')}',
                                     style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 12)),
                               ],
                             ),
@@ -1106,7 +1107,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Changer le mot de passe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text(S.t('owner_change_password'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1114,7 +1115,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                 controller: newPassCtrl,
                 obscureText: obscure1,
                 decoration: InputDecoration(
-                  labelText: 'Nouveau mot de passe',
+                  labelText: S.t('owner_new_password'),
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(obscure1 ? Icons.visibility_off : Icons.visibility),
@@ -1127,7 +1128,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                 controller: confirmCtrl,
                 obscureText: obscure2,
                 decoration: InputDecoration(
-                  labelText: 'Confirmer le mot de passe',
+                  labelText: S.t('owner_confirm_password'),
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(obscure2 ? Icons.visibility_off : Icons.visibility),
@@ -1138,16 +1139,16 @@ class _ProfileSheetState extends State<_ProfileSheet> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
               onPressed: () async {
                 if (newPassCtrl.text.isEmpty || newPassCtrl.text.length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimum 6 caractères.'), backgroundColor: Colors.orange));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_min_chars')), backgroundColor: Colors.orange));
                   return;
                 }
                 if (newPassCtrl.text != confirmCtrl.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Les mots de passe ne correspondent pas.'), backgroundColor: Colors.red));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_passwords_mismatch')), backgroundColor: Colors.red));
                   return;
                 }
                 try {
@@ -1156,15 +1157,15 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe modifié avec succès ✅'), backgroundColor: Colors.green));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_password_changed')), backgroundColor: Colors.green));
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: Colors.red));
                   }
                 }
               },
-              child: const Text('Confirmer'),
+              child: Text(S.t('action_confirm')),
             ),
           ],
         ),
@@ -1177,17 +1178,17 @@ class _ProfileSheetState extends State<_ProfileSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Déconnexion'),
-        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        title: Text(S.t('auth_logout')),
+        content: Text(S.t('auth_logout_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
               await Supabase.instance.client.auth.signOut();
             },
-            child: const Text('Se déconnecter'),
+            child: Text(S.t('auth_logout')),
           ),
         ],
       ),
@@ -1241,7 +1242,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                               color: Colors.indigo[50],
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text('Propriétaire', style: TextStyle(color: Colors.indigo[900], fontWeight: FontWeight.w600, fontSize: 12)),
+                            child: Text(S.t('owner_role_label'), style: TextStyle(color: Colors.indigo[900], fontWeight: FontWeight.w600, fontSize: 12)),
                           ),
                           const SizedBox(height: 4),
                           Text(_email, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
@@ -1256,7 +1257,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       tileColor: Colors.grey[50],
                       leading: Icon(Icons.lock_outline, color: Colors.indigo[900]),
-                      title: const Text('Changer le mot de passe', style: TextStyle(fontWeight: FontWeight.w600)),
+                      title: Text(S.t('owner_change_password'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: _changePassword,
                     ),
@@ -1266,7 +1267,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       tileColor: Colors.red[50],
                       leading: const Icon(Icons.logout, color: Colors.red),
-                      title: const Text('Se déconnecter', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                      title: Text(S.t('auth_logout'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
                       onTap: _signOut,
                     ),
                     const SizedBox(height: 24),
