@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -42,7 +43,8 @@ class SyncEngine {
       final pending = await isar.syncQueueItems
           .filter()
           .statusEqualTo('pending')
-          .sortByCreatedAt()
+          .sortByPriority()
+          .thenByCreatedAt()
           .findAll();
 
       if (pending.isEmpty) {
@@ -80,6 +82,9 @@ class SyncEngine {
       ..operationType = op.toSupabaseString()
       ..payloadJson = jsonEncode(payload)
       ..status = 'pending'
+      ..idempotencyKey =
+          '${DateTime.now().microsecondsSinceEpoch}-${Random().nextInt(1 << 32)}'
+      ..priority = _priorityForOp(op)
       ..retryCount = 0
       ..createdAt = DateTime.now();
 
@@ -123,6 +128,9 @@ class SyncEngine {
 
     debugPrint('  ▸ Processing: ${item.operationType} (retry ${item.retryCount})');
 
+    // Pass idempotency key to all RPC calls for safe replay
+    payload['idempotency_key'] = item.idempotencyKey;
+
     try {
       Map<String, dynamic>? result;
 
@@ -154,18 +162,18 @@ class SyncEngine {
       }
 
       // ── Success ──
-      await isar.writeTxn(() async {
-        item.status = 'synced';
-        item.lastAttemptAt = DateTime.now();
-        await isar.syncQueueItems.put(item);
-      });
-
-      // Update supabaseId on matching local record if returned
+      // Update supabaseId on matching local record before marking synced
       if (result != null && result.containsKey('id')) {
         await _updateLocalSupabaseId(
           isar, opType, payload, result['id'] as String,
         );
       }
+
+      await isar.writeTxn(() async {
+        item.status = 'synced';
+        item.lastAttemptAt = DateTime.now();
+        await isar.syncQueueItems.put(item);
+      });
 
       debugPrint('    ✓ Synced successfully');
     } catch (e) {
@@ -185,6 +193,26 @@ class SyncEngine {
       await isar.writeTxn(() async {
         await isar.syncQueueItems.put(item);
       });
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // PRIVATE — Priority helper
+  // ══════════════════════════════════════════
+
+  int _priorityForOp(SyncOperationType op) {
+    switch (op) {
+      case SyncOperationType.createInvoice:
+      case SyncOperationType.createPayment:
+      case SyncOperationType.openShift:
+      case SyncOperationType.closeShift:
+        return 1;
+      case SyncOperationType.processRefund:
+      case SyncOperationType.createTransaction:
+        return 2;
+      case SyncOperationType.createExpense:
+      case SyncOperationType.createDebtRecoveryPayment:
+        return 3;
     }
   }
 
