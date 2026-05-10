@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../desktop/refund_modal.dart';
-import '../../core/app_session.dart';
-import '../desktop/end_of_day_report.dart';
 import '../../core/app_strings.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
@@ -121,20 +119,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         backgroundColor: Colors.indigo[700],
         foregroundColor: Colors.white,
         actions: [
-          TextButton.icon(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => EndOfDayReport(
-                  date: DateTime.now(),
-                  shiftId: AppSession.currentShiftId, // Might be null for admin view, which triggers Case B.
-                ),
-              );
-            },
-            icon: const Icon(Icons.assessment, color: Colors.white),
-            label: Text(S.t('label_daily_report'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 8),
           if (_userRole == 'owner')
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

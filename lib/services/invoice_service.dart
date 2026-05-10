@@ -23,7 +23,6 @@ class InvoiceService {
     required double paidAmount,
     required String paymentMethod,
     String? customerId,
-    String? shiftId,
     String notes = '',
   }) async {
     // ════════════════════════════════════
@@ -40,7 +39,6 @@ class InvoiceService {
         'p_paid_amount': paidAmount,
         'p_payment_method': paymentMethod,
         'p_notes': notes,
-        'p_shift_id': shiftId,
       });
       if (result is Map) {
         return Map<String, dynamic>.from(result);
@@ -75,7 +73,6 @@ class InvoiceService {
       ..paidAmount = paidAmount
       ..discount = 0
       ..status = status
-      ..shiftId = shiftId
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now()
       ..synced = false;
@@ -134,7 +131,6 @@ class InvoiceService {
         'p_paid_amount': paidAmount,
         'p_payment_method': paymentMethod,
         'p_notes': notes,
-        'p_shift_id': shiftId,
       },
     );
 

@@ -8,9 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
-
-
-import '../local_db/collections/shift_local.dart';
 import '../local_db/collections/sync_queue_item.dart';
 import '../local_db/collections/sync_metadata.dart';
 import 'app_session.dart';
@@ -144,12 +141,6 @@ class SyncEngine {
         case SyncOperationType.createTransaction:
           result = await _insertTransaction(payload);
           break;
-        case SyncOperationType.openShift:
-          result = await _rpcOpenShift(payload);
-          break;
-        case SyncOperationType.closeShift:
-          result = await _rpcCloseShift(payload);
-          break;
         case SyncOperationType.processRefund:
           result = await _rpcProcessRefund(payload);
           break;
@@ -204,8 +195,6 @@ class SyncEngine {
     switch (op) {
       case SyncOperationType.createInvoice:
       case SyncOperationType.createPayment:
-      case SyncOperationType.openShift:
-      case SyncOperationType.closeShift:
         return 1;
       case SyncOperationType.processRefund:
       case SyncOperationType.createTransaction:
@@ -238,21 +227,6 @@ class SyncEngine {
     final res =
         await _client.from('transactions').insert(p).select().single();
     return Map<String, dynamic>.from(res);
-  }
-
-  Future<Map<String, dynamic>?> _rpcOpenShift(
-      Map<String, dynamic> p) async {
-    final res = await _client.rpc('open_shift', params: p);
-    // open_shift returns a UUID string directly
-    if (res is String) return {'id': res};
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> _rpcCloseShift(
-      Map<String, dynamic> p) async {
-    final res = await _client.rpc('close_shift', params: p);
-    if (res is Map) return Map<String, dynamic>.from(res);
-    return null;
   }
 
   Future<Map<String, dynamic>?> _rpcProcessRefund(
@@ -303,22 +277,6 @@ class SyncEngine {
               invoice.supabaseId = supabaseId;
               invoice.synced = true;
               await isar.invoiceLocals.put(invoice);
-            });
-          }
-          break;
-
-        case SyncOperationType.openShift:
-          // Find the local shift that is still unsynced + open
-          final shift = await isar.shiftLocals
-              .filter()
-              .syncedEqualTo(false)
-              .statusEqualTo('open')
-              .findFirst();
-          if (shift != null) {
-            await isar.writeTxn(() async {
-              shift.supabaseId = supabaseId;
-              shift.synced = true;
-              await isar.shiftLocals.put(shift);
             });
           }
           break;

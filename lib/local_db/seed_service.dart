@@ -16,7 +16,6 @@ import '../local_db/collections/inventory_local.dart';
 import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/payment_local.dart';
 import '../local_db/collections/transaction_local.dart';
-import '../local_db/collections/shift_local.dart';
 import '../local_db/collections/expense_category_local.dart';
 import '../local_db/collections/expense_local.dart';
 import '../local_db/collections/sync_metadata.dart';
@@ -95,19 +94,7 @@ class SeedService {
       mapper: _mapInventory,
     );
 
-    // ── 8. shifts (current open only) ──────
-    await _seedCollection<ShiftLocal>(
-      isar: isar,
-      name: 'shifts',
-      fetch: () => _client
-          .from('shifts')
-          .select()
-          .eq('store_id', storeId)
-          .eq('status', 'open'),
-      mapper: _mapShift,
-    );
-
-    // ── 9. invoices (last 30 days) ─────────
+    // ── 8. invoices (last 30 days) ─────────
     await _seedCollection<InvoiceLocal>(
       isar: isar,
       name: 'invoices',
@@ -119,7 +106,7 @@ class SeedService {
       mapper: _mapInvoice,
     );
 
-    // ── 10. payments (last 30 days) ────────
+    // ── 9. payments (last 30 days) ─────────
     await _seedCollection<PaymentLocal>(
       isar: isar,
       name: 'payments',
@@ -131,7 +118,7 @@ class SeedService {
       mapper: _mapPayment,
     );
 
-    // ── 11. transactions (last 30 days) ────
+    // ── 10. transactions (last 30 days) ─────
     await _seedCollection<TransactionLocal>(
       isar: isar,
       name: 'transactions',
@@ -143,7 +130,7 @@ class SeedService {
       mapper: _mapTransaction,
     );
     
-    // ── 12. expense_categories ─────────────
+    // ── 11. expense_categories ──────────────
     await _seedCollection<ExpenseCategoryLocal>(
       isar: isar,
       name: 'expense_categories',
@@ -151,7 +138,7 @@ class SeedService {
       mapper: _mapExpenseCategory,
     );
 
-    // ── 13. expenses (last 30 days) ────────
+    // ── 12. expenses (last 30 days) ─────────
     await _seedCollection<ExpenseLocal>(
       isar: isar,
       name: 'expenses',
@@ -295,20 +282,6 @@ class SeedService {
     ..createdAt = _parseDate(j['created_at'])
     ..updatedAt = _parseDate(j['updated_at']);
 
-  ShiftLocal _mapShift(Map<String, dynamic> j) => ShiftLocal()
-    ..supabaseId = j['id'] as String
-    ..storeId = j['store_id'] as String
-    ..cashierId = j['cashier_id'] as String
-    ..openingAmount = (j['opening_amount'] as num?)?.toDouble() ?? 0.0
-    ..closingAmount = (j['closing_amount'] as num?)?.toDouble()
-    ..expectedAmount = (j['expected_amount'] as num?)?.toDouble()
-    ..discrepancy = (j['discrepancy'] as num?)?.toDouble()
-    ..notes = j['notes'] as String?
-    ..openedAt = _parseDate(j['opened_at'])
-    ..closedAt = _parseDate(j['closed_at'])
-    ..status = j['status'] as String? ?? 'open'
-    ..synced = true; // came from server
-
   InvoiceLocal _mapInvoice(Map<String, dynamic> j) => InvoiceLocal()
     ..supabaseId = j['id'] as String
     ..invoiceNumber = j['invoice_number'] as String
@@ -321,7 +294,6 @@ class SeedService {
     ..paidAmount = (j['paid_amount'] as num?)?.toDouble() ?? 0.0
     ..discount = (j['discount'] as num?)?.toDouble() ?? 0.0
     ..status = j['status'] as String? ?? 'paid'
-    ..shiftId = j['shift_id'] as String?
     ..createdAt = _parseDate(j['created_at'])
     ..updatedAt = _parseDate(j['updated_at'])
     ..synced = true; // came from server
@@ -338,7 +310,6 @@ class SeedService {
     ..paymentType = j['payment_type'] as String? ?? 'invoice'
     ..paymentDate = _parseDate(j['payment_date'])
     ..notes = j['notes'] as String?
-    ..shiftId = j['shift_id'] as String?
     ..createdAt = _parseDate(j['created_at'])
     ..updatedAt = _parseDate(j['updated_at'])
     ..synced = true; // came from server

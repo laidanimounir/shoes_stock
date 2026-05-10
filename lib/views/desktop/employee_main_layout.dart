@@ -10,8 +10,6 @@ import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
 import '../admin/sales_history_screen.dart';
 import '../../core/app_session.dart';
-import '../../services/shift_service.dart';
-import 'end_of_day_report.dart';
 import '../../widgets/offline_banner.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
@@ -206,42 +204,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                   ),
                   child: Column(
                     children: [
-                     
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => EndOfDayReport(
-                                date: DateTime.now(),
-                                shiftId: AppSession.currentShiftId,
-                              ),
-                            ).then((val) {
-                              if (val == true) setState(() {});
-                            });
-                          },
-                          icon: const Icon(Icons.assessment_rounded, size: 18),
-                          label: Text(
-                            S.t('label_daily_report'),
-                            style: GoogleFonts.raleway(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _gold,
-                            foregroundColor: _darkBg,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                     
+                      
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(

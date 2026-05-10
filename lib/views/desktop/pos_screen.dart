@@ -11,12 +11,6 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
-import '../../local_db/collections/shift_local.dart';
-import '../../services/shift_service.dart';
-import '../../models/shift_model.dart';
-import 'shift_dialog.dart';
-import 'end_of_day_report.dart';
-import 'close_shift_screen.dart';
 import '../../services/invoice_service.dart';
 
 class CartItem {
@@ -114,21 +108,6 @@ class _PosScreenState extends State<PosScreen> {
             .supabaseIdEqualTo(_selectedStoreId!)
             .findFirst();
         _storeName = store?.name ?? S.t('misc_unknown');
-
-        // Check for active shift
-        final shiftService = ShiftService();
-        final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
-        if (activeShift == null) {
-          if (mounted) {
-            await showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => ShiftDialog(storeId: _selectedStoreId!),
-            );
-          }
-        } else {
-          AppSession.currentShiftId = activeShift.id;
-        }
       }
 
       final customers = await isar.customerLocals
@@ -162,69 +141,6 @@ class _PosScreenState extends State<PosScreen> {
               .eq('id', _selectedStoreId!)
               .maybeSingle();
           _storeName = storeRes?['name'] ?? S.t('misc_unknown');
-
-          // Check for active shift
-          final shiftService = ShiftService();
-          final activeShift = await shiftService.getActiveShift(_selectedStoreId!);
-          if (activeShift == null) {
-            
-            // Check for unclosed manual shifts from previous days
-            final openShiftsRes = await Supabase.instance.client
-                .from('shifts')
-                .select()
-                .eq('store_id', _selectedStoreId!)
-                .eq('status', 'open')
-                .order('opened_at', ascending: false)
-                .limit(1);
-
-            if (openShiftsRes.isNotEmpty && mounted) {
-              final oldShift = ShiftModel.fromJson(openShiftsRes[0]);
-              final oldDate = oldShift.openedAt.toLocal();
-              final dateStr = "${oldDate.day.toString().padLeft(2, '0')}/${oldDate.month.toString().padLeft(2, '0')}/${oldDate.year}";
-
-              bool handleOldShift = false;
-              await showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (ctx) => AlertDialog(
-                  title: Text(S.t('shift_previous_unclosed')),
-                  content: Text(S.t('shift_previous_unclosed_msg').replaceAll('{date}', dateStr)),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      child: Text(S.t('shift_ignore'), style: const TextStyle(color: Colors.grey)),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        handleOldShift = true;
-                        Navigator.of(ctx).pop();
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                      child: Text(S.t('shift_close_old')),
-                    ),
-                  ],
-                ),
-              );
-
-              if (handleOldShift && mounted) {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => CloseShiftScreen(shift: oldShift)),
-                );
-              }
-            }
-
-            if (mounted) {
-              await showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => ShiftDialog(storeId: _selectedStoreId!),
-              );
-            }
-          } else {
-             AppSession.currentShiftId = activeShift.id;
-          }
         }
 
       
@@ -540,7 +456,6 @@ class _PosScreenState extends State<PosScreen> {
         paidAmount: paidAmount,
         paymentMethod: 'cash',
         customerId: _selectedCustomerId,
-        shiftId: AppSession.currentShiftId,
         notes: 'Paiement à la caisse pour facture $invoiceNumber',
       );
 
@@ -669,20 +584,6 @@ class _PosScreenState extends State<PosScreen> {
             ],
           ),
           actions: [
-            TextButton.icon(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => EndOfDayReport(
-                    date: DateTime.now(),
-                    shiftId: AppSession.currentShiftId,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.assessment, color: Colors.white),
-              label: Text(S.t('pos_report_btn'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 8),
             if (_storeName != null)
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),

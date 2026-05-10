@@ -185,8 +185,6 @@ enum SyncOperationType {
   createInvoice,
   createPayment,
   createTransaction,
-  openShift,
-  closeShift,
   processRefund,
   createExpense,
   createDebtRecoveryPayment,
@@ -201,10 +199,6 @@ extension SyncOperationTypeExt on SyncOperationType {
         return 'create_payment';
       case SyncOperationType.createTransaction:
         return 'create_transaction';
-      case SyncOperationType.openShift:
-        return 'open_shift';
-      case SyncOperationType.closeShift:
-        return 'close_shift';
       case SyncOperationType.processRefund:
         return 'process_refund';
       case SyncOperationType.createExpense:
@@ -222,10 +216,6 @@ extension SyncOperationTypeExt on SyncOperationType {
         return SyncOperationType.createPayment;
       case 'create_transaction':
         return SyncOperationType.createTransaction;
-      case 'open_shift':
-        return SyncOperationType.openShift;
-      case 'close_shift':
-        return SyncOperationType.closeShift;
       case 'process_refund':
         return SyncOperationType.processRefund;
       case 'create_expense':

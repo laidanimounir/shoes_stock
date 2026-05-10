@@ -5,8 +5,6 @@ import '../local_db/collections/settings_local.dart';
 import 'app_strings.dart';
 
 class AppSession {
-  static String? currentShiftId;
-
   /// v3 offline-first: tracks current connectivity mode
   static bool isOfflineMode = false;
 
