@@ -10,8 +10,6 @@ import 'views/desktop/employee_main_layout.dart';
 import 'views/mobile/owner_dashboard.dart';
 import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
-import 'local_db/seed_service.dart';
-import 'local_db/isar_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,11 +137,18 @@ class _AuthGateState extends State<AuthGate> {
 
       if (role == 'owner') {
         if (isDesktop) {
-          // Show mode selection dialog before navigating
-          await _showModeDialog();
           if (mounted) {
             setState(() {
-              _currentScreen = const AdminMainLayout();
+              _currentScreen = _StartupScreen(
+                onNavigate: () {
+                  if (mounted) {
+                    setState(() {
+                      _currentScreen = const AdminMainLayout();
+                      _isLoading = false;
+                    });
+                  }
+                },
+              );
               _isLoading = false;
             });
           }
@@ -172,11 +177,18 @@ class _AuthGateState extends State<AuthGate> {
             );
           }
         } else {
-          // Show mode selection dialog before navigating
-          await _showModeDialog();
           if (mounted) {
             setState(() {
-              _currentScreen = const EmployeeMainLayout();
+              _currentScreen = _StartupScreen(
+                onNavigate: () {
+                  if (mounted) {
+                    setState(() {
+                      _currentScreen = const EmployeeMainLayout();
+                      _isLoading = false;
+                    });
+                  }
+                },
+              );
               _isLoading = false;
             });
           }
@@ -201,22 +213,6 @@ class _AuthGateState extends State<AuthGate> {
     }
   }
 
-  // ══════════════════════════════════════════
-  // Mode Selection Dialog
-  // ══════════════════════════════════════════
-  Future<void> _showModeDialog() async {
-    await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black87,
-      builder: (ctx) => _ModeSelectionDialog(),
-    );
-    // If dismissed (tap outside) → defaults to online mode
-    if (AppSession.isOfflineMode == false) {
-      await ConnectivityService.instance.initialize();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,138 +223,117 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-class _ModeSelectionDialog extends StatefulWidget {
+/// Professional startup screen shown briefly after login.
+/// Initializes connectivity, displays the detected mode, then navigates in.
+class _StartupScreen extends StatefulWidget {
+  final VoidCallback onNavigate;
+  const _StartupScreen({required this.onNavigate});
+
   @override
-  State<_ModeSelectionDialog> createState() => _ModeSelectionDialogState();
+  State<_StartupScreen> createState() => _StartupScreenState();
 }
 
-class _ModeSelectionDialogState extends State<_ModeSelectionDialog> {
-  bool _isSeeding = false;
-  String _status = '';
+class _StartupScreenState extends State<_StartupScreen> {
+  String _status = 'Initialisation...';
+
+  @override
+  void initState() {
+    super.initState();
+    _run();
+  }
+
+  Future<void> _run() async {
+    await ConnectivityService.instance.initialize();
+    if (!mounted) return;
+    setState(() {
+      _status = ConnectivityService.instance.isOnline
+          ? 'En ligne'
+          : 'Hors ligne';
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    widget.onNavigate();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final gold = const Color(0xFFD4A843);
-    final dark = const Color(0xFF1A1A2E);
+    final isOnline = ConnectivityService.instance.isOnline;
+    const gold = Color(0xFFD4A843);
+    const dark = Color(0xFF1A1A2E);
 
-    return Dialog(
+    return Scaffold(
       backgroundColor: dark,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: gold, width: 0.5)),
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        width: 400,
+      body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Icon(Icons.storefront_rounded, color: gold, size: 64),
+            const SizedBox(height: 16),
             Text(
-              "Choisir le mode",
+              'STEPZONE',
               style: GoogleFonts.playfairDisplay(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                letterSpacing: 4,
               ),
             ),
-            const SizedBox(height: 32),
-            if (!_isSeeding) ...[
-              _buildOption(
-                icon: Icons.public,
-                title: "En ligne",
-                subtitle: "Accès temps réel (Recommandé)",
-                onTap: () {
-                  AppSession.isOfflineMode = false;
-                  Navigator.pop(context);
-                },
+            const SizedBox(height: 8),
+            Text(
+              'LUXURY SHOES',
+              style: GoogleFonts.raleway(
+                color: gold,
+                fontSize: 10,
+                letterSpacing: 4,
               ),
-              const SizedBox(height: 16),
-              _buildOption(
-                icon: Icons.cloud_off,
-                title: "Hors ligne",
-                subtitle: "Travailler sans internet",
-                onTap: _handleOfflineChoice,
+            ),
+            const SizedBox(height: 48),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: isOnline
+                    ? Colors.green.withValues(alpha: 0.15)
+                    : Colors.orange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                  width: 0.5,
+                ),
               ),
-            ] else ...[
-              const CircularProgressIndicator(color: Color(0xFFD4A843)),
-              const SizedBox(height: 20),
-              Text(
-                _status,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.raleway(color: Colors.white70, fontSize: 13),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    final gold = const Color(0xFFD4A843);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white12),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: gold, size: 28),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: GoogleFonts.raleway(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: GoogleFonts.raleway(color: Colors.white54, fontSize: 12)),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _status,
+                    style: GoogleFonts.raleway(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
+            const SizedBox(height: 32),
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: gold,
+              ),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _handleOfflineChoice() async {
-    setState(() {
-      _isSeeding = true;
-      _status = "Initialisation de la base locale...";
-    });
-
-    try {
-      await IsarService.getInstance();
-      final isSeeded = await SeedService.instance.isSeeded();
-
-      if (!isSeeded) {
-        if (AppSession.currentStoreId == null) {
-          setState(() => _status = "Erreur: Aucun magasin assigné.");
-          await Future.delayed(const Duration(seconds: 2));
-          setState(() => _isSeeding = false);
-          return;
-        }
-        setState(() => _status = "Synchronisation initiale en cours...");
-        await SeedService.instance.seedAll(AppSession.currentStoreId!);
-      } else {
-        setState(() => _status = "Données locales disponibles ✓");
-        await Future.delayed(const Duration(milliseconds: 800));
-      }
-
-      AppSession.isOfflineMode = true;
-      await ConnectivityService.instance.initialize();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      setState(() => _status = "Erreur: $e");
-      await Future.delayed(const Duration(seconds: 3));
-      setState(() => _isSeeding = false);
-    }
   }
 }
