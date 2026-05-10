@@ -15,11 +15,21 @@ import 'app_session.dart';
 /// Manages the offline sync queue — enqueues operations while offline
 /// and replays them against Supabase RPCs when connectivity returns.
 class SyncEngine {
-  SyncEngine._internal();
+  SyncEngine._internal() {
+    _startRetryTimer();
+  }
   static final SyncEngine instance = SyncEngine._internal();
 
   final _client = Supabase.instance.client;
   bool _isSyncing = false;
+
+  // ── FIX 2: Periodic retry timer ──
+  Timer? _retryTimer;
+
+  // ── FIX 3: Sync-complete event stream ──
+  final _syncCompleteController = StreamController<void>.broadcast();
+  /// Emits after each successful item sync. UI can listen to auto-refresh.
+  Stream<void> get onSyncComplete => _syncCompleteController.stream;
 
   // ══════════════════════════════════════════
   // PUBLIC — Sync pending queue
@@ -123,10 +133,8 @@ class SyncEngine {
     final opType = SyncOperationTypeExt.fromString(item.operationType);
     final payload = jsonDecode(item.payloadJson) as Map<String, dynamic>;
 
-    debugPrint('  ▸ Processing: ${item.operationType} (retry ${item.retryCount})');
-
-    // Pass idempotency key to all RPC calls for safe replay
-    payload['idempotency_key'] = item.idempotencyKey;
+    debugPrint('  ▸ Processing: ${item.operationType} '
+        '(retry ${item.retryCount}, key=${item.idempotencyKey})');
 
     try {
       Map<String, dynamic>? result;
@@ -165,6 +173,9 @@ class SyncEngine {
         item.lastAttemptAt = DateTime.now();
         await isar.syncQueueItems.put(item);
       });
+
+      // FIX 3: Notify listeners (e.g. POS today-sales tab)
+      _syncCompleteController.add(null);
 
       debugPrint('    ✓ Synced successfully');
     } catch (e) {
@@ -326,5 +337,26 @@ class SyncEngine {
     });
 
     AppSession.pendingSync = count;
+  }
+
+  // ══════════════════════════════════════════
+  // FIX 2 — Periodic retry timer
+  // ══════════════════════════════════════════
+
+  void _startRetryTimer() {
+    _retryTimer?.cancel();
+    _retryTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+      final count = await getPendingCount();
+      if (count > 0) {
+        debugPrint('⏰ SyncEngine: Retry timer fired — $count pending items');
+        await syncPending();
+      }
+    });
+  }
+
+  /// Call when the engine is no longer needed (app shutdown).
+  void dispose() {
+    _retryTimer?.cancel();
+    _syncCompleteController.close();
   }
 }

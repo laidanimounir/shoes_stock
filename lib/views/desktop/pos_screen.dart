@@ -5,10 +5,12 @@ import 'package:isar/isar.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
+import '../../core/sync_engine.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../services/invoice_service.dart';
@@ -59,6 +61,11 @@ class _PosScreenState extends State<PosScreen> {
 
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
 
+  // FIX 3: Rebuild today-sales tab after sync completes
+  StreamSubscription<void>? _syncCompleteSubscription;
+  // Key used to force-rebuild the FutureBuilder in today-sales tab
+  UniqueKey _todaySalesKey = UniqueKey();
+
   String _barcodeBuffer = '';
   DateTime? _lastKeyPress;
 
@@ -67,12 +74,21 @@ class _PosScreenState extends State<PosScreen> {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
     _fetchInitialData();
+
+    // FIX 3: Listen for sync completions → rebuild today-sales tab
+    _syncCompleteSubscription =
+        SyncEngine.instance.onSyncComplete.listen((_) {
+      if (mounted) {
+        setState(() => _todaySalesKey = UniqueKey());
+      }
+    });
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _inventorySubscription?.cancel();
+    _syncCompleteSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -489,28 +505,83 @@ class _PosScreenState extends State<PosScreen> {
     }
   }
 
+  // ══════════════════════════════════════════
+  // FIX 4 — Today-sales data source with offline fallback
+  // ══════════════════════════════════════════
 
-  Widget _buildTodaySalesTab() {
-    if (_selectedStoreId == null) return Center(child: Text(S.t('pos_no_store_selected')));
-    
+  Future<List<dynamic>> _fetchTodaySales() async {
     final now = DateTime.now();
     final startOfTodayUTC = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(hours: 1)) // convert UTC+1 to UTC
-        .toIso8601String();
-    final endOfTodayUTC = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(hours: 1))
-        .add(const Duration(hours: 24))
-        .toIso8601String();
+        .subtract(const Duration(hours: 1));
+    final endOfTodayUTC = startOfTodayUTC.add(const Duration(hours: 24));
 
-    return FutureBuilder<List<dynamic>>(
-      future: Supabase.instance.client
+    // ── Offline path: read from Isar ──
+    if (AppSession.isOfflineMode) {
+      return _fetchTodaySalesFromIsar(startOfTodayUTC, endOfTodayUTC);
+    }
+
+    // ── Online path: try Supabase, fall back to Isar on failure ──
+    try {
+      final result = await Supabase.instance.client
           .from('invoices')
           .select('id, invoice_number, total_amount, paid_amount, status, created_at, customers(full_name)')
           .eq('store_id', _selectedStoreId!)
           .eq('type', 'out')
-          .gte('created_at', startOfTodayUTC)
-          .lte('created_at', endOfTodayUTC)
-          .order('created_at', ascending: false),
+          .gte('created_at', startOfTodayUTC.toIso8601String())
+          .lte('created_at', endOfTodayUTC.toIso8601String())
+          .order('created_at', ascending: false);
+      return result;
+    } catch (e) {
+      debugPrint('⚠ _fetchTodaySales: Supabase failed, falling back to Isar: $e');
+      return _fetchTodaySalesFromIsar(startOfTodayUTC, endOfTodayUTC);
+    }
+  }
+
+  /// Reads today's sales invoices from Isar (InvoiceLocal).
+  Future<List<dynamic>> _fetchTodaySalesFromIsar(
+    DateTime start,
+    DateTime end,
+  ) async {
+    final isar = await IsarService.getInstance();
+    final invoices = await isar.invoiceLocals
+        .filter()
+        .typeEqualTo('out')
+        .storeIdEqualTo(_selectedStoreId)
+        .createdAtGreaterThan(start, include: true)
+        .createdAtLessThan(end, include: true)
+        .sortByCreatedAtDesc()
+        .findAll();
+
+    // Resolve customer names from CustomerLocal
+    final List<dynamic> results = [];
+    for (final inv in invoices) {
+      String? customerName;
+      if (inv.customerId != null) {
+        final customer = await isar.customerLocals
+            .filter()
+            .supabaseIdEqualTo(inv.customerId!)
+            .findFirst();
+        customerName = customer?.fullName;
+      }
+      results.add({
+        'id': inv.supabaseId,
+        'invoice_number': inv.invoiceNumber,
+        'total_amount': inv.totalAmount,
+        'paid_amount': inv.paidAmount,
+        'status': inv.status,
+        'created_at': (inv.createdAt ?? DateTime.now()).toIso8601String(),
+        'customers': customerName != null ? {'full_name': customerName} : null,
+      });
+    }
+    return results;
+  }
+
+  Widget _buildTodaySalesTab() {
+    if (_selectedStoreId == null) return Center(child: Text(S.t('pos_no_store_selected')));
+
+    return FutureBuilder<List<dynamic>>(
+      key: _todaySalesKey, // FIX 3: changes on sync → forces rebuild
+      future: _fetchTodaySales(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
