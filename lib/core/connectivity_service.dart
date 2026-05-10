@@ -25,14 +25,14 @@ class ConnectivityService {
     final results = await _connectivity.checkConnectivity();
     _isOnline = !results.contains(ConnectivityResult.none);
 
-    _subscription = _connectivity.onConnectivityChanged.listen((results) {
+    _subscription = _connectivity.onConnectivityChanged.listen((results) async {
       final wasOnline = _isOnline;
       _isOnline = !results.contains(ConnectivityResult.none);
       _controller.add(_isOnline);
 
       if (_isOnline && !wasOnline) {
         debugPrint('🌐 ConnectivityService: Back ONLINE → triggering sync');
-        SyncEngine.instance.syncPending();
+        await SyncEngine.instance.syncPending();
       } else if (!_isOnline && wasOnline) {
         debugPrint('📴 ConnectivityService: Went OFFLINE');
       }
