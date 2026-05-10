@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import '../core/sync_engine.dart';
+import 'app_session.dart';
 
 /// Monitors network connectivity and triggers sync when back online.
 class ConnectivityService {
@@ -28,6 +29,7 @@ class ConnectivityService {
     _subscription = _connectivity.onConnectivityChanged.listen((results) async {
       final wasOnline = _isOnline;
       _isOnline = !results.contains(ConnectivityResult.none);
+      AppSession.isOfflineMode = !_isOnline;
       _controller.add(_isOnline);
 
       if (_isOnline && !wasOnline) {
