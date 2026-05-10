@@ -17,6 +17,12 @@ class SyncQueueItem {
   /// SyncStatus: 'pending' | 'synced' | 'failed'
   late String status;
 
+  /// Unique UUID per operation for idempotent replay
+  late String idempotencyKey;
+
+  /// Sync order priority (1=highest, default by operationType)
+  int priority = 3;
+
   int retryCount = 0;
   String? errorMessage;
   late DateTime createdAt;

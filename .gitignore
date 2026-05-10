@@ -59,3 +59,12 @@ lib/check_schema.py
 
 # FVM Version Cache
 .fvm/
+# OpenCode MCP config (contains secrets)
+.opencode/config.json
+.opencode/node_modules/
+.opencode/package-lock.json
+.opencode/package.json
+
+# OpenCode
+.opencode/
+AGENTS.md
