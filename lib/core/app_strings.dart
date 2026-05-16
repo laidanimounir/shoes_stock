@@ -252,6 +252,8 @@ class S {
       'prod_add_product_success': 'Produit ajouté avec succès !',
       'prod_price_note': "Note: Les anciennes factures garderont l'ancien prix.",
       'prod_total_stock': 'Stock Total',
+      'prod_no_permission': "Vous n'avez pas la permission d'ajouter des produits",
+      'prod_buy_price_hidden': '---',
 
       // ── Inventory ──
       'inv_title': 'Inventaire',
@@ -858,6 +860,8 @@ class S {
       'prod_remove_variant': 'حذف الصنف',
       'prod_add_product_success': 'تمت إضافة المنتج بنجاح!',
       'prod_total_stock': 'المخزون الكلي',
+      'prod_no_permission': 'ليس لديك صلاحية لإضافة منتجات',
+      'prod_buy_price_hidden': '---',
 
       // ── Inventory ──
       'inv_title': 'المخزون',

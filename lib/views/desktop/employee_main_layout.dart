@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../desktop/pos_screen.dart';
-import '../admin/ajouter_produit.dart';
 import '../admin/liste_produits.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
@@ -29,10 +28,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
     super.initState();
     _screens = [
       const PosScreen(),
-      ListeProduitsScreen(
-        onAddProduct: () => setState(() => _selectedIndex = 2),
-      ),
-      const AjouterProduitScreen(),
+      ListeProduitsScreen(),
       const GestionClientsScreen(),
       const GestionFournisseursScreen(),
       const AchatFournisseurScreen(),
@@ -176,15 +172,13 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             Icons.point_of_sale_rounded, S.t('nav_pos')),
                         _buildNavItem(1, Icons.inventory_2_outlined,
                             Icons.inventory_2_rounded, S.t('nav_products')),
-                        _buildNavItem(2, Icons.add_box_outlined,
-                            Icons.add_box_rounded, S.t('nav_add_product')),
-                        _buildNavItem(3, Icons.people_outline,
+                        _buildNavItem(2, Icons.people_outline,
                             Icons.people_rounded, S.t('nav_clients')),
-                        _buildNavItem(4, Icons.local_shipping_outlined,
+                        _buildNavItem(3, Icons.local_shipping_outlined,
                             Icons.local_shipping_rounded, S.t('nav_suppliers')),
-                        _buildNavItem(5, Icons.shopping_bag_outlined,
+                        _buildNavItem(4, Icons.shopping_bag_outlined,
                             Icons.shopping_bag_rounded, S.t('nav_purchases')),
-                        _buildNavItem(6, Icons.history_edu_outlined,
+                        _buildNavItem(5, Icons.history_edu_outlined,
                             Icons.history_edu_rounded, S.t('nav_my_sales')),
                       ],
                     ),

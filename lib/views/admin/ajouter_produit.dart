@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class VariantFormData {
   String size = '';
@@ -21,6 +22,8 @@ class AjouterProduitScreen extends StatefulWidget {
 }
 
 class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
+  bool _blocked = false;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
@@ -31,7 +34,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   List<dynamic> _stores = [];
   String? _selectedStoreId;
 
-  String? _userRole;
   String? _userStoreId;
 
   final List<VariantFormData> _variants = [VariantFormData()]; 
@@ -45,20 +47,30 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   @override
   void initState() {
     super.initState();
+    if (AppSession.isEmployee) {
+      _blocked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.t('prod_no_permission')), backgroundColor: Colors.red),
+          );
+          Navigator.of(context).pop();
+        }
+      });
+      return;
+    }
     _fetchData();
   }
 
   Future<void> _fetchData() async {
     try {
-      // Fetch user role and store_id
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
         final profile = await Supabase.instance.client
             .from('user_profiles')
-            .select('role, store_id')
+            .select('store_id')
             .eq('id', user.id)
             .single();
-        _userRole = profile['role'];
         _userStoreId = profile['store_id'];
       }
 
@@ -71,10 +83,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         setState(() {
           _suppliers = futures[0];
           _stores = futures[1];
-          // Employee: lock to their store; Owner: default to first store
-          if (_userRole == 'employee' && _userStoreId != null) {
-            _selectedStoreId = _userStoreId;
-          } else if (_stores.isNotEmpty) {
+          if (_stores.isNotEmpty) {
             _selectedStoreId = _stores.first['id'];
           }
           if (_suppliers.isNotEmpty) _selectedSupplierId = _suppliers.first['id'];
@@ -262,7 +271,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
-      body: _isLoading 
+      body: _blocked
+        ? const SizedBox.shrink()
+        : _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -334,23 +345,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _userRole == 'employee'
-                                    ? TextFormField(
-                                        readOnly: true,
-                                        decoration: const InputDecoration(labelText: 'Magasin', border: OutlineInputBorder()),
-                                        initialValue: _stores.where((s) => s['id'] == _userStoreId).isNotEmpty
-                                            ? _stores.firstWhere((s) => s['id'] == _userStoreId)['name']
-                                            : S.t('label_store'),
-                                      )
-                                    : DropdownButtonFormField<String>(
-                                        decoration: InputDecoration(labelText: S.t('label_store'), border: const OutlineInputBorder()),
-                                        value: _selectedStoreId,
-                                        items: _stores.map((s) => DropdownMenuItem<String>(
-                                          value: s['id'],
-                                          child: Text(s['name']),
-                                        )).toList(),
-                                        onChanged: (val) => setState(() => _selectedStoreId = val),
-                                      ),
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(labelText: S.t('label_store'), border: const OutlineInputBorder()),
+                                    value: _selectedStoreId,
+                                    items: _stores.map((s) => DropdownMenuItem<String>(
+                                      value: s['id'],
+                                      child: Text(s['name']),
+                                    )).toList(),
+                                    onChanged: (val) => setState(() => _selectedStoreId = val),
+                                  ),
                                 )
                               ],
                             ),

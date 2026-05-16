@@ -23,33 +23,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
   List<dynamic> _products = [];
   bool _isLoading = true;
   final _searchController = TextEditingController();
-  String? _userRole;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _initRoleAndFetch();
-  }
-
-  Future<void> _initRoleAndFetch() async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final profile = await Supabase.instance.client
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        _userRole = profile['role'];
-      }
-    } catch (e) {
-      debugPrint("Error fetching role: $e");
-    }
-    if (mounted) {
-      setState(() {});
-    }
-    await _fetchProducts();
+    _fetchProducts();
   }
 
   Future<void> _fetchProducts() async {
@@ -330,12 +309,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: widget.onAddProduct,
-        backgroundColor: Colors.teal,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-      ),
+      floatingActionButton: AppSession.isOwner
+          ? FloatingActionButton.extended(
+              onPressed: widget.onAddProduct,
+              backgroundColor: Colors.teal,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            )
+          : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -502,11 +483,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
+                                                    children: [
+                                                      if (AppSession.isOwner) ...[
                                                         Text('${S.t('prod_buy_short')}$buyPrice ${S.t('misc_currency')}', style: const TextStyle(fontSize: 12, color: Colors.orange)),
                                                         Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}', style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
                                                         Text('${S.t('prod_margin_short')}$margin ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-                                                      ],
+                                                      ] else
+                                                        Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}', style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                    ],
                                                     ),
                                                   ),
                                                   Expanded(
@@ -532,7 +516,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                     child: Row(
                                                       mainAxisAlignment: MainAxisAlignment.end,
                                                       children: [
-                                                        if (_userRole == 'owner') ...[
+                                                        if (AppSession.isOwner) ...[
                                                           IconButton(
                                                             icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
                                                             tooltip: S.t('prod_edit_price_code'),
@@ -555,7 +539,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                       ),
                                     ),
                                   
-                                  if (_userRole == 'owner')
+                                  if (AppSession.isOwner)
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Align(
