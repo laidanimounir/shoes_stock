@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/liste_produits.dart';
+import '../admin/inventory_screen.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
@@ -29,6 +30,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
     _screens = [
       const PosScreen(),
       ListeProduitsScreen(),
+      const InventoryScreen(),
       const GestionClientsScreen(),
       const GestionFournisseursScreen(),
       const AchatFournisseurScreen(),
@@ -172,13 +174,15 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             Icons.point_of_sale_rounded, S.t('nav_pos')),
                         _buildNavItem(1, Icons.inventory_2_outlined,
                             Icons.inventory_2_rounded, S.t('nav_products')),
-                        _buildNavItem(2, Icons.people_outline,
+                        _buildNavItem(2, Icons.inventory_outlined,
+                            Icons.inventory_rounded, S.t('nav_inventory')),
+                        _buildNavItem(3, Icons.people_outline,
                             Icons.people_rounded, S.t('nav_clients')),
-                        _buildNavItem(3, Icons.local_shipping_outlined,
+                        _buildNavItem(4, Icons.local_shipping_outlined,
                             Icons.local_shipping_rounded, S.t('nav_suppliers')),
-                        _buildNavItem(4, Icons.shopping_bag_outlined,
+                        _buildNavItem(5, Icons.shopping_bag_outlined,
                             Icons.shopping_bag_rounded, S.t('nav_purchases')),
-                        _buildNavItem(5, Icons.history_edu_outlined,
+                        _buildNavItem(6, Icons.history_edu_outlined,
                             Icons.history_edu_rounded, S.t('nav_my_sales')),
                       ],
                     ),

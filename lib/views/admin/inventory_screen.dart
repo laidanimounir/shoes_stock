@@ -377,279 +377,393 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     ],
                   ),
                 )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              : Column(
                   children: [
-
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        children: [
-                       
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                _buildStatCard(S.t('inv_stat_total_products'), '$_totalProducts', Icons.category, Colors.blue),
-                                _buildStatCard(S.t('inv_stat_total_stock'), '$_totalStock ${S.t('inv_units')}', Icons.inventory_2, Colors.green),
-                                _buildStatCard(S.t('inv_stat_total_value'), '${_totalValue.toStringAsFixed(2)} ${S.t('misc_currency')}', Icons.account_balance_wallet, Colors.orange),
-                                _buildStatCard(S.t('inv_stat_low_stock'), '$_lowStockCount', Icons.warning_amber, Colors.red),
-                              ],
-                            ),
-                          ),
-
-                     
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                              ),
-                                child: TextField(
-                                  controller: _searchController,
-                                  decoration: InputDecoration(
-                                    hintText: S.t('inv_search_hint'),
-                                    prefixIcon: const Icon(Icons.search),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.all(16),
-                                  ),
-                                onChanged: (val) => setState(() => _searchQuery = val),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                        
-                          Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                              ),
-                              child: _filteredInventory.isEmpty
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
-                                          const SizedBox(height: 12),
-                                          Text(S.t('inv_no_products'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
-                                        ],
-                                      ),
-                                    )
-                                  : ListView.separated(
-                                      padding: const EdgeInsets.all(8),
-                                      itemCount: _filteredInventory.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1),
-                                      itemBuilder: (context, index) {
-                                        final item = _filteredInventory[index];
-                                        final variant = item['product_variants'] ?? {};
-                                        final product = variant['products'] ?? {};
-                                        final qty = (item['quantity'] as int?) ?? 0;
-                                        final isLow = qty < 3;
-
-                                        return ListTile(
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                          leading: Container(
-                                            width: 48,
-                                            height: 48,
-                                            decoration: BoxDecoration(
-                                              color: isLow ? Colors.red[50] : Colors.teal[50],
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: product['image_url'] != null
-                                                ? ClipRRect(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    child: Image.network(product['image_url'], fit: BoxFit.cover),
-                                                  )
-                                                : Icon(Icons.image_not_supported, color: isLow ? Colors.red : Colors.teal),
-                                          ),
-                                          title: Text(
-                                            product['name'] ?? S.t('misc_unknown'),
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          subtitle: Text(
-                                            '${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'} | ${S.t('prod_barcode')}: ${variant['barcode'] ?? '-'}',
-                                            style: const TextStyle(fontSize: 12),
-                                          ),
-                                          trailing: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color: isLow ? Colors.red[50] : Colors.green[50],
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(color: isLow ? Colors.red : Colors.green),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                if (isLow) const Icon(Icons.warning_amber, size: 16, color: Colors.red),
-                                                if (isLow) const SizedBox(width: 4),
-                                                Text(
-                                                  '$qty',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                    color: isLow ? Colors.red : Colors.green[800],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                   
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 16, right: 16, bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                    if (AppSession.isEmployee)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.orange.withOpacity(0.1),
+                        child: Row(
                           children: [
-                     
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.red[50],
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.warning_amber_rounded, color: Colors.red),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      S.t('inv_low_stock_alerts'),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
-                                    ),
-                                  ),
-                                  Chip(
-                                    label: Text('$_lowStockCount'),
-                                    backgroundColor: Colors.red,
-                                    labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                           
-                            SizedBox(
-                              height: 250,
-                              child: _lowStockAlerts.isEmpty
-                                  ? Center(child: Text(S.t('inv_no_alerts'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))
-                                  : ListView.separated(
-                                      padding: const EdgeInsets.all(8),
-                                      itemCount: _lowStockAlerts.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1),
-                                      itemBuilder: (context, index) {
-                                        final alert = _lowStockAlerts[index];
-                                        final variant = alert['product_variants'] ?? {};
-                                        final name = variant['products']?['name'] ?? S.t('misc_unknown');
-                                        final size = variant['size'] ?? '-';
-                                        final qty = alert['quantity'] ?? 0;
-                                        return ListTile(
-                                          dense: true,
-                                          leading: CircleAvatar(
-                                            backgroundColor: Colors.red[100],
-                                            radius: 16,
-                                            child: Text('$qty', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-                                          ),
-                                          title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                                          subtitle: Text('${S.t('prod_size')}: $size', style: const TextStyle(fontSize: 11)),
-                                        );
-                                      },
-                                    ),
-                            ),
-
-                        
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              color: Colors.indigo[50],
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.swap_vert, color: Colors.indigo),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    S.t('inv_recent_movements'),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        
-                            Expanded(
-                              child: _recentMovements.isEmpty
-                                  ? Center(child: Text(S.t('inv_no_movements'), style: const TextStyle(color: Colors.grey)))
-                                  : ListView.separated(
-                                      padding: const EdgeInsets.all(8),
-                                      itemCount: _recentMovements.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1),
-                                      itemBuilder: (context, index) {
-                                        final mov = _recentMovements[index];
-                                        final isIn = mov['type'] == 'in';
-                                        final productName = mov['product_variants']?['products']?['name'] ?? S.t('misc_unknown');
-                                        final size = mov['product_variants']?['size'] ?? '-';
-                                        final userName = mov['user_profiles']?['full_name'] ?? S.t('misc_system');
-                                        final date = DateTime.tryParse(mov['created_at'] ?? '');
-                                        final qty = mov['quantity'] ?? 0;
-
-                                        return ListTile(
-                                          dense: true,
-                                          leading: CircleAvatar(
-                                            backgroundColor: isIn ? Colors.blue[50] : Colors.green[50],
-                                            radius: 16,
-                                            child: Icon(
-                                              isIn ? Icons.arrow_downward : Icons.arrow_upward,
-                                              color: isIn ? Colors.blue : Colors.green,
-                                              size: 18,
-                                            ),
-                                          ),
-                                          title: Text(
-                                            '$productName ($size)',
-                                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                                          ),
-                                          subtitle: Text(
-                                            '${isIn ? S.t('inv_mov_in') : S.t('inv_mov_out')} ${S.t('misc_by')} $userName • ${date != null ? timeago.format(date, locale: AppSession.locale.value == 'ar' ? 'ar' : 'fr') : ''}',
-                                            style: const TextStyle(fontSize: 11),
-                                          ),
-                                          trailing: Text(
-                                            '${isIn ? "+" : "-"}$qty',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: isIn ? Colors.blue : Colors.green,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                            ),
+                            const Icon(Icons.visibility, size: 16, color: Colors.orange),
+                            const SizedBox(width: 8),
+                            Text(S.t('inv_read_only'), style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w600, fontSize: 13)),
                           ],
                         ),
                       ),
+                    Expanded(
+                      child: AppSession.isEmployee
+                          ? _buildEmployeeView()
+                          : _buildOwnerView(),
                     ),
                   ],
+                );
+
+  Widget _buildOwnerView() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Expanded(
+          flex: 3,
+          child: Column(
+            children: [
+           
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildStatCard(S.t('inv_stat_total_products'), '$_totalProducts', Icons.category, Colors.blue),
+                    _buildStatCard(S.t('inv_stat_total_stock'), '$_totalStock ${S.t('inv_units')}', Icons.inventory_2, Colors.green),
+                    _buildStatCard(S.t('inv_stat_total_value'), '${_totalValue.toStringAsFixed(2)} ${S.t('misc_currency')}', Icons.account_balance_wallet, Colors.orange),
+                    _buildStatCard(S.t('inv_stat_low_stock'), '$_lowStockCount', Icons.warning_amber, Colors.red),
+                  ],
                 ),
+              ),
+
+         
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                  ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: S.t('inv_search_hint'),
+                        prefixIcon: const Icon(Icons.search),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+            
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                  ),
+                  child: _filteredInventory.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+                              const SizedBox(height: 12),
+                              Text(S.t('inv_no_products'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                            ],
+                          ),
+                        )
+                      : _buildInventoryList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+       
+        Expanded(
+          flex: 2,
+          child: Container(
+            margin: const EdgeInsets.only(top: 16, right: 16, bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+          
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          S.t('inv_low_stock_alerts'),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
+                        ),
+                      ),
+                      Chip(
+                        label: Text('$_lowStockCount'),
+                        backgroundColor: Colors.red,
+                        labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(
+                  height: 250,
+                  child: _lowStockAlerts.isEmpty
+                      ? Center(child: Text(S.t('inv_no_alerts'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(8),
+                          itemCount: _lowStockAlerts.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final alert = _lowStockAlerts[index];
+                            final variant = alert['product_variants'] ?? {};
+                            final name = variant['products']?['name'] ?? S.t('misc_unknown');
+                            final size = variant['size'] ?? '-';
+                            final qty = alert['quantity'] ?? 0;
+                            return ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.red[100],
+                                radius: 16,
+                                child: Text('$qty', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                              ),
+                              title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                              subtitle: Text('${S.t('prod_size')}: $size', style: const TextStyle(fontSize: 11)),
+                            );
+                          },
+                        ),
+                ),
+
+            
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.indigo[50],
+                  child: Row(
+                    children: [
+                      const Icon(Icons.swap_vert, color: Colors.indigo),
+                      const SizedBox(width: 8),
+                      Text(
+                        S.t('inv_recent_movements'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+            
+                Expanded(
+                  child: _recentMovements.isEmpty
+                      ? Center(child: Text(S.t('inv_no_movements'), style: const TextStyle(color: Colors.grey)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(8),
+                          itemCount: _recentMovements.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final mov = _recentMovements[index];
+                            final isIn = mov['type'] == 'in';
+                            final productName = mov['product_variants']?['products']?['name'] ?? S.t('misc_unknown');
+                            final size = mov['product_variants']?['size'] ?? '-';
+                            final userName = mov['user_profiles']?['full_name'] ?? S.t('misc_system');
+                            final date = DateTime.tryParse(mov['created_at'] ?? '');
+                            final qty = mov['quantity'] ?? 0;
+
+                            return ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                backgroundColor: isIn ? Colors.blue[50] : Colors.green[50],
+                                radius: 16,
+                                child: Icon(
+                                  isIn ? Icons.arrow_downward : Icons.arrow_upward,
+                                  color: isIn ? Colors.blue : Colors.green,
+                                  size: 18,
+                                ),
+                              ),
+                              title: Text(
+                                '$productName ($size)',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                '${isIn ? S.t('inv_mov_in') : S.t('inv_mov_out')} ${S.t('misc_by')} $userName • ${date != null ? timeago.format(date, locale: AppSession.locale.value == 'ar' ? 'ar' : 'fr') : ''}',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: Text(
+                                '${isIn ? "+" : "-"}$qty',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isIn ? Colors.blue : Colors.green,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  
+  Widget _buildEmployeeView() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: S.t('inv_search_hint'),
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+            onChanged: (val) => setState(() => _searchQuery = val),
+          ),
+        ),
+        Expanded(
+          child: _filteredInventory.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+                      const SizedBox(height: 12),
+                      Text(S.t('inv_no_products'), style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: _filteredInventory.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final item = _filteredInventory[index];
+                    final variant = item['product_variants'] ?? {};
+                    final product = variant['products'] ?? {};
+                    final qty = (item['quantity'] as int?) ?? 0;
+                    final isLow = qty < 3;
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isLow ? Colors.red[50] : Colors.teal[50],
+                          child: Icon(
+                            isLow ? Icons.warning_amber_rounded : Icons.inventory_2_outlined,
+                            color: isLow ? Colors.red : Colors.teal,
+                          ),
+                        ),
+                        title: Text(
+                          product['name'] ?? S.t('misc_unknown'),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isLow ? Colors.red[50] : Colors.green[50],
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isLow ? Colors.red : Colors.green),
+                          ),
+                          child: Text(
+                            '$qty',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: isLow ? Colors.red : Colors.green[800],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInventoryList() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: _filteredInventory.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final item = _filteredInventory[index];
+        final variant = item['product_variants'] ?? {};
+        final product = variant['products'] ?? {};
+        final qty = (item['quantity'] as int?) ?? 0;
+        final isLow = qty < 3;
+
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isLow ? Colors.red[50] : Colors.teal[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: product['image_url'] != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(product['image_url'], fit: BoxFit.cover),
+                  )
+                : Icon(Icons.image_not_supported, color: isLow ? Colors.red : Colors.teal),
+          ),
+          title: Text(
+            product['name'] ?? S.t('misc_unknown'),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            '${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'} | ${S.t('prod_barcode')}: ${variant['barcode'] ?? '-'}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isLow ? Colors.red[50] : Colors.green[50],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isLow ? Colors.red : Colors.green),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLow) const Icon(Icons.warning_amber, size: 16, color: Colors.red),
+                if (isLow) const SizedBox(width: 4),
+                Text(
+                  '$qty',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: isLow ? Colors.red : Colors.green[800],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
       width: 220, 

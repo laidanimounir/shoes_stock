@@ -283,6 +283,7 @@ class S {
       'inv_no_movements': 'Aucun mouvement récent',
       'inv_mov_in': 'Acheté',
       'inv_mov_out': 'Vendu',
+      'inv_read_only': 'Stock — consultation uniquement',
 
       // ── Misc ──
       'misc_by': 'par',
@@ -891,6 +892,7 @@ class S {
       'inv_no_movements': 'لا توجد حركات حديثة',
       'inv_mov_in': 'تم الشراء',
       'inv_mov_out': 'تم البيع',
+      'inv_read_only': 'عرض المخزون — للاطلاع فقط',
 
       // ── Misc ──
       'misc_by': 'بواسطة',
