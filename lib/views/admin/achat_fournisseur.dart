@@ -407,15 +407,11 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                   title: Text(item.label, style: const TextStyle(fontWeight: FontWeight.bold)),
                                   subtitle: Text('${S.t('label_qty_short')} ${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} ${S.t('misc_currency')} = ${(item.quantity * item.unitPrice).toStringAsFixed(2)} ${S.t('misc_currency')}'),
                                   trailing: IconButton(
-                                    icon: const Icon(Icons.close, color: Colors.red),
-                                    onPressed: () => setState(() => _purchaseItems.removeAt(i)),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () => setState(() => _purchaseItems.removeAt(i)),
+                                  ),
+                                ),
+                              );
                             }),
 
                           if (_purchaseItems.isNotEmpty) ...[
@@ -443,12 +439,15 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                               ),
                             ),
                           ],
-                  ],
-                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

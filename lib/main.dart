@@ -8,6 +8,7 @@ import 'views/auth/login_screen.dart';
 import 'views/desktop/admin_main_layout.dart';
 import 'views/desktop/employee_main_layout.dart';
 import 'views/mobile/owner_dashboard.dart';
+import 'views/mobile/employee_dashboard.dart';
 import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
 
@@ -165,18 +166,20 @@ class _AuthGateState extends State<AuthGate> {
         }
       } else if (role == 'employee') {
         if (isMobile) {
-          // Force sign out and show exact requested error message
-          await supabase.auth.signOut();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Accès refusé : Mobile réservé au Propriétaire.",
-                ),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 5),
-              ),
-            );
+            setState(() {
+              _currentScreen = _StartupScreen(
+                onNavigate: () {
+                  if (mounted) {
+                    setState(() {
+                      _currentScreen = const EmployeeDashboard();
+                      _isLoading = false;
+                    });
+                  }
+                },
+              );
+              _isLoading = false;
+            });
           }
         } else {
           if (mounted) {
