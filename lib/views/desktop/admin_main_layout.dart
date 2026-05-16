@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../admin/dashboard_screen.dart';
+import 'pos_screen.dart';
 import '../admin/ajouter_produit.dart';
 import '../admin/liste_produits.dart';
 import '../admin/gestion_employes.dart';
@@ -34,10 +35,11 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     super.initState();
     _screens = [
       const DashboardScreen(),
+      const PosScreen(),
       const GestionStoresScreen(),
       const InventoryScreen(),
       ListeProduitsScreen(
-        onAddProduct: () => setState(() => _selectedIndex = 4),
+        onAddProduct: () => setState(() => _selectedIndex = 5),
       ),
       const AjouterProduitScreen(),
       const GestionClientsScreen(),
@@ -61,6 +63,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
 
   static List<(IconData, IconData, String)> get _destinations => [
     (Icons.dashboard_outlined, Icons.dashboard_rounded, S.t('nav_dashboard')),
+    (Icons.point_of_sale_outlined, Icons.point_of_sale_rounded, S.t('nav_pos')),
     (Icons.warehouse_outlined, Icons.warehouse_rounded, S.t('nav_stores')),
     (Icons.inventory_outlined, Icons.inventory_rounded, S.t('nav_inventory')),
     (Icons.inventory_2_outlined, Icons.inventory_2_rounded, S.t('nav_products')),
