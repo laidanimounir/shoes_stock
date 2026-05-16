@@ -519,6 +519,11 @@ class S {
       'refund_original_invoice': 'Facture originale :',
       'refund_total_amount': 'Montant total du retour :',
       'refund_unit_price': 'Prix :',
+      'refund_48h_blocked': 'Retour impossible après 48h de la vente',
+      'refund_48h_warning_title': 'Attention: Délai dépassé',
+      'refund_48h_warning_body': 'Attention: cette facture date de plus de 48h. Continuer quand même?',
+      'refund_48h_continue': 'Continuer le retour',
+      'refund_invoice_age': 'Vendu il y a {hours}h',
 
       // ── Activity Logs ──
       'log_title': "Journaux d'activité",
@@ -1120,6 +1125,11 @@ class S {
       'refund_original_invoice': 'الفاتورة الأصلية:',
       'refund_total_amount': 'إجمالي مبلغ الإرجاع:',
       'refund_unit_price': 'السعر:',
+      'refund_48h_blocked': 'لا يمكن إرجاع فاتورة بعد 48 ساعة من البيع',
+      'refund_48h_warning_title': 'تحذير: تجاوز المدة',
+      'refund_48h_warning_body': 'تحذير: مضى على هذه الفاتورة أكثر من 48 ساعة. هل تريد المتابعة؟',
+      'refund_48h_continue': 'متابعة الإرجاع',
+      'refund_invoice_age': 'تم البيع منذ {hours} ساعة',
 
       // ── Activity Logs ──
       'log_title': 'سجل النشاطات',

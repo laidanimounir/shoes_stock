@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 import '../../services/refund_service.dart';
 
 class RefundModal extends StatefulWidget {
   final Map<String, dynamic> invoice;
-  const RefundModal({super.key, required this.invoice});
+  final bool isOwner;
+  const RefundModal({super.key, required this.invoice, this.isOwner = false});
 
   @override
   State<RefundModal> createState() => _RefundModalState();
@@ -100,6 +103,18 @@ class _RefundModalState extends State<RefundModal> {
 
       // ignore: use_build_context_synchronously
       if (!context.mounted) return;
+
+      // Log activity
+      try {
+        await Supabase.instance.client.from('activity_logs').insert({
+          'user_id': AppSession.currentUserId,
+          'action_type': 'refund',
+          'description': 'Refund #$refundId for invoice ${widget.invoice['invoice_number']} (${widget.isOwner ? 'owner' : 'employee'})',
+          'invoice_id': invoiceId,
+          'amount': _totalRefundAmount,
+        });
+      } catch (_) {}
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${S.t('refund_success')} $refundId'), backgroundColor: Colors.green),
       );
@@ -117,6 +132,32 @@ class _RefundModalState extends State<RefundModal> {
     }
   }
 
+  Widget _buildInvoiceAgeBanner() {
+    final createdAtStr = widget.invoice['created_at'] as String?;
+    if (createdAtStr == null) return const SizedBox.shrink();
+    final createdAt = DateTime.parse(createdAtStr);
+    final hoursSince = DateTime.now().difference(createdAt).inHours;
+    final ageText = S.t('refund_invoice_age').replaceAll('{hours}', hoursSince.toString());
+
+    final ageColor = hoursSince > 48 ? Colors.red : Colors.green;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: ageColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ageColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(hoursSince > 48 ? Icons.warning_amber_rounded : Icons.access_time, size: 16, color: ageColor),
+          const SizedBox(width: 8),
+          Text(ageText, style: TextStyle(color: ageColor, fontWeight: FontWeight.w600, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -128,6 +169,8 @@ class _RefundModalState extends State<RefundModal> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('${S.t('refund_original_invoice')} ${widget.invoice['invoice_number'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            _buildInvoiceAgeBanner(),
             const SizedBox(height: 16),
             Text(S.t('refund_select_items'), style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

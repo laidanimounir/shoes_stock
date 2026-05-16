@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../desktop/refund_modal.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   const SalesHistoryScreen({super.key});
@@ -16,7 +17,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   List<dynamic> _stores = [];
   bool _isLoading = true;
   
-  String? _userRole;
   String? _userStoreId;
   String? _filterStoreId; 
 
@@ -29,12 +29,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   Future<void> _initAndFetch() async {
     try {
       final user = supabase.auth.currentUser;
-      final profile = await supabase.from('user_profiles').select().eq('id', user!.id).single();
-      
-      _userRole = profile['role'];
-      _userStoreId = profile['store_id'];
+      _userStoreId = AppSession.currentStoreId;
 
-      if (_userRole == 'owner') {
+      if (AppSession.isOwner) {
         _stores = await supabase.from('stores').select('id, name').order('name');
       } else {
         _filterStoreId = _userStoreId; 
@@ -119,7 +116,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         backgroundColor: Colors.indigo[700],
         foregroundColor: Colors.white,
         actions: [
-          if (_userRole == 'owner')
+          if (AppSession.isOwner)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: DropdownButton<String?>(
@@ -183,9 +180,48 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                 icon: const Icon(Icons.assignment_return, color: Colors.red),
                                 tooltip: S.t('label_return'),
                                 onPressed: () async {
+                                  final createdAtStr = s['created_at'] as String?;
+                                  if (createdAtStr == null) return;
+                                  final createdAt = DateTime.parse(createdAtStr);
+                                  final hoursSince = DateTime.now().difference(createdAt).inHours;
+
+                                  if (hoursSince > 48) {
+                                    if (AppSession.isOwner) {
+                                      final proceed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: Text(S.t('refund_48h_warning_title')),
+                                          content: Text(S.t('refund_48h_warning_body')),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, false),
+                                              child: Text(S.t('action_cancel')),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                                              child: Text(S.t('refund_48h_continue')),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (proceed != true) return;
+                                    } else {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(S.t('refund_48h_blocked')), backgroundColor: Colors.red),
+                                        );
+                                      }
+                                      return;
+                                    }
+                                  }
+
                                   final result = await showDialog(
                                     context: context,
-                                    builder: (_) => RefundModal(invoice: s),
+                                    builder: (_) => RefundModal(
+                                      invoice: s,
+                                      isOwner: AppSession.isOwner,
+                                    ),
                                   );
                                   if (result == true) {
                                     _fetchSales();
