@@ -32,46 +32,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   bool _isLoadingHistory = false;
   double _currentBalance = 0.0;
 
-  String? _userRole;
-  String? _userStoreId;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadUserProfile();
-  }
-
-  Future<void> _loadUserProfile() async {
-    if (AppSession.isOfflineMode) {
-      final isar = await IsarService.getInstance();
-      final userId = AppSession.currentUserId;
-      if (userId != null) {
-        final profile = await isar.userProfileLocals
-            .filter()
-            .supabaseIdEqualTo(userId)
-            .findFirst();
-        _userRole = profile?.role;
-        _userStoreId = profile?.storeId;
-      }
-      _fetchCustomers();
-      return;
-    }
-
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final profile = await Supabase.instance.client
-            .from('user_profiles')
-            .select('role, store_id')
-            .eq('id', user.id)
-            .single();
-        _userRole = profile['role'];
-        _userStoreId = profile['store_id'];
-      }
-    } catch (e) {
-      debugPrint("Error loading user profile: $e");
-    }
     _fetchCustomers();
   }
 
@@ -221,9 +185,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           .eq('customer_id', customerId);
 
       // Employee: filter by store_id
-      if (_userRole == 'employee' && _userStoreId != null) {
-        invoicesQuery = invoicesQuery.eq('store_id', _userStoreId!);
-        paymentsQuery = paymentsQuery.eq('store_id', _userStoreId!);
+      if (AppSession.isEmployee && AppSession.currentStoreId != null) {
+        invoicesQuery = invoicesQuery.eq('store_id', AppSession.currentStoreId!);
+        paymentsQuery = paymentsQuery.eq('store_id', AppSession.currentStoreId!);
       }
 
       final invoicesRes = await invoicesQuery.order('created_at', ascending: false);
@@ -234,7 +198,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           _invoices = invoicesRes;
           _payments = paymentsRes;
 
-          if (_userRole == 'employee' && _userStoreId != null) {
+          if (AppSession.isEmployee && AppSession.currentStoreId != null) {
             // Employee: compute balance from filtered invoices/payments
             double totalInvoiced = 0.0;
             for (var inv in _invoices) {
@@ -348,6 +312,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 };
                 
                 if (isEdit) {
+                  if (!AppSession.isOwner) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_access_denied')), backgroundColor: Colors.red));
+                    return;
+                  }
                   await Supabase.instance.client.from('customers').update(data).eq('id', customer['id']);
                   if (_selectedCustomer?['id'] == customer['id']) {
                     setState(() {
@@ -360,6 +328,16 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                   data['balance'] = 0;
                   data['is_active'] = true;
                   await Supabase.instance.client.from('customers').insert(data);
+
+                  // Log activity for new customer
+                  try {
+                    await Supabase.instance.client.from('activity_logs').insert({
+                      'user_id': AppSession.currentUserId,
+                      'action_type': 'add_customer',
+                      'description': 'Nouveau client ajouté: ${data['full_name']}',
+                      'store_id': AppSession.currentStoreId,
+                    });
+                  } catch (_) {}
                 }
                 
                 _fetchCustomers(_searchController.text);
@@ -464,6 +442,16 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                   'payment_method': 'cash',
                   'notes': notesCtrl.text.isEmpty ? S.t('cust_manual_payment') : notesCtrl.text,
                 });
+
+                // Log activity
+                try {
+                  await Supabase.instance.client.from('activity_logs').insert({
+                    'user_id': AppSession.currentUserId,
+                    'action_type': 'debt_payment',
+                    'description': 'Paiement reçu de ${_selectedCustomer!['full_name']} — ${amount.toStringAsFixed(2)} DA',
+                    'store_id': AppSession.currentStoreId,
+                  });
+                } catch (_) {}
                 
                 _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
                 _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية
@@ -644,7 +632,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
-                                      if (_userRole == 'owner') ...[
+                                      if (AppSession.isOwner) ...[
                                         IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
                                         IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
                                       ]
