@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class AchatFournisseurScreen extends StatefulWidget {
   const AchatFournisseurScreen({super.key});
@@ -18,9 +19,6 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   String? _selectedStoreId;
   String? _selectedVariantId;
 
-  String? _userRole;
-  String? _userStoreId;
-
   final _qtyController = TextEditingController();
   final _priceController = TextEditingController();
 
@@ -36,19 +34,6 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
   Future<void> _fetchData() async {
     try {
-      // Fetch user role and store_id
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final profile = await Supabase.instance.client
-            .from('user_profiles')
-            .select('role, store_id')
-            .eq('id', user.id)
-            .single();
-        _userRole = profile['role'];
-        _userStoreId = profile['store_id'];
-      }
-
-      // جلب البيانات النشطة فقط (غير المحذوفة وهمياً)
       final results = await Future.wait([
         Supabase.instance.client.from('suppliers').select().eq('is_active', true),
         Supabase.instance.client.from('stores').select().eq('is_active', true),
@@ -62,10 +47,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
           _variants = results[2];
           
           if (_suppliers.isNotEmpty) _selectedSupplierId = _suppliers.first['id'];
-          // Employee: lock to their store; Owner: default to first store
-          if (_userRole == 'employee' && _userStoreId != null) {
-            _selectedStoreId = _userStoreId;
-          } else if (_stores.isNotEmpty) {
+          if (_stores.isNotEmpty) {
             _selectedStoreId = _stores.first['id'];
           }
           if (_variants.isNotEmpty) _selectedVariantId = _variants.first['id'];
@@ -110,6 +92,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
   // نافذة تأكيد الدفع قبل إرسال البيانات لقاعدة البيانات
   void _showPaymentDialog() {
+    if (AppSession.isEmployee) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.t('buy_no_permission')), backgroundColor: Colors.red),
+      );
+      return;
+    }
     if (_purchaseItems.isEmpty || _selectedStoreId == null || _selectedSupplierId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.t('buy_fill_fields')), backgroundColor: Colors.orange),
@@ -243,7 +231,23 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : Column(
+        children: [
+          if (AppSession.isEmployee)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.deepPurple.withOpacity(0.08),
+              child: Row(
+                children: [
+                  const Icon(Icons.visibility, size: 16, color: Colors.deepPurple),
+                  const SizedBox(width: 8),
+                  Text(S.t('buy_read_only'), style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600, fontSize: 13)),
+                ],
+              ),
+            ),
+          Expanded(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,12 +281,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                           const SizedBox(height: 16),
 
                           // Store
-                          if (_userRole == 'employee')
+                          if (AppSession.isEmployee)
                             TextFormField(
                               readOnly: true,
                               decoration: InputDecoration(labelText: S.t('buy_store_receiving'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
-                              initialValue: _stores.where((s) => s['id'] == _userStoreId).isNotEmpty
-                                  ? _stores.firstWhere((s) => s['id'] == _userStoreId)['name']
+                              initialValue: AppSession.currentStoreId != null && _stores.any((s) => s['id'] == AppSession.currentStoreId)
+                                  ? (_stores.firstWhere((s) => s['id'] == AppSession.currentStoreId)['name'] as String)
                                   : S.t('buy_my_store'),
                             )
                           else
@@ -405,9 +409,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                   trailing: IconButton(
                                     icon: const Icon(Icons.close, color: Colors.red),
                                     onPressed: () => setState(() => _purchaseItems.removeAt(i)),
-                                  ),
-                                ),
-                              );
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
                             }),
 
                           if (_purchaseItems.isNotEmpty) ...[
@@ -435,13 +443,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }
