@@ -17,6 +17,29 @@ class AppSession {
   /// Auth user ID from Supabase
   static String? currentUserId;
 
+  /// Current user role resolved from user_profiles on login
+  static String? currentUserRole;
+
+  /// Sets the current user role. Call after fetching from Supabase.
+  static void setRole(String role) {
+    currentUserRole = role;
+  }
+
+  /// Returns true if the current user is an owner/admin.
+  static bool get isOwner => currentUserRole == 'owner';
+
+  /// Returns true if the current user is an employee/cashier.
+  static bool get isEmployee => currentUserRole == 'employee';
+
+  /// Resets all session state. Call on logout.
+  static void clearSession() {
+    currentUserId = null;
+    currentStoreId = null;
+    currentUserRole = null;
+    isOfflineMode = false;
+    pendingSync = 0;
+  }
+
   // ══════════════════════════════════════════
   // Locale management
   // ══════════════════════════════════════════

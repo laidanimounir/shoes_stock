@@ -80,6 +80,7 @@ class _AuthGateState extends State<AuthGate> {
       final event = data.event;
 
       if (event == AuthChangeEvent.signedOut || session == null) {
+        AppSession.clearSession();
         if (mounted) {
           setState(() {
             _currentScreen = const LoginScreen();
@@ -125,6 +126,7 @@ class _AuthGateState extends State<AuthGate> {
       // ── Set AppSession global state ──
       AppSession.currentUserId = userId;
       AppSession.currentStoreId = response['store_id'] as String?;
+      AppSession.setRole(role);
 
       final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
                         defaultTargetPlatform == TargetPlatform.macOS ||
