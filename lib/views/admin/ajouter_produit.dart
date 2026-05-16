@@ -34,8 +34,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   List<dynamic> _stores = [];
   String? _selectedStoreId;
 
-  String? _userStoreId;
-
   final List<VariantFormData> _variants = [VariantFormData()]; 
   
   File? _imageFile;
@@ -64,16 +62,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
   Future<void> _fetchData() async {
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final profile = await Supabase.instance.client
-            .from('user_profiles')
-            .select('store_id')
-            .eq('id', user.id)
-            .single();
-        _userStoreId = profile['store_id'];
-      }
-
       final futures = await Future.wait([
         Supabase.instance.client.from('suppliers').select().eq('is_active', true),
         Supabase.instance.client.from('stores').select().eq('is_active', true),

@@ -6,10 +6,7 @@ import '../desktop/pos_screen.dart';
 import '../admin/liste_produits.dart';
 import '../admin/inventory_screen.dart';
 import '../admin/gestion_clients.dart';
-import '../admin/gestion_fournisseurs.dart';
-import '../admin/achat_fournisseur.dart';
 import '../admin/sales_history_screen.dart';
-import '../../core/app_session.dart';
 import '../../widgets/offline_banner.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
@@ -32,8 +29,6 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
       ListeProduitsScreen(),
       const InventoryScreen(),
       const GestionClientsScreen(),
-      const GestionFournisseursScreen(),
-      const AchatFournisseurScreen(),
       const SalesHistoryScreen(),
     ];
   }
@@ -178,11 +173,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             Icons.inventory_rounded, S.t('nav_inventory')),
                         _buildNavItem(3, Icons.people_outline,
                             Icons.people_rounded, S.t('nav_clients')),
-                        _buildNavItem(4, Icons.local_shipping_outlined,
-                            Icons.local_shipping_rounded, S.t('nav_suppliers')),
-                        _buildNavItem(5, Icons.shopping_bag_outlined,
-                            Icons.shopping_bag_rounded, S.t('nav_purchases')),
-                        _buildNavItem(6, Icons.history_edu_outlined,
+                        _buildNavItem(4, Icons.history_edu_outlined,
                             Icons.history_edu_rounded, S.t('nav_my_sales')),
                       ],
                     ),

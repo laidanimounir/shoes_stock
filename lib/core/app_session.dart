@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:isar/isar.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/collections/settings_local.dart';
 import 'app_strings.dart';

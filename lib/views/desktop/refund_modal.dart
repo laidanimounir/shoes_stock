@@ -19,7 +19,7 @@ class _RefundModalState extends State<RefundModal> {
   bool _isLoading = false;
 
   // Track checked state and quantity to refund for each item
-  List<Map<String, dynamic>> _refundableItems = [];
+  final List<Map<String, dynamic>> _refundableItems = [];
   
   @override
   void initState() {

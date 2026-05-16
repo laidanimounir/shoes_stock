@@ -25,7 +25,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   String? _selectedStoreId;
 
   List<dynamic> _inventoryItems = [];
-  List<dynamic> _lowStockAlerts = [];
+  final List<dynamic> _lowStockAlerts = [];
   List<dynamic> _recentMovements = [];
 
   bool _isLoading = true;
@@ -398,7 +398,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           : _buildOwnerView(),
                     ),
                   ],
-                );
+                ),
+              );
+  }
 
   Widget _buildOwnerView() {
     return Row(
@@ -603,8 +605,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             );
                           },
                         ),
-                  ),
-                ),
+                      ),
               ],
             ),
           ),

@@ -28,7 +28,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   Future<void> _initAndFetch() async {
     try {
-      final user = supabase.auth.currentUser;
       _userStoreId = AppSession.currentStoreId;
 
       if (AppSession.isOwner) {

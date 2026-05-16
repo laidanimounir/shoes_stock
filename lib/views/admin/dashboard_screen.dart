@@ -241,7 +241,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   static const _darkBg   = Color(0xFF0F0F1A);
   static const _cardBg   = Color(0xFF1A1A2E);
   static const _gold     = Color(0xFFD4A843);
-  static const _goldLight= Color(0xFFF0C96B);
 
 
   @override

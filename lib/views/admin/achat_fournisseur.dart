@@ -189,16 +189,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     setState(() => _isSubmitting = true);
     
     try {
-      final user = Supabase.instance.client.auth.currentUser;
       final invoiceNumber = 'ACH-${DateTime.now().millisecondsSinceEpoch}';
-
-   
-      String status = 'paid';
-      if (paidAmount == 0) {
-        status = 'unpaid';
-      } else if (paidAmount < totalAmount) {
-        status = 'partial';
-      }
 
       await Supabase.instance.client.rpc('process_purchase', params: {
         'p_store_id': _selectedStoreId,
