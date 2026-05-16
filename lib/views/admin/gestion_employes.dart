@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class GestionEmployesScreen extends StatefulWidget {
   const GestionEmployesScreen({super.key});
@@ -10,6 +11,8 @@ class GestionEmployesScreen extends StatefulWidget {
 }
 
 class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
+  bool _blocked = false;
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -25,24 +28,22 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
   @override
   void initState() {
     super.initState();
+    if (AppSession.isEmployee) {
+      _blocked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.t('emp_no_permission')), backgroundColor: Colors.red),
+          );
+          Navigator.of(context).pop();
+        }
+      });
+      return;
+    }
     _fetchData();
   }
 
-  String? _userRole;
-
   Future<void> _fetchData() async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final profile = await Supabase.instance.client
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        if (mounted) setState(() => _userRole = profile['role']);
-      }
-    } catch (_) {}
-
     await Future.wait([
       _fetchStores(),
       _fetchEmployees(),
@@ -219,11 +220,13 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
-      body: Row(
+      body: _blocked
+          ? const SizedBox.shrink()
+          : Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Left side: Create Employee Form
-          if (_userRole == 'owner')
+          if (AppSession.isOwner)
             Expanded(
               flex: 1,
               child: SingleChildScrollView(
@@ -358,7 +361,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen> {
                                     title: Text(emp['full_name'] ?? S.t('misc_unknown'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     subtitle: Text('${S.t('label_store')} $storeName\n${S.t('label_added_on')} ${emp['created_at'].toString().split('T')[0]}'),
                                     isThreeLine: true,
-                                    trailing: _userRole == 'owner' ? IconButton(
+                                    trailing: AppSession.isOwner ? IconButton(
                                       icon: const Icon(Icons.delete_outline, color: Colors.red),
                                       tooltip: 'Supprimer',
                                       onPressed: () => _deleteEmployee(emp['id']),

@@ -403,6 +403,7 @@ class S {
       'emp_delete_warning': 'Cette action est irréversible.',
       'emp_add_btn': "Créer l'employé",
       'emp_list_title': 'Liste des employés',
+      'emp_no_permission': "Vous n'avez pas accès à la liste des employés",
 
       // ── Stores ──
       'store_title': 'Gestion des Magasins',
@@ -1012,6 +1013,7 @@ class S {
       'emp_delete_warning': 'هذا الإجراء لا رجعة فيه.',
       'emp_add_btn': 'إنشاء الموظف',
       'emp_list_title': 'قائمة الموظفين',
+      'emp_no_permission': 'ليس لديك صلاحية لعرض قائمة الموظفين',
 
       // ── Stores ──
       'store_title': 'إدارة المتاجر',
