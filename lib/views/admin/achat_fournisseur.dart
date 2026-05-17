@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -40,6 +41,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   double _enteredPrice = 0;
   bool _isPriceDifferent = false;
   double _priceDiffPercent = 0;
+  int _infoLoadVersion = 0;
 
   // Unit type state
   String _unitType = 'piece';
@@ -56,7 +58,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       final results = await Future.wait([
         Supabase.instance.client.from('suppliers').select().eq('is_active', true),
         Supabase.instance.client.from('stores').select().eq('is_active', true),
-        Supabase.instance.client.from('product_variants').select('id, size, color, barcode, buy_price, products(name)').eq('is_active', true),
+        Supabase.instance.client.from('product_variants').select('id, product_id, size, color, barcode, buy_price, sell_price, products(name)').eq('is_active', true),
       ]);
       
       if (mounted) {
@@ -73,8 +75,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
           // Load smart info for initial variant
           if (_selectedVariantId != null && _selectedStoreId != null) {
-            final firstVariant = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
-            _loadVariantSmartInfo(firstVariant);
+            _loadVariantSmartInfo(variantId: _selectedVariantId!, storeId: _selectedStoreId!);
           }
           
           _isLoading = false;
@@ -110,7 +111,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       return;
     }
 
-    _confirmAddItem(isNouvelleArrivage: false);
+    _confirmAddItem(price: enteredPrice, isNouvelleArrivage: false);
   }
 
   // ========== NOUVELLE ARRIVAGE ==========
@@ -184,7 +185,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               subtitle: 'Même produit, prix mis à jour',
               onTap: () {
                 Navigator.pop(ctx);
-                _confirmAddItem(isNouvelleArrivage: false);
+                _confirmAddItem(price: newPrice, isNouvelleArrivage: false);
               },
             ),
             const SizedBox(height: 8),
@@ -193,9 +194,21 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               color: const Color(0xFF2ECC71),
               title: 'Nouvelle arrivage',
               subtitle: 'Stock séparé avec nouveau prix d\'achat',
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(ctx);
-                _confirmAddItem(isNouvelleArrivage: true);
+                final created = await _createArrivageVariant(newPrice);
+                if (created != null && mounted) {
+                  setState(() {
+                    _variants = [..._variants, created];
+                    _selectedVariantId = created['id'];
+                  });
+                  if (_selectedStoreId != null) {
+                    _loadVariantSmartInfo(variantId: created['id'], storeId: _selectedStoreId!);
+                  }
+                  _confirmAddItem(price: newPrice, isNouvelleArrivage: true);
+                } else if (mounted) {
+                  _confirmAddItem(price: newPrice, isNouvelleArrivage: false);
+                }
               },
             ),
           ],
@@ -245,9 +258,8 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     );
   }
 
-  void _confirmAddItem({required bool isNouvelleArrivage}) {
+  void _confirmAddItem({required double price, required bool isNouvelleArrivage}) {
     final inputQty = int.tryParse(_qtyController.text) ?? 0;
-    final price = double.tryParse(_priceController.text) ?? 0;
 
     final variant = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
     final p = variant['products'];
@@ -257,9 +269,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
         ? '$productName (${variant['size']} / ${variant['color']}) [$inputQty cartons × $_unitsPerCarton pcs]'
         : '$productName (${variant['size']} / ${variant['color']})';
 
-    final arrivageId = isNouvelleArrivage
-        ? DateTime.now().millisecondsSinceEpoch.toString()
-        : null;
+    final arrivageId = isNouvelleArrivage ? _generateUuidV4() : null;
 
     setState(() {
       _purchaseItems.add(_PurchaseItem(
@@ -275,6 +285,50 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       _priceController.clear();
       _clearSmartInfo();
     });
+  }
+
+  Future<Map<String, dynamic>?> _createArrivageVariant(double newPrice) async {
+    try {
+      final original = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
+      final productId = original['product_id'];
+      final size = original['size'] as String;
+      final colorBase = (original['color'] as String).replaceAll(RegExp(r'\s*\[Arrivage.*?\]$'), '');
+
+      final count = _variants.where((v) =>
+          v['product_id'] == productId &&
+          v['size'] == size &&
+          (v['color'] as String).replaceAll(RegExp(r'\s*\[Arrivage.*?\]$'), '') == colorBase).length;
+
+      final now = DateTime.now();
+      final dateStr = '${now.day.toString().padLeft(2, '0')}/'
+          '${now.month.toString().padLeft(2, '0')}/${now.year}';
+      final label = '[Arrivage ${count + 1} • $dateStr]';
+      final newColor = '$colorBase $label';
+
+      final response = await Supabase.instance.client
+          .from('product_variants')
+          .insert({
+            'product_id': productId,
+            'size': size,
+            'color': newColor,
+            'buy_price': newPrice,
+            'sell_price': original['buy_price'],
+            'barcode': null,
+          })
+          .select('id, product_id, size, color, barcode, buy_price, sell_price, products(name)')
+          .single();
+
+      return response;
+    } catch (e) {
+      debugPrint('Error creating arrivage variant: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Erreur création arrivage: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ));
+      }
+      return null;
+    }
   }
 
   // ========== DEFINE + BUY ==========
@@ -721,15 +775,15 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     }
   }
 
-  Future<void> _loadVariantSmartInfo(dynamic selectedVariant) async {
+  Future<void> _loadVariantSmartInfo({required String variantId, required String storeId}) async {
+    final loadVersion = ++_infoLoadVersion;
     setState(() => _isLoadingHistory = true);
     try {
-      final vid = selectedVariant['id']?.toString() ?? '';
-      final sid = _selectedStoreId ?? '';
       final results = await Future.wait([
-        _fetchPurchaseHistory(vid, sid),
-        _fetchVariantStock(vid, sid),
+        _fetchPurchaseHistory(variantId, storeId),
+        _fetchVariantStock(variantId, storeId),
       ]);
+      if (loadVersion != _infoLoadVersion) return;
       final history = results[0] as List<Map<String, dynamic>>;
       final stock = results[1] as int;
       if (mounted) {
@@ -747,7 +801,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoadingHistory = false);
+      if (mounted && loadVersion == _infoLoadVersion) {
+        setState(() => _isLoadingHistory = false);
+      }
     }
   }
 
@@ -761,6 +817,18 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       _priceDiffPercent = 0;
       _enteredPrice = 0;
     });
+  }
+
+  String _generateUuidV4() {
+    final r = Random();
+    final hex = List.generate(32, (_) => r.nextInt(16).toRadixString(16));
+    hex[12] = '4';
+    hex[16] = (8 + r.nextInt(4)).toRadixString(16);
+    return '${hex.sublist(0, 8).join()}-'
+        '${hex.sublist(8, 12).join()}-'
+        '${hex.sublist(12, 16).join()}-'
+        '${hex.sublist(16, 20).join()}-'
+        '${hex.sublist(20, 32).join()}';
   }
 
   String _formatDate(DateTime date) {
@@ -1118,10 +1186,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 return DropdownMenuItem(value: s['id'], child: Text(s['name'] ?? ''));
                               }).toList(),
                               onChanged: (val) {
-                                setState(() => _selectedStoreId = val);
-                                if (val != null && _selectedVariantId != null) {
-                                  final v = _variants.firstWhere((x) => x['id'] == _selectedVariantId, orElse: () => null);
-                                  if (v != null) _loadVariantSmartInfo(v);
+                                setState(() { _selectedStoreId = val; });
+                                if (_selectedVariantId != null && val != null) {
+                                  _loadVariantSmartInfo(variantId: _selectedVariantId!, storeId: val);
                                 }
                               },
                             ),
@@ -1160,22 +1227,22 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                     );
                                   }).toList(),
                                   onChanged: (val) {
+                                    if (val == null) return;
                                     setState(() {
                                       _selectedVariantId = val;
                                       _isPriceDifferent = false;
                                       _priceDiffPercent = 0;
                                       _enteredPrice = 0;
                                     });
-                                    if (val != null) {
-                                      final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
-                                      if (v != null) {
-                                        if (v['buy_price'] != null) {
-                                          _priceController.text = v['buy_price'].toString();
-                                        }
-                                        _loadVariantSmartInfo(v);
+                                    final matches = _variants.where((v) => v['id'] == val);
+                                    if (matches.isNotEmpty) {
+                                      final v = matches.first;
+                                      if (v['buy_price'] != null) {
+                                        _priceController.text = v['buy_price'].toString();
                                       }
-                                    } else {
-                                      _clearSmartInfo();
+                                    }
+                                    if (_selectedStoreId != null) {
+                                      _loadVariantSmartInfo(variantId: val, storeId: _selectedStoreId!);
                                     }
                                   },
                                 ),

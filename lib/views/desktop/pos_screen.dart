@@ -758,7 +758,7 @@ class _PosScreenState extends State<PosScreen> {
                                                             maxLines: 1, overflow: TextOverflow.ellipsis,
                                                           ),
                                                           const SizedBox(height: 4),
-                                                          Text('${S.t('prod_size')}: ${item['size']} | ${S.t('prod_color')}: ${item['color']}', style: const TextStyle(color: Colors.black54)),
+                                                          _buildVariantColorRow(item['color'], item['size']),
                                                           Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
                                                         ],
                                                       ),
@@ -959,6 +959,32 @@ class _PosScreenState extends State<PosScreen> {
               ],
             ),
       ),
+    );
+  }
+
+  Widget _buildVariantColorRow(String color, String size) {
+    final arrMatch = RegExp(r'\s*\[Arrivage\s+\d+\s*•\s*\d{2}/\d{2}/\d{4}\]').firstMatch(color);
+    if (arrMatch == null) {
+      return Text('${S.t('prod_size')}: $size | ${S.t('prod_color')}: $color',
+          style: const TextStyle(color: Colors.black54));
+    }
+    final baseColor = color.replaceAll(arrMatch.group(0)!, '');
+    final arrLabel = arrMatch.group(0)!.trim();
+    return Row(
+      children: [
+        Text('${S.t('prod_size')}: $size | ${S.t('prod_color')}: $baseColor',
+            style: const TextStyle(color: Colors.black54)),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2ECC71).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(arrLabel,
+              style: TextStyle(fontSize: 9, color: const Color(0xFF2ECC71), fontWeight: FontWeight.bold)),
+        ),
+      ],
     );
   }
 }
