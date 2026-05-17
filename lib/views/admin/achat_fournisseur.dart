@@ -27,6 +27,17 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   bool _isLoading = true;
   bool _isSubmitting = false;
 
+  // Smart selection state
+  List<Map<String, dynamic>> _purchaseHistory = [];
+  int _currentStock = 0;
+  double? _lastPurchasePrice;
+  DateTime? _lastPurchaseDate;
+  bool _isLoadingHistory = false;
+
+  // Unit type state
+  String _unitType = 'piece';
+  int _unitsPerCarton = 1;
+
   @override
   void initState() {
     super.initState();
@@ -64,10 +75,10 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
   void _addItemToList() {
     if (_selectedVariantId == null || _selectedStoreId == null) return;
-    final qty = int.tryParse(_qtyController.text) ?? 0;
+    final inputQty = int.tryParse(_qtyController.text) ?? 0;
     final price = double.tryParse(_priceController.text) ?? 0;
     
-    if (qty <= 0) {
+    if (inputQty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.t('buy_qty_invalid')), backgroundColor: Colors.red),
       );
@@ -77,13 +88,16 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     // البحث عن اسم المنتج ومقاسه
     final variant = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
     final productName = variant['products']['name'];
-    final label = '$productName (${variant['size']} / ${variant['color']})';
+    final effectiveQty = _unitType == 'carton' ? inputQty * _unitsPerCarton : inputQty;
+    final label = _unitType == 'carton'
+        ? '$productName (${variant['size']} / ${variant['color']}) [$inputQty cartons × $_unitsPerCarton pcs]'
+        : '$productName (${variant['size']} / ${variant['color']})';
 
     setState(() {
       _purchaseItems.add(_PurchaseItem(
         variantId: _selectedVariantId!,
         label: label,
-        quantity: qty,
+        quantity: effectiveQty,
         unitPrice: price,
       ));
       _qtyController.clear();
@@ -212,6 +226,241 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  // ========== SMART SELECTION ==========
+
+  Future<List<Map<String, dynamic>>> _fetchPurchaseHistory(String variantId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('transactions')
+          .select('created_at, quantity, unit_price')
+          .eq('variant_id', variantId)
+          .eq('type', 'in')
+          .order('created_at', ascending: false)
+          .limit(3);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<int> _fetchVariantStock(String variantId, String storeId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('inventory')
+          .select('quantity')
+          .eq('variant_id', variantId)
+          .eq('store_id', storeId)
+          .maybeSingle();
+      return response?['quantity'] as int? ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<void> _loadVariantSmartInfo(dynamic selectedVariant) async {
+    setState(() => _isLoadingHistory = true);
+    try {
+      final vid = selectedVariant['id']?.toString() ?? '';
+      final sid = _selectedStoreId ?? '';
+      final results = await Future.wait([
+        _fetchPurchaseHistory(vid),
+        _fetchVariantStock(vid, sid),
+      ]);
+      final history = results[0] as List<Map<String, dynamic>>;
+      final stock = results[1] as int;
+      if (mounted) {
+        setState(() {
+          _purchaseHistory = history;
+          _currentStock = stock;
+          _isLoadingHistory = false;
+          if (history.isNotEmpty) {
+            _lastPurchasePrice = (history.first['unit_price'] as num?)?.toDouble();
+            _lastPurchaseDate = DateTime.tryParse(history.first['created_at']?.toString() ?? '');
+          } else {
+            _lastPurchasePrice = null;
+            _lastPurchaseDate = null;
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  void _clearSmartInfo() {
+    setState(() {
+      _purchaseHistory = [];
+      _currentStock = 0;
+      _lastPurchasePrice = null;
+      _lastPurchaseDate = null;
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
+  Widget _buildSmartInfoCard() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: const Color(0xFF1B4F72).withOpacity(0.3)),
+      ),
+      color: const Color(0xFF1B4F72).withOpacity(0.04),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: _isLoadingHistory
+          ? const Center(child: SizedBox(
+              width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1B4F72))))
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.inventory_2_outlined, size: 16, color: Color(0xFF1B4F72)),
+                  const SizedBox(width: 6),
+                  Text('Stock actuel: ',
+                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _currentStock > 5 ? const Color(0xFF2ECC71)
+                           : _currentStock > 0 ? const Color(0xFFE67E22)
+                           : _currentStock == 0 ? const Color(0xFFE74C3C)
+                           : const Color(0xFF7B0000),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text('$_currentStock pcs',
+                      style: GoogleFonts.raleway(
+                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ]),
+                if (_lastPurchasePrice != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(children: [
+                      const Icon(Icons.history_outlined, size: 16, color: Color(0xFF6B7C93)),
+                      const SizedBox(width: 6),
+                      Text('Dernier achat: ',
+                        style: GoogleFonts.cairo(fontSize: 13, color: Color(0xFF6B7C93))),
+                      Text('${_lastPurchasePrice!.toStringAsFixed(2)} DA',
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.bold, fontSize: 13,
+                          color: const Color(0xFF1B4F72))),
+                      if (_lastPurchaseDate != null) ...[
+                        const SizedBox(width: 8),
+                        Text('le ${_formatDate(_lastPurchaseDate!)}',
+                          style: GoogleFonts.raleway(fontSize: 11, color: Color(0xFF6B7C93))),
+                      ],
+                    ]),
+                  ),
+                _buildPriceComparisonRow(),
+              ],
+            ),
+      ),
+    );
+  }
+
+  Widget _buildPriceComparisonRow() {
+    final currentPrice = double.tryParse(_priceController.text);
+    if (currentPrice == null || _lastPurchasePrice == null) {
+      return const SizedBox.shrink();
+    }
+    final diff = currentPrice - _lastPurchasePrice!;
+    final pct = (diff / _lastPurchasePrice!) * 100;
+    if (diff == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Row(children: [
+          const Icon(Icons.check_circle, size: 16, color: Color(0xFF2ECC71)),
+          const SizedBox(width: 6),
+          Text('Prix identique au dernier achat',
+            style: GoogleFonts.cairo(fontSize: 12, color: Color(0xFF2ECC71))),
+        ]),
+      );
+    }
+    final isHigher = diff > 0;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(children: [
+        Icon(isHigher ? Icons.warning_amber_rounded : Icons.info_outline,
+          size: 16, color: isHigher ? const Color(0xFFE67E22) : const Color(0xFF1B4F72)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(isHigher
+            ? 'Prix supérieur de ${diff.toStringAsFixed(2)} DA (+${pct.toStringAsFixed(1)}%)'
+            : 'Prix inférieur de ${(-diff).toStringAsFixed(2)} DA (${pct.toStringAsFixed(1)}%)',
+            style: GoogleFonts.cairo(fontSize: 12,
+              color: isHigher ? const Color(0xFFE67E22) : const Color(0xFF1B4F72))),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildPurchaseHistoryTable() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('📊 Historique des achats',
+          style: GoogleFonts.cairo(
+            fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF6B7C93))),
+        const SizedBox(height: 6),
+        ..._purchaseHistory.map((h) {
+          final date = DateTime.tryParse(h['created_at'] ?? '');
+          final qty = h['quantity'] ?? 0;
+          final price = h['unit_price'] ?? 0;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(children: [
+              const Icon(Icons.circle, size: 6, color: Color(0xFF1B4F72)),
+              const SizedBox(width: 8),
+              Text(date != null ? _formatDate(date) : '—',
+                style: GoogleFonts.raleway(fontSize: 12, color: Color(0xFF6B7C93))),
+              const Spacer(),
+              Text('$qty pcs', style: GoogleFonts.raleway(fontSize: 12)),
+              const SizedBox(width: 16),
+              Text('$price DA',
+                style: GoogleFonts.raleway(fontSize: 12,
+                  fontWeight: FontWeight.bold, color: Color(0xFF1B4F72))),
+            ]),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _unitTypeToggle(String type, String label) {
+    final isSelected = _unitType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _unitType = type),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF1B4F72) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF1B4F72) : const Color(0xFFE0E6ED),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(label,
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isSelected ? Colors.white : const Color(0xFF6B7C93))),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -374,16 +623,28 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             onChanged: (val) {
                               setState(() {
                                 _selectedVariantId = val;
-                                if (val != null) {
-                                  final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
-                                  if (v != null && v['buy_price'] != null) {
+                              });
+                              if (val != null) {
+                                final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
+                                if (v != null) {
+                                  if (v['buy_price'] != null) {
                                     _priceController.text = v['buy_price'].toString();
                                   }
+                                  _loadVariantSmartInfo(v);
                                 }
-                              });
+                              } else {
+                                _clearSmartInfo();
+                              }
                             },
                           ),
-                          const SizedBox(height: 16),
+                          if (_selectedVariantId != null) ...[
+                            _buildSmartInfoCard(),
+                            const SizedBox(height: 8),
+                            if (_purchaseHistory.isNotEmpty)
+                              _buildPurchaseHistoryTable(),
+                            const SizedBox(height: 16),
+                          ] else
+                            const SizedBox(height: 16),
                           _sectionHeader('Quantité & Prix', Icons.calculate_outlined),
                           Row(
                             children: [
@@ -404,6 +665,37 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 16),
+                          _sectionHeader('Unité de saisie', Icons.straighten_outlined),
+                          Row(
+                            children: [
+                              _unitTypeToggle('piece', '📦 Pièce'),
+                              const SizedBox(width: 12),
+                              _unitTypeToggle('carton', '🗃️ Carton'),
+                            ],
+                          ),
+                          if (_unitType == 'carton') ...[
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              decoration: formStyle('Pièces par carton', Icons.grid_view_outlined),
+                              keyboardType: TextInputType.number,
+                              initialValue: _unitsPerCarton.toString(),
+                              onChanged: (val) {
+                                final parsed = int.tryParse(val) ?? 1;
+                                if (parsed > 0) setState(() => _unitsPerCarton = parsed);
+                              },
+                            ),
+                          ],
+                          if (_unitType == 'carton') ...[
+                            const SizedBox(height: 8),
+                            Builder(
+                              builder: (_) {
+                                final qty = int.tryParse(_qtyController.text) ?? 0;
+                                return Text('= ${qty * _unitsPerCarton} pièces au total',
+                                  style: GoogleFonts.raleway(fontSize: 13, color: kTextSec));
+                              },
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
@@ -558,6 +850,22 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                       Text('Articles:',
                                         style: GoogleFonts.raleway(color: kTextSec)),
                                       Text('${_purchaseItems.fold<int>(0, (s, i) => s + i.quantity)} pcs',
+                                        style: GoogleFonts.raleway(color: kTextSec)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Moy/pièce:',
+                                        style: GoogleFonts.raleway(color: kTextSec)),
+                                      Text(
+                                        (() {
+                                          final tp = _purchaseItems.fold<int>(0, (s, i) => s + i.quantity);
+                                          return tp > 0
+                                            ? '${(_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice) / tp).toStringAsFixed(2)} DA'
+                                            : '0 DA';
+                                        })(),
                                         style: GoogleFonts.raleway(color: kTextSec)),
                                     ],
                                   ),
