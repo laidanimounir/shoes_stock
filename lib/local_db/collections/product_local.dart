@@ -11,6 +11,7 @@ class ProductLocal {
   String? description;
   String? imageUrl;
   String? supplierId;
+  String? category;
   bool isActive = true;
   DateTime? createdAt;
   DateTime? updatedAt;

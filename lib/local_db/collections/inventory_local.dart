@@ -14,6 +14,9 @@ class InventoryLocal {
   @Index()
   late String storeId;
   int quantity = 0;
+  String? arrivageId;
+  DateTime? arrivageDate;
+  double? purchasePrice;
   DateTime? createdAt;
   DateTime? updatedAt;
 }

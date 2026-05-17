@@ -17,33 +17,48 @@ const InventoryLocalSchema = CollectionSchema(
   name: r'InventoryLocal',
   id: -7728381355647449418,
   properties: {
-    r'createdAt': PropertySchema(
+    r'arrivageDate': PropertySchema(
       id: 0,
+      name: r'arrivageDate',
+      type: IsarType.dateTime,
+    ),
+    r'arrivageId': PropertySchema(
+      id: 1,
+      name: r'arrivageId',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
+    r'purchasePrice': PropertySchema(
+      id: 3,
+      name: r'purchasePrice',
+      type: IsarType.double,
+    ),
     r'quantity': PropertySchema(
-      id: 1,
+      id: 4,
       name: r'quantity',
       type: IsarType.long,
     ),
     r'storeId': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'variantId': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'variantId',
       type: IsarType.string,
     )
@@ -95,6 +110,12 @@ int _inventoryLocalEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.arrivageId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.storeId.length * 3;
   bytesCount += 3 + object.supabaseId.length * 3;
   bytesCount += 3 + object.variantId.length * 3;
@@ -107,12 +128,15 @@ void _inventoryLocalSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeLong(offsets[1], object.quantity);
-  writer.writeString(offsets[2], object.storeId);
-  writer.writeString(offsets[3], object.supabaseId);
-  writer.writeDateTime(offsets[4], object.updatedAt);
-  writer.writeString(offsets[5], object.variantId);
+  writer.writeDateTime(offsets[0], object.arrivageDate);
+  writer.writeString(offsets[1], object.arrivageId);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeDouble(offsets[3], object.purchasePrice);
+  writer.writeLong(offsets[4], object.quantity);
+  writer.writeString(offsets[5], object.storeId);
+  writer.writeString(offsets[6], object.supabaseId);
+  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeString(offsets[8], object.variantId);
 }
 
 InventoryLocal _inventoryLocalDeserialize(
@@ -122,13 +146,16 @@ InventoryLocal _inventoryLocalDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = InventoryLocal();
-  object.createdAt = reader.readDateTimeOrNull(offsets[0]);
+  object.arrivageDate = reader.readDateTimeOrNull(offsets[0]);
+  object.arrivageId = reader.readStringOrNull(offsets[1]);
+  object.createdAt = reader.readDateTimeOrNull(offsets[2]);
   object.isarId = id;
-  object.quantity = reader.readLong(offsets[1]);
-  object.storeId = reader.readString(offsets[2]);
-  object.supabaseId = reader.readString(offsets[3]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[4]);
-  object.variantId = reader.readString(offsets[5]);
+  object.purchasePrice = reader.readDoubleOrNull(offsets[3]);
+  object.quantity = reader.readLong(offsets[4]);
+  object.storeId = reader.readString(offsets[5]);
+  object.supabaseId = reader.readString(offsets[6]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.variantId = reader.readString(offsets[8]);
   return object;
 }
 
@@ -142,14 +169,20 @@ P _inventoryLocalDeserializeProp<P>(
     case 0:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
-    case 3:
-      return (reader.readString(offset)) as P;
-    case 4:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 3:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 4:
+      return (reader.readLong(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -341,6 +374,234 @@ extension InventoryLocalQueryWhere
 extension InventoryLocalQueryFilter
     on QueryBuilder<InventoryLocal, InventoryLocal, QFilterCondition> {
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'arrivageDate',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'arrivageDate',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'arrivageDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'arrivageDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'arrivageDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'arrivageDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'arrivageId',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'arrivageId',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'arrivageId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'arrivageId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'arrivageId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'arrivageId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      arrivageIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'arrivageId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
       createdAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -466,6 +727,90 @@ extension InventoryLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'purchasePrice',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'purchasePrice',
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'purchasePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'purchasePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'purchasePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterFilterCondition>
+      purchasePriceBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'purchasePrice',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -1017,6 +1362,34 @@ extension InventoryLocalQueryLinks
 
 extension InventoryLocalQuerySortBy
     on QueryBuilder<InventoryLocal, InventoryLocal, QSortBy> {
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByArrivageDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByArrivageDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByArrivageId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByArrivageIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageId', Sort.desc);
+    });
+  }
+
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1027,6 +1400,20 @@ extension InventoryLocalQuerySortBy
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByPurchasePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchasePrice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      sortByPurchasePriceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchasePrice', Sort.desc);
     });
   }
 
@@ -1099,6 +1486,34 @@ extension InventoryLocalQuerySortBy
 
 extension InventoryLocalQuerySortThenBy
     on QueryBuilder<InventoryLocal, InventoryLocal, QSortThenBy> {
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByArrivageDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByArrivageDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByArrivageId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByArrivageIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'arrivageId', Sort.desc);
+    });
+  }
+
   QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1122,6 +1537,20 @@ extension InventoryLocalQuerySortThenBy
       thenByIsarIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByPurchasePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchasePrice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QAfterSortBy>
+      thenByPurchasePriceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchasePrice', Sort.desc);
     });
   }
 
@@ -1195,9 +1624,30 @@ extension InventoryLocalQuerySortThenBy
 extension InventoryLocalQueryWhereDistinct
     on QueryBuilder<InventoryLocal, InventoryLocal, QDistinct> {
   QueryBuilder<InventoryLocal, InventoryLocal, QDistinct>
+      distinctByArrivageDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'arrivageDate');
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QDistinct> distinctByArrivageId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'arrivageId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
+    });
+  }
+
+  QueryBuilder<InventoryLocal, InventoryLocal, QDistinct>
+      distinctByPurchasePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'purchasePrice');
     });
   }
 
@@ -1245,9 +1695,29 @@ extension InventoryLocalQueryProperty
   }
 
   QueryBuilder<InventoryLocal, DateTime?, QQueryOperations>
+      arrivageDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'arrivageDate');
+    });
+  }
+
+  QueryBuilder<InventoryLocal, String?, QQueryOperations> arrivageIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'arrivageId');
+    });
+  }
+
+  QueryBuilder<InventoryLocal, DateTime?, QQueryOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<InventoryLocal, double?, QQueryOperations>
+      purchasePriceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'purchasePrice');
     });
   }
 

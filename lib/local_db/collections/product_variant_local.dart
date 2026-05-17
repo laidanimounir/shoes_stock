@@ -16,6 +16,8 @@ class ProductVariantLocal {
 
   double sellPrice = 0.0;
   double buyPrice = 0.0;
+  String? unitType;
+  int? unitsPerCarton;
   bool isActive = true;
   DateTime? createdAt;
   DateTime? updatedAt;

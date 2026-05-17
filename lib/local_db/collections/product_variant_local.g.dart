@@ -63,8 +63,18 @@ const ProductVariantLocalSchema = CollectionSchema(
       name: r'supabaseId',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'unitType': PropertySchema(
       id: 9,
+      name: r'unitType',
+      type: IsarType.string,
+    ),
+    r'unitsPerCarton': PropertySchema(
+      id: 10,
+      name: r'unitsPerCarton',
+      type: IsarType.long,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -113,6 +123,12 @@ int _productVariantLocalEstimateSize(
   bytesCount += 3 + object.productId.length * 3;
   bytesCount += 3 + object.size.length * 3;
   bytesCount += 3 + object.supabaseId.length * 3;
+  {
+    final value = object.unitType;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -131,7 +147,9 @@ void _productVariantLocalSerialize(
   writer.writeDouble(offsets[6], object.sellPrice);
   writer.writeString(offsets[7], object.size);
   writer.writeString(offsets[8], object.supabaseId);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeString(offsets[9], object.unitType);
+  writer.writeLong(offsets[10], object.unitsPerCarton);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 ProductVariantLocal _productVariantLocalDeserialize(
@@ -151,7 +169,9 @@ ProductVariantLocal _productVariantLocalDeserialize(
   object.sellPrice = reader.readDouble(offsets[6]);
   object.size = reader.readString(offsets[7]);
   object.supabaseId = reader.readString(offsets[8]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
+  object.unitType = reader.readStringOrNull(offsets[9]);
+  object.unitsPerCarton = reader.readLongOrNull(offsets[10]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[11]);
   return object;
 }
 
@@ -181,6 +201,10 @@ P _productVariantLocalDeserializeProp<P>(
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readLongOrNull(offset)) as P;
+    case 11:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1322,6 +1346,234 @@ extension ProductVariantLocalQueryFilter on QueryBuilder<ProductVariantLocal,
   }
 
   QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'unitType',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'unitType',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'unitType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'unitType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'unitType',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'unitType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitTypeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'unitType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'unitsPerCarton',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'unitsPerCarton',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'unitsPerCarton',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'unitsPerCarton',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'unitsPerCarton',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      unitsPerCartonBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'unitsPerCarton',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
       updatedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1531,6 +1783,34 @@ extension ProductVariantLocalQuerySortBy
   }
 
   QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByUnitType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByUnitTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByUnitsPerCarton() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitsPerCarton', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByUnitsPerCartonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitsPerCarton', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
       sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1688,6 +1968,34 @@ extension ProductVariantLocalQuerySortThenBy
   }
 
   QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByUnitType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByUnitTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByUnitsPerCarton() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitsPerCarton', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByUnitsPerCartonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unitsPerCarton', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
       thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1768,6 +2076,20 @@ extension ProductVariantLocalQueryWhereDistinct
   }
 
   QueryBuilder<ProductVariantLocal, ProductVariantLocal, QDistinct>
+      distinctByUnitType({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'unitType', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QDistinct>
+      distinctByUnitsPerCarton() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'unitsPerCarton');
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QDistinct>
       distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -1840,6 +2162,20 @@ extension ProductVariantLocalQueryProperty
       supabaseIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'supabaseId');
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, String?, QQueryOperations>
+      unitTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'unitType');
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, int?, QQueryOperations>
+      unitsPerCartonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'unitsPerCarton');
     });
   }
 
