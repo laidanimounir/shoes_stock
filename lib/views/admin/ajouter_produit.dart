@@ -1,18 +1,35 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 
-class VariantFormData {
-  String size = '';
-  String color = '';
-  String barcode = '';
-  String buyPrice = '';
-  String sellPrice = '';
-}
+const List<Map<String, dynamic>> kShoeColors = [
+  {'name': 'Noir', 'hex': '#000000'},
+  {'name': 'Blanc', 'hex': '#FFFFFF'},
+  {'name': 'Marron', 'hex': '#8B4513'},
+  {'name': 'Beige', 'hex': '#F5F0DC'},
+  {'name': 'Rouge', 'hex': '#E53935'},
+  {'name': 'Bleu', 'hex': '#1E88E5'},
+  {'name': 'Bleu Marine', 'hex': '#1A237E'},
+  {'name': 'Vert', 'hex': '#43A047'},
+  {'name': 'Gris', 'hex': '#757575'},
+  {'name': 'Or', 'hex': '#FFD700'},
+  {'name': 'Argent', 'hex': '#C0C0C0'},
+  {'name': 'Rose', 'hex': '#E91E8C'},
+];
+
+const Map<String, List<String>> kSizesByCategory = {
+  'homme': ['38','39','40','41','42','43','44','45','46'],
+  'femme': ['35','36','37','38','39','40','41','42'],
+  'enfant': ['20','21','22','23','24','25','26','27','28',
+             '29','30','31','32','33','34','35'],
+};
 
 class AjouterProduitScreen extends StatefulWidget {
   const AjouterProduitScreen({super.key});
@@ -34,13 +51,23 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   List<dynamic> _stores = [];
   String? _selectedStoreId;
 
-  final List<VariantFormData> _variants = [VariantFormData()]; 
-  
+  List<Map<String, dynamic>> _variants = [];
+
   File? _imageFile;
-  Uint8List? _imageBytes; 
+  Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
-  
+
   bool _isLoading = false;
+
+  String _selectedCategory = 'homme';
+  List<String> _selectedColors = [];
+  String? _customColorName;
+  List<String> _selectedSizes = [];
+  String? _customSize;
+  String _unitType = 'piece';
+  int _unitsPerCarton = 1;
+  double _unifiedBuyPrice = 0;
+  double _unifiedSellPrice = 0;
 
   @override
   void initState() {
@@ -66,7 +93,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         Supabase.instance.client.from('suppliers').select().eq('is_active', true),
         Supabase.instance.client.from('stores').select().eq('is_active', true),
       ]);
-      
+
       if (mounted) {
         setState(() {
           _suppliers = futures[0];
@@ -93,8 +120,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             _imageFile = null;
           });
         } else {
+          final file = File(image.path);
+          final compressed = await _compressImage(file);
           setState(() {
-            _imageFile = File(image.path);
+            _imageFile = compressed;
             _imageBytes = null;
           });
         }
@@ -104,13 +133,31 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     }
   }
 
+  Future<File> _compressImage(File file) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final targetPath = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 70,
+        minWidth: 800,
+        minHeight: 800,
+      );
+      if (result != null) return File(result.path);
+    } catch (e) {
+      debugPrint("Error compressing image: $e");
+    }
+    return file;
+  }
+
   Future<String?> _uploadImage() async {
     if (_imageFile == null && _imageBytes == null) return null;
-    
+
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final path = 'products/$fileName';
-      
+
       if (kIsWeb && _imageBytes != null) {
         await Supabase.instance.client.storage
           .from('shoes-images')
@@ -120,11 +167,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           .from('shoes-images')
           .upload(path, _imageFile!);
       }
-      
+
       final imageUrl = Supabase.instance.client.storage
           .from('shoes-images')
           .getPublicUrl(path);
-          
+
       return imageUrl;
     } catch (e) {
       debugPrint("Error uploading image: $e");
@@ -132,18 +179,196 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     }
   }
 
+  Map<String, dynamic> _emptyVariant() => {
+    'size': '',
+    'color': '',
+    'barcode': null,
+    'buy_price': _unifiedBuyPrice.toString(),
+    'sell_price': _unifiedSellPrice.toString(),
+    'unit_type': _unitType,
+    'units_per_carton': _unitType == 'carton' ? _unitsPerCarton : null,
+  };
+
+  void _addVariant() {
+    setState(() {
+      _variants.add(_emptyVariant());
+    });
+  }
+
+  void _removeVariant(int index) {
+    if (_variants.length > 1) {
+      setState(() {
+        _variants.removeAt(index);
+      });
+    }
+  }
+
+  void _toggleColor(String colorName) {
+    setState(() {
+      if (_selectedColors.contains(colorName)) {
+        _selectedColors.remove(colorName);
+      } else {
+        _selectedColors.add(colorName);
+      }
+    });
+  }
+
+  void _toggleSize(String size) {
+    setState(() {
+      if (_selectedSizes.contains(size)) {
+        _selectedSizes.remove(size);
+      } else {
+        _selectedSizes.add(size);
+      }
+    });
+  }
+
+  void _addCustomSize(String size) {
+    if (size.isNotEmpty && !_selectedSizes.contains(size)) {
+      setState(() => _selectedSizes.add(size));
+    }
+  }
+
+  int get _totalUnits =>
+    _unitType == 'carton'
+      ? _quantityInput * _unitsPerCarton
+      : _quantityInput;
+
+  int _quantityInput = 0;
+
+  void _generateVariants() {
+    if (_selectedSizes.isEmpty || _selectedColors.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() {
+      _variants.clear();
+      for (final size in _selectedSizes) {
+        for (final color in _selectedColors) {
+          _variants.add({
+            'size': size,
+            'color': color,
+            'barcode': null,
+            'buy_price': _unifiedBuyPrice,
+            'sell_price': _unifiedSellPrice,
+            'unit_type': _unitType,
+            'units_per_carton': _unitType == 'carton' ? _unitsPerCarton : null,
+          });
+        }
+      }
+    });
+  }
+
+  void _applyUnifiedPrice() {
+    setState(() {
+      for (final v in _variants) {
+        v['buy_price'] = _unifiedBuyPrice.toString();
+        v['sell_price'] = _unifiedSellPrice.toString();
+      }
+    });
+  }
+
+  String _generateLocalBarcode() {
+    final random = Random();
+    final number = 100000 + random.nextInt(900000);
+    return 'SHO-$number';
+  }
+
+  Future<void> _copyFromExistingProduct() async {
+    try {
+      final products = await Supabase.instance.client
+          .from('products')
+          .select('id, name, category, product_variants(size, color)')
+          .eq('is_active', true)
+          .order('name');
+
+      if (!mounted) return;
+
+      final selected = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (ctx) {
+          final searchCtrl = TextEditingController();
+          return StatefulBuilder(
+            builder: (ctx, setDialogState) {
+              final filtered = products.where((p) {
+                final q = searchCtrl.text.toLowerCase();
+                return q.isEmpty || (p['name'] as String).toLowerCase().contains(q);
+              }).toList();
+
+              return AlertDialog(
+                title: Text(S.t('prod_copy_from')),
+                content: SizedBox(
+                  width: 400,
+                  height: 400,
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: searchCtrl,
+                        decoration: const InputDecoration(
+                          hintText: 'Rechercher...',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) {
+                            final p = filtered[i];
+                            final variants = (p['product_variants'] as List<dynamic>?) ?? [];
+                            final colors = variants.map((v) => v['color'] as String).toSet().toList();
+                            return ListTile(
+                              title: Text(p['name'] ?? ''),
+                              subtitle: Text('${p['category'] ?? 'homme'} · ${colors.join(', ')}'),
+                              onTap: () => Navigator.pop(ctx, p),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+
+      if (selected != null && mounted) {
+        _nameController.text = selected['name'] ?? '';
+        final existingVariants = (selected['product_variants'] as List<dynamic>?) ?? [];
+        final colors = existingVariants.map((v) => v['color'] as String).where((c) => c.isNotEmpty).toSet().toList();
+        final sizes = existingVariants.map((v) => v['size'] as String).where((s) => s.isNotEmpty).toSet().toList();
+        setState(() {
+          _selectedCategory = selected['category'] ?? 'homme';
+          _selectedColors = colors;
+          _selectedSizes = sizes;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error copying product: $e");
+    }
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    
+
     for (var v in _variants) {
-      if (v.size.isEmpty || v.color.isEmpty || v.barcode.isEmpty || v.sellPrice.isEmpty || v.buyPrice.isEmpty) {
+      final sellPriceStr = v['sell_price'].toString();
+      final buyPriceStr = v['buy_price'].toString();
+      if ((v['size'] as String).isEmpty || (v['color'] as String).isEmpty ||
+          sellPriceStr.isEmpty || buyPriceStr.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Colors.red),
         );
         return;
       }
-      if (double.tryParse(v.sellPrice) == null || double.tryParse(v.buyPrice) == null) {
+      if (double.tryParse(sellPriceStr) == null || double.tryParse(buyPriceStr) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.t('msg_invalid')), backgroundColor: Colors.red),
         );
@@ -161,39 +386,38 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     setState(() => _isLoading = true);
 
     try {
-    
       final imageUrl = await _uploadImage();
 
-    
       final productRes = await Supabase.instance.client.from('products').insert({
         'name': _nameController.text.trim(),
         'description': _descController.text.trim(),
         'supplier_id': _selectedSupplierId,
         'image_url': imageUrl,
-        'is_active': true, 
+        'category': _selectedCategory,
+        'is_active': true,
       }).select('id').single();
 
       final productId = productRes['id'];
 
-      
       for (var variant in _variants) {
         final variantRes = await Supabase.instance.client.from('product_variants').insert({
           'product_id': productId,
-          'size': variant.size.trim(),
-          'color': variant.color.trim(),
-          'barcode': variant.barcode.trim(),
-          'buy_price': double.tryParse(variant.buyPrice) ?? 0.0,
-          'sell_price': double.tryParse(variant.sellPrice) ?? 0.0,
+          'size': variant['size'].toString().trim(),
+          'color': variant['color'].toString().trim(),
+          'barcode': null,
+          'buy_price': double.tryParse(variant['buy_price'].toString()) ?? 0.0,
+          'sell_price': double.tryParse(variant['sell_price'].toString()) ?? 0.0,
+          'unit_type': variant['unit_type'] ?? 'piece',
+          'units_per_carton': variant['units_per_carton'],
           'is_active': true,
         }).select('id').single();
 
         final variantId = variantRes['id'];
 
-       
         await Supabase.instance.client.from('inventory').insert({
           'variant_id': variantId,
           'store_id': _selectedStoreId,
-          'quantity': 0, 
+          'quantity': 0,
         });
       }
 
@@ -201,7 +425,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Colors.green),
         );
-       
+
         _formKey.currentState!.reset();
         _nameController.clear();
         _descController.clear();
@@ -209,7 +433,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           _imageFile = null;
           _imageBytes = null;
           _variants.clear();
-          _variants.add(VariantFormData());
+          _selectedCategory = 'homme';
+          _selectedColors = [];
+          _selectedSizes = [];
+          _unitType = 'piece';
+          _unifiedBuyPrice = 0;
+          _unifiedSellPrice = 0;
         });
       }
     } on PostgrestException catch (e) {
@@ -226,20 +455,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _addVariant() {
-    setState(() {
-      _variants.add(VariantFormData());
-    });
-  }
-
-  void _removeVariant(int index) {
-    if (_variants.length > 1) {
-      setState(() {
-        _variants.removeAt(index);
-      });
     }
   }
 
@@ -261,7 +476,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       ),
       body: _blocked
         ? const SizedBox.shrink()
-        : _isLoading 
+        : _isLoading
         ? const Center(child: CircularProgressIndicator())
         : SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -270,11 +485,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-               
+
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     
+
                       GestureDetector(
                         onTap: _pickImage,
                         child: Container(
@@ -300,8 +515,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         ),
                       ),
                       const SizedBox(width: 32),
-                      
-                  
+
                       Expanded(
                         child: Column(
                           children: [
@@ -350,9 +564,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // --- VARIANTS ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -367,10 +581,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   ..._variants.asMap().entries.map((entry) {
                     int index = entry.key;
-                    VariantFormData v = entry.value;
+                    Map<String, dynamic> v = entry.value;
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       child: Padding(
@@ -383,26 +597,31 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: TextFormField(
-                                    initialValue: v.size,
+                                    initialValue: v['size'] as String,
                                     decoration: InputDecoration(labelText: S.t('prod_size'), isDense: true),
-                                    onChanged: (val) => v.size = val,
+                                    onChanged: (val) => v['size'] = val,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: TextFormField(
-                                    initialValue: v.color,
+                                    initialValue: v['color'] as String,
                                     decoration: InputDecoration(labelText: S.t('prod_color'), isDense: true),
-                                    onChanged: (val) => v.color = val,
+                                    onChanged: (val) => v['color'] = val,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   flex: 2,
                                   child: TextFormField(
-                                    initialValue: v.barcode,
-                                    decoration: InputDecoration(labelText: S.t('prod_barcode'), isDense: true),
-                                    onChanged: (val) => v.barcode = val,
+                                    initialValue: v['barcode'] as String?,
+                                    decoration: InputDecoration(
+                                      labelText: S.t('prod_barcode'),
+                                      isDense: true,
+                                      hintText: 'Auto',
+                                      hintStyle: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                                    ),
+                                    onChanged: (val) => v['barcode'] = val,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -418,7 +637,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 const SizedBox(width: 32),
                                 Expanded(
                                   child: TextFormField(
-                                    initialValue: v.buyPrice,
+                                    initialValue: v['buy_price'].toString(),
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       labelText: S.t('prod_buy_price'),
@@ -427,13 +646,13 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange[200]!)),
                                       focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.orange)),
                                     ),
-                                    onChanged: (val) => v.buyPrice = val,
+                                    onChanged: (val) => v['buy_price'] = val,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: TextFormField(
-                                    initialValue: v.sellPrice,
+                                    initialValue: v['sell_price'].toString(),
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
                                       labelText: S.t('prod_sell_price'),
@@ -442,7 +661,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                       enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green[200]!)),
                                       focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                                     ),
-                                    onChanged: (val) => v.sellPrice = val,
+                                    onChanged: (val) => v['sell_price'] = val,
                                   ),
                                 ),
                                 const SizedBox(width: 48),
@@ -453,7 +672,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       ),
                     );
                   }),
-                  
+
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
