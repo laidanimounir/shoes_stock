@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
@@ -220,14 +221,76 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     super.dispose();
   }
 
+  Widget _sectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF1B4F72), size: 18),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: const Color(0xFF1B4F72),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Container(height: 1, color: const Color(0xFFE0E6ED))),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    const kPrimary = Color(0xFF1B4F72);
+    const kTextSec = Color(0xFF6B7C93);
+    const kBorder = Color(0xFFE0E6ED);
+
+    InputDecoration formStyle(String label, IconData icon) {
+      return InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.raleway(color: kTextSec),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: kBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: kBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: kPrimary, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        prefixIcon: Icon(icon, color: kTextSec),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text(S.t('buy_title')),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: kPrimary,
+        elevation: 0,
+        title: Row(
+          children: [
+            const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              'Achat / Approvisionnement',
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -237,12 +300,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.deepPurple.withOpacity(0.08),
+              color: kPrimary.withOpacity(0.08),
               child: Row(
                 children: [
-                  const Icon(Icons.visibility, size: 16, color: Colors.deepPurple),
+                  const Icon(Icons.visibility, size: 16, color: kPrimary),
                   const SizedBox(width: 8),
-                  Text(S.t('buy_read_only'), style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600, fontSize: 13)),
+                  Text(S.t('buy_read_only'), style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
                 ],
               ),
             ),
@@ -252,39 +315,35 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- LEFT: FORMULAR ---
+                  // --- LEFT: FORM ---
                   Expanded(
                     flex: 1,
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(S.t('buy_add_items'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                          const SizedBox(height: 24),
-
-                          // Supplier
+                          _sectionHeader('Fournisseur', Icons.local_shipping_outlined),
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             value: _selectedSupplierId,
-                            decoration: InputDecoration(labelText: S.t('suppliers_title'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.local_shipping)),
+                            decoration: formStyle(S.t('suppliers_title'), Icons.local_shipping_outlined),
                             items: _suppliers.map<DropdownMenuItem<String>>((s) {
                               return DropdownMenuItem(value: s['id'], child: Text(s['company_name']));
                             }).toList(),
                             onChanged: (val) => setState(() => _selectedSupplierId = val),
                           ),
                           const SizedBox(height: 16),
-
-                          // Store
+                          _sectionHeader('Magasin de réception', Icons.store_outlined),
                           if (AppSession.isEmployee)
                             TextFormField(
                               readOnly: true,
-                              decoration: InputDecoration(labelText: S.t('buy_store_receiving'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
+                              decoration: formStyle(S.t('buy_store_receiving'), Icons.store_outlined),
                               initialValue: AppSession.currentStoreId != null && _stores.any((s) => s['id'] == AppSession.currentStoreId)
                                   ? (_stores.firstWhere((s) => s['id'] == AppSession.currentStoreId)['name'] as String)
                                   : S.t('buy_my_store'),
@@ -293,19 +352,18 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             DropdownButtonFormField<String>(
                               isExpanded: true,
                               value: _selectedStoreId,
-                              decoration: InputDecoration(labelText: S.t('buy_store_receiving'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.store)),
+                              decoration: formStyle(S.t('buy_store_receiving'), Icons.store_outlined),
                               items: _stores.map<DropdownMenuItem<String>>((s) {
                                 return DropdownMenuItem(value: s['id'], child: Text(s['name']));
                               }).toList(),
                               onChanged: (val) => setState(() => _selectedStoreId = val),
                             ),
                           const SizedBox(height: 16),
-
-                          // Variant
+                          _sectionHeader('Produit & Variante', Icons.inventory_2_outlined),
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             value: _selectedVariantId,
-                            decoration: InputDecoration(labelText: S.t('buy_product_variant'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.category)),
+                            decoration: formStyle(S.t('buy_product_variant'), Icons.inventory_2_outlined),
                             items: _variants.map<DropdownMenuItem<String>>((v) {
                               final name = v['products']['name'];
                               return DropdownMenuItem(
@@ -326,15 +384,14 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-
-                          // Quantity & Price
+                          _sectionHeader('Quantité & Prix', Icons.calculate_outlined),
                           Row(
                             children: [
                               Expanded(
                                 child: TextFormField(
                                   controller: _qtyController,
                                   keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(labelText: S.t('label_quantity'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.numbers)),
+                                  decoration: formStyle(S.t('label_quantity'), Icons.tag_outlined),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -342,34 +399,37 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                 child: TextFormField(
                                   controller: _priceController,
                                   keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(labelText: '${S.t('label_unit_price')} (${S.t('misc_currency')})', border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.attach_money)),
+                                  decoration: formStyle('${S.t('label_unit_price')} (${S.t('misc_currency')})', Icons.attach_money_outlined),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 24),
-
                           ElevatedButton.icon(
-                            onPressed: _addItemToList,
-                            icon: const Icon(Icons.add),
-                            label: Text(S.t('action_add_to_list')),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple[50],
-                              foregroundColor: Colors.deepPurple,
+                              backgroundColor: kPrimary,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              minimumSize: const Size(double.infinity, 52),
+                              elevation: 2,
                             ),
+                            icon: const Icon(Icons.add_shopping_cart_outlined),
+                            label: Text(
+                              '+ Ajouter à la commande',
+                              style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            onPressed: _addItemToList,
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(width: 24),
-
                   // --- RIGHT: RECEIPT ---
                   Expanded(
                     flex: 1,
                     child: Container(
-                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -378,64 +438,150 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.receipt_long, color: Colors.deepPurple),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text(S.t('buy_receipt'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple))),
-                              Chip(label: Text('${_purchaseItems.length} ${S.t('buy_items')}'), backgroundColor: Colors.deepPurple[50]),
-                            ],
-                          ),
-                          const Divider(height: 32),
-
-                          if (_purchaseItems.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 48),
-                              child: Center(child: Text(S.t('buy_no_items'), style: const TextStyle(color: Colors.grey, fontSize: 16))),
-                            )
-                          else
-                            ..._purchaseItems.asMap().entries.map((entry) {
-                              final i = entry.key;
-                              final item = entry.value;
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.deepPurple[50],
-                                    child: Text('${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                                  ),
-                                  title: Text(item.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text('${S.t('label_qty_short')} ${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} ${S.t('misc_currency')} = ${(item.quantity * item.unitPrice).toStringAsFixed(2)} ${S.t('misc_currency')}'),
-                                  trailing: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    onPressed: () => setState(() => _purchaseItems.removeAt(i)),
-                                  ),
-                                ),
-                              );
-                            }),
-
-                          if (_purchaseItems.isNotEmpty) ...[
-                            const Divider(height: 32),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: kPrimary,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
+                            ),
+                            child: Row(
                               children: [
-                                Text(S.t('label_total'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                Text(
-                                  '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                                const Icon(Icons.receipt_long_outlined, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Text('Bon de Commande',
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  )),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text('${_purchaseItems.length} articles',
+                                    style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              height: 56,
+                          ),
+                          Expanded(
+                            child: _purchaseItems.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.shopping_cart_outlined,
+                                             size: 64, color: Color(0xFFE0E6ED)),
+                                        const SizedBox(height: 12),
+                                        Text('Aucun article ajouté',
+                                          style: GoogleFonts.cairo(
+                                            color: kTextSec, fontSize: 15)),
+                                        Text('Sélectionnez un produit et ajoutez-le',
+                                          style: GoogleFonts.raleway(
+                                            color: Color(0xFFB0BEC5), fontSize: 13)),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    itemCount: _purchaseItems.length,
+                                    itemBuilder: (ctx, i) {
+                                      final item = _purchaseItems[i];
+                                      return Card(
+                                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          side: const BorderSide(color: kBorder),
+                                        ),
+                                        child: ListTile(
+                                          dense: true,
+                                          leading: CircleAvatar(
+                                            backgroundColor: kPrimary.withOpacity(0.1),
+                                            child: Text('${i + 1}',
+                                              style: const TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+                                          ),
+                                          title: Text(item.label,
+                                            style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
+                                          subtitle: Text('${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} DA',
+                                            style: GoogleFonts.raleway()),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text('${(item.quantity * item.unitPrice).toStringAsFixed(2)} DA',
+                                                style: GoogleFonts.raleway(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: kPrimary)),
+                                              IconButton(
+                                                icon: const Icon(Icons.close, size: 18, color: Color(0xFFE74C3C)),
+                                                onPressed: () => setState(() => _purchaseItems.removeAt(i)),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                          if (_purchaseItems.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: kPrimary.withOpacity(0.05),
+                                border: const Border(top: BorderSide(color: kBorder)),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Total commande:',
+                                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                                      Text(
+                                        '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} DA',
+                                        style: GoogleFonts.raleway(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: kPrimary)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Articles:',
+                                        style: GoogleFonts.raleway(color: kTextSec)),
+                                      Text('${_purchaseItems.fold<int>(0, (s, i) => s + i.quantity)} pcs',
+                                        style: GoogleFonts.raleway(color: kTextSec)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
                               child: ElevatedButton.icon(
-                                onPressed: _isSubmitting ? null : _showPaymentDialog, // استدعاء نافذة الدفع
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2ECC71),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  minimumSize: const Size(double.infinity, 56),
+                                  elevation: 3,
+                                ),
                                 icon: _isSubmitting
                                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Icon(Icons.check_circle),
-                                label: Text(S.t('buy_validate_pay'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+                                    : const Icon(Icons.check_circle_outline),
+                                label: Text('✅ Confirmer la commande',
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                                onPressed: _isSubmitting ? null : _showPaymentDialog,
                               ),
                             ),
                           ],
