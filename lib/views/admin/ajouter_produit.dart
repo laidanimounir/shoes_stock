@@ -151,6 +151,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     return file;
   }
 
+
   Future<String?> _uploadImage() async {
     if (_imageFile == null && _imageBytes == null) return null;
 
