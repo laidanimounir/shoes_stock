@@ -27,12 +27,19 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
   bool _isLoading = true;
   bool _isSubmitting = false;
 
+  // Error state
+  bool _hasError = false;
+  String _errorMessage = '';
+
   // Smart selection state
   List<Map<String, dynamic>> _purchaseHistory = [];
   int _currentStock = 0;
   double? _lastPurchasePrice;
   DateTime? _lastPurchaseDate;
   bool _isLoadingHistory = false;
+  double _enteredPrice = 0;
+  bool _isPriceDifferent = false;
+  double _priceDiffPercent = 0;
 
   // Unit type state
   String _unitType = 'piece';
@@ -63,13 +70,25 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
             _selectedStoreId = _stores.first['id'];
           }
           if (_variants.isNotEmpty) _selectedVariantId = _variants.first['id'];
+
+          // Load smart info for initial variant
+          if (_selectedVariantId != null && _selectedStoreId != null) {
+            final firstVariant = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
+            _loadVariantSmartInfo(firstVariant);
+          }
           
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint("Error: $e");
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {
+        _isLoading = false;
+        _hasError = true;
+        _errorMessage = 'Impossible de charger les données : ${e.toString()}';
+      });
+    } finally {
+      if (mounted && _isLoading) setState(() => _isLoading = false);
     }
   }
 
@@ -231,7 +250,8 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     final price = double.tryParse(_priceController.text) ?? 0;
 
     final variant = _variants.firstWhere((v) => v['id'] == _selectedVariantId);
-    final productName = variant['products']['name'];
+    final p = variant['products'];
+    final productName = (p is Map) ? (p['name'] ?? 'Inconnu') : 'Inconnu';
     final effectiveQty = _unitType == 'carton' ? inputQty * _unitsPerCarton : inputQty;
     final label = _unitType == 'carton'
         ? '$productName (${variant['size']} / ${variant['color']}) [$inputQty cartons × $_unitsPerCarton pcs]'
@@ -671,12 +691,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
   // ========== SMART SELECTION ==========
 
-  Future<List<Map<String, dynamic>>> _fetchPurchaseHistory(String variantId) async {
+  Future<List<Map<String, dynamic>>> _fetchPurchaseHistory(String variantId, String storeId) async {
     try {
       final response = await Supabase.instance.client
           .from('transactions')
           .select('created_at, quantity, unit_price')
           .eq('variant_id', variantId)
+          .eq('store_id', storeId)
           .eq('type', 'in')
           .order('created_at', ascending: false)
           .limit(3);
@@ -706,7 +727,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       final vid = selectedVariant['id']?.toString() ?? '';
       final sid = _selectedStoreId ?? '';
       final results = await Future.wait([
-        _fetchPurchaseHistory(vid),
+        _fetchPurchaseHistory(vid, sid),
         _fetchVariantStock(vid, sid),
       ]);
       final history = results[0] as List<Map<String, dynamic>>;
@@ -736,6 +757,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       _currentStock = 0;
       _lastPurchasePrice = null;
       _lastPurchaseDate = null;
+      _isPriceDifferent = false;
+      _priceDiffPercent = 0;
+      _enteredPrice = 0;
     });
   }
 
@@ -770,13 +794,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _currentStock > 5 ? const Color(0xFF2ECC71)
-                           : _currentStock > 0 ? const Color(0xFFE67E22)
+                      color: _currentStock > 10 ? const Color(0xFF2ECC71)
+                           : _currentStock >= 1 ? const Color(0xFFE67E22)
                            : _currentStock == 0 ? const Color(0xFFE74C3C)
                            : const Color(0xFF7B0000),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('$_currentStock pcs',
+                    child: Text('${_currentStock < 0 ? "⚠️ " : ""}$_currentStock pcs',
                       style: GoogleFonts.raleway(
                         color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
@@ -984,39 +1008,78 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          if (AppSession.isEmployee)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: kPrimary.withOpacity(0.08),
-              child: Row(
-                children: [
-                  const Icon(Icons.visibility, size: 16, color: kPrimary),
-                  const SizedBox(width: 8),
-                  Text(S.t('buy_read_only'), style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
-                ],
-              ),
-            ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- LEFT: FORM ---
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                      ),
+          : _hasError
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.cloud_off, size: 64, color: Color(0xFFE74C3C)),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Erreur de chargement',
+                          style: GoogleFonts.cairo(
+                            fontSize: 18, fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1A2533)),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.raleway(fontSize: 14, color: Color(0xFF6B7C93)),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: Text('Réessayer',
+                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B4F72),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _hasError = false;
+                              _errorMessage = '';
+                              _isLoading = true;
+                            });
+                            _fetchData();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : LayoutBuilder(
+        builder: (context, constraints) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (AppSession.isEmployee)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: kPrimary.withOpacity(0.08),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.visibility, size: 16, color: kPrimary),
+                        const SizedBox(width: 8),
+                        Text(S.t('buy_read_only'), style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           _sectionHeader('Fournisseur', Icons.local_shipping_outlined),
                           DropdownButtonFormField<String>(
@@ -1024,18 +1087,26 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                             value: _selectedSupplierId,
                             decoration: formStyle(S.t('suppliers_title'), Icons.local_shipping_outlined),
                             items: _suppliers.map<DropdownMenuItem<String>>((s) {
-                              return DropdownMenuItem(value: s['id'], child: Text(s['company_name']));
+                              return DropdownMenuItem(value: s['id'], child: Text(s['company_name'] ?? ''));
                             }).toList(),
                             onChanged: (val) => setState(() => _selectedSupplierId = val),
                           ),
-                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           _sectionHeader('Magasin de réception', Icons.store_outlined),
                           if (AppSession.isEmployee)
                             TextFormField(
                               readOnly: true,
                               decoration: formStyle(S.t('buy_store_receiving'), Icons.store_outlined),
                               initialValue: AppSession.currentStoreId != null && _stores.any((s) => s['id'] == AppSession.currentStoreId)
-                                  ? (_stores.firstWhere((s) => s['id'] == AppSession.currentStoreId)['name'] as String)
+                                  ? (_stores.firstWhere((s) => s['id'] == AppSession.currentStoreId)['name']?.toString() ?? '')
                                   : S.t('buy_my_store'),
                             )
                           else
@@ -1044,346 +1115,423 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                               value: _selectedStoreId,
                               decoration: formStyle(S.t('buy_store_receiving'), Icons.store_outlined),
                               items: _stores.map<DropdownMenuItem<String>>((s) {
-                                return DropdownMenuItem(value: s['id'], child: Text(s['name']));
+                                return DropdownMenuItem(value: s['id'], child: Text(s['name'] ?? ''));
                               }).toList(),
-                              onChanged: (val) => setState(() => _selectedStoreId = val),
-                            ),
-                          const SizedBox(height: 16),
-                          _sectionHeader('Produit & Variante', Icons.inventory_2_outlined),
-                          DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: _selectedVariantId,
-                            decoration: formStyle(S.t('buy_product_variant'), Icons.inventory_2_outlined),
-                            items: _variants.map<DropdownMenuItem<String>>((v) {
-                              final name = v['products']['name'];
-                              return DropdownMenuItem(
-                                value: v['id'],
-                                child: Text('$name (${v['size']} / ${v['color']})'),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _selectedVariantId = val;
-                              });
-                              if (val != null) {
-                                final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
-                                if (v != null) {
-                                  if (v['buy_price'] != null) {
-                                    _priceController.text = v['buy_price'].toString();
-                                  }
-                                  _loadVariantSmartInfo(v);
-                                }
-                              } else {
-                                _clearSmartInfo();
-                              }
-                            },
-                          ),
-                          if (_selectedVariantId != null) ...[
-                            _buildSmartInfoCard(),
-                            const SizedBox(height: 8),
-                            if (_purchaseHistory.isNotEmpty)
-                              _buildPurchaseHistoryTable(),
-                            const SizedBox(height: 16),
-                          ] else
-                            const SizedBox(height: 16),
-                          _sectionHeader('Quantité & Prix', Icons.calculate_outlined),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _qtyController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: formStyle(S.t('label_quantity'), Icons.tag_outlined),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _priceController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: formStyle('${S.t('label_unit_price')} (${S.t('misc_currency')})', Icons.attach_money_outlined),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _sectionHeader('Unité de saisie', Icons.straighten_outlined),
-                          Row(
-                            children: [
-                              _unitTypeToggle('piece', '📦 Pièce'),
-                              const SizedBox(width: 12),
-                              _unitTypeToggle('carton', '🗃️ Carton'),
-                            ],
-                          ),
-                          if (_unitType == 'carton') ...[
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              decoration: formStyle('Pièces par carton', Icons.grid_view_outlined),
-                              keyboardType: TextInputType.number,
-                              initialValue: _unitsPerCarton.toString(),
                               onChanged: (val) {
-                                final parsed = int.tryParse(val) ?? 1;
-                                if (parsed > 0) setState(() => _unitsPerCarton = parsed);
+                                setState(() => _selectedStoreId = val);
+                                if (val != null && _selectedVariantId != null) {
+                                  final v = _variants.firstWhere((x) => x['id'] == _selectedVariantId, orElse: () => null);
+                                  if (v != null) _loadVariantSmartInfo(v);
+                                }
                               },
                             ),
-                          ],
-                          if (_unitType == 'carton') ...[
-                            const SizedBox(height: 8),
-                            Builder(
-                              builder: (_) {
-                                final qty = int.tryParse(_qtyController.text) ?? 0;
-                                return Text('= ${qty * _unitsPerCarton} pièces au total',
-                                  style: GoogleFonts.raleway(fontSize: 13, color: kTextSec));
-                              },
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrimary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              minimumSize: const Size(double.infinity, 52),
-                              elevation: 2,
-                            ),
-                            icon: const Icon(Icons.add_shopping_cart_outlined),
-                            label: Text(
-                              '+ Ajouter à la commande',
-                              style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            onPressed: _addItemToList,
-                          ),
-                          const Divider(color: Color(0xFFE0E6ED), height: 32),
-                          Row(
-                            children: [
-                              const Icon(Icons.help_outline, size: 16, color: Color(0xFF6B7C93)),
-                              const SizedBox(width: 6),
-                              Text('Produit non enregistré?',
-                                style: GoogleFonts.cairo(fontSize: 13, color: Color(0xFF6B7C93))),
-                              const Spacer(),
-                              TextButton.icon(
-                                icon: const Icon(Icons.add_business_outlined, color: Color(0xFF1B4F72), size: 18),
-                                label: Text('Définir + Acheter',
-                                  style: GoogleFonts.cairo(
-                                    color: Color(0xFF1B4F72),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13)),
-                                onPressed: _showDefinePlusAchetDialog,
-                                style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1B4F72).withOpacity(0.08),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 24),
-                  // --- RIGHT: RECEIPT ---
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 400,
+                        child: Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: SingleChildScrollView(
                             padding: const EdgeInsets.all(16),
-                            decoration: const BoxDecoration(
-                              color: kPrimary,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                            ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.receipt_long_outlined, color: Colors.white),
-                                const SizedBox(width: 8),
-                                Text('Bon de Commande',
-                                  style: GoogleFonts.cairo(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  )),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
+                                _sectionHeader('Produit & Variante', Icons.inventory_2_outlined),
+                                DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  value: _selectedVariantId,
+                                  decoration: formStyle(S.t('buy_product_variant'), Icons.inventory_2_outlined),
+                                  items: _variants.map<DropdownMenuItem<String>>((v) {
+                                    final p = v['products'];
+                                    final name = (p is Map) ? (p['name'] ?? 'Inconnu') : 'Inconnu';
+                                    return DropdownMenuItem(
+                                      value: v['id'],
+                                      child: Text('$name (${v['size']} / ${v['color']})'),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _selectedVariantId = val;
+                                      _isPriceDifferent = false;
+                                      _priceDiffPercent = 0;
+                                      _enteredPrice = 0;
+                                    });
+                                    if (val != null) {
+                                      final v = _variants.firstWhere((x) => x['id'] == val, orElse: () => null);
+                                      if (v != null) {
+                                        if (v['buy_price'] != null) {
+                                          _priceController.text = v['buy_price'].toString();
+                                        }
+                                        _loadVariantSmartInfo(v);
+                                      }
+                                    } else {
+                                      _clearSmartInfo();
+                                    }
+                                  },
+                                ),
+                                if (_selectedVariantId != null) ...[
+                                  const SizedBox(height: 8),
+                                  _buildSmartInfoCard(),
+                                  const SizedBox(height: 8),
+                                  if (_purchaseHistory.isNotEmpty)
+                                    _buildPurchaseHistoryTable(),
+                                ],
+                                const SizedBox(height: 16),
+                                _sectionHeader('Quantité & Prix', Icons.calculate_outlined),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _qtyController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: formStyle(S.t('label_quantity'), Icons.tag_outlined),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _priceController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: formStyle('${S.t('label_unit_price')} (${S.t('misc_currency')})', Icons.attach_money_outlined),
+                                        onChanged: (val) {
+                                          final newPrice = double.tryParse(val) ?? 0;
+                                          setState(() {
+                                            _enteredPrice = newPrice;
+                                            if (_lastPurchasePrice != null && newPrice > 0 && newPrice != _lastPurchasePrice) {
+                                              _isPriceDifferent = true;
+                                              _priceDiffPercent = ((newPrice - _lastPurchasePrice!) / _lastPurchasePrice! * 100);
+                                            } else {
+                                              _isPriceDifferent = false;
+                                              _priceDiffPercent = 0;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_isPriceDifferent && _lastPurchasePrice != null) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.orange.shade300),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange.shade700),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            'Nouvelle arrivage: '
+                                            '${_lastPurchasePrice!.toStringAsFixed(0)}'
+                                            ' → ${_enteredPrice.toStringAsFixed(0)} DA '
+                                            '(${_priceDiffPercent > 0 ? "+" : ""}'
+                                            '${_priceDiffPercent.toStringAsFixed(1)}%)',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.orange.shade700,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  child: Text('${_purchaseItems.length} articles',
-                                    style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
+                                ],
+                                const SizedBox(height: 16),
+                                _sectionHeader('Unité de saisie', Icons.straighten_outlined),
+                                Row(
+                                  children: [
+                                    _unitTypeToggle('piece', '📦 Pièce'),
+                                    const SizedBox(width: 12),
+                                    _unitTypeToggle('carton', '🗃️ Carton'),
+                                  ],
+                                ),
+                                if (_unitType == 'carton') ...[
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    decoration: formStyle('Pièces par carton', Icons.grid_view_outlined),
+                                    keyboardType: TextInputType.number,
+                                    initialValue: _unitsPerCarton.toString(),
+                                    onChanged: (val) {
+                                      final parsed = int.tryParse(val) ?? 1;
+                                      if (parsed > 0) setState(() => _unitsPerCarton = parsed);
+                                    },
+                                  ),
+                                ],
+                                if (_unitType == 'carton') ...[
+                                  const SizedBox(height: 8),
+                                  Builder(
+                                    builder: (_) {
+                                      final qty = int.tryParse(_qtyController.text) ?? 0;
+                                      return Text('= ${qty * _unitsPerCarton} pièces au total',
+                                        style: GoogleFonts.raleway(fontSize: 13, color: kTextSec));
+                                    },
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrimary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    minimumSize: const Size(double.infinity, 52),
+                                    elevation: 2,
+                                  ),
+                                  icon: const Icon(Icons.add_shopping_cart_outlined),
+                                  label: Text(
+                                    '+ Ajouter à la commande',
+                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                  onPressed: _addItemToList,
+                                ),
+                                const Divider(color: Color(0xFFE0E6ED), height: 24),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.help_outline, size: 16, color: Color(0xFF6B7C93)),
+                                    const SizedBox(width: 6),
+                                    Text('Produit non enregistré?',
+                                      style: GoogleFonts.cairo(fontSize: 13, color: Color(0xFF6B7C93))),
+                                    const Spacer(),
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.add_business_outlined, color: Color(0xFF1B4F72), size: 18),
+                                      label: Text('Définir + Acheter',
+                                        style: GoogleFonts.cairo(
+                                          color: Color(0xFF1B4F72),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                      onPressed: _showDefinePlusAchetDialog,
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1B4F72).withOpacity(0.08),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                          Expanded(
-                            child: _purchaseItems.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.shopping_cart_outlined,
-                                             size: 64, color: Color(0xFFE0E6ED)),
-                                        const SizedBox(height: 12),
-                                        Text('Aucun article ajouté',
-                                          style: GoogleFonts.cairo(
-                                            color: kTextSec, fontSize: 15)),
-                                        Text('Sélectionnez un produit et ajoutez-le',
-                                          style: GoogleFonts.raleway(
-                                            color: Color(0xFFB0BEC5), fontSize: 13)),
-                                      ],
-                                    ),
-                                  )
-                                : ListView.builder(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    itemCount: _purchaseItems.length,
-                                    itemBuilder: (ctx, i) {
-                                      final item = _purchaseItems[i];
-                                      return Card(
-                                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                          side: const BorderSide(color: kBorder),
-                                        ),
-                                        child: ListTile(
-                                          dense: true,
-                                          leading: CircleAvatar(
-                                            backgroundColor: kPrimary.withOpacity(0.1),
-                                            child: Text('${i + 1}',
-                                              style: const TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-                                          ),
-                                          title: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(item.label,
-                                                  style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
-                                              ),
-                                              if (item.isNouvelleArrivage)
-                                                Container(
-                                                  margin: const EdgeInsets.only(left: 8),
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFF2ECC71).withOpacity(0.15),
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: Text('Nouvelle arrivage 🆕',
-                                                    style: GoogleFonts.cairo(fontSize: 10, color: const Color(0xFF2ECC71))),
-                                                ),
-                                            ],
-                                          ),
-                                          subtitle: Text('${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} DA',
-                                            style: GoogleFonts.raleway()),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text('${(item.quantity * item.unitPrice).toStringAsFixed(2)} DA',
-                                                style: GoogleFonts.raleway(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: kPrimary)),
-                                              IconButton(
-                                                icon: const Icon(Icons.close, size: 18, color: Color(0xFFE74C3C)),
-                                                onPressed: () => setState(() => _purchaseItems.removeAt(i)),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          ),
-                          if (_purchaseItems.isNotEmpty) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: kPrimary.withOpacity(0.05),
-                                border: const Border(top: BorderSide(color: kBorder)),
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Total commande:',
-                                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
-                                      Text(
-                                        '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} DA',
-                                        style: GoogleFonts.raleway(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: kPrimary)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Articles:',
-                                        style: GoogleFonts.raleway(color: kTextSec)),
-                                      Text('${_purchaseItems.fold<int>(0, (s, i) => s + i.quantity)} pcs',
-                                        style: GoogleFonts.raleway(color: kTextSec)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Moy/pièce:',
-                                        style: GoogleFonts.raleway(color: kTextSec)),
-                                      Text(
-                                        (() {
-                                          final tp = _purchaseItems.fold<int>(0, (s, i) => s + i.quantity);
-                                          return tp > 0
-                                            ? '${(_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice) / tp).toStringAsFixed(2)} DA'
-                                            : '0 DA';
-                                        })(),
-                                        style: GoogleFonts.raleway(color: kTextSec)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2ECC71),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  minimumSize: const Size(double.infinity, 56),
-                                  elevation: 3,
-                                ),
-                                icon: _isSubmitting
-                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Icon(Icons.check_circle_outline),
-                                label: Text('✅ Confirmer la commande',
-                                  style: GoogleFonts.cairo(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
-                                onPressed: _isSubmitting ? null : _showPaymentDialog,
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: const BoxDecoration(
+                                  color: kPrimary,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.receipt_long_outlined, color: Colors.white),
+                                    const SizedBox(width: 8),
+                                    Text('Bon de Commande',
+                                      style: GoogleFonts.cairo(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      )),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text('${_purchaseItems.length} articles',
+                                        style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Divider(height: 1, color: Color(0xFFE0E6ED)),
+                              Expanded(
+                                child: _purchaseItems.isEmpty
+                                    ? Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.shopping_cart_outlined,
+                                                 size: 64, color: Color(0xFFE0E6ED)),
+                                            const SizedBox(height: 12),
+                                            Text('Aucun article ajouté',
+                                              style: GoogleFonts.cairo(
+                                                color: kTextSec, fontSize: 15)),
+                                            Text('Sélectionnez un produit et ajoutez-le',
+                                              style: GoogleFonts.raleway(
+                                                color: Color(0xFFB0BEC5), fontSize: 13)),
+                                          ],
+                                        ),
+                                      )
+                                    : ListView.builder(
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        itemCount: _purchaseItems.length,
+                                        itemBuilder: (ctx, i) {
+                                          final item = _purchaseItems[i];
+                                          return Card(
+                                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                              side: const BorderSide(color: kBorder),
+                                            ),
+                                            child: ListTile(
+                                              dense: true,
+                                              leading: CircleAvatar(
+                                                backgroundColor: kPrimary.withOpacity(0.1),
+                                                child: Text('${i + 1}',
+                                                  style: const TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+                                              ),
+                                              title: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(item.label,
+                                                      style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
+                                                  ),
+                                                  if (item.isNouvelleArrivage)
+                                                    Container(
+                                                      margin: const EdgeInsets.only(left: 8),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFF2ECC71).withOpacity(0.15),
+                                                        borderRadius: BorderRadius.circular(4),
+                                                      ),
+                                                      child: Text('Nouvelle arrivage 🆕',
+                                                        style: GoogleFonts.cairo(fontSize: 10, color: const Color(0xFF2ECC71))),
+                                                    ),
+                                                ],
+                                              ),
+                                              subtitle: Text('${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} DA',
+                                                style: GoogleFonts.raleway()),
+                                              trailing: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text('${(item.quantity * item.unitPrice).toStringAsFixed(2)} DA',
+                                                    style: GoogleFonts.raleway(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: kPrimary)),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.close, size: 18, color: Color(0xFFE74C3C)),
+                                                    onPressed: () => setState(() => _purchaseItems.removeAt(i)),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              ),
+                              if (_purchaseItems.isNotEmpty) ...[
+                                const Divider(height: 1, color: Color(0xFFE0E6ED)),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: kPrimary.withOpacity(0.05),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Total commande:',
+                                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                                          Text(
+                                            '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} DA',
+                                            style: GoogleFonts.raleway(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: kPrimary)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Articles:',
+                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                          Text('${_purchaseItems.fold<int>(0, (s, i) => s + i.quantity)} pcs',
+                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Moy/pièce:',
+                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                          Text(
+                                            (() {
+                                              final tp = _purchaseItems.fold<int>(0, (s, i) => s + i.quantity);
+                                              return tp > 0
+                                                ? '${(_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice) / tp).toStringAsFixed(2)} DA'
+                                                : '0 DA';
+                                            })(),
+                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF2ECC71),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 18),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        minimumSize: const Size(double.infinity, 56),
+                                        elevation: 3,
+                                      ),
+                                      icon: _isSubmitting
+                                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                          : const Icon(Icons.check_circle_outline),
+                                      label: Text('✅ Confirmer la commande',
+                                        style: GoogleFonts.cairo(
+                                          fontWeight: FontWeight.bold, fontSize: 16)),
+                                      onPressed: _isSubmitting ? null : _showPaymentDialog,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

@@ -364,7 +364,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   }
 
   Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_formKey.currentState == null || !_formKey.currentState!.validate()) return;
 
     for (var v in _variants) {
       final sellPriceStr = v['sell_price'].toString();
@@ -434,7 +434,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Colors.green),
         );
 
-        _formKey.currentState!.reset();
         _nameController.clear();
         _descController.clear();
         setState(() {
@@ -607,166 +606,167 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Photo
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(kBorderRadius),
-                        border: Border.all(
-                          color: _imageFile != null || _imageBytes != null
-                              ? Colors.transparent
-                              : Colors.grey[400]!,
-                          width: 2,
-                          style: _imageFile != null || _imageBytes != null
-                              ? BorderStyle.solid
-                              : BorderStyle.solid,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Photo
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(kBorderRadius),
+                          border: Border.all(
+                            color: _imageFile != null || _imageBytes != null
+                                ? Colors.transparent
+                                : Colors.grey[400]!,
+                            width: 2,
+                            style: _imageFile != null || _imageBytes != null
+                                ? BorderStyle.solid
+                                : BorderStyle.solid,
+                          ),
                         ),
+                        child: _imageFile != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(kBorderRadius),
+                                child: Image.file(_imageFile!, fit: BoxFit.cover),
+                              )
+                            : _imageBytes != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(kBorderRadius),
+                                    child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_a_photo, size: 36, color: Colors.grey[400]),
+                                      const SizedBox(height: 8),
+                                      Text('Ajouter\nune photo',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
                       ),
-                      child: _imageFile != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(kBorderRadius),
-                              child: Image.file(_imageFile!, fit: BoxFit.cover),
-                            )
-                          : _imageBytes != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(kBorderRadius),
-                                  child: Image.memory(_imageBytes!, fit: BoxFit.cover),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_a_photo, size: 36, color: Colors.grey[400]),
-                                    const SizedBox(height: 8),
-                                    Text('Ajouter\nune photo',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                                    ),
-                                  ],
+                      if (_imageFile != null || _imageBytes != null)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: kAccentGreen,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check, color: Colors.white, size: 12),
+                                SizedBox(width: 2),
+                                Text('Compressée ✓',
+                                  style: TextStyle(color: Colors.white, fontSize: 9),
                                 ),
-                    ),
-                    if (_imageFile != null || _imageBytes != null)
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: kAccentGreen,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.check, color: Colors.white, size: 12),
-                              SizedBox(width: 2),
-                              Text('Compressée ✓',
-                                style: TextStyle(color: Colors.white, fontSize: 9),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Général
-            Text('Informations générales', style: _sectionStyle),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: '${S.t('prod_name')} *',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
-                filled: true,
-                fillColor: Colors.white,
+              // Général
+              Text('Informations générales', style: _sectionStyle),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: '${S.t('prod_name')} *',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
+                onChanged: (_) => setState(() {}),
               ),
-              validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: S.t('label_description'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
-                filled: true,
-                fillColor: Colors.white,
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: S.t('label_description'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Catégorie
-            Text('Catégorie', style: _sectionStyle),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildCategoryButton('homme', '👨 Homme'),
-                const SizedBox(width: 12),
-                _buildCategoryButton('femme', '👩 Femme'),
-                const SizedBox(width: 12),
-                _buildCategoryButton('enfant', '👶 Enfant'),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Magasin
-            Text('Magasin', style: _sectionStyle),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: S.t('label_store'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
-                filled: true,
-                fillColor: Colors.white,
+              // Catégorie
+              Text('Catégorie', style: _sectionStyle),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildCategoryButton('homme', '👨 Homme'),
+                  const SizedBox(width: 12),
+                  _buildCategoryButton('femme', '👩 Femme'),
+                  const SizedBox(width: 12),
+                  _buildCategoryButton('enfant', '👶 Enfant'),
+                ],
               ),
-              value: _selectedStoreId,
-              items: _stores.map((s) => DropdownMenuItem<String>(
-                value: s['id'],
-                child: Text(s['name'] ?? ''),
-              )).toList(),
-              onChanged: (val) => setState(() => _selectedStoreId = val),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Template
-            OutlinedButton.icon(
-              onPressed: _copyFromExistingProduct,
-              icon: const Icon(Icons.content_copy, size: 18),
-              label: Text('📋 Copier depuis un produit existant',
-                style: GoogleFonts.raleway(fontSize: 13),
+              // Magasin
+              Text('Magasin', style: _sectionStyle),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: S.t('label_store'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                value: _selectedStoreId,
+                items: _stores.map((s) => DropdownMenuItem<String>(
+                  value: s['id'],
+                  child: Text(s['name'] ?? ''),
+                )).toList(),
+                onChanged: (val) => setState(() => _selectedStoreId = val),
               ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: kPrimaryColor,
-                side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
+              const SizedBox(height: 24),
 
-            const Spacer(),
-            // Navigation
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _canGoToStep2
-                    ? () => setState(() => _currentStep = 1)
-                    : null,
-                style: ElevatedButton.styleFrom(
+              // Template
+              OutlinedButton.icon(
+                onPressed: _copyFromExistingProduct,
+                icon: const Icon(Icons.content_copy, size: 18),
+                label: Text('📋 Copier depuis un produit existant',
+                  style: GoogleFonts.raleway(fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: kPrimaryColor,
+                  side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              // Navigation
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _canGoToStep2
+                      ? () => setState(() => _currentStep = 1)
+                      : null,
+                  style: ElevatedButton.styleFrom(
                   backgroundColor: kAccentGreen,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
@@ -781,8 +781,9 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCategoryButton(String value, String label) {
     final selected = _selectedCategory == value;
@@ -1590,13 +1591,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : IndexedStack(
-                        index: _currentStep,
-                        children: [
-                          _buildStep1(),
-                          _buildStep2(),
-                          _buildStep3(),
-                        ],
+                    : Form(
+                        key: _formKey,
+                        child: IndexedStack(
+                          index: _currentStep,
+                          children: [
+                            _buildStep1(),
+                            _buildStep2(),
+                            _buildStep3(),
+                          ],
+                        ),
                       ),
               ),
             ],
