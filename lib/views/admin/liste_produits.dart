@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:barcode/barcode.dart' as bc;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../local_db/isar_service.dart';
@@ -20,6 +24,21 @@ const Color kBackgroundColor = Color(0xFFF5F7FA);
 const double kBorderRadius = 12.0;
 
 enum StockStatus { healthy, low, empty, negative }
+
+const List<Map<String, dynamic>> kShoeColors = [
+  {'name': 'Noir', 'hex': '#000000'},
+  {'name': 'Blanc', 'hex': '#FFFFFF'},
+  {'name': 'Marron', 'hex': '#8B4513'},
+  {'name': 'Beige', 'hex': '#F5F0DC'},
+  {'name': 'Rouge', 'hex': '#E53935'},
+  {'name': 'Bleu', 'hex': '#1E88E5'},
+  {'name': 'Bleu Marine', 'hex': '#1A237E'},
+  {'name': 'Vert', 'hex': '#43A047'},
+  {'name': 'Gris', 'hex': '#757575'},
+  {'name': 'Or', 'hex': '#FFD700'},
+  {'name': 'Argent', 'hex': '#C0C0C0'},
+  {'name': 'Rose', 'hex': '#E91E8C'},
+];
 
 const Map<String, Map<String, dynamic>> kCategoryConfig = {
   'homme': {'icon': '👨', 'label': 'Homme', 'color': Color(0xFF1B4F72)},
@@ -395,6 +414,521 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     }
   }
 
+  // ─── Helpers ──────────────────────────────────────────────
+
+  Color _getColorForName(String name) {
+    for (final c in kShoeColors) {
+      if (c['name'] == name) return _hexToColor(c['hex'] as String);
+    }
+    return Colors.grey;
+  }
+
+  Color _hexToColor(String hex) {
+    hex = hex.replaceAll('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  // ─── Barcode Printing ─────────────────────────────────────
+
+  Future<void> _printSingleVariant(Map<String, dynamic> variant, String productName) async {
+    final barcodeText = (variant['barcode'] as String?)?.trim();
+    if (barcodeText == null || barcodeText.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun code-barres disponible pour cette variante'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    await _generateAndPrintLabel(barcodeText, productName,
+      variant['size'] as String? ?? '', variant['color'] as String? ?? '',
+      (variant['sell_price'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Future<void> _printAllVariants(Map<String, dynamic> product) async {
+    final variants = (product['product_variants'] as List<dynamic>?)
+        ?.where((v) => v['is_active'] == true).toList() ?? [];
+    if (variants.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Imprimer les étiquettes'),
+        content: Text('Imprimer ${variants.length} étiquette(s) pour "${product['name']}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Imprimer')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final pdf = pw.Document();
+    int pageCount = 0;
+    for (final v in variants) {
+      final barcodeText = (v['barcode'] as String?)?.trim();
+      if (barcodeText == null || barcodeText.isEmpty) continue;
+      await _addLabelPage(pdf, barcodeText,
+        product['name'] as String? ?? '',
+        v['size'] as String? ?? '', v['color'] as String? ?? '',
+        (v['sell_price'] as num?)?.toDouble() ?? 0,
+      );
+      pageCount++;
+    }
+    if (pageCount > 0) {
+      await Printing.layoutPdf(onLayout: (_) => pdf.save());
+    }
+  }
+
+  Future<void> _printCustomQuantity(Map<String, dynamic> variant, String productName) async {
+    final barcodeText = (variant['barcode'] as String?)?.trim();
+    if (barcodeText == null || barcodeText.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun code-barres disponible'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
+    final qtyCtrl = TextEditingController(text: '1');
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(children: [Icon(Icons.print), SizedBox(width: 8), Text('Quantité d\'impression')]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Combien d\'étiquettes imprimer?'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: qtyCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Nombre de copies',
+                border: OutlineInputBorder(),
+                suffixText: 'copies',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('Aperçu: $barcodeText / ${variant['size']} / ${variant['color']}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () {
+              final qty = int.tryParse(qtyCtrl.text) ?? 1;
+              if (qty > 0) Navigator.pop(ctx, qty);
+            },
+            child: Text('Imprimer ${qtyCtrl.text} copie(s)'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result <= 0) return;
+
+    final pdf = pw.Document();
+    for (int i = 0; i < result; i++) {
+      await _addLabelPage(pdf, barcodeText, productName,
+        variant['size'] as String? ?? '', variant['color'] as String? ?? '',
+        (variant['sell_price'] as num?)?.toDouble() ?? 0,
+      );
+    }
+    await Printing.layoutPdf(onLayout: (_) => pdf.save());
+  }
+
+  Future<void> _generateAndPrintLabel(
+    String barcodeText, String productName, String size, String color, double price,
+  ) async {
+    final pdf = pw.Document();
+    await _addLabelPage(pdf, barcodeText, productName, size, color, price);
+    await Printing.layoutPdf(onLayout: (_) => pdf.save());
+  }
+
+  Future<void> _addLabelPage(pw.Document pdf, String barcodeText,
+    String productName, String size, String color, double price,
+  ) async {
+    final code128 = bc.Barcode.code128();
+    final svg = code128.toSvg(barcodeText, width: 200, height: 80);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, 40 * PdfPageFormat.mm),
+        margin: const pw.EdgeInsets.all(2),
+        build: (pw.Context ctx) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Text('STEPZONE ERP',
+                style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 2),
+              pw.Expanded(
+                child: pw.Center(
+                  child: pw.SvgImage(svg: svg),
+                ),
+              ),
+              pw.Text(barcodeText,
+                style: pw.TextStyle(
+                  fontSize: 7,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 1),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('$productName / $size / $color',
+                    style: const pw.TextStyle(fontSize: 4),
+                  ),
+                  pw.Text('${price.toStringAsFixed(0)} DA',
+                    style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ─── Product Detail Dialog ────────────────────────────────
+
+  void _showProductDetailDialog(Map<String, dynamic> product) {
+    final allVariants = (product['product_variants'] as List<dynamic>?) ?? [];
+    final activeVariants = allVariants.where((v) => v['is_active'] == true).toList();
+    final totalStock = _getTotalStock(activeVariants);
+    final stockStatus = _getStockStatus(totalStock);
+    final imageUrl = product['image_url'] as String?;
+
+    final avgBuy = activeVariants.isEmpty
+      ? 0.0
+      : activeVariants.fold<double>(0, (s, v) => s + ((v['buy_price'] as num?)?.toDouble() ?? 0)) / activeVariants.length;
+    final avgSell = activeVariants.isEmpty
+      ? 0.0
+      : activeVariants.fold<double>(0, (s, v) => s + ((v['sell_price'] as num?)?.toDouble() ?? 0)) / activeVariants.length;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        child: Container(
+          width: 800,
+          constraints: const BoxConstraints(maxHeight: 700),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: imageUrl != null
+                        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _buildImageFallback())
+                        : _buildImageFallback(),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(product['name'] ?? '',
+                          style: GoogleFonts.cairo(fontSize: 22, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          _buildCategoryBadge(product['category']),
+                          const SizedBox(width: 8),
+                          Text(product['suppliers']?['company_name'] ?? '',
+                            style: GoogleFonts.raleway(fontSize: 13, color: Colors.grey[600]),
+                          ),
+                        ]),
+                        const SizedBox(height: 8),
+                        _buildStockBadge(stockStatus, totalStock),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Info cards
+              Row(
+                children: [
+                  _buildInfoCard('📦 Variantes', '${activeVariants.length}', kPrimaryColor),
+                  const SizedBox(width: 12),
+                  _buildInfoCard('💰 Prix achat moy.', '${avgBuy.toStringAsFixed(0)} DA', kWarningOrange),
+                  const SizedBox(width: 12),
+                  _buildInfoCard('🏷️ Prix vente moy.', '${avgSell.toStringAsFixed(0)} DA', kAccentGreen),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Variants table
+              Text('Détail des variantes',
+                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: kPrimaryColor),
+              ),
+              const SizedBox(height: 12),
+
+              if (activeVariants.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: Text('Aucune variante active', style: TextStyle(color: Colors.grey))),
+                )
+              else
+                Flexible(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header
+                        Container(
+                          color: kPrimaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: const [
+                              Expanded(flex: 2, child: Text('Code-barres',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Pointure',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Couleur',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Stock',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Achat',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Vente',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              Expanded(flex: 1, child: Text('Marge',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                              SizedBox(width: 64, child: Text('Actions',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                            ],
+                          ),
+                        ),
+                        // Rows
+                        Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: activeVariants.length,
+                            itemBuilder: (_, i) {
+                              final v = activeVariants[i];
+                              final inv = v['inventory'] as List<dynamic>? ?? [];
+                              int qty = 0;
+                              for (var invItem in inv) {
+                                qty += (invItem['quantity'] as int?) ?? 0;
+                              }
+                              final buy = (v['buy_price'] as num?)?.toDouble() ?? 0;
+                              final sell = (v['sell_price'] as num?)?.toDouble() ?? 0;
+                              final margin = sell - buy;
+                              final varStatus = _getStockStatus(qty);
+                              final barcodeText = v['barcode'] as String? ?? '';
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
+                                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(flex: 2, child: Text(barcodeText.isNotEmpty ? barcodeText : '-',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        color: barcodeText.isNotEmpty ? Colors.black87 : Colors.grey,
+                                      ),
+                                    )),
+                                    Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+                                    Expanded(flex: 1, child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12, height: 12,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: _getColorForName(v['color'] as String? ?? ''),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Flexible(child: Text(v['color'] as String? ?? '',
+                                          style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                                      ],
+                                    )),
+                                    Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
+                                    Expanded(flex: 1, child: Text('${buy.toStringAsFixed(0)}',
+                                      style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
+                                    Expanded(flex: 1, child: Text('${sell.toStringAsFixed(0)}',
+                                      style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold))),
+                                    Expanded(flex: 1, child: Text(
+                                      margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: margin >= 0 ? kAccentGreen : kDangerRed,
+                                      ),
+                                    )),
+                                    SizedBox(
+                                      width: 64,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          if (barcodeText.isNotEmpty)
+                                            IconButton(
+                                              icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
+                                              tooltip: 'Imprimer',
+                                              onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                            ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                            tooltip: 'Modifier',
+                                            onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // Footer
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (activeVariants.isNotEmpty)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.print, size: 18),
+                      label: const Text('Imprimer tout'),
+                      onPressed: () { Navigator.pop(ctx); _printAllVariants(product); },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: kPrimaryColor,
+                        side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  Row(
+                    children: [
+                      if (AppSession.isOwner)
+                        TextButton.icon(
+                          icon: const Icon(Icons.archive, color: Colors.red, size: 18),
+                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
+                          onPressed: () { Navigator.pop(ctx); _archiveProduct(product['id']); },
+                        ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor, foregroundColor: Colors.white),
+                        child: const Text('Fermer'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPrintChoice(Map<String, dynamic> variant, String productName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Options d\'impression'),
+        content: const Text('Combien d\'étiquettes imprimer pour cette variante?'),
+        actions: [
+          TextButton(onPressed: () { Navigator.pop(ctx); _printSingleVariant(variant, productName); },
+            child: const Text('1 copie')),
+          ElevatedButton(onPressed: () { Navigator.pop(ctx); _printCustomQuantity(variant, productName); },
+            child: const Text('X copies (saisir)')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        child: Column(
+          children: [
+            Text(label, style: GoogleFonts.raleway(fontSize: 11, color: Colors.grey[600])),
+            const SizedBox(height: 4),
+            Text(value, style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageFallback() {
+    return Container(
+      color: Colors.grey[200],
+      child: const Center(child: Icon(Icons.shopping_bag, size: 40, color: Colors.grey)),
+    );
+  }
+
+  Widget _buildStatChip(String emoji, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: kPrimaryColor.withOpacity(0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text(text,
+            style: GoogleFonts.raleway(fontSize: 11, fontWeight: FontWeight.w600, color: kPrimaryColor),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -645,13 +1179,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
-                              decoration: totalStock < 0
-                                ? BoxDecoration(
-                                    border: const Border(left: BorderSide(color: kNegativeRed, width: 4)),
-                                    color: kNegativeRed.withOpacity(0.03),
-                                    borderRadius: BorderRadius.circular(kBorderRadius + 2),
-                                  )
-                                : null,
+                              decoration: BoxDecoration(
+                                border: Border(left: BorderSide(
+                                  color: _getStockColor(stockStatus),
+                                  width: stockStatus == StockStatus.negative ? 4 : 3,
+                                )),
+                                color: stockStatus == StockStatus.negative
+                                    ? kNegativeRed.withOpacity(0.03)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(kBorderRadius + 2),
+                              ),
                               child: Card(
                                 margin: EdgeInsets.zero,
                                 elevation: 2,
@@ -710,6 +1247,22 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         child: Column(
                                           children: [
 
+                                            if (activeVariants.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                                                child: Row(
+                                                  children: [
+                                                    _buildStatChip('📦', '${activeVariants.length} variantes'),
+                                                    const SizedBox(width: 8),
+                                                    _buildStatChip('🎨',
+                                                      '${activeVariants.map((x) => x['color'] as String).toSet().length} couleurs'),
+                                                    const SizedBox(width: 8),
+                                                    _buildStatChip('👟',
+                                                      '${activeVariants.map((x) => x['size'] as String).toSet().length} pointures'),
+                                                  ],
+                                                ),
+                                              ),
+
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                                               decoration: BoxDecoration(color: kPrimaryColor.withOpacity(0.05)),
@@ -719,7 +1272,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                   Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                                   Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                                   Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue))),
-                                                  SizedBox(width: 80, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                  SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                                 ],
                                               ),
                                             ),
@@ -784,18 +1337,24 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                       ),
                                                     ),
                                                     SizedBox(
-                                                      width: 80,
+                                                      width: 96,
                                                       child: Row(
                                                         mainAxisAlignment: MainAxisAlignment.end,
                                                         children: [
+                                                          if ((v['barcode'] as String?)?.isNotEmpty == true)
+                                                            IconButton(
+                                                              icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
+                                                              tooltip: 'Imprimer étiquette',
+                                                              onPressed: () => _printCustomQuantity(v, product['name']),
+                                                            ),
                                                           if (AppSession.isOwner) ...[
                                                             IconButton(
-                                                              icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                                              icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
                                                               tooltip: S.t('prod_edit_price_code'),
                                                               onPressed: () => _showEditVariantDialog(v),
                                                             ),
                                                             IconButton(
-                                                              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                              icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
                                                               tooltip: S.t('prod_archive_variant'),
                                                               onPressed: () => _archiveVariant(v['id']),
                                                             ),
@@ -811,18 +1370,30 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         ),
                                       ),
 
-                                    if (AppSession.isOwner)
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Align(
-                                          alignment: AlignmentDirectional.centerEnd,
-                                          child: TextButton.icon(
-                                            onPressed: () => _archiveProduct(product['id']),
-                                            icon: const Icon(Icons.archive, color: Colors.red, size: 18),
-                                            label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          OutlinedButton.icon(
+                                            icon: const Icon(Icons.info_outline, size: 18),
+                                            label: const Text('Détails complets'),
+                                            onPressed: () => _showProductDetailDialog(product),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: kPrimaryColor,
+                                              side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                                            ),
                                           ),
-                                        ),
-                                      )
+                                          const SizedBox(width: 8),
+                                          if (AppSession.isOwner)
+                                            TextButton.icon(
+                                              onPressed: () => _archiveProduct(product['id']),
+                                              icon: const Icon(Icons.archive, color: Colors.red, size: 18),
+                                              label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
+                                            ),
+                                        ],
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
