@@ -59,6 +59,12 @@ class _PosScreenState extends State<PosScreen> {
   bool _isLoading = true;
   bool _isProcessingPayment = false;
 
+  /// FIX 2: Tracks cart indices with stock conflicts during payment check.
+  Set<int> _stockConflictItems = {};
+
+  /// Cached balance of the selected client (null = not fetched yet).
+  double? _selectedCustomerBalance;
+
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
 
   // FIX 3: Rebuild today-sales tab after sync completes
@@ -318,15 +324,31 @@ class _PosScreenState extends State<PosScreen> {
         availability += (inv['quantity'] as int?) ?? 0;
       }
     }
-    
+
+    // ── FIX 1: Block add when stock = 0 ──
     if (availability <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(S.t('pos_stock_empty_warning')),
         backgroundColor: Colors.orange,
       ));
+      return; // ⬅ was missing — item was added despite stock = 0
     }
 
     final variantId = variantData['id'];
+
+    // ── FIX 1: Block add when alreadyInCart >= available stock ──
+    final alreadyInCart = _cart
+        .where((i) => i.variantId == variantId)
+        .fold(0, (int sum, CartItem i) => sum + i.quantity);
+    if (alreadyInCart >= availability) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text('${S.t('pos_stock_insufficient')} $availability ${S.t('pos_stock_available')}'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
     final existIndex = _cart.indexWhere((item) => item.variantId == variantId);
 
     if (existIndex >= 0) {
@@ -358,6 +380,64 @@ class _PosScreenState extends State<PosScreen> {
 
   double get _cartTotal => _cart.fold(0, (sum, item) => sum + item.totalPrice);
 
+  /// Returns the current stock quantity for a variant in the selected store.
+  Future<int> _getCurrentStock(String variantId) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final inv = await isar.inventoryLocals
+          .filter()
+          .variantIdEqualTo(variantId)
+          .and()
+          .storeIdEqualTo(_selectedStoreId!)
+          .findFirst();
+      return inv?.quantity ?? 0;
+    }
+    try {
+      final result = await Supabase.instance.client
+          .from('inventory')
+          .select('quantity')
+          .eq('variant_id', variantId)
+          .eq('store_id', _selectedStoreId!)
+          .maybeSingle();
+      return (result?['quantity'] as int?) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Resolves stock for a search-result item entry in the current store.
+  int _getStockForItem(Map<String, dynamic> item) {
+    final invList = (item['inventory'] as List<dynamic>?) ?? [];
+    for (final inv in invList) {
+      if (inv['store_id'] == _selectedStoreId) {
+        return (inv['quantity'] as int?) ?? 0;
+      }
+    }
+    return 0;
+  }
+
+  /// Fetches and caches the selected client's balance.
+  Future<void> _cacheCustomerBalance(String customerId) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final c = await isar.customerLocals
+          .filter()
+          .supabaseIdEqualTo(customerId)
+          .findFirst();
+      _selectedCustomerBalance = c?.balance ?? 0;
+    } else {
+      try {
+        final res = await Supabase.instance.client
+            .from('customers')
+            .select('balance')
+            .eq('id', customerId)
+            .single();
+        _selectedCustomerBalance = (res['balance'] as num?)?.toDouble() ?? 0;
+      } catch (_) {
+        _selectedCustomerBalance = 0;
+      }
+    }
+  }
 
   void _showPaymentDialog() {
     if (_cart.isEmpty) return;
@@ -373,87 +453,291 @@ class _PosScreenState extends State<PosScreen> {
     }
 
     final totalAmount = _cartTotal;
-    final paymentController = TextEditingController(text: totalAmount.toStringAsFixed(2));
-    final isWalkInCustomer = _selectedCustomerId == null;
+    final isRegisteredClient = _selectedCustomerId != null;
+
+    // ── FIX 3: Payment method state ──
+    String selectedMethod = 'cash'; // 'cash' | 'credit' | 'mixed'
+    final cashController = TextEditingController(text: totalAmount.toStringAsFixed(2));
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              const Icon(Icons.point_of_sale, color: Colors.indigo),
-              const SizedBox(width: 8),
-              Text(S.t('pos_cashout_title')),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.indigo[50], borderRadius: BorderRadius.circular(8)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(S.t('pos_total_to_pay_lbl'), style: const TextStyle(fontSize: 18)),
-                    Text('${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                  ],
-                ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final bool canUseCredit = isRegisteredClient;
+            final double cashAmount = selectedMethod == 'mixed'
+                ? (double.tryParse(cashController.text) ?? 0)
+                : (selectedMethod == 'cash'
+                    ? (double.tryParse(cashController.text) ?? totalAmount)
+                    : 0);
+            final double creditAmount = selectedMethod == 'mixed'
+                ? (totalAmount - cashAmount).clamp(0, totalAmount)
+                : (selectedMethod == 'credit' ? totalAmount : 0);
+
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.point_of_sale, color: Colors.indigo),
+                  const SizedBox(width: 8),
+                  Text(S.t('pos_cashout_title')),
+                ],
               ),
-              const SizedBox(height: 24),
-              if (isWalkInCustomer)
-                Text(
-                  S.t('pos_walkin_warning'),
-                  style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-                )
-              else
-                TextFormField(
-                  controller: paymentController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: '${S.t('pos_amount_received')} (${S.t('misc_currency')})',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.payments),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Total banner ──
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(S.t('pos_total_to_pay_lbl'),
+                            style: const TextStyle(fontSize: 18)),
+                        Text(
+                          '${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                          style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              if (!isWalkInCustomer)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    S.t('pos_credit_note'),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  const SizedBox(height: 20),
+
+                  // ── FIX 3: Payment method segmented control ──
+                  Text(S.t('pos_payment_method'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  ToggleButtons(
+                    isSelected: [
+                      selectedMethod == 'cash',
+                      selectedMethod == 'credit' && canUseCredit,
+                      selectedMethod == 'mixed' && canUseCredit,
+                    ],
+                    onPressed: (index) {
+                      setDialogState(() {
+                        if (index == 0) {
+                          selectedMethod = 'cash';
+                        } else if (index == 1 && canUseCredit) {
+                          selectedMethod = 'credit';
+                        } else if (index == 2 && canUseCredit) {
+                          selectedMethod = 'mixed';
+                          cashController.text = totalAmount.toStringAsFixed(2);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    constraints: const BoxConstraints(minHeight: 38, minWidth: 80),
+                    textStyle: const TextStyle(fontSize: 13),
+                    selectedColor: Colors.indigo,
+                    fillColor: Colors.indigo[50],
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(S.t('pos_cash')),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Opacity(
+                          opacity: canUseCredit ? 1.0 : 0.4,
+                          child: Text(S.t('pos_credit')),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Opacity(
+                          opacity: canUseCredit ? 1.0 : 0.4,
+                          child: Text(S.t('pos_mixed')),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (!canUseCredit)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(S.t('pos_credit_client_only'),
+                          style: const TextStyle(
+                              color: Colors.orange, fontSize: 11)),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // ── Amount fields based on method ──
+                  if (selectedMethod == 'cash')
+                    TextFormField(
+                      controller: cashController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText:
+                            '${S.t('pos_amount_received')} (${S.t('misc_currency')})',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.payments),
+                        isDense: true,
+                      ),
+                    ),
+                  if (selectedMethod == 'credit')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              size: 16, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(S.t('pos_credit_note'),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (selectedMethod == 'mixed')
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          controller: cashController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText:
+                                '${S.t('pos_cash_amount')} (${S.t('misc_currency')})',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.money),
+                            isDense: true,
+                          ),
+                          onChanged: (_) => setDialogState(() {}),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text('${S.t('pos_credit_amount')}: ',
+                                style: const TextStyle(fontSize: 13)),
+                            Text(
+                              '${creditAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.orange[700]),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                  // ── FIX 3: Client balance warning (amber left border) ──
+                  if (isRegisteredClient &&
+                      _selectedCustomerBalance != null &&
+                      selectedMethod != 'cash')
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: const Border(
+                            left: BorderSide(color: Colors.amber, width: 4)),
+                        color: Colors.amber[50],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${S.t('pos_client_balance_current')} ${_selectedCustomerBalance!.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _selectedCustomerBalance! > 0
+                                    ? Colors.amber[900]
+                                    : null),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${S.t('pos_balance_new_warning')} ${(_selectedCustomerBalance! + creditAmount).toStringAsFixed(2)} ${S.t('misc_currency')}',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _selectedCustomerBalance! > 0
+                                    ? Colors.red[700]
+                                    : Colors.amber[900]),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(S.t('action_cancel'),
+                      style: const TextStyle(color: Colors.red)),
                 ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(S.t('action_cancel'), style: const TextStyle(color: Colors.red)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                double paidAmount = totalAmount;
-                if (!isWalkInCustomer) {
-                  paidAmount = double.tryParse(paymentController.text) ?? 0;
-                }
-                Navigator.pop(context);
-                _processPayment(totalAmount, paidAmount);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-              child: Text(S.t('pos_validate_sale'), style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+                ElevatedButton(
+                  onPressed: () async {
+                    // ── FIX 2: Re-verify stock before processing ──
+                    final conflicts = <int>{};
+                    for (int i = 0; i < _cart.length; i++) {
+                      final currentStock =
+                          await _getCurrentStock(_cart[i].variantId);
+                      if (currentStock < _cart[i].quantity) {
+                        conflicts.add(i);
+                      }
+                    }
+                    if (conflicts.isNotEmpty) {
+                      setState(() => _stockConflictItems = conflicts);
+                      Navigator.pop(context);
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                '${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                    setState(() => _stockConflictItems = {});
+
+                    // ── Calculate paid amount ──
+                    double paidAmount;
+                    if (selectedMethod == 'cash') {
+                      paidAmount =
+                          double.tryParse(cashController.text) ?? totalAmount;
+                    } else if (selectedMethod == 'credit') {
+                      paidAmount = 0;
+                    } else {
+                      // mixed
+                      paidAmount =
+                          double.tryParse(cashController.text) ?? 0;
+                    }
+
+                    Navigator.pop(context);
+                    _processPayment(totalAmount, paidAmount,
+                        paymentMethod: selectedMethod);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white),
+                  child: Text(S.t('pos_validate_sale'),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
-      }
+      },
     );
   }
 
   
-  Future<void> _processPayment(double totalAmount, double paidAmount) async {
+  Future<void> _processPayment(double totalAmount, double paidAmount,
+      {String paymentMethod = 'cash'}) async {
     setState(() => _isProcessingPayment = true);
     
     try {
@@ -470,7 +754,7 @@ class _PosScreenState extends State<PosScreen> {
         }).toList(),
         totalAmount: totalAmount,
         paidAmount: paidAmount,
-        paymentMethod: 'cash',
+        paymentMethod: paymentMethod, // FIX 3: was hardcoded 'cash'
         customerId: _selectedCustomerId,
         notes: 'Paiement à la caisse pour facture $invoiceNumber',
       );
@@ -482,7 +766,9 @@ class _PosScreenState extends State<PosScreen> {
         ));
         setState(() {
           _cart.clear();
-          _selectedCustomerId = null; 
+          _selectedCustomerId = null;
+          _selectedCustomerBalance = null;
+          _stockConflictItems.clear();
           _isProcessingPayment = false;
         });
       }
@@ -727,55 +1013,92 @@ class _PosScreenState extends State<PosScreen> {
                                           ),
                                           itemCount: _searchResults.length,
                                           itemBuilder: (context, index) {
-                                            final item = _searchResults[index];
+                                            final item = _searchResults[index] as Map<String, dynamic>;
                                             final imageUrl = item['products']['image_url'];
+                                            // ── FIX 1: Resolve stock for visual state ──
+                                            final stock = _getStockForItem(item);
+                                            final isOutOfStock = stock <= 0;
+                                            final isLowStock = stock > 0 && stock <= 3;
                                             
                                             return Card(
                                               clipBehavior: Clip.antiAlias,
                                               elevation: 2,
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               child: InkWell(
-                                                onTap: () => _addToCart(item),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                  children: [
-                                                    Expanded(
-                                                      child: Container(
-                                                        color: Colors.grey[200],
-                                                        child: imageUrl != null 
-                                                            ? Image.network(imageUrl, fit: BoxFit.cover)
-                                                            : const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+                                                onTap: isOutOfStock ? null : () => _addToCart(item),
+                                                child: Opacity(
+                                                  opacity: isOutOfStock ? 0.35 : 1.0,
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Stack(
+                                                          children: [
+                                                            Container(
+                                                              color: Colors.grey[200],
+                                                              child: imageUrl != null 
+                                                                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                                                                  : const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+                                                            ),
+                                                            // ── Stock badge ──
+                                                            Positioned(
+                                                              top: 8,
+                                                              right: 8,
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color: isOutOfStock
+                                                                      ? Colors.red
+                                                                      : isLowStock
+                                                                          ? Colors.orange
+                                                                          : Colors.green,
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                ),
+                                                                child: Text(
+                                                                  isOutOfStock
+                                                                      ? S.t('pos_out_of_stock')
+                                                                      : stock.toString(),
+                                                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Padding(
-                                                      padding: const EdgeInsets.all(12),
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            item['products']['name'],
-                                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                          const SizedBox(height: 4),
-                                                          _buildVariantColorRow(item['color'], item['size']),
-                                                          Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
-                                                        ],
+                                                      Padding(
+                                                        padding: const EdgeInsets.all(12),
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              item['products']['name'],
+                                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                            const SizedBox(height: 4),
+                                                            _buildVariantColorRow(item['color'], item['size']),
+                                                            Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
+                                                          ],
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Container(
-                                                      color: Colors.indigo[50],
-                                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                                      child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.center,
-                                                        children: [
-                                                          const Icon(Icons.add_shopping_cart, color: Colors.indigo, size: 18),
-                                                          const SizedBox(width: 8),
-                                                          Text(S.t('pos_add_btn'), style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
-                                                        ],
-                                                      ),
-                                                    )
-                                                  ],
+                                                      Container(
+                                                        color: isOutOfStock ? Colors.red[50] : Colors.indigo[50],
+                                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          children: [
+                                                            Icon(isOutOfStock ? Icons.block : Icons.add_shopping_cart,
+                                                                color: isOutOfStock ? Colors.red : Colors.indigo, size: 18),
+                                                            const SizedBox(width: 8),
+                                                            Text(isOutOfStock ? S.t('pos_out_of_stock') : S.t('pos_add_btn'),
+                                                                style: TextStyle(
+                                                                    color: isOutOfStock ? Colors.red : Colors.indigo,
+                                                                    fontWeight: FontWeight.bold)),
+                                                          ],
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             );
@@ -818,67 +1141,92 @@ class _PosScreenState extends State<PosScreen> {
                                     separatorBuilder: (_, __) => const Divider(height: 1),
                                     itemBuilder: (context, index) {
                                       final item = _cart[index];
-                                      return Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                                  Text('${item.size} - ${item.color}', style: const TextStyle(color: Colors.grey)),
-                                                  const SizedBox(height: 8),
-                                                  Wrap(
-                                                    spacing: 8,
-                                                    runSpacing: 8,
-                                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                                    children: [
-                                                      Text(S.t('pos_qty_short'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                      SizedBox(
-                                                        width: 50,
-                                                        child: TextFormField(
-                                                          initialValue: item.quantity.toString(),
-                                                          keyboardType: TextInputType.number,
-                                                          textAlign: TextAlign.center,
-                                                          onChanged: (val) {
-                                                            final q = int.tryParse(val) ?? 1;
-                                                            _updateCartItem(index, q, item.unitPrice);
-                                                          },
+                                      final hasConflict = _stockConflictItems.contains(index);
+                                      return Container(
+                                        decoration: hasConflict
+                                            ? const BoxDecoration(
+                                                border: Border(left: BorderSide(color: Colors.red, width: 4)),
+                                              )
+                                            : null,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(item.productName,
+                                                              style: TextStyle(
+                                                                  fontWeight: FontWeight.bold,
+                                                                  fontSize: 16,
+                                                                  color: hasConflict ? Colors.red : null)),
                                                         ),
-                                                      ),
-                                                      Text(S.t('pos_unit_price'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                      SizedBox(
-                                                        width: 70,
-                                                        child: TextFormField(
-                                                          initialValue: item.unitPrice > 0 ? item.unitPrice.toString() : '',
-                                                          keyboardType: TextInputType.number,
-                                                          textAlign: TextAlign.center,
-                                                          decoration: const InputDecoration(hintText: '0.00'),
-                                                          onChanged: (val) {
-                                                            final p = double.tryParse(val) ?? 0.0;
-                                                            _updateCartItem(index, item.quantity, p);
-                                                          },
+                                                        if (hasConflict)
+                                                          const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                                                      ],
+                                                    ),
+                                                    Text('${item.size} - ${item.color}',
+                                                        style: TextStyle(color: hasConflict ? Colors.red[300] : Colors.grey)),
+                                                    const SizedBox(height: 8),
+                                                    Wrap(
+                                                      spacing: 8,
+                                                      runSpacing: 8,
+                                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                                      children: [
+                                                        Text(S.t('pos_qty_short'),
+                                                            style: TextStyle(fontWeight: FontWeight.bold, color: hasConflict ? Colors.red : null)),
+                                                        SizedBox(
+                                                          width: 50,
+                                                          child: TextFormField(
+                                                            initialValue: item.quantity.toString(),
+                                                            keyboardType: TextInputType.number,
+                                                            textAlign: TextAlign.center,
+                                                            onChanged: (val) {
+                                                              final q = int.tryParse(val) ?? 1;
+                                                              _updateCartItem(index, q, item.unitPrice);
+                                                              setState(() => _stockConflictItems.remove(index));
+                                                            },
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons.close, color: Colors.red),
-                                                  onPressed: () => setState(() => _cart.removeAt(index)),
+                                                        Text(S.t('pos_unit_price'),
+                                                            style: TextStyle(fontWeight: FontWeight.bold, color: hasConflict ? Colors.red : null)),
+                                                        SizedBox(
+                                                          width: 70,
+                                                          child: TextFormField(
+                                                            initialValue: item.unitPrice > 0 ? item.unitPrice.toString() : '',
+                                                            keyboardType: TextInputType.number,
+                                                            textAlign: TextAlign.center,
+                                                            decoration: const InputDecoration(hintText: '0.00'),
+                                                            onChanged: (val) {
+                                                              final p = double.tryParse(val) ?? 0.0;
+                                                              _updateCartItem(index, item.quantity, p);
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ),
-                                                const SizedBox(height: 8),
-                                                Text('${item.totalPrice.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                              ],
-                                            )
-                                          ],
+                                              ),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.close, color: Colors.red),
+                                                    onPressed: () => setState(() => _cart.removeAt(index)),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Text('${item.totalPrice.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: hasConflict ? Colors.red : null)),
+                                                ],
+                                              )
+                                            ],
+                                          ),
                                         ),
                                       );
                                     },
@@ -912,7 +1260,15 @@ class _PosScreenState extends State<PosScreen> {
                                         child: Text(c['full_name'] as String),
                                       )),
                                     ],
-                                    onChanged: (val) => setState(() => _selectedCustomerId = val),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedCustomerId = val;
+                                        _selectedCustomerBalance = null;
+                                      });
+                                      if (val != null) {
+                                        _cacheCustomerBalance(val);
+                                      }
+                                    },
                                   ),
                                   const SizedBox(height: 16),
 
