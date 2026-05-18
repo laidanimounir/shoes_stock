@@ -247,8 +247,7 @@ class SyncEngine {
   Future<Map<String, dynamic>?> _rpcProcessRefund(
       Map<String, dynamic> p) async {
     final res = await _client.rpc('process_refund', params: p);
-    // process_refund returns a UUID string directly
-    if (res is String) return {'id': res};
+    if (res is Map) return Map<String, dynamic>.from(res);
     return null;
   }
 

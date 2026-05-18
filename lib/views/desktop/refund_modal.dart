@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../services/refund_service.dart';
@@ -15,7 +14,7 @@ class RefundModal extends StatefulWidget {
 
 class _RefundModalState extends State<RefundModal> {
   final _reasonController = TextEditingController();
-  final _refundService = RefundService();
+  final _refundService = RefundService.instance;
   bool _isLoading = false;
 
   // Track checked state and quantity to refund for each item
@@ -94,29 +93,19 @@ class _RefundModalState extends State<RefundModal> {
       // Find original invoice ID. From sales_history it might be in 'invoice_id' if transaction.
       final invoiceId = widget.invoice['invoice_id'] ?? widget.invoice['id'];
 
-      final refundId = await _refundService.processRefund(
-        invoiceId,
-        itemsPayload,
-        _totalRefundAmount,
+      await _refundService.processRefund(
+        invoiceId: invoiceId,
+        items: itemsPayload,
+        refundAmount: _totalRefundAmount,
         reason: _reasonController.text.trim(),
+        storeId: widget.invoice['store_id'] ?? AppSession.currentStoreId ?? '',
       );
 
       // ignore: use_build_context_synchronously
       if (!context.mounted) return;
 
-      // Log activity
-      try {
-        await Supabase.instance.client.from('activity_logs').insert({
-          'user_id': AppSession.currentUserId,
-          'action_type': 'refund',
-          'description': 'Refund #$refundId for invoice ${widget.invoice['invoice_number']} (${widget.isOwner ? 'owner' : 'employee'})',
-          'invoice_id': invoiceId,
-          'amount': _totalRefundAmount,
-        });
-      } catch (_) {}
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${S.t('refund_success')} $refundId'), backgroundColor: Colors.green),
+        SnackBar(content: Text(S.t('refund_success')), backgroundColor: Colors.green),
       );
       Navigator.of(context).pop(true); // Return true to indicate refresh
     } catch (e) {

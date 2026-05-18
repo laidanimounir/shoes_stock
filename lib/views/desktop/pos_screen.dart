@@ -18,6 +18,7 @@ import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../services/invoice_service.dart';
+import '../../services/refund_service.dart';
 
 // ─────────────────────────────────────────────
 //  DESIGN TOKENS — Odoo-inspired clean palette
@@ -392,7 +393,6 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       });
     }
     _searchController.clear();
-    _searchProduct('');
   }
 
   void _updateCartItem(int index, int qty, double price) {
@@ -1058,6 +1058,24 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                           style: const TextStyle(fontSize: 9, color: _C.warning, fontWeight: FontWeight.w700)),
                     ),
                   ],
+                  if (pending > 0) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: _isOnline ? Colors.orange[100] : Colors.red[100],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$pending ${S.t('pos_pending_ops')}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _isOnline ? Colors.orange[800] : Colors.red[700],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(width: 10),
                   Text(_currentDateTimeStr,
                       style: const TextStyle(fontSize: 11, color: Colors.white60)),
@@ -1065,6 +1083,41 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               ),
 
               const Spacer(),
+
+              // Print preference toggle
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      if (AppSession.autoPrintTicket == true) {
+                        AppSession.autoPrintTicket = false;
+                      } else {
+                        AppSession.autoPrintTicket = true;
+                      }
+                      AppSession.posTicketPreferenceSet = true;
+                    });
+                  },
+                  icon: Icon(
+                    AppSession.autoPrintTicket == true
+                        ? Icons.print
+                        : Icons.print_disabled,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                  label: Text(
+                    AppSession.autoPrintTicket == true
+                        ? S.t('pos_print_auto_short')
+                        : S.t('pos_print_manual_short'),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
 
               // Tab switcher — inline buttons
               Container(
@@ -2452,27 +2505,51 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
                 decoration: const BoxDecoration(border: Border(top: BorderSide(color: _C.border))),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _snack(S.t('pos_inv_print_pending'), _C.accent);
-                      },
-                      icon: const Icon(Icons.print_rounded, size: 15),
-                      label: Text(S.t('pos_inv_reprint'), style: const TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _C.accent,
-                        side: const BorderSide(color: _C.accent),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _snack(S.t('pos_inv_print_pending'), _C.accent);
+                          },
+                          icon: const Icon(Icons.print_rounded, size: 15),
+                          label: Text(S.t('pos_inv_reprint'), style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _C.accent,
+                            side: const BorderSide(color: _C.accent),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(S.t('action_close'), style: const TextStyle(color: _C.textMid)),
+                        ),
+                      ],
+                    ),
+                    if (_canRefundInvoice(invoice))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showRefundDialog(ctx, invoice),
+                            icon: const Icon(Icons.undo, size: 16, color: Colors.red),
+                            label: Text(
+                              S.t('pos_refund_btn'),
+                              style: const TextStyle(color: Colors.red, fontSize: 13),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(S.t('action_close'), style: const TextStyle(color: _C.textMid)),
-                    ),
                   ],
                 ),
               ),
@@ -2538,6 +2615,210 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         const Spacer(),
         Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.textDark)),
       ],
+    );
+  }
+
+  // ── REFUND ────────────────────────────────────
+  bool _canRefundInvoice(Map<String, dynamic> invoice) {
+    final status = invoice['status'] as String? ?? '';
+    if (status == 'refunded' || status == 'partial_refund') return false;
+    final createdAt = invoice['createdAt'] as DateTime?;
+    if (createdAt == null) return false;
+    final now = DateTime.now();
+    return createdAt.year == now.year &&
+        createdAt.month == now.month &&
+        createdAt.day == now.day;
+  }
+
+  Future<void> _showRefundDialog(
+      BuildContext parentCtx, Map<String, dynamic> invoice) async {
+    final invoiceId = invoice['id'] as String;
+    final reasonController = TextEditingController();
+    bool isProcessing = false;
+
+    final items = await _fetchInvoiceItems(invoiceId);
+    if (items.isEmpty || !mounted) return;
+
+    final selectedItems = <int, bool>{};
+    for (int i = 0; i < items.length; i++) {
+      selectedItems[i] = true;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setRefundState) {
+          double refundTotal = 0;
+          final refundItems = <Map<String, dynamic>>[];
+          for (int i = 0; i < items.length; i++) {
+            if (selectedItems[i] == true) {
+              final item = items[i];
+              final qty = (item['quantity'] as int?) ?? 0;
+              final price = (item['unit_price'] as num?)?.toDouble() ?? 0;
+              refundTotal += qty * price;
+              final variant = item['product_variants'] as Map<String, dynamic>?;
+              refundItems.add({
+                'variant_id': variant != null ? variant['id'] ?? '' : '',
+                'quantity': qty,
+                'unit_price': price,
+              });
+            }
+          }
+
+          return AlertDialog(
+            title: Text(S.t('pos_refund_title')),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 460,
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        border: const Border(
+                          left: BorderSide(color: Colors.red, width: 3),
+                        ),
+                      ),
+                      child: Text(
+                        S.t('pos_refund_warning'),
+                        style: TextStyle(fontSize: 12, color: Colors.red[800]),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      S.t('pos_refund_select_items'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    ...items.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final item = entry.value;
+                      final variant =
+                          item['product_variants'] as Map<String, dynamic>?;
+                      final product =
+                          variant?['products'] as Map<String, dynamic>?;
+                      final name = product?['name'] as String? ?? '';
+                      final size = variant?['size'] as String? ?? '';
+                      final qty = (item['quantity'] as int?) ?? 0;
+                      final price =
+                          (item['unit_price'] as num?)?.toDouble() ?? 0;
+                      return CheckboxListTile(
+                        dense: true,
+                        value: selectedItems[i] ?? false,
+                        onChanged: (val) =>
+                            setRefundState(() => selectedItems[i] = val ?? false),
+                        title: Text('$name $size',
+                            style: const TextStyle(fontSize: 13)),
+                        subtitle: Text(
+                          'x$qty — ${price.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(S.t('pos_refund_total'),
+                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          '${refundTotal.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[700],
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: S.t('pos_refund_reason'),
+                        hintText: S.t('pos_refund_reason_hint'),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.all(10),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isProcessing ? null : () => Navigator.pop(ctx),
+                child: Text(S.t('action_cancel'),
+                    style: const TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: (isProcessing || refundItems.isEmpty)
+                    ? null
+                    : () async {
+                        setRefundState(() => isProcessing = true);
+                        try {
+                          await RefundService.instance.processRefund(
+                            invoiceId: invoiceId,
+                            items: refundItems,
+                            refundAmount: refundTotal,
+                            reason: reasonController.text.trim(),
+                            storeId: _selectedStoreId!,
+                          );
+                          if (mounted) {
+                            Navigator.pop(ctx);
+                            Navigator.pop(parentCtx);
+                            _loadTodayInvoices();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(S.t('pos_refund_success')),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          setRefundState(() => isProcessing = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${S.t('pos_error')} $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(S.t('pos_refund_confirm')),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
