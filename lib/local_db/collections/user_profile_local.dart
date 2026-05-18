@@ -8,9 +8,17 @@ class UserProfileLocal {
 
   late String supabaseId;
   late String fullName;
-  late String role; // UserRole.toSupabaseString(): 'owner' | 'employee'
+  late String role;
   String? storeId;
   bool isActive = true;
   DateTime? createdAt;
   DateTime? updatedAt;
+
+  String? firstName;
+  String? lastName;
+  String? phone;
+  String? address;
+  String? jobTitle;
+  DateTime? hiredAt;
+  bool isPermanentlyDeleted = false;
 }

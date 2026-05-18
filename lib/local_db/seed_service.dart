@@ -226,7 +226,14 @@ class SeedService {
         ..storeId = j['store_id'] as String?
         ..isActive = j['is_active'] as bool? ?? true
         ..createdAt = _parseDate(j['created_at'])
-        ..updatedAt = _parseDate(j['updated_at']);
+        ..updatedAt = _parseDate(j['updated_at'])
+        ..firstName = j['first_name'] as String?
+        ..lastName = j['last_name'] as String?
+        ..phone = j['phone'] as String?
+        ..address = j['address'] as String?
+        ..jobTitle = j['job_title'] as String?
+        ..hiredAt = _parseDate(j['hired_at'])
+        ..isPermanentlyDeleted = j['is_permanently_deleted'] as bool? ?? false;
 
   CustomerLocal _mapCustomer(Map<String, dynamic> j) => CustomerLocal()
     ..supabaseId = j['id'] as String

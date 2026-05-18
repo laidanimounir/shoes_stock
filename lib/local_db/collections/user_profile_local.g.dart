@@ -17,38 +17,73 @@ const UserProfileLocalSchema = CollectionSchema(
   name: r'UserProfileLocal',
   id: -162739588724510973,
   properties: {
-    r'createdAt': PropertySchema(
+    r'address': PropertySchema(
       id: 0,
+      name: r'address',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 1,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
+    r'firstName': PropertySchema(
+      id: 2,
+      name: r'firstName',
+      type: IsarType.string,
+    ),
     r'fullName': PropertySchema(
-      id: 1,
+      id: 3,
       name: r'fullName',
       type: IsarType.string,
     ),
+    r'hiredAt': PropertySchema(
+      id: 4,
+      name: r'hiredAt',
+      type: IsarType.dateTime,
+    ),
     r'isActive': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'isActive',
       type: IsarType.bool,
     ),
+    r'isPermanentlyDeleted': PropertySchema(
+      id: 6,
+      name: r'isPermanentlyDeleted',
+      type: IsarType.bool,
+    ),
+    r'jobTitle': PropertySchema(
+      id: 7,
+      name: r'jobTitle',
+      type: IsarType.string,
+    ),
+    r'lastName': PropertySchema(
+      id: 8,
+      name: r'lastName',
+      type: IsarType.string,
+    ),
+    r'phone': PropertySchema(
+      id: 9,
+      name: r'phone',
+      type: IsarType.string,
+    ),
     r'role': PropertySchema(
-      id: 3,
+      id: 10,
       name: r'role',
       type: IsarType.string,
     ),
     r'storeId': PropertySchema(
-      id: 4,
+      id: 11,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 5,
+      id: 12,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 6,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -73,7 +108,37 @@ int _userProfileLocalEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.firstName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.fullName.length * 3;
+  {
+    final value = object.jobTitle;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.lastName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.phone;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.role.length * 3;
   {
     final value = object.storeId;
@@ -91,13 +156,20 @@ void _userProfileLocalSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.fullName);
-  writer.writeBool(offsets[2], object.isActive);
-  writer.writeString(offsets[3], object.role);
-  writer.writeString(offsets[4], object.storeId);
-  writer.writeString(offsets[5], object.supabaseId);
-  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeString(offsets[0], object.address);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeString(offsets[2], object.firstName);
+  writer.writeString(offsets[3], object.fullName);
+  writer.writeDateTime(offsets[4], object.hiredAt);
+  writer.writeBool(offsets[5], object.isActive);
+  writer.writeBool(offsets[6], object.isPermanentlyDeleted);
+  writer.writeString(offsets[7], object.jobTitle);
+  writer.writeString(offsets[8], object.lastName);
+  writer.writeString(offsets[9], object.phone);
+  writer.writeString(offsets[10], object.role);
+  writer.writeString(offsets[11], object.storeId);
+  writer.writeString(offsets[12], object.supabaseId);
+  writer.writeDateTime(offsets[13], object.updatedAt);
 }
 
 UserProfileLocal _userProfileLocalDeserialize(
@@ -107,14 +179,21 @@ UserProfileLocal _userProfileLocalDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = UserProfileLocal();
-  object.createdAt = reader.readDateTimeOrNull(offsets[0]);
-  object.fullName = reader.readString(offsets[1]);
-  object.isActive = reader.readBool(offsets[2]);
+  object.address = reader.readStringOrNull(offsets[0]);
+  object.createdAt = reader.readDateTimeOrNull(offsets[1]);
+  object.firstName = reader.readStringOrNull(offsets[2]);
+  object.fullName = reader.readString(offsets[3]);
+  object.hiredAt = reader.readDateTimeOrNull(offsets[4]);
+  object.isActive = reader.readBool(offsets[5]);
+  object.isPermanentlyDeleted = reader.readBool(offsets[6]);
   object.isarId = id;
-  object.role = reader.readString(offsets[3]);
-  object.storeId = reader.readStringOrNull(offsets[4]);
-  object.supabaseId = reader.readString(offsets[5]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.jobTitle = reader.readStringOrNull(offsets[7]);
+  object.lastName = reader.readStringOrNull(offsets[8]);
+  object.phone = reader.readStringOrNull(offsets[9]);
+  object.role = reader.readString(offsets[10]);
+  object.storeId = reader.readStringOrNull(offsets[11]);
+  object.supabaseId = reader.readString(offsets[12]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[13]);
   return object;
 }
 
@@ -126,18 +205,32 @@ P _userProfileLocalDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
+      return (reader.readString(offset)) as P;
+    case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -240,6 +333,160 @@ extension UserProfileLocalQueryWhere
 extension UserProfileLocalQueryFilter
     on QueryBuilder<UserProfileLocal, UserProfileLocal, QFilterCondition> {
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'address',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'address',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      addressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
       createdAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -309,6 +556,160 @@ extension UserProfileLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'firstName',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'firstName',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'firstName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'firstName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'firstName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'firstName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      firstNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'firstName',
+        value: '',
       ));
     });
   }
@@ -450,10 +851,94 @@ extension UserProfileLocalQueryFilter
   }
 
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'hiredAt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'hiredAt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hiredAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'hiredAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'hiredAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      hiredAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'hiredAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
       isActiveEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isActive',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      isPermanentlyDeletedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isPermanentlyDeleted',
         value: value,
       ));
     });
@@ -511,6 +996,468 @@ extension UserProfileLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'jobTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'jobTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'jobTitle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'jobTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'jobTitle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'jobTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      jobTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'jobTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastName',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastName',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'lastName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'lastName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      lastNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'lastName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'phone',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'phone',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterFilterCondition>
+      phoneIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'phone',
+        value: '',
       ));
     });
   }
@@ -1025,6 +1972,20 @@ extension UserProfileLocalQueryLinks
 extension UserProfileLocalQuerySortBy
     on QueryBuilder<UserProfileLocal, UserProfileLocal, QSortBy> {
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
       sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1035,6 +1996,20 @@ extension UserProfileLocalQuerySortBy
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByFirstName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByFirstNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstName', Sort.desc);
     });
   }
 
@@ -1053,6 +2028,20 @@ extension UserProfileLocalQuerySortBy
   }
 
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByHiredAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hiredAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByHiredAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hiredAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
       sortByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -1063,6 +2052,61 @@ extension UserProfileLocalQuerySortBy
       sortByIsActiveDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByIsPermanentlyDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPermanentlyDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByIsPermanentlyDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPermanentlyDeleted', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByJobTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'jobTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByJobTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'jobTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByLastName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByLastNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy> sortByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      sortByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
     });
   }
 
@@ -1125,6 +2169,20 @@ extension UserProfileLocalQuerySortBy
 extension UserProfileLocalQuerySortThenBy
     on QueryBuilder<UserProfileLocal, UserProfileLocal, QSortThenBy> {
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
       thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1135,6 +2193,20 @@ extension UserProfileLocalQuerySortThenBy
       thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByFirstName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByFirstNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstName', Sort.desc);
     });
   }
 
@@ -1153,6 +2225,20 @@ extension UserProfileLocalQuerySortThenBy
   }
 
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByHiredAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hiredAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByHiredAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hiredAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
       thenByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -1167,6 +2253,20 @@ extension UserProfileLocalQuerySortThenBy
   }
 
   QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByIsPermanentlyDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPermanentlyDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByIsPermanentlyDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPermanentlyDeleted', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
       thenByIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.asc);
@@ -1177,6 +2277,47 @@ extension UserProfileLocalQuerySortThenBy
       thenByIsarIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByJobTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'jobTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByJobTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'jobTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByLastName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByLastNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy> thenByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QAfterSortBy>
+      thenByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
     });
   }
 
@@ -1238,10 +2379,24 @@ extension UserProfileLocalQuerySortThenBy
 
 extension UserProfileLocalQueryWhereDistinct
     on QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct> {
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct> distinctByAddress(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'address', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
+      distinctByFirstName({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'firstName', caseSensitive: caseSensitive);
     });
   }
 
@@ -1253,9 +2408,44 @@ extension UserProfileLocalQueryWhereDistinct
   }
 
   QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
+      distinctByHiredAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hiredAt');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
       distinctByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isActive');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
+      distinctByIsPermanentlyDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isPermanentlyDeleted');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
+      distinctByJobTitle({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'jobTitle', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct>
+      distinctByLastName({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, UserProfileLocal, QDistinct> distinctByPhone(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'phone', caseSensitive: caseSensitive);
     });
   }
 
@@ -1296,10 +2486,23 @@ extension UserProfileLocalQueryProperty
     });
   }
 
+  QueryBuilder<UserProfileLocal, String?, QQueryOperations> addressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'address');
+    });
+  }
+
   QueryBuilder<UserProfileLocal, DateTime?, QQueryOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, String?, QQueryOperations>
+      firstNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'firstName');
     });
   }
 
@@ -1309,9 +2512,41 @@ extension UserProfileLocalQueryProperty
     });
   }
 
+  QueryBuilder<UserProfileLocal, DateTime?, QQueryOperations>
+      hiredAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hiredAt');
+    });
+  }
+
   QueryBuilder<UserProfileLocal, bool, QQueryOperations> isActiveProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isActive');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, bool, QQueryOperations>
+      isPermanentlyDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isPermanentlyDeleted');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, String?, QQueryOperations> jobTitleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'jobTitle');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, String?, QQueryOperations> lastNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastName');
+    });
+  }
+
+  QueryBuilder<UserProfileLocal, String?, QQueryOperations> phoneProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'phone');
     });
   }
 
