@@ -10,6 +10,7 @@ import '../../core/sync_engine.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/transaction_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/customer_local.dart';
@@ -68,10 +69,8 @@ class _PosScreenState extends State<PosScreen> {
 
   StreamSubscription<List<Map<String, dynamic>>>? _inventorySubscription;
 
-  // FIX 3: Rebuild today-sales tab after sync completes
+  // Listen for sync completions → reload today invoices
   StreamSubscription<void>? _syncCompleteSubscription;
-  // Key used to force-rebuild the FutureBuilder in today-sales tab
-  UniqueKey _todaySalesKey = UniqueKey();
 
   String _barcodeBuffer = '';
   DateTime? _lastKeyPress;
@@ -91,17 +90,31 @@ class _PosScreenState extends State<PosScreen> {
   /// Index of the cart item currently in direct-qty-edit mode, or null.
   int? _editingQtyIndex;
 
+  // ── TODAY'S INVOICES STATE ──
+  List<Map<String, dynamic>> _allInvoices = [];
+  List<Map<String, dynamic>> _filteredInvoices = [];
+  int _dailyInvoiceCounter = 0;
+  String? _lastInvoiceDate;
+  int _invoiceCurrentPage = 0;
+  String _invoiceFilter = 'all';
+  final _invoiceSearchController = TextEditingController();
+  String _invoiceSearchQuery = '';
+  Timer? _invoiceSearchDebounce;
+  bool _isLoadingInvoices = false;
+
+  static const int _invoicePageSize = 15;
+
   @override
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
     _fetchInitialData();
 
-    // FIX 3: Listen for sync completions → rebuild today-sales tab
+    // Listen for sync completions → reload today invoices
     _syncCompleteSubscription =
         SyncEngine.instance.onSyncComplete.listen((_) {
       if (mounted) {
-        setState(() => _todaySalesKey = UniqueKey());
+        _loadTodayInvoices();
       }
     });
 
@@ -139,6 +152,8 @@ class _PosScreenState extends State<PosScreen> {
     _syncCompleteSubscription?.cancel();
     _dateTimer?.cancel();
     _pulseTimer?.cancel();
+    _invoiceSearchDebounce?.cancel();
+    _invoiceSearchController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -204,6 +219,7 @@ class _PosScreenState extends State<PosScreen> {
         setState(() => _isLoading = false);
       }
       _searchProduct('');
+      _loadTodayInvoices();
       return;
     }
 
@@ -241,6 +257,7 @@ class _PosScreenState extends State<PosScreen> {
         }
         
         _searchProduct('');
+        _loadTodayInvoices();
       }
     } catch (e) {
       debugPrint("Error fetching initial data: $e");
@@ -505,15 +522,6 @@ class _PosScreenState extends State<PosScreen> {
     }
   }
 
-  /// Caches the available stock for all items currently in the cart.
-  Future<void> _cacheCartStock() async {
-    for (final item in _cart) {
-      if (!_cachedStock.containsKey(item.variantId)) {
-        _cachedStock[item.variantId] = await _getCurrentStock(item.variantId);
-      }
-    }
-  }
-
   void _showPaymentDialog() {
     if (_cart.isEmpty) return;
     
@@ -763,22 +771,75 @@ class _PosScreenState extends State<PosScreen> {
                         conflicts.add(i);
                       }
                     }
-                      if (conflicts.isNotEmpty) {
-                        setState(() => _stockConflictItems = conflicts);
-                        Navigator.pop(context);
-                        if (mounted) {
-                          ScaffoldMessenger.of(this.context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  '${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                    if (conflicts.isNotEmpty) {
+                      setState(() => _stockConflictItems = conflicts);
+                      Navigator.pop(context);
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                '${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
-                    },
-                    child: Text(S.t('pos_confirm_payment')),
-                  ),
+                      return;
+                    }
+
+                    // No conflicts → process sale
+                    setState(() => _isProcessingPayment = true);
+                    final paidAmount = selectedMethod == 'cash'
+                        ? (double.tryParse(cashController.text) ?? totalAmount)
+                        : (selectedMethod == 'credit' ? 0.0 : (double.tryParse(cashController.text) ?? 0));
+                    final items = _cart.map((item) => {
+                      'variant_id': item.variantId,
+                      'quantity': item.quantity,
+                      'unit_price': item.unitPrice,
+                      'total_price': item.totalPrice,
+                    }).toList();
+
+                    try {
+                      await InvoiceService.instance.processSale(
+                        storeId: _selectedStoreId!,
+                        invoiceNumber: _generateInvoiceNumber(),
+                        items: items,
+                        totalAmount: totalAmount,
+                        paidAmount: paidAmount,
+                        paymentMethod: selectedMethod,
+                        customerId: _selectedCustomerId,
+                      );
+                      setState(() => _isProcessingPayment = false);
+                      Navigator.pop(context);
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text(S.t('pos_sale_success')),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        setState(() {
+                          _cart.clear();
+                          _selectedCustomerId = null;
+                          _selectedCustomerBalance = null;
+                          _stockConflictItems = {};
+                          _cachedStock.clear();
+                        });
+                        _loadTodayInvoices();
+                      }
+                    } catch (e) {
+                      setState(() => _isProcessingPayment = false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(
+                            content: Text('${S.t('pos_error')} $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Text(S.t('pos_confirm_payment')),
+                ),
 
               ],
             );
@@ -1406,10 +1467,651 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   Widget _buildTodaySalesTab() {
-    return Center(
-      child: Text(S.t('pos_today_invoices'),
-          style: const TextStyle(fontSize: 18, color: Colors.grey)),
+    return Column(
+      children: [
+        _buildSearchFilterBar(),
+        const Divider(height: 1),
+        Expanded(
+          child: _isLoadingInvoices
+              ? const Center(child: CircularProgressIndicator(strokeWidth: 3))
+              : _filteredInvoices.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                          const SizedBox(height: 12),
+                          Text(
+                            _allInvoices.isEmpty
+                                ? S.t('pos_no_today_invoices')
+                                : S.t('pos_no_invoice_today'),
+                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _getPageInvoices().length,
+                      itemBuilder: (context, index) {
+                        final inv = _getPageInvoices()[index];
+                        return _buildInvoiceRow(inv, _allInvoices.indexOf(inv));
+                      },
+                    ),
+        ),
+        if (_computeTotalPages() > 1) _buildPaginationControls(),
+      ],
     );
+  }
+
+  // ── SEARCH + FILTER BAR ──
+  Widget _buildSearchFilterBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      color: Colors.white,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 36,
+            child: TextField(
+              controller: _invoiceSearchController,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: S.t('pos_inv_search_hint'),
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _invoiceSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          _invoiceSearchController.clear();
+                          _invoiceSearchQuery = '';
+                          setState(() => _applyInvoiceFilters());
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                isDense: true,
+              ),
+              onChanged: (val) {
+                _invoiceSearchQuery = val;
+                _invoiceSearchDebounce?.cancel();
+                _invoiceSearchDebounce = Timer(const Duration(milliseconds: 300), () {
+                  if (mounted) setState(() => _applyInvoiceFilters());
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _filterChip('all', _invoiceFilter == 'all'),
+              const SizedBox(width: 4),
+              _filterChip('paid', _invoiceFilter == 'paid'),
+              const SizedBox(width: 4),
+              _filterChip('credit', _invoiceFilter == 'credit'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip(String filterKey, bool isSelected) {
+    String label;
+    switch (filterKey) {
+      case 'paid': label = S.t('pos_inv_filter_paid'); break;
+      case 'credit': label = S.t('pos_inv_filter_credit'); break;
+      default: label = S.t('pos_inv_filter_all');
+    }
+    return GestureDetector(
+      onTap: () {
+        if (_invoiceFilter != filterKey) {
+          _invoiceFilter = filterKey;
+          setState(() => _applyInvoiceFilters());
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.indigo[50] : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? Colors.indigo : Colors.grey[300]!,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? Colors.indigo : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── INVOICE ROW ──
+  Widget _buildInvoiceRow(Map<String, dynamic> inv, int globalIndex) {
+    final isCredit = inv['status'] == 'partial' || inv['status'] == 'unpaid';
+    final total = (inv['total_amount'] as num?)?.toDouble() ?? 0;
+    final paid = (inv['paid_amount'] as num?)?.toDouble() ?? 0;
+    final remaining = total - paid;
+    final createdAt = inv['createdAt'] as DateTime? ?? (inv['created_at'] as DateTime?);
+    final invNum = inv['invoice_number'] as String? ?? '';
+    final clientName = _getCustomerName(inv);
+    final bgColor = globalIndex.isEven ? Colors.transparent : Colors.grey.withOpacity(0.03);
+
+    return Container(
+      color: bgColor,
+      child: InkWell(
+        onTap: () => _showInvoiceDetail(inv),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      invNum,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      clientName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isCredit ? Colors.amber[800] : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  createdAt != null ? _formatInvoiceDateTime(createdAt) : '',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  '${_formatPrice(total)} ${S.t('misc_currency')}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+              if (isCredit) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '${_formatPrice(remaining)} ${S.t('misc_currency')}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: remaining > 0 ? Colors.red[600] : Colors.amber,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Icon(
+                isCredit ? Icons.warning_amber_rounded : Icons.check_circle,
+                size: 18,
+                color: isCredit ? Colors.amber : Colors.green[600],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── PAGINATION ──
+  Widget _buildPaginationControls() {
+    final totalPages = _computeTotalPages();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: Colors.white,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextButton.icon(
+            onPressed: _invoiceCurrentPage > 0
+                ? () => setState(() => _invoiceCurrentPage--)
+                : null,
+            icon: const Icon(Icons.chevron_left, size: 18),
+            label: Text(
+              S.t('pos_inv_page_prev'),
+              style: const TextStyle(fontSize: 12),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: _invoiceCurrentPage > 0 ? Colors.indigo : Colors.grey[400],
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          Text(
+            _pageLabel(totalPages),
+            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          ),
+          TextButton.icon(
+            onPressed: _invoiceCurrentPage < totalPages - 1
+                ? () => setState(() => _invoiceCurrentPage++)
+                : null,
+            icon: const Icon(Icons.chevron_right, size: 18),
+            label: Text(
+              S.t('pos_inv_page_next'),
+              style: const TextStyle(fontSize: 12),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: _invoiceCurrentPage < totalPages - 1 ? Colors.indigo : Colors.grey[400],
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _computeTotalPages() {
+    if (_filteredInvoices.isEmpty) return 1;
+    return (_filteredInvoices.length / _invoicePageSize).ceil();
+  }
+
+  List<Map<String, dynamic>> _getPageInvoices() {
+    final start = _invoiceCurrentPage * _invoicePageSize;
+    final end = (start + _invoicePageSize).clamp(0, _filteredInvoices.length);
+    if (start >= _filteredInvoices.length) return [];
+    return _filteredInvoices.sublist(start, end);
+  }
+
+  String _pageLabel(int total) {
+    final current = _invoiceCurrentPage + 1;
+    final raw = S.t('pos_inv_page_of');
+    return raw.replaceAll('{current}', '$current').replaceAll('{total}', '$total');
+  }
+
+  // ── INVOICE DETAIL MODAL ──
+  Future<void> _showInvoiceDetail(Map<String, dynamic> invoice) async {
+    final invoiceId = invoice['id'] as String;
+    final total = (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+    final paid = (invoice['paid_amount'] as num?)?.toDouble() ?? 0;
+    final remaining = total - paid;
+    final isCredit = invoice['status'] == 'partial' || invoice['status'] == 'unpaid';
+    final createdAt = invoice['createdAt'] as DateTime? ?? (invoice['created_at'] as DateTime?);
+    final invNum = invoice['invoice_number'] as String? ?? '';
+    final clientName = _getCustomerName(invoice);
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => FutureBuilder<List<Map<String, dynamic>>>(
+        future: _fetchInvoiceItems(invoiceId),
+        builder: (ctx, snapshot) {
+          final items = snapshot.data ?? [];
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          return AlertDialog(
+            titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        invNum,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isCredit ? Colors.amber[50] : Colors.green[50],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isCredit ? S.t('pos_inv_credit_status') : S.t('pos_paid'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isCredit ? Colors.amber[800] : Colors.green[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$clientName  •  ${createdAt != null ? _formatInvoiceDateTime(createdAt) : ''}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: 480,
+              child: isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 3)),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Divider(),
+                          if (items.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Text(S.t('pos_inv_no_items'),
+                                  style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                            )
+                          else ...[
+                            Text(S.t('pos_inv_articles'),
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            const SizedBox(height: 8),
+                            ...items.map((item) => _buildDetailItemRow(item)),
+                          ],
+                          const Divider(),
+                          _buildDetailTotalRow(S.t('label_total'), _formatPrice(total), false),
+                          _buildDetailTotalRow(S.t('pos_inv_paid_label'), _formatPrice(paid), false),
+                          _buildDetailTotalRow(
+                            S.t('pos_inv_remaining_label'),
+                            _formatPrice(remaining),
+                            true,
+                            remaining > 0 ? Colors.red[700] : Colors.green[700],
+                          ),
+                          const Divider(),
+                          _buildDetailInfoRow(S.t('pos_inv_mode'), _getPaymentMethod(invoice)),
+                          _buildDetailInfoRow(S.t('pos_inv_seller'), _getSellerName(invoice)),
+                          const Divider(),
+                          Row(
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(content: Text(S.t('pos_inv_print_pending'))),
+                                  );
+                                },
+                                icon: const Icon(Icons.print, size: 16),
+                                label: Text(S.t('pos_inv_reprint'), style: const TextStyle(fontSize: 12)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.indigo,
+                                  side: const BorderSide(color: Colors.indigo),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(S.t('action_close'),
+                    style: const TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailItemRow(Map<String, dynamic> item) {
+    final qty = item['quantity'] as int? ?? 0;
+    final totalPrice = (item['total_price'] as num?)?.toDouble() ?? 0;
+    final variant = item['product_variants'] as Map<String, dynamic>?;
+    final product = variant?['products'] as Map<String, dynamic>?;
+    final prodName = product?['name'] as String? ?? '';
+    final size = variant?['size'] as String? ?? '';
+    final color = variant?['color'] as String? ?? '';
+    final label = '$prodName${size.isNotEmpty ? ' $size' : ''}${color.isNotEmpty ? ' $color' : ''}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text('x$qty', style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 90,
+            child: Text(
+              '${_formatPrice(totalPrice)} ${S.t('misc_currency')}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailTotalRow(String label, String value, bool isRemaining, [Color? valueColor]) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700]))),
+          Text(
+            '$value ${S.t('misc_currency')}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isRemaining ? FontWeight.w600 : FontWeight.normal,
+              color: valueColor ?? Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700]))),
+          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchInvoiceItems(String invoiceId) async {
+    if (AppSession.isOfflineMode) {
+      try {
+        final isar = await IsarService.getInstance();
+        final txs = await isar.transactionLocals
+            .filter()
+            .invoiceIdEqualTo(invoiceId)
+            .findAll();
+        return txs.map((tx) => <String, dynamic>{
+          'quantity': tx.quantity,
+          'unit_price': tx.unitPrice,
+          'total_price': tx.totalPrice,
+          'product_variants': null,
+        }).toList();
+      } catch (_) {
+        return [];
+      }
+    }
+    try {
+      final response = await Supabase.instance.client
+          .from('transactions')
+          .select('''
+            quantity, unit_price, total_price,
+            product_variants!left (
+              size, color,
+              products!left (name)
+            )
+          ''')
+          .eq('invoice_id', invoiceId)
+          .order('created_at', ascending: true);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  String _getPaymentMethod(Map<String, dynamic> invoice) {
+    final status = invoice['status'] as String? ?? '';
+    if (status == 'unpaid') return '-';
+    final payments = invoice['payments'] as List<dynamic>?;
+    if (payments != null && payments.isNotEmpty) {
+      return (payments.first['payment_method'] as String? ?? 'cash');
+    }
+    return S.t('pos_cash');
+  }
+
+  String _getSellerName(Map<String, dynamic> invoice) {
+    final up = invoice['user_profiles'] as Map<String, dynamic>?;
+    if (up != null) return up['full_name'] as String? ?? '';
+    return '';
+  }
+
+  // ── INVOICE NUMBER GENERATION ──
+  String _generateInvoiceNumber() {
+    final now = DateTime.now();
+    final date = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final todayKey = now.toIso8601String().substring(0, 10);
+    if (_lastInvoiceDate != todayKey) {
+      _dailyInvoiceCounter = 0;
+      _lastInvoiceDate = todayKey;
+    }
+    _dailyInvoiceCounter++;
+    final seq = _dailyInvoiceCounter.toString().padLeft(4, '0');
+    return 'FAC-$date-$seq';
+  }
+
+  // ── TODAY'S INVOICES DATA LOADING ──
+  Future<void> _loadTodayInvoices() async {
+    if (_selectedStoreId == null) return;
+    if (mounted) setState(() => _isLoadingInvoices = true);
+
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    try {
+      if (AppSession.isOfflineMode) {
+        final isar = await IsarService.getInstance();
+        final localInvoices = await isar.invoiceLocals
+            .filter()
+            .storeIdEqualTo(_selectedStoreId!)
+            .and()
+            .typeEqualTo('out')
+            .and()
+            .createdAtGreaterThan(startOfDay)
+            .and()
+            .createdAtLessThan(endOfDay)
+            .findAll();
+
+        final customers = await isar.customerLocals.where().findAll();
+        final customerMap = {for (var c in customers) c.supabaseId: c.fullName};
+
+        _allInvoices = localInvoices.reversed.map((inv) => <String, dynamic>{
+          'id': inv.supabaseId.isEmpty ? 'local_${inv.isarId}' : inv.supabaseId,
+          'invoice_number': inv.invoiceNumber,
+          'total_amount': inv.totalAmount,
+          'paid_amount': inv.paidAmount,
+          'status': inv.status,
+          'createdAt': inv.createdAt,
+          'customer_name': customerMap[inv.customerId] ?? '',
+          'user_name': '',
+        }).toList();
+
+        _dailyInvoiceCounter = _allInvoices.length;
+      } else {
+        final response = await Supabase.instance.client
+            .from('invoices')
+            .select('''
+              id, invoice_number, total_amount, paid_amount, status, created_at,
+              customers!left (full_name),
+              user_profiles!left (full_name)
+            ''')
+            .eq('store_id', _selectedStoreId!)
+            .eq('type', 'out')
+            .gte('created_at', startOfDay.toIso8601String())
+            .lt('created_at', endOfDay.toIso8601String())
+            .order('created_at', ascending: false);
+
+        _allInvoices = (response as List<dynamic>).map((inv) => Map<String, dynamic>.from(inv as Map)).toList();
+        _dailyInvoiceCounter = _allInvoices.length;
+      }
+
+      _applyInvoiceFilters();
+    } catch (e) {
+      debugPrint('Error loading today invoices: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingInvoices = false);
+    }
+  }
+
+  void _applyInvoiceFilters() {
+    _filteredInvoices = _computeFilteredInvoices();
+    _invoiceCurrentPage = 0;
+  }
+
+  List<Map<String, dynamic>> _computeFilteredInvoices() {
+    var result = _allInvoices.toList();
+
+    // Apply status filter
+    if (_invoiceFilter == 'paid') {
+      result = result.where((inv) => inv['status'] == 'paid').toList();
+    } else if (_invoiceFilter == 'credit') {
+      result = result.where((inv) => inv['status'] == 'partial' || inv['status'] == 'unpaid').toList();
+    }
+
+    // Apply search
+    if (_invoiceSearchQuery.isNotEmpty) {
+      final q = _invoiceSearchQuery.toLowerCase();
+      result = result.where((inv) {
+        final num = (inv['invoice_number'] as String? ?? '').toLowerCase();
+        final name = _getCustomerName(inv).toLowerCase();
+        return num.contains(q) || name.contains(q);
+      }).toList();
+    }
+
+    return result;
+  }
+
+  String _getCustomerName(Map<String, dynamic> inv) {
+    final customers = inv['customers'] as Map<String, dynamic>?;
+    if (customers != null && customers['full_name'] != null) {
+      return customers['full_name'] as String;
+    }
+    final customerName = inv['customer_name'] as String?;
+    if (customerName != null && customerName.isNotEmpty) return customerName;
+    return S.t('pos_walkin_client');
+  }
+
+  String _formatInvoiceDateTime(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
   }
 
   Widget _buildVariantColorRow(String color, String size) {
