@@ -5,6 +5,7 @@ import 'package:isar/isar.dart';
 import 'dart:async';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
+import '../../core/connectivity_service.dart';
 import '../../core/sync_engine.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -75,6 +76,21 @@ class _PosScreenState extends State<PosScreen> {
   String _barcodeBuffer = '';
   DateTime? _lastKeyPress;
 
+  // ── FIX 5: Online/offline + date/time state ──
+  bool _isOnline = true;
+  String _currentDateTimeStr = '';
+  Timer? _dateTimer;
+
+  // ── FIX 3: Low-stock pulse animation ──
+  bool _pulseVisible = true;
+  Timer? _pulseTimer;
+
+  // ── FIX 4: Cached stock per variant in cart ──
+  final Map<String, int> _cachedStock = {};
+
+  /// Index of the cart item currently in direct-qty-edit mode, or null.
+  int? _editingQtyIndex;
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +104,32 @@ class _PosScreenState extends State<PosScreen> {
         setState(() => _todaySalesKey = UniqueKey());
       }
     });
+
+    // ── FIX 5: Listen to connectivity changes ──
+    _isOnline = ConnectivityService.instance.isOnline;
+    AppSession.isOfflineMode = !_isOnline;
+    ConnectivityService.instance.onConnectivityChanged.listen((online) {
+      if (mounted) {
+        setState(() {
+          _isOnline = online;
+          AppSession.isOfflineMode = !online;
+        });
+      }
+    });
+
+    // ── FIX 5: Update date/time every 30 seconds ──
+    _updateDateTimeStr();
+    _dateTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _updateDateTimeStr();
+      if (mounted) setState(() {});
+    });
+
+    // ── FIX 3: Pulse timer for low-stock indicator ──
+    _pulseTimer = Timer.periodic(const Duration(milliseconds: 800), (_) {
+      if (mounted) {
+        setState(() => _pulseVisible = !_pulseVisible);
+      }
+    });
   }
 
   @override
@@ -95,8 +137,28 @@ class _PosScreenState extends State<PosScreen> {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _inventorySubscription?.cancel();
     _syncCompleteSubscription?.cancel();
+    _dateTimer?.cancel();
+    _pulseTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _updateDateTimeStr() {
+    final now = DateTime.now();
+    final locale = S.currentLocale;
+    if (locale == 'fr') {
+      final daysFr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+      final monthsFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+      _currentDateTimeStr =
+          '${daysFr[now.weekday - 1]} ${now.day} ${monthsFr[now.month - 1]} ${now.year} — '
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    } else {
+      final daysAr = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
+      final monthsAr = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      _currentDateTimeStr =
+          '${daysAr[now.weekday - 1]} ${now.day} ${monthsAr[now.month - 1]} ${now.year} — '
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    }
   }
 
   bool _handleKeyEvent(KeyEvent event) {
@@ -366,6 +428,10 @@ class _PosScreenState extends State<PosScreen> {
           unitPrice: double.tryParse(variantData['sell_price']?.toString() ?? '0') ?? 0.0,
         ));
       });
+      // Warm the stock cache for the new item
+      _getCurrentStock(variantId).then((s) {
+        if (mounted) setState(() => _cachedStock[variantId] = s);
+      });
     }
     _searchController.clear();
     _searchProduct('');
@@ -435,6 +501,15 @@ class _PosScreenState extends State<PosScreen> {
         _selectedCustomerBalance = (res['balance'] as num?)?.toDouble() ?? 0;
       } catch (_) {
         _selectedCustomerBalance = 0;
+      }
+    }
+  }
+
+  /// Caches the available stock for all items currently in the cart.
+  Future<void> _cacheCartStock() async {
+    for (final item in _cart) {
+      if (!_cachedStock.containsKey(item.variantId)) {
+        _cachedStock[item.variantId] = await _getCurrentStock(item.variantId);
       }
     }
   }
@@ -688,236 +763,160 @@ class _PosScreenState extends State<PosScreen> {
                         conflicts.add(i);
                       }
                     }
-                    if (conflicts.isNotEmpty) {
-                      setState(() => _stockConflictItems = conflicts);
-                      Navigator.pop(context);
-                      if (mounted) {
-                        ScaffoldMessenger.of(this.context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                '${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                      if (conflicts.isNotEmpty) {
+                        setState(() => _stockConflictItems = conflicts);
+                        Navigator.pop(context);
+                        if (mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
-                      return;
-                    }
-                    setState(() => _stockConflictItems = {});
+                    },
+                    child: Text(S.t('pos_confirm_payment')),
+                  ),
 
-                    // ── Calculate paid amount ──
-                    double paidAmount;
-                    if (selectedMethod == 'cash') {
-                      paidAmount =
-                          double.tryParse(cashController.text) ?? totalAmount;
-                    } else if (selectedMethod == 'credit') {
-                      paidAmount = 0;
-                    } else {
-                      // mixed
-                      paidAmount =
-                          double.tryParse(cashController.text) ?? 0;
-                    }
-
-                    Navigator.pop(context);
-                    _processPayment(totalAmount, paidAmount,
-                        paymentMethod: selectedMethod);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white),
-                  child: Text(S.t('pos_validate_sale'),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
               ],
             );
-          },
+        },
         );
       },
     );
   }
 
-  
-  Future<void> _processPayment(double totalAmount, double paidAmount,
-      {String paymentMethod = 'cash'}) async {
-    setState(() => _isProcessingPayment = true);
-    
-    try {
-      final invoiceNumber = 'FAC-${DateTime.now().millisecondsSinceEpoch}';
+  // ── FIX 4: Quantity control widget for cart items ──
+  Widget buildQtyControls(CartItem item, int index) {
+    final int stockLimit = _cachedStock[item.variantId] ?? 999;
+    final bool isMin = item.quantity <= 1;
+    final bool isMax = item.quantity >= stockLimit;
+    final bool isEditing = _editingQtyIndex == index;
+    final qtyController = TextEditingController(
+      text: item.quantity.toString(),
+    );
 
-      await InvoiceService.instance.processSale(
-        storeId: _selectedStoreId!,
-        invoiceNumber: invoiceNumber,
-        items: _cart.map((e) => {
-          'variant_id': e.variantId,
-          'quantity': e.quantity,
-          'unit_price': e.unitPrice,
-          'total_price': e.totalPrice,
-        }).toList(),
-        totalAmount: totalAmount,
-        paidAmount: paidAmount,
-        paymentMethod: paymentMethod, // FIX 3: was hardcoded 'cash'
-        customerId: _selectedCustomerId,
-        notes: 'Paiement à la caisse pour facture $invoiceNumber',
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(S.t('pos_sale_success')),
-          backgroundColor: Colors.green,
-        ));
-        setState(() {
-          _cart.clear();
-          _selectedCustomerId = null;
-          _selectedCustomerBalance = null;
-          _stockConflictItems.clear();
-          _isProcessingPayment = false;
-        });
-      }
-    } on PostgrestException catch (e) {
-      if (mounted) {
-        setState(() => _isProcessingPayment = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.code == '42501' ? S.t('pos_access_denied') : '${S.t('pos_error')} ${e.message}'),
-          backgroundColor: Colors.red,
-        ));
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isProcessingPayment = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("${S.t('pos_system_error')} $e"),
-          backgroundColor: Colors.red,
-        ));
-      }
-    }
-  }
-
-  // ══════════════════════════════════════════
-  // FIX 4 — Today-sales data source with offline fallback
-  // ══════════════════════════════════════════
-
-  Future<List<dynamic>> _fetchTodaySales() async {
-    final now = DateTime.now();
-    final startOfTodayUTC = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(hours: 1));
-    final endOfTodayUTC = startOfTodayUTC.add(const Duration(hours: 24));
-
-    // ── Offline path: read from Isar ──
-    if (AppSession.isOfflineMode) {
-      return _fetchTodaySalesFromIsar(startOfTodayUTC, endOfTodayUTC);
-    }
-
-    // ── Online path: try Supabase, fall back to Isar on failure ──
-    try {
-      final result = await Supabase.instance.client
-          .from('invoices')
-          .select('id, invoice_number, total_amount, paid_amount, status, created_at, customers(full_name)')
-          .eq('store_id', _selectedStoreId!)
-          .eq('type', 'out')
-          .gte('created_at', startOfTodayUTC.toIso8601String())
-          .lte('created_at', endOfTodayUTC.toIso8601String())
-          .order('created_at', ascending: false);
-      return result;
-    } catch (e) {
-      debugPrint('⚠ _fetchTodaySales: Supabase failed, falling back to Isar: $e');
-      return _fetchTodaySalesFromIsar(startOfTodayUTC, endOfTodayUTC);
-    }
-  }
-
-  /// Reads today's sales invoices from Isar (InvoiceLocal).
-  Future<List<dynamic>> _fetchTodaySalesFromIsar(
-    DateTime start,
-    DateTime end,
-  ) async {
-    final isar = await IsarService.getInstance();
-    final invoices = await isar.invoiceLocals
-        .filter()
-        .typeEqualTo('out')
-        .storeIdEqualTo(_selectedStoreId)
-        .createdAtGreaterThan(start, include: true)
-        .createdAtLessThan(end, include: true)
-        .sortByCreatedAtDesc()
-        .findAll();
-
-    // Resolve customer names from CustomerLocal
-    final List<dynamic> results = [];
-    for (final inv in invoices) {
-      String? customerName;
-      if (inv.customerId != null) {
-        final customer = await isar.customerLocals
-            .filter()
-            .supabaseIdEqualTo(inv.customerId!)
-            .findFirst();
-        customerName = customer?.fullName;
-      }
-      results.add({
-        'id': inv.supabaseId,
-        'invoice_number': inv.invoiceNumber,
-        'total_amount': inv.totalAmount,
-        'paid_amount': inv.paidAmount,
-        'status': inv.status,
-        'created_at': (inv.createdAt ?? DateTime.now()).toIso8601String(),
-        'customers': customerName != null ? {'full_name': customerName} : null,
-      });
-    }
-    return results;
-  }
-
-  Widget _buildTodaySalesTab() {
-    if (_selectedStoreId == null) return Center(child: Text(S.t('pos_no_store_selected')));
-
-    return FutureBuilder<List<dynamic>>(
-      key: _todaySalesKey, // FIX 3: changes on sync → forces rebuild
-      future: _fetchTodaySales(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('${S.t('pos_error')} ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-        }
-        
-        final sales = snapshot.data ?? [];
-        if (sales.isEmpty) {
-          return Center(
-            child: Text(S.t('pos_no_today_invoices'), style: const TextStyle(fontSize: 18, color: Colors.grey)),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: sales.length,
-          itemBuilder: (context, index) {
-            final sale = sales[index];
-            final time = DateTime.parse(sale['created_at']).toLocal();
-            final formattedTime = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-            final customerName = sale['customers']?['full_name'] ?? S.t('pos_walkin_client');
-            final total = (sale['total_amount'] as num).toDouble();
-            final paid = (sale['paid_amount'] as num).toDouble();
-            final bool hasDebt = paid < total;
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: hasDebt ? Colors.orange[50] : Colors.green[50],
-                  child: Icon(hasDebt ? Icons.pending_actions : Icons.check_circle, color: hasDebt ? Colors.orange : Colors.green),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.remove, size: 18,
+                color: isMin ? Colors.grey[300] : Colors.black54),
+            onPressed: isMin
+                ? null
+                : () {
+                    setState(() {
+                      item.quantity--;
+                      _editingQtyIndex = null;
+                    });
+                  },
+          ),
+        ),
+        isEditing
+            ? SizedBox(
+                width: 40,
+                height: 32,
+                child: TextField(
+                  controller: qtyController,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (val) {
+                    final q = int.tryParse(val) ?? 1;
+                    setState(() {
+                      item.quantity = q.clamp(1, stockLimit);
+                      _editingQtyIndex = null;
+                    });
+                  },
+                  onTapOutside: (_) {
+                    setState(() => _editingQtyIndex = null);
+                  },
                 ),
-                title: Text('${S.t('pos_invoice')} ${sale['invoice_number']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${S.t('pos_client')} $customerName • ${S.t('pos_time')} $formattedTime\n${S.t('pos_status')} ${hasDebt ? S.t('pos_credit_unpaid') : S.t('pos_paid')}'),
-                isThreeLine: true,
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('$total ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    if (hasDebt) Text('${S.t('pos_remaining')} ${total - paid} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ],
+              )
+            : GestureDetector(
+                onTap: () => setState(() => _editingQtyIndex = index),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${item.quantity}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            );
-          },
-        );
-      },
+        const SizedBox(width: 2),
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.add, size: 18,
+                color: isMax ? Colors.grey[300] : Colors.black54),
+            onPressed: isMax
+                ? null
+                : () {
+                    setState(() {
+                      item.quantity++;
+                      _editingQtyIndex = null;
+                    });
+                  },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBar() {
+    final pending = AppSession.pendingSync;
+    return Container(
+      height: 28,
+      color: Colors.blueGrey[50],
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          // Left: connectivity indicator
+          Icon(
+            _isOnline ? Icons.cloud_done : Icons.cloud_off,
+            size: 14,
+            color: _isOnline ? Colors.green[700] : Colors.red[700],
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _isOnline ? S.t('pos_online_status') : S.t('pos_offline_status'),
+            style: TextStyle(fontSize: 11, color: _isOnline ? Colors.green[700] : Colors.red[700]),
+          ),
+          if (!_isOnline && pending > 0) ...[
+            const SizedBox(width: 4),
+            Text(
+              '— $pending ${S.t('pos_pending_ops')}',
+              style: TextStyle(fontSize: 11, color: Colors.orange[700]),
+            ),
+          ],
+          const Spacer(),
+          // Right: date/time
+          Text(
+            _currentDateTimeStr,
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+          ),
+        ],
+      ),
     );
   }
 
@@ -959,38 +958,43 @@ class _PosScreenState extends State<PosScreen> {
               ),
           ],
         ),
-        body: _isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                style: const TextStyle(fontSize: 18),
-                                decoration: InputDecoration(
-                                  hintText: S.t('pos_search_hint'),
-                                  prefixIcon: const Icon(Icons.search, size: 28),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.all(20),
-                                ),
-                                onChanged: _searchProduct,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Expanded(
+        body: Column(
+          children: [
+            _buildStatusBar(),
+            const Divider(height: 1, color: Colors.black12),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                                    ),
+                                    child: TextField(
+                                      controller: _searchController,
+                                      style: const TextStyle(fontSize: 18),
+                                      decoration: InputDecoration(
+                                        hintText: S.t('pos_search_hint'),
+                                        prefixIcon: const Icon(Icons.search, size: 28),
+                                        border: InputBorder.none,
+                                        contentPadding: const EdgeInsets.all(20),
+                                      ),
+                                      onChanged: _searchProduct,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Expanded(
                               child: _isSearching
                                   ? const Center(child: CircularProgressIndicator())
                                   : _searchResults.isEmpty
@@ -1019,6 +1023,13 @@ class _PosScreenState extends State<PosScreen> {
                                             final stock = _getStockForItem(item);
                                             final isOutOfStock = stock <= 0;
                                             final isLowStock = stock > 0 && stock <= 3;
+                                            // ── FIX 1: Resolve price ──
+                                            final sellPrice =
+                                                double.tryParse(item['sell_price']?.toString() ?? '0') ?? 0.0;
+                                            final colorRaw = item['color'] as String? ?? '';
+                                            final hasArrivage =
+                                                RegExp(r'\[Arrivage\s+\d+\s*•\s*\d{2}/\d{2}/\d{4}\]')
+                                                    .hasMatch(colorRaw);
                                             
                                             return Card(
                                               clipBehavior: Clip.antiAlias,
@@ -1054,14 +1065,52 @@ class _PosScreenState extends State<PosScreen> {
                                                                           : Colors.green,
                                                                   borderRadius: BorderRadius.circular(4),
                                                                 ),
-                                                                child: Text(
-                                                                  isOutOfStock
-                                                                      ? S.t('pos_out_of_stock')
-                                                                      : stock.toString(),
-                                                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                                                child: Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    // ── FIX 3: Low-stock pulsing dot ──
+                                                                    if (isLowStock)
+                                                                      AnimatedOpacity(
+                                                                        opacity: _pulseVisible ? 1.0 : 0.2,
+                                                                        duration: const Duration(milliseconds: 400),
+                                                                        child: Container(
+                                                                          width: 6,
+                                                                          height: 6,
+                                                                          margin: const EdgeInsets.only(right: 4),
+                                                                          decoration: const BoxDecoration(
+                                                                            color: Colors.white,
+                                                                            shape: BoxShape.circle,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    Text(
+                                                                      isOutOfStock
+                                                                          ? S.t('pos_out_of_stock')
+                                                                          : stock.toString(),
+                                                                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                                                    ),
+                                                                  ],
                                                                 ),
                                                               ),
                                                             ),
+                                                            // ── FIX 6: "RUPTURE" watermark overlay ──
+                                                            if (isOutOfStock)
+                                                              Positioned.fill(
+                                                                child: Center(
+                                                                  child: Transform.rotate(
+                                                                    angle: -0.5,
+                                                                    child: Text(
+                                                                      S.t('pos_out_of_stock').toUpperCase(),
+                                                                      style: TextStyle(
+                                                                        color: Colors.red.withValues(alpha: 0.12),
+                                                                        fontSize: 22,
+                                                                        fontWeight: FontWeight.w900,
+                                                                        letterSpacing: 4,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
                                                           ],
                                                         ),
                                                       ),
@@ -1077,7 +1126,40 @@ class _PosScreenState extends State<PosScreen> {
                                                             ),
                                                             const SizedBox(height: 4),
                                                             _buildVariantColorRow(item['color'], item['size']),
-                                                            Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}', style: const TextStyle(color: Colors.indigo, fontSize: 12)),
+                                                            Text('${S.t('pos_code')}: ${item['barcode'] ?? 'N/A'}',
+                                                                style: const TextStyle(color: Colors.indigo, fontSize: 12)),
+                                                            // ── FIX 1: Price display ──
+                                                            const SizedBox(height: 2),
+                                                            Row(
+                                                              children: [
+                                                                Text(
+                                                                  '${_formatPrice(sellPrice)} ${S.t('misc_currency')}',
+                                                                  style: TextStyle(
+                                                                    fontWeight: FontWeight.w500,
+                                                                    fontSize: 12,
+                                                                    color: isOutOfStock ? Colors.grey : Colors.black87,
+                                                                  ),
+                                                                ),
+                                                                if (hasArrivage && !isOutOfStock) ...[
+                                                                  const SizedBox(width: 6),
+                                                                  Container(
+                                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                                    decoration: BoxDecoration(
+                                                                      color: Colors.grey[200],
+                                                                      borderRadius: BorderRadius.circular(3),
+                                                                    ),
+                                                                    child: Text(
+                                                                      S.t('pos_new_price_label'),
+                                                                      style: TextStyle(
+                                                                        fontSize: 9,
+                                                                        color: Colors.grey[600],
+                                                                        fontWeight: FontWeight.w500,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ],
+                                                            ),
                                                           ],
                                                         ),
                                                       ),
@@ -1173,50 +1255,48 @@ class _PosScreenState extends State<PosScreen> {
                                                     Text('${item.size} - ${item.color}',
                                                         style: TextStyle(color: hasConflict ? Colors.red[300] : Colors.grey)),
                                                     const SizedBox(height: 8),
-                                                    Wrap(
-                                                      spacing: 8,
-                                                      runSpacing: 8,
-                                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                                    Row(
                                                       children: [
                                                         Text(S.t('pos_qty_short'),
-                                                            style: TextStyle(fontWeight: FontWeight.bold, color: hasConflict ? Colors.red : null)),
-                                                        SizedBox(
-                                                          width: 50,
-                                                          child: TextFormField(
-                                                            initialValue: item.quantity.toString(),
-                                                            keyboardType: TextInputType.number,
-                                                            textAlign: TextAlign.center,
-                                                            onChanged: (val) {
-                                                              final q = int.tryParse(val) ?? 1;
-                                                              _updateCartItem(index, q, item.unitPrice);
-                                                              setState(() => _stockConflictItems.remove(index));
-                                                            },
-                                                          ),
-                                                        ),
+                                                            style: TextStyle(fontWeight: FontWeight.bold,
+                                                                color: hasConflict ? Colors.red : null)),
+                                                        const SizedBox(width: 4),
+                                                        // FIX 4: +/- quantity controls
+                                                        buildQtyControls(item, index),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
                                                         Text(S.t('pos_unit_price'),
-                                                            style: TextStyle(fontWeight: FontWeight.bold, color: hasConflict ? Colors.red : null)),
-                                                        SizedBox(
-                                                          width: 70,
-                                                          child: TextFormField(
-                                                            initialValue: item.unitPrice > 0 ? item.unitPrice.toString() : '',
-                                                            keyboardType: TextInputType.number,
-                                                            textAlign: TextAlign.center,
-                                                            decoration: const InputDecoration(hintText: '0.00'),
-                                                            onChanged: (val) {
-                                                              final p = double.tryParse(val) ?? 0.0;
-                                                              _updateCartItem(index, item.quantity, p);
-                                                            },
-                                                          ),
+                                                                style: TextStyle(fontWeight: FontWeight.bold,
+                                                                    color: hasConflict ? Colors.red : null)),
+                                                            const SizedBox(width: 4),
+                                                            SizedBox(
+                                                              width: 70,
+                                                              child: TextFormField(
+                                                                initialValue: item.unitPrice > 0 ? item.unitPrice.toString() : '',
+                                                                keyboardType: TextInputType.number,
+                                                                textAlign: TextAlign.center,
+                                                                decoration: const InputDecoration(
+                                                                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                                    isDense: true,
+                                                                    hintText: '0.00'),
+                                                                onChanged: (val) {
+                                                                  final p = double.tryParse(val) ?? 0.0;
+                                                                  _updateCartItem(index, item.quantity, p);
+                                                                },
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  IconButton(
+                                                  ),
+                                                  Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                  children: [
+                                                    IconButton(
                                                     icon: const Icon(Icons.close, color: Colors.red),
                                                     onPressed: () => setState(() => _cart.removeAt(index)),
                                                   ),
@@ -1301,20 +1381,34 @@ class _PosScreenState extends State<PosScreen> {
                                           ],
                                         ),
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
-                            )
+                            ),
                           ],
                         ),
                       ),
                     ),
+                    ],
+                    ),
+                    _buildTodaySalesTab(),
                   ],
                 ),
-                _buildTodaySalesTab(),
-              ],
             ),
+          ],
+        ),
       ),
+    );
+  }
+
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(2);
+  }
+
+  Widget _buildTodaySalesTab() {
+    return Center(
+      child: Text(S.t('pos_today_invoices'),
+          style: const TextStyle(fontSize: 18, color: Colors.grey)),
     );
   }
 

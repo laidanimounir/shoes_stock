@@ -191,6 +191,11 @@ class S {
       'pos_credit_client_only': 'Crédit réservé aux clients enregistrés',
       'pos_stock_changed_title': 'Stock modifié',
       'pos_stock_changed_msg': 'Le stock de certains articles a changé. Quantités ajustées.',
+      'pos_price_label': 'Prix',
+      'pos_new_price_label': 'Nouveau prix',
+      'pos_online_status': 'En ligne',
+      'pos_offline_status': 'Hors ligne',
+      'pos_pending_ops': 'opération(s) en attente',
       'pos_error': 'Erreur:',
 
       // ── Shifts ──
@@ -823,6 +828,11 @@ class S {
       'pos_credit_client_only': 'الدين مخصص للعملاء المسجلين فقط',
       'pos_stock_changed_title': 'تغير المخزون',
       'pos_stock_changed_msg': 'تغير مخزون بعض الأصناف. تم تعديل الكميات.',
+      'pos_price_label': 'السعر',
+      'pos_new_price_label': 'السعر الجديد',
+      'pos_online_status': 'متصل',
+      'pos_offline_status': 'غير متصل',
+      'pos_pending_ops': 'عملية (عمليات) معلقة',
       'pos_error': 'خطأ:',
 
       // ── Shifts ──
