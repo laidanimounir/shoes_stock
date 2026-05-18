@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_colors.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/liste_produits.dart';
 import '../admin/inventory_screen.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/sales_history_screen.dart';
 import '../admin/activity_logs_screen.dart';
+import '../admin/employee_dashboard_screen.dart';
 import '../../widgets/offline_banner.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
@@ -18,7 +20,7 @@ class EmployeeMainLayout extends StatefulWidget {
 }
 
 class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
- 
+
   int _selectedIndex = 0;
   late final List<Widget> _screens;
 
@@ -26,6 +28,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
   void initState() {
     super.initState();
     _screens = [
+      const EmployeeDashboardScreen(),
       const PosScreen(),
       ListeProduitsScreen(),
       const InventoryScreen(),
@@ -34,14 +37,6 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
       const ActivityLogsScreen(),
     ];
   }
-
-  
-  static const _darkBg = Color(0xFF0F0F1A);
-  static const _sidebarTop = Color(0xFF1A1A2E);
-  static const _sidebarBottom = Color(0xFF16213E);
-  static const _gold = Color(0xFFD4A843);
-  static const _goldLight = Color(0xFFF0C96B);
-
 
   @override
   Widget build(BuildContext context) {
@@ -53,41 +48,38 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
         : S.t('label_role_employee')[0].toUpperCase();
 
     return Scaffold(
-      backgroundColor: _darkBg,
+      backgroundColor: AppColors.background,
       body: Row(
         children: [
-         
           Container(
             width: 240,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [_sidebarTop, _sidebarBottom],
+                colors: [AppColors.sidebarTop, AppColors.sidebarBottom],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
               border: BorderDirectional(
                 end: BorderSide(
-                  color: Color(0x33D4A843),
-                  width: 1,
+                  color: AppColors.goldLight,
+                  width: 0.2,
                 ),
               ),
             ),
             child: Column(
               children: [
-              
                 Container(
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: _gold.withValues(alpha: 0.2),
+                        color: AppColors.gold.withValues(alpha: 0.2),
                         width: 0.8,
                       ),
                     ),
                   ),
                   child: Column(
                     children: [
-                   
                       Stack(
                         children: [
                           Container(
@@ -96,13 +88,13 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: const LinearGradient(
-                                colors: [_gold, _goldLight],
+                                colors: [AppColors.gold, AppColors.goldLight],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _gold.withValues(alpha: 0.3),
+                                  color: AppColors.gold.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                 ),
@@ -112,14 +104,13 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                               child: Text(
                                 initials,
                                 style: GoogleFonts.playfairDisplay(
-                                  color: _darkBg,
+                                  color: AppColors.background,
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ),
-                         
                           Positioned(
                             bottom: 2,
                             right: 2,
@@ -142,15 +133,15 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
-                          color: _gold.withValues(alpha: 0.15),
+                          color: AppColors.gold.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: _gold.withValues(alpha: 0.4), width: 0.8),
+                              color: AppColors.gold.withValues(alpha: 0.4), width: 0.8),
                         ),
                         child: Text(
                           S.t('label_role_employee'),
                           style: GoogleFonts.raleway(
-                            color: _gold,
+                            color: AppColors.gold,
                             fontSize: 11,
                             letterSpacing: 1,
                           ),
@@ -159,45 +150,42 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                     ],
                   ),
                 ),
-
-              
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         vertical: 16, horizontal: 12),
                     child: Column(
                       children: [
-                        _buildNavItem(0, Icons.point_of_sale_outlined,
+                        _buildNavItem(0, Icons.dashboard_outlined,
+                            Icons.dashboard_rounded, S.t('nav_dashboard')),
+                        _buildNavItem(1, Icons.point_of_sale_outlined,
                             Icons.point_of_sale_rounded, S.t('nav_pos')),
-                        _buildNavItem(1, Icons.inventory_2_outlined,
+                        _buildNavItem(2, Icons.inventory_2_outlined,
                             Icons.inventory_2_rounded, S.t('nav_products')),
-                        _buildNavItem(2, Icons.inventory_outlined,
+                        _buildNavItem(3, Icons.inventory_outlined,
                             Icons.inventory_rounded, S.t('nav_inventory')),
-                        _buildNavItem(3, Icons.people_outline,
+                        _buildNavItem(4, Icons.people_outline,
                             Icons.people_rounded, S.t('nav_clients')),
-                        _buildNavItem(4, Icons.history_edu_outlined,
+                        _buildNavItem(5, Icons.history_edu_outlined,
                             Icons.history_edu_rounded, S.t('nav_my_sales')),
-                        _buildNavItem(5, Icons.history_outlined,
+                        _buildNavItem(6, Icons.history_outlined,
                             Icons.history_rounded, S.t('log_title')),
                       ],
                     ),
                   ),
                 ),
-
-            
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: _gold.withValues(alpha: 0.2),
+                        color: AppColors.gold.withValues(alpha: 0.2),
                         width: 0.8,
                       ),
                     ),
                   ),
                   child: Column(
                     children: [
-                      
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
@@ -230,8 +218,6 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
               ],
             ),
           ),
-
- 
           Expanded(
             child: Column(
               children: [
@@ -250,7 +236,6 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
     );
   }
 
- 
   Widget _buildNavItem(
       int index, IconData icon, IconData selectedIcon, String label) {
     final isSelected = _selectedIndex == index;
@@ -262,12 +247,12 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isSelected
-              ? _gold.withValues(alpha: 0.15)
+              ? AppColors.gold.withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? _gold.withValues(alpha: 0.4)
+                ? AppColors.gold.withValues(alpha: 0.4)
                 : Colors.transparent,
             width: 0.8,
           ),
@@ -276,14 +261,14 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
           children: [
             Icon(
               isSelected ? selectedIcon : icon,
-              color: isSelected ? _gold : Colors.white54,
+              color: isSelected ? AppColors.gold : Colors.white54,
               size: 20,
             ),
             const SizedBox(width: 12),
             Text(
               label,
               style: GoogleFonts.raleway(
-                color: isSelected ? _gold : Colors.white60,
+                color: isSelected ? AppColors.gold : Colors.white60,
                 fontSize: 13,
                 fontWeight:
                     isSelected ? FontWeight.w700 : FontWeight.w400,
@@ -295,7 +280,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                 width: 4,
                 height: 4,
                 decoration: const BoxDecoration(
-                  color: _gold,
+                  color: AppColors.gold,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -306,7 +291,6 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
     );
   }
 }
-
 
 class _PulseDot extends StatefulWidget {
   @override

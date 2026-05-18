@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_colors.dart';
 import '../admin/dashboard_screen.dart';
 import 'pos_screen.dart';
 import '../admin/ajouter_produit.dart';
@@ -53,14 +54,6 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     ];
   }
 
-  
-  static const _darkBg = Color(0xFF0F0F1A);
-  static const _sidebarTop = Color(0xFF1A1A2E);
-  static const _sidebarBottom = Color(0xFF0D0D1F);
-  static const _gold = Color(0xFFD4A843);
-  static const _goldLight = Color(0xFFF0C96B);
-
-
   static List<(IconData, IconData, String)> get _destinations => [
     (Icons.dashboard_outlined, Icons.dashboard_rounded, S.t('nav_dashboard')),
     (Icons.point_of_sale_outlined, Icons.point_of_sale_rounded, S.t('nav_pos')),
@@ -88,52 +81,49 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
         : 'A';
 
     return Scaffold(
-      backgroundColor: _darkBg,
+      backgroundColor: AppColors.background,
       body: Row(
         children: [
-       
           Container(
             width: 260,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [_sidebarTop, _sidebarBottom],
+                colors: [AppColors.sidebarTop, AppColors.sidebarBottom],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
               border: BorderDirectional(
                 end: BorderSide(
-                  color: Color(0x44D4A843),
-                  width: 1,
+                  color: AppColors.goldLight,
+                  width: 0.16,
                 ),
               ),
             ),
             child: Column(
               children: [
-       
                 Container(
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: _gold.withValues(alpha: 0.25),
+                        color: AppColors.gold.withValues(alpha: 0.25),
                         width: 0.8,
                       ),
                     ),
                   ),
                   child: Column(
                     children: [
-             
                       Container(
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _gold.withValues(alpha: 0.12),
-                          border: Border.all(color: _gold, width: 1.5),
+                          color: AppColors.gold.withValues(alpha: 0.12),
+                          border: Border.all(color: AppColors.gold, width: 1.5),
                         ),
                         child: const Icon(
                           Icons.storefront_rounded,
-                          color: _gold,
+                          color: AppColors.gold,
                           size: 26,
                         ),
                       ),
@@ -151,19 +141,18 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                       Text(
                         'ERP · Gestion',
                         style: GoogleFonts.raleway(
-                          color: _gold.withValues(alpha: 0.7),
+                          color: AppColors.gold.withValues(alpha: 0.7),
                           fontSize: 10,
                           letterSpacing: 2,
                         ),
                       ),
                       const SizedBox(height: 16),
-                  
                       Row(
                         children: [
                           Expanded(
                             child: Container(
                               height: 0.5,
-                              color: _gold.withValues(alpha: 0.2),
+                              color: AppColors.gold.withValues(alpha: 0.2),
                             ),
                           ),
                           Padding(
@@ -171,41 +160,39 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                 const EdgeInsets.symmetric(horizontal: 8),
                             child: Icon(
                               Icons.auto_awesome,
-                              color: _gold.withValues(alpha: 0.5),
+                              color: AppColors.gold.withValues(alpha: 0.5),
                               size: 12,
                             ),
                           ),
                           Expanded(
                             child: Container(
                               height: 0.5,
-                              color: _gold.withValues(alpha: 0.2),
+                              color: AppColors.gold.withValues(alpha: 0.2),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                   
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: _gold.withValues(alpha: 0.08),
+                          color: AppColors.gold.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _gold.withValues(alpha: 0.25),
+                            color: AppColors.gold.withValues(alpha: 0.25),
                             width: 0.8,
                           ),
                         ),
                         child: Row(
                           children: [
-                            // أيقونة المدير
                             Container(
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: const LinearGradient(
-                                  colors: [_gold, _goldLight],
+                                  colors: [AppColors.gold, AppColors.goldLight],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -214,7 +201,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                 child: Text(
                                   initials,
                                   style: GoogleFonts.playfairDisplay(
-                                    color: _darkBg,
+                                    color: AppColors.background,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -242,7 +229,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                         width: 6,
                                         height: 6,
                                         decoration: const BoxDecoration(
-                                          color: _gold,
+                                          color: AppColors.gold,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -250,7 +237,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                       Text(
                                         S.t('label_role_admin'),
                                         style: GoogleFonts.raleway(
-                                          color: _gold,
+                                          color: AppColors.gold,
                                           fontSize: 10,
                                           letterSpacing: 0.5,
                                         ),
@@ -266,8 +253,6 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                     ],
                   ),
                 ),
-
-                
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -285,14 +270,12 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                     ),
                   ),
                 ),
-
-    
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: _gold.withValues(alpha: 0.2),
+                        color: AppColors.gold.withValues(alpha: 0.2),
                         width: 0.8,
                       ),
                     ),
@@ -328,8 +311,6 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               ],
             ),
           ),
-
-       
           Expanded(
             child: Column(
               children: [
@@ -348,7 +329,6 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     );
   }
 
-
   Widget _buildNavItem(
       int index, IconData icon, IconData selectedIcon, String label) {
     final isSelected = _selectedIndex == index;
@@ -361,32 +341,31 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isSelected
-              ? _gold.withValues(alpha: 0.12)
+              ? AppColors.gold.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? _gold.withValues(alpha: 0.35)
+                ? AppColors.gold.withValues(alpha: 0.35)
                 : Colors.transparent,
             width: 0.8,
           ),
         ),
         child: Row(
           children: [
-          
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 32,
               height: 32,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? _gold.withValues(alpha: 0.15)
+                    ? AppColors.gold.withValues(alpha: 0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 isSelected ? selectedIcon : icon,
-                color: isSelected ? _gold : Colors.white38,
+                color: isSelected ? AppColors.gold : Colors.white38,
                 size: 18,
               ),
             ),
@@ -404,13 +383,12 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-         
             if (isSelected)
               Container(
                 width: 3,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: _gold,
+                  color: AppColors.gold,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

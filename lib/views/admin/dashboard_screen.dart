@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:isar/isar.dart';
-import '../../core/app_session.dart';
-import '../../local_db/isar_service.dart';
-import '../../local_db/collections/store_local.dart';
-import '../../local_db/collections/transaction_local.dart';
-import '../../local_db/collections/product_variant_local.dart';
-import '../../local_db/collections/customer_local.dart';
-import '../../local_db/collections/supplier_local.dart';
-import '../../local_db/collections/inventory_local.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
+import '../../core/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,17 +15,16 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
-  
   bool _isLoading = true;
   List<dynamic> _stores = [];
   String? _selectedStoreId;
-  double _todaySales = 0.0;
-  double _todayProfit = 0.0;
-  double _customerDebt = 0.0;
-  double _supplierDebt = 0.0;
-  double _stockValue = 0.0;
-  int _activeCustomers = 0;
-  int _activeSuppliers = 0;
+
+  Map<String, dynamic> _stats = {};
+  List<Map<String, dynamic>> _chartData = [];
+  String _chartPeriod = 'month';
+  List<Map<String, dynamic>> _topProducts = [];
+  List<Map<String, dynamic>> _recentActivity = [];
+  List<Map<String, dynamic>> _debtClients = [];
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -44,7 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       duration: const Duration(milliseconds: 600),
     );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _initDashboard();
+    _init();
   }
 
   @override
@@ -53,200 +46,75 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
-  Future<void> _initDashboard() async {
+  Future<void> _init() async {
     await _fetchStores();
-    await _fetchDashboardStats();
+    await _fetchAll();
   }
 
   Future<void> _fetchStores() async {
-    if (AppSession.isOfflineMode) {
-      final isar = await IsarService.getInstance();
-      final res = await isar.storeLocals
-          .filter()
-          .isActiveEqualTo(true)
-          .findAll();
-      if (mounted) {
-        setState(() {
-          _stores = res.map((s) => {'id': s.supabaseId, 'name': s.name}).toList();
-          _selectedStoreId = null;
-        });
-      }
-      return;
-    }
-
     try {
       final res = await Supabase.instance.client
           .from('stores')
           .select()
           .eq('is_active', true)
           .order('name');
-      if (mounted) {
-        setState(() {
-          _stores = res;
-          _selectedStoreId = null;
-        });
-      }
+      if (mounted) setState(() => _stores = res);
     } catch (e) {
       debugPrint('Error fetching stores: $e');
     }
   }
 
-  Future<void> _fetchDashboardStats() async {
+  Future<void> _fetchAll() async {
     setState(() => _isLoading = true);
     _animController.reset();
-
-    if (AppSession.isOfflineMode) {
-      final isar = await IsarService.getInstance();
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-
-      // 1. Transactions stats
-      var transQuery = isar.transactionLocals
-          .filter()
-          .typeEqualTo('out')
-          .createdAtGreaterThan(startOfDay.subtract(const Duration(seconds: 1)));
-      
-      if (_selectedStoreId != null) {
-        transQuery = transQuery.storeIdEqualTo(_selectedStoreId!);
-      }
-      
-      final transRes = await transQuery.findAll();
-      final variants = await isar.productVariantLocals.where().findAll();
-      final variantMap = {for (var v in variants) v.supabaseId: v};
-
-      double sales = 0;
-      double profit = 0;
-      for (var t in transRes) {
-        double totalPrice = t.totalPrice;
-        int qty = t.quantity;
-        final v = variantMap[t.variantId];
-        double buyPrice = v?.buyPrice ?? 0.0;
-        
-        sales += totalPrice;
-        profit += (totalPrice - (buyPrice * qty));
-      }
-
-      // 2. Customer Debt & Count
-      final customers = await isar.customerLocals.filter().isActiveEqualTo(true).findAll();
-      double totalCustDebt = customers.fold(0.0, (sum, c) => sum + c.balance);
-
-      // 3. Supplier Debt & Count
-      final suppliers = await isar.supplierLocals.filter().isActiveEqualTo(true).findAll();
-      double totalSuppDebt = suppliers.fold(0.0, (sum, s) => sum + s.balance);
-
-      // 4. Stock Value
-      var invQuery = isar.inventoryLocals.filter().quantityGreaterThan(0);
-      if (_selectedStoreId != null) {
-        invQuery = invQuery.and().storeIdEqualTo(_selectedStoreId!);
-      }
-      final inventory = await invQuery.findAll();
-      double totalStockVal = 0;
-      for (var inv in inventory) {
-        final v = variantMap[inv.variantId];
-        totalStockVal += (inv.quantity * (v?.buyPrice ?? 0.0));
-      }
-
-      if (mounted) {
-        setState(() {
-          _todaySales = sales;
-          _todayProfit = profit;
-          _customerDebt = totalCustDebt;
-          _supplierDebt = totalSuppDebt;
-          _stockValue = totalStockVal;
-          _activeCustomers = customers.length;
-          _activeSuppliers = suppliers.length;
-          _isLoading = false;
-        });
-        _animController.forward();
-      }
-      return;
-    }
-
     try {
-      final today = DateTime.now();
-      final startOfDay =
-          DateTime(today.year, today.month, today.day).toIso8601String();
+      final supabase = Supabase.instance.client;
 
-      var transQuery = Supabase.instance.client
-          .from('transactions')
-          .select('quantity, total_price, product_variants(buy_price)')
-          .eq('type', 'out')
-          .gte('created_at', startOfDay);
-      if (_selectedStoreId != null) {
-        transQuery = transQuery.eq('store_id', _selectedStoreId!);
-      }
-      final transRes = await transQuery;
-
-      double sales = 0;
-      double profit = 0;
-      for (var t in transRes) {
-        double totalPrice = (t['total_price'] as num?)?.toDouble() ?? 0.0;
-        int qty = (t['quantity'] as num?)?.toInt() ?? 0;
-        double buyPrice =
-            (t['product_variants']?['buy_price'] as num?)?.toDouble() ?? 0.0;
-        sales += totalPrice;
-        profit += (totalPrice - (buyPrice * qty));
-      }
-
-      final custRes = await Supabase.instance.client
+      final statsRes = await supabase.rpc('get_admin_dashboard_stats',
+          params: {'p_store_id': _selectedStoreId});
+      final chartRes = await supabase.rpc('get_revenue_chart_data', params: {
+        'p_store_id': _selectedStoreId,
+        'p_period': _chartPeriod,
+      });
+      final topRes = await supabase.rpc('get_top_products',
+          params: {'p_store_id': _selectedStoreId});
+      final activityRes = await supabase
+          .from('activity_logs')
+          .select('id, action_type, description, created_at, user_id')
+          .order('created_at', ascending: false)
+          .limit(10);
+      final debtRes = await supabase
           .from('customers')
-          .select('balance')
-          .eq('is_active', true);
-      double cDebt = custRes.fold(
-          0.0, (sum, c) => sum + ((c['balance'] as num?)?.toDouble() ?? 0.0));
-
-      final suppRes = await Supabase.instance.client
-          .from('suppliers')
-          .select('balance')
-          .eq('is_active', true);
-      double sDebt = suppRes.fold(
-          0.0, (sum, s) => sum + ((s['balance'] as num?)?.toDouble() ?? 0.0));
-
-      var invQuery = Supabase.instance.client
-          .from('inventory')
-          .select('quantity, product_variants(buy_price)')
-          .gt('quantity', 0);
-      if (_selectedStoreId != null) {
-        invQuery = invQuery.eq('store_id', _selectedStoreId!);
-      }
-      final invRes = await invQuery;
-      double stockVal = 0;
-      for (var i in invRes) {
-        int qty = (i['quantity'] as num?)?.toInt() ?? 0;
-        double buyPrice =
-            (i['product_variants']?['buy_price'] as num?)?.toDouble() ?? 0.0;
-        stockVal += (qty * buyPrice);
-      }
+          .select('id, full_name, phone, balance')
+          .gt('balance', 0)
+          .eq('is_active', true)
+          .order('balance', ascending: false)
+          .limit(5);
 
       if (mounted) {
         setState(() {
-          _todaySales = sales;
-          _todayProfit = profit;
-          _customerDebt = cDebt;
-          _supplierDebt = sDebt;
-          _stockValue = stockVal;
-          _activeCustomers = custRes.length;
-          _activeSuppliers = suppRes.length;
+          _stats = statsRes as Map<String, dynamic>;
+          _chartData = (chartRes as List<dynamic>).cast<Map<String, dynamic>>();
+          _topProducts = (topRes as List<dynamic>).cast<Map<String, dynamic>>();
+          _recentActivity = (activityRes as List<dynamic>).cast<Map<String, dynamic>>();
+          _debtClients = (debtRes as List<dynamic>).cast<Map<String, dynamic>>();
           _isLoading = false;
         });
         _animController.forward();
       }
     } catch (e) {
-      debugPrint('Error fetching dashboard stats: $e');
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Error fetching dashboard data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _animController.forward();
+      }
     }
   }
-
-  
-  static const _darkBg   = Color(0xFF0F0F1A);
-  static const _cardBg   = Color(0xFF1A1A2E);
-  static const _gold     = Color(0xFFD4A843);
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _darkBg,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -263,36 +131,32 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-
   Widget _buildHeader() {
     final now = DateTime.now();
     final daysKeys = ['day_sun', 'day_mon', 'day_tue', 'day_wed', 'day_thu', 'day_fri', 'day_sat'];
-    // now.weekday is 1 (Mon) to 7 (Sun). daysKeys is 0 (Sun) to 6 (Sat).
     final dayKey = daysKeys[now.weekday % 7];
     final monthKey = 'month_${now.month}';
-    
     final dateStr = '${S.t(dayKey)} ${now.day} ${S.t(monthKey)} ${now.year}';
 
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: AppColors.surface,
         border: Border(
-          bottom: BorderSide(color: _gold.withValues(alpha: 0.25), width: 0.8),
+          bottom: BorderSide(color: AppColors.border, width: 0.8),
         ),
       ),
       child: Row(
         children: [
-      
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _gold.withValues(alpha: 0.12),
-              border: Border.all(color: _gold, width: 1.2),
+              color: AppColors.gold.withValues(alpha: 0.12),
+              border: Border.all(color: AppColors.gold, width: 1.2),
             ),
-            child: const Icon(Icons.storefront_rounded, color: _gold, size: 18),
+            child: const Icon(Icons.dashboard_rounded, color: AppColors.gold, size: 18),
           ),
           const SizedBox(width: 12),
           Column(
@@ -305,25 +169,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                       fontWeight: FontWeight.bold)),
               Text(dateStr,
                   style: GoogleFonts.raleway(
-                      color: _gold, fontSize: 11, letterSpacing: 0.8)),
+                      color: AppColors.gold, fontSize: 11, letterSpacing: 0.8)),
             ],
           ),
           const Spacer(),
-
-      
           Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _gold.withValues(alpha: 0.25), width: 0.8),
+              border: Border.all(color: AppColors.border, width: 0.8),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String?>(
                 value: _selectedStoreId,
-                dropdownColor: _cardBg,
-                icon: const Icon(Icons.store_outlined, color: _gold, size: 16),
+                dropdownColor: AppColors.surface,
+                icon: const Icon(Icons.store_outlined, color: AppColors.gold, size: 16),
                 style: GoogleFonts.raleway(color: Colors.white, fontSize: 13,
                     fontWeight: FontWeight.w600),
                 items: [
@@ -340,25 +202,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ],
                 onChanged: (val) {
                   setState(() => _selectedStoreId = val);
-                  _fetchDashboardStats();
+                  _fetchAll();
                 },
               ),
             ),
           ),
           const SizedBox(width: 8),
-
-         
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
-              color: _gold.withValues(alpha: 0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _gold.withValues(alpha: 0.35), width: 0.8),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 0.8),
             ),
             child: IconButton(
               padding: EdgeInsets.zero,
-              icon: const Icon(Icons.refresh_rounded, color: _gold, size: 18),
-              onPressed: _fetchDashboardStats,
+              icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
+              onPressed: _fetchAll,
               tooltip: S.t('action_refresh'),
             ),
           ),
@@ -367,122 +227,137 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
- 
   Widget _buildBody() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                _buildKpiCard(
-                  title: S.t('dash_revenue'),
-                  subtitle: S.t('dash_today'),
-                  value: '${_todaySales.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  icon: Icons.point_of_sale_rounded,
-                  accentColor: const Color(0xFF1E88E5),
-                  topColor: const Color(0xFF1565C0),
-                ),
-                const SizedBox(width: 14),
-                _buildKpiCard(
-                  title: S.t('dash_net_profit'),
-                  subtitle: S.t('dash_today'),
-                  value: '+${_todayProfit.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  icon: Icons.trending_up_rounded,
-                  accentColor: const Color(0xFF43A047),
-                  topColor: const Color(0xFF1B5E20),
-                ),
-                const SizedBox(width: 14),
-                _buildKpiCard(
-                  title: S.t('dash_customer_debt'),
-                  subtitle: S.t('dash_credits_in_progress'),
-                  value: '${_customerDebt.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  icon: Icons.account_balance_wallet_rounded,
-                  accentColor: const Color(0xFFFB8C00),
-                  topColor: const Color(0xFFE65100),
-                ),
-                const SizedBox(width: 14),
-                _buildKpiCard(
-                  title: S.t('dash_supplier_debt'),
-                  subtitle: S.t('dash_to_settle'),
-                  value: '${_supplierDebt.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  icon: Icons.money_off_rounded,
-                  accentColor: const Color(0xFFE53935),
-                  topColor: const Color(0xFFB71C1C),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
+          _buildKpiRow(),
+          const SizedBox(height: 16),
+          _buildSecondaryKpiRow(),
+          const SizedBox(height: 20),
+          _buildBottomRow(),
+        ],
+      ),
+    );
+  }
 
-        
-          Row(
-            children: [
-              Expanded(child: Container(height: 0.5,
-                  color: _gold.withValues(alpha: 0.2))),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Icon(Icons.auto_awesome,
-                    color: _gold.withValues(alpha: 0.5), size: 13),
-              ),
-              Expanded(child: Container(height: 0.5,
-                  color: _gold.withValues(alpha: 0.2))),
-            ],
+  Widget _buildKpiRow() {
+    final stats = _stats;
+    return SizedBox(
+      height: 120,
+      child: Row(
+        children: [
+          _kpiCard(
+            title: S.t('dash_revenue'),
+            subtitle: S.t('dash_today'),
+            value: '${(stats['today_revenue'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            icon: Icons.trending_up_rounded,
+            color: AppColors.info,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(width: 12),
+          _kpiCard(
+            title: S.t('dash_today_sales_count'),
+            subtitle: S.t('dash_item_count'),
+            value: '${(stats['today_sales_count'] as num?)?.toInt() ?? 0}',
+            icon: Icons.receipt_long_rounded,
+            color: AppColors.teal,
+          ),
+          const SizedBox(width: 12),
+          _kpiCard(
+            title: S.t('dash_today_expenses'),
+            subtitle: S.t('dash_today'),
+            value: '${(stats['today_expenses'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            icon: Icons.money_off_rounded,
+            color: AppColors.danger,
+          ),
+          const SizedBox(width: 12),
+          _kpiCard(
+            title: S.t('dash_month_revenue'),
+            subtitle: S.t('dash_sales_count'),
+            value: '${(stats['month_revenue'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            icon: Icons.calendar_month_rounded,
+            color: AppColors.success,
+          ),
+          const SizedBox(width: 12),
+          _kpiCard(
+            title: S.t('dash_month_sales'),
+            subtitle: S.t('dash_item_count'),
+            value: '${(stats['month_sales_count'] as num?)?.toInt() ?? 0}',
+            icon: Icons.shopping_cart_rounded,
+            color: AppColors.gold,
+          ),
+        ],
+      ),
+    );
+  }
 
-     
+  Widget _buildSecondaryKpiRow() {
+    final stats = _stats;
+    return SizedBox(
+      height: 90,
+      child: Row(
+        children: [
+          _miniKpiCard(
+            title: S.t('dash_customer_debt'),
+            value: '${(stats['customer_debt_total'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            color: AppColors.warning,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
+            title: S.t('dash_supplier_debt'),
+            value: '${(stats['supplier_debt_total'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            color: AppColors.danger,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
+            title: S.t('dash_stock_value'),
+            value: '${(stats['stock_value'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            color: AppColors.teal,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
+            title: S.t('dash_low_stock'),
+            value: '${(stats['low_stock_count'] as num?)?.toInt() ?? 0}',
+            color: AppColors.danger,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
+            title: S.t('dash_active_cust'),
+            value: '${(stats['active_customers'] as num?)?.toInt() ?? 0}',
+            color: AppColors.purple,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomRow() {
+    return SizedBox(
+      height: 400,
+      child: Row(
+        children: [
           Expanded(
             flex: 3,
-            child: Row(
+            child: _buildChartCard(),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 2,
+            child: _buildTopProductsCard(),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 2,
+            child: Column(
               children: [
-             
                 Expanded(
-                  flex: 2,
-                  child: _buildStatBigCard(
-                    title: S.t('dash_stock_value'),
-                    value: '${_stockValue.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                    icon: Icons.inventory_rounded,
-                    accentColor: const Color(0xFF00897B),
-                    topColor: const Color(0xFF00695C),
-                  ),
+                  child: _buildRecentActivityCard(),
                 ),
-                const SizedBox(width: 14),
-
-         
+                const SizedBox(height: 12),
                 Expanded(
-                  flex: 2,
-                  child: _buildStatBigCard(
-                    title: S.t('dash_active_cust'),
-                    value: '$_activeCustomers',
-                    icon: Icons.people_rounded,
-                    accentColor: const Color(0xFF7B1FA2),
-                    topColor: const Color(0xFF4A148C),
-                    isCount: true,
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-            
-                Expanded(
-                  flex: 2,
-                  child: _buildStatBigCard(
-                    title: S.t('dash_active_supp'),
-                    value: '$_activeSuppliers',
-                    icon: Icons.local_shipping_rounded,
-                    accentColor: const Color(0xFF6D4C41),
-                    topColor: const Color(0xFF3E2723),
-                    isCount: true,
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                Expanded(
-                  flex: 4,
-                  child: _buildChartPlaceholder(),
+                  child: _buildDebtClientsCard(),
                 ),
               ],
             ),
@@ -492,178 +367,102 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
- 
-  Widget _buildKpiCard({
+  Widget _kpiCard({
     required String title,
     required String subtitle,
     required String value,
     required IconData icon,
-    required Color accentColor,
-    required Color topColor,
+    required Color color,
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _cardBg,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: accentColor.withValues(alpha: 0.2), width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: topColor.withValues(alpha: 0.15),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 16),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style: GoogleFonts.raleway(
-                              color: Colors.white70, fontSize: 12,
-                              fontWeight: FontWeight.w600),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(subtitle,
-                          style: GoogleFonts.raleway(
-                              color: Colors.white30, fontSize: 10)),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 38, height: 38,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [topColor, accentColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 18),
+                  child: Text(title,
+                      style: GoogleFonts.raleway(
+                          color: AppColors.textSecondary, fontSize: 11,
+                          fontWeight: FontWeight.w600),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value,
-                    style: GoogleFonts.raleway(
-                        color: Colors.white, fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 8),
-                Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [accentColor, accentColor.withValues(alpha: 0.1)],
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ],
-            ),
+            Text(value,
+                style: GoogleFonts.raleway(
+                    color: Colors.white, fontSize: 18,
+                    fontWeight: FontWeight.bold),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(subtitle,
+                style: GoogleFonts.raleway(
+                    color: AppColors.textSecondary, fontSize: 10)),
           ],
         ),
       ),
     );
   }
 
-  
-  Widget _buildStatBigCard({
+  Widget _miniKpiCard({
     required String title,
     required String value,
-    required IconData icon,
-    required Color accentColor,
-    required Color topColor,
-    bool isCount = false,
+    required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accentColor.withValues(alpha: 0.2), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: topColor.withValues(alpha: 0.15),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // أيقونة كبيرة
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [topColor, accentColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: GoogleFonts.raleway(
-                      color: Colors.white54, fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 6),
-              Text(value,
-                  style: GoogleFonts.raleway(
-                      color: Colors.white,
-                      fontSize: isCount ? 40 : 22,
-                      fontWeight: FontWeight.bold),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 10),
-              Container(
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [accentColor, accentColor.withValues(alpha: 0.1)],
-                  ),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.15), width: 0.8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(title,
+                style: GoogleFonts.raleway(
+                    color: AppColors.textSecondary, fontSize: 10,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(value,
+                style: GoogleFonts.raleway(
+                    color: Colors.white, fontSize: 15,
+                    fontWeight: FontWeight.bold),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
+        ),
       ),
     );
   }
 
- 
-  Widget _buildChartPlaceholder() {
+  Widget _buildChartCard() {
+    final data = _chartData;
+    final maxRevenue = data.fold<double>(0, (p, v) => p > ((v['revenue'] as num?)?.toDouble() ?? 0) ? p : ((v['revenue'] as num?)?.toDouble() ?? 0));
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _gold.withValues(alpha: 0.15), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: _gold.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: AppColors.border, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,86 +473,417 @@ class _DashboardScreenState extends State<DashboardScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(S.t('dash_evolution'),
+                  Text(S.t('dash_revenue_chart'),
                       style: GoogleFonts.playfairDisplay(
                           color: Colors.white, fontSize: 14,
                           fontWeight: FontWeight.bold)),
-                  Text(S.t('dash_7days'),
+                  Text(S.t('dash_${_chartPeriod}'),
                       style: GoogleFonts.raleway(
-                          color: Colors.white38, fontSize: 11)),
+                          color: AppColors.textSecondary, fontSize: 11)),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _gold.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _gold.withValues(alpha: 0.3), width: 0.8),
-                ),
-                child: Text('7J',
-                    style: GoogleFonts.raleway(
-                        color: _gold, fontSize: 11,
-                        fontWeight: FontWeight.w700)),
+              Row(
+                children: [
+                  _periodChip('week', S.t('dash_week')),
+                  const SizedBox(width: 4),
+                  _periodChip('month', S.t('dash_month')),
+                  const SizedBox(width: 4),
+                  _periodChip('3months', S.t('dash_3months')),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-
-    
           Expanded(
-            child: _MiniLineChart(
-              goldColor: _gold,
-              accentColor: const Color(0xFF1E88E5),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              S.t('dash_day_mon'),
-              S.t('dash_day_tue'),
-              S.t('dash_day_wed'),
-              S.t('dash_day_thu'),
-              S.t('dash_day_fri'),
-              S.t('dash_day_sat'),
-              S.t('dash_day_today'),
-            ].map((d) => Text(d,
-                    style: GoogleFonts.raleway(
-                        color: Colors.white30, fontSize: 10)))
-                .toList(),
+            child: data.isEmpty
+                ? Center(child: Text(S.t('dash_no_data'),
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                : LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: maxRevenue > 0 ? (maxRevenue / 4).ceilToDouble() : 1,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: AppColors.border,
+                          strokeWidth: 0.5,
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 44,
+                            getTitlesWidget: (value, meta) {
+                              final v = value.toInt();
+                              if (v % 2 == 0 || v == 0) {
+                                return Text('$v',
+                                    style: GoogleFonts.raleway(
+                                        color: AppColors.textSecondary, fontSize: 9));
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: (data.length / 5).ceilToDouble().clamp(1, double.infinity),
+                            getTitlesWidget: (value, meta) {
+                              final idx = value.toInt();
+                              if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
+                              final day = data[idx]['day'] as String? ?? '';
+                              final parts = day.split('-');
+                              final label = parts.length >= 3 ? '${parts[2]}/${parts[1]}' : day;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(label,
+                                    style: GoogleFonts.raleway(
+                                        color: AppColors.textSecondary, fontSize: 9)),
+                              );
+                            },
+                          ),
+                        ),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: List.generate(data.length, (i) {
+                            final rev = (data[i]['revenue'] as num?)?.toDouble() ?? 0;
+                            return FlSpot(i.toDouble(), rev);
+                          }),
+                          isCurved: true,
+                          color: AppColors.info,
+                          barWidth: 2.5,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(
+                            show: data.length <= 31,
+                            getDotPainter: (spot, percent, barData, index) {
+                              if (index == data.length - 1) {
+                                return FlDotCirclePainter(
+                                  radius: 4,
+                                  color: AppColors.info,
+                                  strokeWidth: 2,
+                                  strokeColor: Colors.white,
+                                );
+                              }
+                              return FlDotCirclePainter(
+                                radius: 2,
+                                color: AppColors.info.withValues(alpha: 0.5),
+                                strokeWidth: 0,
+                              );
+                            },
+                          ),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: AppColors.info.withValues(alpha: 0.08),
+                          ),
+                        ),
+                      ],
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                            final rev = spot.y.toInt();
+                            return LineTooltipItem(
+                              '$rev ${S.t('misc_currency')}',
+                              TextStyle(
+                                color: AppColors.info,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
 
+  Widget _periodChip(String period, String label) {
+    final isSelected = _chartPeriod == period;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _chartPeriod = period);
+        _fetchAll();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.info.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.info.withValues(alpha: 0.4)
+                : AppColors.border,
+            width: 0.8,
+          ),
+        ),
+        child: Text(label,
+            style: GoogleFonts.raleway(
+                color: isSelected ? AppColors.info : AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400)),
+      ),
+    );
+  }
+
+  Widget _buildTopProductsCard() {
+    final products = _topProducts;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(S.t('dash_top_products_title'),
+              style: GoogleFonts.playfairDisplay(
+                  color: Colors.white, fontSize: 14,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(S.t('dash_month'),
+              style: GoogleFonts.raleway(
+                  color: AppColors.textSecondary, fontSize: 11)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: products.isEmpty
+                ? Center(child: Text(S.t('dash_no_products_sold'),
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                : ListView.separated(
+                    itemCount: products.length,
+                    separatorBuilder: (_, __) => Divider(
+                        color: AppColors.border, height: 1, thickness: 0.5),
+                    itemBuilder: (context, index) {
+                      final p = products[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24, height: 24,
+                              decoration: BoxDecoration(
+                                color: AppColors.gold.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Center(
+                                child: Text('${index + 1}',
+                                    style: GoogleFonts.raleway(
+                                        color: AppColors.gold, fontSize: 11,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(p['product_name'] ?? '',
+                                      style: GoogleFonts.raleway(
+                                          color: Colors.white, fontSize: 12,
+                                          fontWeight: FontWeight.w600),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  Text(p['variant_info'] ?? '',
+                                      style: GoogleFonts.raleway(
+                                          color: AppColors.textSecondary, fontSize: 10)),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('${p['total_sold'] ?? 0}',
+                                    style: GoogleFonts.raleway(
+                                        color: AppColors.info, fontSize: 13,
+                                        fontWeight: FontWeight.bold)),
+                                Text(S.t('dash_item_count'),
+                                    style: GoogleFonts.raleway(
+                                        color: AppColors.textSecondary, fontSize: 9)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivityCard() {
+    final activity = _recentActivity;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(S.t('dash_recent_activity'),
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 13,
+                      fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: activity.isEmpty
+                ? Center(child: Text(S.t('dash_no_activity'),
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                : ListView.builder(
+                    itemCount: activity.length,
+                    itemBuilder: (context, index) {
+                      final a = activity[index];
+                      final createdAt = a['created_at'] as String?;
+                      final timeAgo = createdAt != null
+                          ? timeago.format(DateTime.parse(createdAt), locale: 'fr_short')
+                          : '';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6, height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.gold.withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                (a['description']?.toString() ?? '').length > 50
+                                    ? '${(a['description']?.toString() ?? '').substring(0, 47)}...'
+                                    : (a['description']?.toString() ?? ''),
+                                style: GoogleFonts.raleway(
+                                    color: AppColors.textPrimary, fontSize: 10),
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (timeAgo.isNotEmpty)
+                              Text(timeAgo,
+                                  style: GoogleFonts.raleway(
+                                      color: AppColors.textSecondary, fontSize: 9)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtClientsCard() {
+    final clients = _debtClients;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(S.t('dash_debt_clients'),
+              style: GoogleFonts.playfairDisplay(
+                  color: Colors.white, fontSize: 13,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Expanded(
+            child: clients.isEmpty
+                ? Center(child: Text(S.t('dash_no_debt_clients'),
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                : ListView.builder(
+                    itemCount: clients.length,
+                    itemBuilder: (context, index) {
+                      final c = clients[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                (c['full_name']?.toString() ?? '').length > 20
+                                    ? '${(c['full_name']?.toString() ?? '').substring(0, 18)}...'
+                                    : (c['full_name'] ?? ''),
+                                style: GoogleFonts.raleway(
+                                    color: AppColors.textPrimary, fontSize: 11),
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${((c['balance'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
+                              style: GoogleFonts.raleway(
+                                  color: AppColors.warning, fontSize: 11,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildShimmer() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Expanded(
-            flex: 2,
+          SizedBox(
+            height: 120,
             child: Row(
-              children: List.generate(4, (i) => [
+              children: List.generate(5, (i) => [
                 Expanded(child: _ShimmerBox()),
-                if (i < 3) const SizedBox(width: 14),
+                if (i < 4) const SizedBox(width: 12),
               ]).expand((e) => e).toList(),
             ),
           ),
-          const SizedBox(height: 14),
-          const SizedBox(height: 1),
-          const SizedBox(height: 14),
-          Expanded(
-            flex: 3,
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 90,
             child: Row(
-              children: List.generate(4, (i) => [
-                Expanded(flex: i == 3 ? 4 : 2, child: _ShimmerBox()),
-                if (i < 3) const SizedBox(width: 14),
+              children: List.generate(5, (i) => [
+                Expanded(child: _ShimmerBox()),
+                if (i < 4) const SizedBox(width: 10),
               ]).expand((e) => e).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: _ShimmerBox()),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: _ShimmerBox()),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: _ShimmerBox()),
+              ],
             ),
           ),
         ],
@@ -761,107 +891,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 }
-
-
-class _MiniLineChart extends StatelessWidget {
-  final Color goldColor;
-  final Color accentColor;
-
-  const _MiniLineChart({
-    required this.goldColor,
-    required this.accentColor,
-  });
-
-  
-  static const _points = [0.3, 0.5, 0.4, 0.7, 0.6, 0.85, 1.0];
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _LinePainter(
-        points: _points,
-        lineColor: accentColor,
-        fillColor: accentColor.withValues(alpha: 0.12),
-        dotColor: goldColor,
-      ),
-    );
-  }
-}
-
-class _LinePainter extends CustomPainter {
-  final List<double> points;
-  final Color lineColor;
-  final Color fillColor;
-  final Color dotColor;
-
-  _LinePainter({
-    required this.points,
-    required this.lineColor,
-    required this.fillColor,
-    required this.dotColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (points.isEmpty) return;
-
-    final linePaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..color = fillColor
-      ..style = PaintingStyle.fill;
-
-    final dotPaint = Paint()
-      ..color = dotColor
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final fillPath = Path();
-
-    final w = size.width;
-    final h = size.height;
-    final step = w / (points.length - 1);
-
-    
-    final coords = <Offset>[];
-    for (int i = 0; i < points.length; i++) {
-      coords.add(Offset(i * step, h - (points[i] * h)));
-    }
-
-   
-    path.moveTo(coords[0].dx, coords[0].dy);
-    fillPath.moveTo(coords[0].dx, h);
-    fillPath.lineTo(coords[0].dx, coords[0].dy);
-
-    for (int i = 0; i < coords.length - 1; i++) {
-      final cp1 = Offset((coords[i].dx + coords[i + 1].dx) / 2, coords[i].dy);
-      final cp2 = Offset((coords[i].dx + coords[i + 1].dx) / 2, coords[i + 1].dy);
-      path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
-          coords[i + 1].dx, coords[i + 1].dy);
-      fillPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy,
-          coords[i + 1].dx, coords[i + 1].dy);
-    }
-
-    fillPath.lineTo(coords.last.dx, h);
-    fillPath.close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, linePaint);
-
-  
-    final last = coords.last;
-    canvas.drawCircle(last, 5, dotPaint);
-    canvas.drawCircle(last, 3, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(_LinePainter old) => false;
-}
-
 
 class _ShimmerBox extends StatefulWidget {
   @override
@@ -895,11 +924,9 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       builder: (_, __) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Color.lerp(
-              const Color(0xFF1A1A2E), const Color(0xFF252545), _anim.value),
+          color: Color.lerp(AppColors.surface, AppColors.surfaceLight, _anim.value),
           border: Border.all(
-              color: const Color(0xFFD4A843).withValues(alpha: 0.08),
-              width: 0.8),
+              color: AppColors.border, width: 0.8),
         ),
       ),
     );
