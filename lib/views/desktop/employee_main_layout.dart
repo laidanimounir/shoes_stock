@@ -7,6 +7,7 @@ import '../admin/liste_produits.dart';
 import '../admin/inventory_screen.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/sales_history_screen.dart';
+import '../admin/activity_logs_screen.dart';
 import '../../widgets/offline_banner.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
@@ -30,6 +31,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
       const InventoryScreen(),
       const GestionClientsScreen(),
       const SalesHistoryScreen(),
+      const ActivityLogsScreen(),
     ];
   }
 
@@ -175,6 +177,8 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             Icons.people_rounded, S.t('nav_clients')),
                         _buildNavItem(4, Icons.history_edu_outlined,
                             Icons.history_edu_rounded, S.t('nav_my_sales')),
+                        _buildNavItem(5, Icons.history_outlined,
+                            Icons.history_rounded, S.t('log_title')),
                       ],
                     ),
                   ),
@@ -334,7 +338,7 @@ class _PulseDotState extends State<_PulseDot>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Container(
+      builder: (_, _) => Container(
         width: 12,
         height: 12,
         decoration: BoxDecoration(
