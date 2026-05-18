@@ -30,6 +30,12 @@ class AppSession {
   /// Returns true if the current user is an employee/cashier.
   static bool get isEmployee => currentUserRole == 'employee';
 
+  /// Auto-print preference: null=not set, true=auto, false=manual
+  static bool? autoPrintTicket;
+
+  /// Whether the print preference dialog has been shown this session
+  static bool posTicketPreferenceSet = false;
+
   /// Resets all session state. Call on logout.
   static void clearSession() {
     currentUserId = null;
@@ -37,6 +43,8 @@ class AppSession {
     currentUserRole = null;
     isOfflineMode = false;
     pendingSync = 0;
+    autoPrintTicket = null;
+    posTicketPreferenceSet = false;
   }
 
   // ══════════════════════════════════════════

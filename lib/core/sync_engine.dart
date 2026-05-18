@@ -158,6 +158,9 @@ class SyncEngine {
         case SyncOperationType.createDebtRecoveryPayment:
           result = await _rpcAddDebtRecoveryPayment(payload);
           break;
+        case SyncOperationType.createLogDiscount:
+          result = await _insertActivityLog(payload);
+          break;
       }
 
       // ── Success ──
@@ -212,6 +215,7 @@ class SyncEngine {
         return 2;
       case SyncOperationType.createExpense:
       case SyncOperationType.createDebtRecoveryPayment:
+      case SyncOperationType.createLogDiscount:
         return 3;
     }
   }
@@ -261,6 +265,12 @@ class SyncEngine {
     await _client.rpc('add_debt_recovery_payment', params: p);
     // add_debt_recovery_payment returns void
     return null;
+  }
+
+  Future<Map<String, dynamic>?> _insertActivityLog(
+      Map<String, dynamic> p) async {
+    final res = await _client.from('activity_logs').insert(p).select().single();
+    return Map<String, dynamic>.from(res);
   }
 
   // ══════════════════════════════════════════

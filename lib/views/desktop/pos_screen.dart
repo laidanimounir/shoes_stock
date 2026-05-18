@@ -104,11 +104,25 @@ class _PosScreenState extends State<PosScreen> {
 
   static const int _invoicePageSize = 15;
 
+  // ── DISCOUNT STATE ──
+  int _discountMode = 0; // 0 = percent, 1 = fixed
+  double _discountInput = 0;
+  double _discountAmount = 0;
+  bool _isDiscountApplied = false;
+
+  // ── CLEAR CART CONFIRMATION ──
+  bool _showClearConfirm = false;
+  Timer? _clearConfirmTimer;
+
   @override
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-    _fetchInitialData();
+    _fetchInitialData().then((_) {
+      if (mounted && !AppSession.posTicketPreferenceSet) {
+        _showPrintPreferenceDialog();
+      }
+    });
 
     // Listen for sync completions → reload today invoices
     _syncCompleteSubscription =
@@ -152,6 +166,7 @@ class _PosScreenState extends State<PosScreen> {
     _syncCompleteSubscription?.cancel();
     _dateTimer?.cancel();
     _pulseTimer?.cancel();
+    _clearConfirmTimer?.cancel();
     _invoiceSearchDebounce?.cancel();
     _invoiceSearchController.dispose();
     _searchController.dispose();
@@ -462,6 +477,7 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   double get _cartTotal => _cart.fold(0, (sum, item) => sum + item.totalPrice);
+  double get _discountedTotal => _cartTotal - _discountAmount;
 
   /// Returns the current stock quantity for a variant in the selected store.
   Future<int> _getCurrentStock(String variantId) async {
@@ -535,12 +551,11 @@ class _PosScreenState extends State<PosScreen> {
       }
     }
 
-    final totalAmount = _cartTotal;
+    final totalAmount = _discountedTotal;
     final isRegisteredClient = _selectedCustomerId != null;
 
-    // ── FIX 3: Payment method state ──
-    String selectedMethod = 'cash'; // 'cash' | 'credit' | 'mixed'
-    final cashController = TextEditingController(text: totalAmount.toStringAsFixed(2));
+    String selectedMethod = 'cash';
+    String numpadValue = totalAmount.toStringAsFixed(2);
 
     showDialog(
       context: context,
@@ -549,14 +564,18 @@ class _PosScreenState extends State<PosScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final bool canUseCredit = isRegisteredClient;
-            final double cashAmount = selectedMethod == 'mixed'
-                ? (double.tryParse(cashController.text) ?? 0)
-                : (selectedMethod == 'cash'
-                    ? (double.tryParse(cashController.text) ?? totalAmount)
+            final double cashAmount = selectedMethod == 'cash'
+                ? (double.tryParse(numpadValue) ?? totalAmount)
+                : (selectedMethod == 'mixed'
+                    ? (double.tryParse(numpadValue) ?? 0)
                     : 0);
             final double creditAmount = selectedMethod == 'mixed'
                 ? (totalAmount - cashAmount).clamp(0, totalAmount)
                 : (selectedMethod == 'credit' ? totalAmount : 0);
+            final double change = selectedMethod != 'credit' && cashAmount >= totalAmount
+                ? cashAmount - totalAmount
+                : 0;
+            final bool isInsufficient = selectedMethod != 'credit' && cashAmount > 0 && cashAmount < totalAmount;
 
             return AlertDialog(
               title: Row(
@@ -594,7 +613,7 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── FIX 3: Payment method segmented control ──
+                  // ── Payment method segmented control ──
                   Text(S.t('pos_payment_method'),
                       style: const TextStyle(
                           fontWeight: FontWeight.w600, fontSize: 14)),
@@ -609,11 +628,12 @@ class _PosScreenState extends State<PosScreen> {
                       setDialogState(() {
                         if (index == 0) {
                           selectedMethod = 'cash';
+                          numpadValue = totalAmount.toStringAsFixed(2);
                         } else if (index == 1 && canUseCredit) {
                           selectedMethod = 'credit';
                         } else if (index == 2 && canUseCredit) {
                           selectedMethod = 'mixed';
-                          cashController.text = totalAmount.toStringAsFixed(2);
+                          numpadValue = totalAmount.toStringAsFixed(2);
                         }
                       });
                     },
@@ -652,19 +672,55 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                   const SizedBox(height: 16),
 
-                  // ── Amount fields based on method ──
-                  if (selectedMethod == 'cash')
-                    TextFormField(
-                      controller: cashController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText:
-                            '${S.t('pos_amount_received')} (${S.t('misc_currency')})',
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.payments),
-                        isDense: true,
+                  // ── Numpad for cash/mixed ──
+                  if (selectedMethod == 'cash' || selectedMethod == 'mixed') ...[
+                    // Amount received display
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        '${S.t('pos_amount_received')} $numpadValue ${S.t('misc_currency')}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    // Change display
+                    Row(
+                      children: [
+                        if (change > 0)
+                          Text(
+                            '${S.t('pos_change_label')} ${change.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                        if (isInsufficient)
+                          Text(
+                            '${S.t('pos_insufficient')} (${(totalAmount - cashAmount).toStringAsFixed(2)} ${S.t('misc_currency')})',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Numpad
+                    PosNumpad(
+                      value: numpadValue,
+                      onChanged: (v) => setDialogState(() => numpadValue = v),
+                    ),
+                  ],
+
                   if (selectedMethod == 'credit')
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
@@ -681,40 +737,25 @@ class _PosScreenState extends State<PosScreen> {
                         ],
                       ),
                     ),
-                  if (selectedMethod == 'mixed')
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                  if (selectedMethod == 'mixed') ...[
+                    const SizedBox(height: 12),
+                    Row(
                       children: [
-                        TextFormField(
-                          controller: cashController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText:
-                                '${S.t('pos_cash_amount')} (${S.t('misc_currency')})',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.money),
-                            isDense: true,
-                          ),
-                          onChanged: (_) => setDialogState(() {}),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text('${S.t('pos_credit_amount')}: ',
-                                style: const TextStyle(fontSize: 13)),
-                            Text(
-                              '${creditAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.orange[700]),
-                            ),
-                          ],
+                        Text('${S.t('pos_credit_amount')}: ',
+                            style: const TextStyle(fontSize: 13)),
+                        Text(
+                          '${creditAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.orange[700]),
                         ),
                       ],
                     ),
+                  ],
 
-                  // ── FIX 3: Client balance warning (amber left border) ──
+                  // ── Client balance warning ──
                   if (isRegisteredClient &&
                       _selectedCustomerBalance != null &&
                       selectedMethod != 'cash')
@@ -762,7 +803,7 @@ class _PosScreenState extends State<PosScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // ── FIX 2: Re-verify stock before processing ──
+                    // ── Re-verify stock before processing ──
                     final conflicts = <int>{};
                     for (int i = 0; i < _cart.length; i++) {
                       final currentStock =
@@ -789,8 +830,8 @@ class _PosScreenState extends State<PosScreen> {
                     // No conflicts → process sale
                     setState(() => _isProcessingPayment = true);
                     final paidAmount = selectedMethod == 'cash'
-                        ? (double.tryParse(cashController.text) ?? totalAmount)
-                        : (selectedMethod == 'credit' ? 0.0 : (double.tryParse(cashController.text) ?? 0));
+                        ? (double.tryParse(numpadValue) ?? totalAmount)
+                        : (selectedMethod == 'credit' ? 0.0 : (double.tryParse(numpadValue) ?? 0));
                     final items = _cart.map((item) => {
                       'variant_id': item.variantId,
                       'quantity': item.quantity,
@@ -798,33 +839,33 @@ class _PosScreenState extends State<PosScreen> {
                       'total_price': item.totalPrice,
                     }).toList();
 
+                    String notes = '';
+                    if (_isDiscountApplied) {
+                      notes = '{"discount_amount": ${_discountAmount.toStringAsFixed(2)}, "discount_percent": ${_discountMode == 0 ? _discountInput.toStringAsFixed(1) : 'null'}}';
+                    }
+
                     try {
+                      final invoiceNumber = _generateInvoiceNumber();
                       await InvoiceService.instance.processSale(
                         storeId: _selectedStoreId!,
-                        invoiceNumber: _generateInvoiceNumber(),
+                        invoiceNumber: invoiceNumber,
                         items: items,
                         totalAmount: totalAmount,
                         paidAmount: paidAmount,
                         paymentMethod: selectedMethod,
                         customerId: _selectedCustomerId,
+                        notes: notes,
                       );
+
+                      // ── Audit log for discount ──
+                      if (_isDiscountApplied) {
+                        _logDiscount(invoiceNumber, items, totalAmount);
+                      }
+
                       setState(() => _isProcessingPayment = false);
                       Navigator.pop(context);
                       if (mounted) {
-                        ScaffoldMessenger.of(this.context).showSnackBar(
-                          SnackBar(
-                            content: Text(S.t('pos_sale_success')),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                        setState(() {
-                          _cart.clear();
-                          _selectedCustomerId = null;
-                          _selectedCustomerBalance = null;
-                          _stockConflictItems = {};
-                          _cachedStock.clear();
-                        });
-                        _loadTodayInvoices();
+                        _handlePostSaleAction(invoiceNumber, paidAmount);
                       }
                     } catch (e) {
                       setState(() => _isProcessingPayment = false);
@@ -840,13 +881,94 @@ class _PosScreenState extends State<PosScreen> {
                   },
                   child: Text(S.t('pos_confirm_payment')),
                 ),
-
               ],
             );
         },
         );
       },
     );
+  }
+
+  Future<void> _logDiscount(String invoiceNumber, List<Map<String, dynamic>> items, double finalTotal) async {
+    final logPayload = {
+      'user_id': AppSession.currentUserId,
+      'action_type': 'REMISE_APPLIQUEE',
+      'description': jsonEncode({
+        'invoice_number': invoiceNumber,
+        'discount_percent': _discountMode == 0 ? _discountInput : null,
+        'discount_amount': _discountAmount,
+        'original_total': _cartTotal,
+        'final_total': finalTotal,
+      }),
+    };
+
+    if (AppSession.isOfflineMode) {
+      await SyncEngine.instance.enqueue(
+        SyncOperationType.createLogDiscount,
+        logPayload,
+      );
+    } else {
+      try {
+        await Supabase.instance.client.from('activity_logs').insert(logPayload);
+      } catch (_) {}
+    }
+  }
+
+  void _handlePostSaleAction(String invoiceNumber, double paidAmount) {
+    setState(() {
+      _cart.clear();
+      _selectedCustomerId = null;
+      _selectedCustomerBalance = null;
+      _stockConflictItems = {};
+      _cachedStock.clear();
+      _isDiscountApplied = false;
+      _discountAmount = 0;
+      _discountInput = 0;
+      _discountMode = 0;
+    });
+    _loadTodayInvoices();
+
+    if (AppSession.autoPrintTicket == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(S.t('pos_print_auto_msg')),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } else if (AppSession.autoPrintTicket == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Expanded(child: Text(S.t('pos_sale_success'))),
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(S.t('pos_print_auto_msg'))),
+                  );
+                },
+                child: Text(S.t('pos_print_now'), style: const TextStyle(color: Colors.white)),
+              ),
+              TextButton(
+                onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                child: Text(S.t('pos_print_ignore'), style: const TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(S.t('pos_sale_success')),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   // ── FIX 4: Quantity control widget for cart items ──
@@ -1268,6 +1390,27 @@ class _PosScreenState extends State<PosScreen> {
                                   const SizedBox(width: 12),
                                   Text(S.t('pos_cart_title'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                   const Spacer(),
+                                  if (_cart.isNotEmpty)
+                                    _showClearConfirm
+                                        ? _buildClearConfirmRow()
+                                        : GestureDetector(
+                                            onTap: () => setState(() {
+                                              _showClearConfirm = true;
+                                              _clearConfirmTimer?.cancel();
+                                              _clearConfirmTimer = Timer(const Duration(seconds: 5), () {
+                                                if (mounted) setState(() => _showClearConfirm = false);
+                                              });
+                                            }),
+                                            child: Text(
+                                              S.t('pos_cart_clear'),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.orange[700],
+                                              ),
+                                            ),
+                                          ),
+                                  const SizedBox(width: 8),
                                   Chip(
                                     label: Text('${_cart.length}'), 
                                     backgroundColor: Colors.indigo,
@@ -1411,13 +1554,27 @@ class _PosScreenState extends State<PosScreen> {
                                       }
                                     },
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
 
+                                  // ── DISCOUNT SECTION ──
+                                  if (_cart.isNotEmpty)
+                                    _isDiscountApplied
+                                        ? _buildDiscountSummary()
+                                        : _buildDiscountInput(),
+                                  const SizedBox(height: 12),
+
+                                  // ── TOTAL ──
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(S.t('pos_total_to_pay'), style: const TextStyle(fontSize: 20, color: Colors.grey)),
-                                      Text('${_cartTotal.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                      Text(
+                                        _isDiscountApplied ? S.t('label_total') : S.t('pos_total_to_pay'),
+                                        style: const TextStyle(fontSize: 20, color: Colors.grey),
+                                      ),
+                                      Text(
+                                        '${_discountedTotal.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 24),
