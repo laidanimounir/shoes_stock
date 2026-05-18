@@ -118,6 +118,11 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
       final res = await Supabase.instance.client.from('stores').select('id, name').order('name');
       if (mounted) setState(() => _stores = res);
     } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.t('msg_load_error')), backgroundColor: Colors.red),
+        );
+      }
       debugPrint('Error fetching stores: $e');
     }
   }
@@ -169,7 +174,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
       if (mounted) {
         setState(() => _isLoadingEmployees = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${S.t('msg_error')}: ${S.t('emp_no_results')}'), backgroundColor: Colors.red),
+          SnackBar(content: Text(S.t('msg_load_error')), backgroundColor: Colors.red),
         );
       }
       debugPrint('Error fetching employees: $e');
@@ -252,10 +257,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
     setState(() => _submitting = true);
     try {
-      final session = Supabase.instance.client.auth.currentSession;
       final res = await Supabase.instance.client.functions.invoke(
         'create_employee',
-        headers: {'Authorization': 'Bearer ${session?.accessToken}'},
         body: {
           'email': _emailCtl.text.trim(),
           'password': _passwordCtl.text,
@@ -306,7 +309,6 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
     setState(() => _editSubmitting = true);
     try {
-      final session = Supabase.instance.client.auth.currentSession;
       final body = <String, dynamic>{
         'employee_id': _selectedEmployee!['id'],
         'first_name': _editFirstNameCtl.text.trim(),
@@ -323,7 +325,6 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
       final res = await Supabase.instance.client.functions.invoke(
         'update_employee',
-        headers: {'Authorization': 'Bearer ${session?.accessToken}'},
         body: body,
       );
 
@@ -392,10 +393,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     }
 
     try {
-      final session = Supabase.instance.client.auth.currentSession;
       final res = await Supabase.instance.client.functions.invoke(
         'toggle_employee_status',
-        headers: {'Authorization': 'Bearer ${session?.accessToken}'},
         body: {'employee_id': employeeId, 'action': action},
       );
 
