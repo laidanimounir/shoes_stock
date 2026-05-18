@@ -641,6 +641,7 @@ class S {
       'log_user': 'Utilisateur',
       'log_date': 'Date',
       'log_no_results': 'Aucun journal trouvé.',
+      'label_performed_action': 'a effectué',
 
       // ── Messages success ──
       'msg_saved': 'Enregistré avec succès.',
@@ -1358,6 +1359,7 @@ class S {
       'log_user': 'المستخدم',
       'log_date': 'التاريخ',
       'log_no_results': 'لا توجد سجلات.',
+      'label_performed_action': 'قام بـ',
 
       // ── Messages success ──
       'msg_saved': 'تم الحفظ بنجاح.',

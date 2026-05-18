@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
@@ -58,6 +59,22 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         return Icons.delete_forever;
       case 'RETURN':
         return Icons.keyboard_return;
+      case 'CREATE_EMPLOYEE':
+        return Icons.person_add;
+      case 'UPDATE_EMPLOYEE':
+        return Icons.edit;
+      case 'SUSPEND_EMPLOYEE':
+        return Icons.pause_circle;
+      case 'REACTIVATE_EMPLOYEE':
+        return Icons.play_circle;
+      case 'PERMANENT_DELETE_EMPLOYEE':
+        return Icons.delete_forever;
+      case 'DELETE_EMPLOYEE':
+        return Icons.no_accounts;
+      case 'ADD_EXPENSE':
+        return Icons.receipt;
+      case 'ADD_DEBT_RECOVERY':
+        return Icons.payments;
       default:
         return Icons.history;
     }
@@ -77,6 +94,18 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         return Colors.red;
       case 'RETURN':
         return Colors.purple;
+      case 'CREATE_EMPLOYEE':
+      case 'REACTIVATE_EMPLOYEE':
+        return Colors.green;
+      case 'UPDATE_EMPLOYEE':
+      case 'ADD_DEBT_RECOVERY':
+        return Colors.blue;
+      case 'SUSPEND_EMPLOYEE':
+      case 'ADD_EXPENSE':
+        return Colors.orange;
+      case 'PERMANENT_DELETE_EMPLOYEE':
+      case 'DELETE_EMPLOYEE':
+        return Colors.red;
       default:
         return Colors.grey;
     }
@@ -150,14 +179,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                                   const Icon(Icons.access_time, size: 14, color: Colors.grey),
                                   const SizedBox(width: 4),
                                   Text(
-                                    timeago.format(date, locale: AppSession.locale.value),
+                                    '${timeago.format(date, locale: AppSession.locale.value)}  (${DateFormat('dd/MM/yyyy à HH:mm:ss').format(date.toLocal())})',
                                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '(${date.toLocal().toString().split('.')[0]})',
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                  )
                                 ],
                               )
                             ],
