@@ -5,7 +5,6 @@ import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/transaction_local.dart';
-import '../../local_db/collections/inventory_local.dart';
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});

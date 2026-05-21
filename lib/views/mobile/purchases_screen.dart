@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
 class PurchasesScreen extends StatefulWidget {
@@ -118,7 +117,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                   ])));
                 })),
                 Container(padding: const EdgeInsets.all(12), child: Column(children: [
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('${S.t('pos_total')}:'), Text('$_totalCost ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold))]),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('$_totalQty ${S.t('inv_units')} - ${S.t('pos_total')}:'), Text('$_totalCost ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold))]),
                   const SizedBox(height: 8),
                   SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white), onPressed: _cart.isEmpty ? null : _save, child: Text(S.t('action_save')))),
                 ])),

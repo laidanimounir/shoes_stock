@@ -7,13 +7,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
-import '../../core/app_colors.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
-import '../../local_db/collections/store_local.dart';
 import 'products_screen.dart';
 import 'add_product_screen.dart';
 import 'pos_screen.dart';
@@ -181,7 +179,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         if (mounted) {
           setState(() => _lowStockAlerts = low.map((i) => {
             'quantity': i.quantity,
-            'stores': {'name': i.storeId ?? ''},
+            'stores': {'name': i.storeId},
             'product_variants': {
               'size': '',
               'color': '',
@@ -1144,7 +1142,7 @@ class _InventorySheetState extends State<_InventorySheet> {
           ) : null;
           result.add({
             'quantity': item.quantity,
-            'stores': {'name': item.storeId ?? ''},
+            'stores': {'name': item.storeId},
             'product_variants': {
               'size': variant?.size ?? '', 'color': variant?.color ?? '',
               'products': {'name': prod?.name ?? ''},

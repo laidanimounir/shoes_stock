@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
 class StoresScreen extends StatefulWidget {

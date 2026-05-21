@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
-import '../../core/connectivity_service.dart';
-import '../../core/sync_engine.dart';
+import '../../services/invoice_service.dart';
 import '../../local_db/isar_service.dart';
-import '../../local_db/enums/local_enums.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
-import '../../services/invoice_service.dart';
-
 class CartItem {
   final String variantId;
   final String productName;

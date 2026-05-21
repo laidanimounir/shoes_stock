@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
 class EmployeesScreen extends StatefulWidget {
@@ -23,7 +22,6 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
     try {
-      final isActive = _statusFilter == 'active' ? true : (_statusFilter == 'suspended' ? false : null);
       var qb = Supabase.instance.client.from('user_profiles').select('id, full_name, email, phone, is_active, role, stores(name)');
       if (_statusFilter == 'active') qb = qb.eq('is_active', true);
       else if (_statusFilter == 'suspended') qb = qb.eq('is_active', false);
