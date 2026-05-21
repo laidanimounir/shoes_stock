@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
@@ -54,6 +55,53 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
     ));
   }
 
+  // ─── WhatsApp / SMS ─────────────────────────────────────────
+  String _cleanPhone(String phone) {
+    String cleaned = phone.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
+    if (cleaned.startsWith('00213')) {
+      cleaned = '+213${cleaned.substring(5)}';
+    } else if (cleaned.startsWith('0')) {
+      cleaned = '+213${cleaned.substring(1)}';
+    } else if (!cleaned.startsWith('+')) {
+      cleaned = '+213$cleaned';
+    }
+    return cleaned;
+  }
+
+  Future<void> _sendWhatsApp(String phone, String name, double balance) async {
+    if (phone == null || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+    final cleanedPhone = _cleanPhone(phone).replaceAll('+', '');
+    final message = S.t('contact_whatsapp_msg')
+        .replaceAll('{name}', name)
+        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
+    final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _sendSMS(String phone, String name, double balance) async {
+    if (phone == null || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+    final cleanedPhone = _cleanPhone(phone);
+    final message = S.t('contact_sms_msg')
+        .replaceAll('{name}', name)
+        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
+    final url = Uri.parse('sms:$cleanedPhone?body=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _searchCtrl.text.isEmpty ? _debts : _debts.where((d) => (d['full_name'] ?? '').toString().toLowerCase().contains(_searchCtrl.text.toLowerCase())).toList();
@@ -77,7 +125,25 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                   leading: CircleAvatar(child: Text(((d['full_name'] as String?)?[0] ?? '?').toUpperCase())),
                   title: Text(d['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('${S.t('pos_credit')}: ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  trailing: IconButton(icon: const Icon(Icons.payments, color: Colors.green), onPressed: () => _recordPayment(d)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chat, color: Colors.green, size: 20),
+                        tooltip: 'WhatsApp',
+                        onPressed: () => _sendWhatsApp(d['phone'], d['full_name'], bal),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
+                        tooltip: 'SMS',
+                        onPressed: () => _sendSMS(d['phone'], d['full_name'], bal),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.payments, color: Colors.green, size: 20),
+                        onPressed: () => _recordPayment(d),
+                      ),
+                    ],
+                  ),
                 ));
               }),
         ),

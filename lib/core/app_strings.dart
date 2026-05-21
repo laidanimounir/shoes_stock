@@ -783,6 +783,8 @@ class S {
       'contact_no_phone': 'Aucun numéro de téléphone pour ce client',
       'contact_debt_list_title': 'Clients débiteurs',
       'contact_send_reminder': 'Envoyer un rappel',
+      'debt_whatsapp_reminder': 'Rappel WhatsApp',
+      'debt_sms_reminder': 'Rappel SMS',
 
       // ── Dates ──
       'day_mon': 'Lun', 'day_tue': 'Mar', 'day_wed': 'Mer', 'day_thu': 'Jeu', 'day_fri': 'Ven', 'day_sat': 'Sam', 'day_sun': 'Dim',
@@ -1548,6 +1550,8 @@ class S {
       'contact_no_phone': 'لا يوجد رقم هاتف لهذا العميل',
       'contact_debt_list_title': 'العملاء المدينون',
       'contact_send_reminder': 'إرسال تذكير',
+      'debt_whatsapp_reminder': 'تذكير واتساب',
+      'debt_sms_reminder': 'تذكير SMS',
 
       // ── Dates ──
       'day_mon': 'الإثنين', 'day_tue': 'الثلاثاء', 'day_wed': 'الأربعاء', 'day_thu': 'الخميس', 'day_fri': 'الجمعة', 'day_sat': 'السبت', 'day_sun': 'الأحد',
