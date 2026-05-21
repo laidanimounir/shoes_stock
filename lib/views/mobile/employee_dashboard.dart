@@ -15,6 +15,37 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _checkAccess();
+  }
+
+  void _checkAccess() {
+    if (!AppSession.isEmployee) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Text(S.t('auth_access_denied_mobile')),
+            content: Text(S.t('owner_role_label')),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Supabase.instance.client.auth.signOut();
+                },
+                child: Text(S.t('auth_logout')),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screens = [
       _PosTab(),

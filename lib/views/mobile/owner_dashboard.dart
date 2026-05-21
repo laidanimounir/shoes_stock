@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -33,8 +34,34 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   void initState() {
     super.initState();
     timeago.setLocaleMessages('fr', timeago.FrMessages());
+    _checkAccess();
     _fetchDashboardData();
     _setupRealtime();
+  }
+
+  void _checkAccess() {
+    if (!AppSession.isOwner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Text(S.t('auth_access_denied_mobile')),
+            content: Text(S.t('owner_role_label')),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Supabase.instance.client.auth.signOut();
+                },
+                child: Text(S.t('auth_logout')),
+              ),
+            ],
+          ),
+        );
+      });
+    }
   }
 
   void _setupRealtime() {
