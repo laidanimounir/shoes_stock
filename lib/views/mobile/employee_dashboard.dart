@@ -11,6 +11,8 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/transaction_local.dart';
+import 'expenses_screen.dart';
+import 'activity_logs_screen.dart';
 
 class EmployeeDashboard extends StatefulWidget {
   const EmployeeDashboard({super.key});
@@ -64,6 +66,45 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
     ];
 
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.indigo[900]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.white24,
+                    child: Icon(Icons.person, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(S.t('dash_employee_dashboard'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.money_off, color: Colors.indigo[900]),
+              title: Text(S.t('nav_expenses')),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.notifications, color: Colors.indigo[900]),
+              title: Text(S.t('nav_activity')),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityLogsScreen()));
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: Text(S.t('owner_dash_title')),
         backgroundColor: Colors.indigo[900],

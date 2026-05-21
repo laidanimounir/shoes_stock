@@ -14,6 +14,18 @@ import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/store_local.dart';
+import 'products_screen.dart';
+import 'add_product_screen.dart';
+import 'pos_screen.dart';
+import 'customers_screen.dart';
+import 'suppliers_screen.dart';
+import 'sales_screen.dart';
+import 'purchases_screen.dart';
+import 'expenses_screen.dart';
+import 'debt_recovery_screen.dart';
+import 'activity_logs_screen.dart';
+import 'stores_screen.dart';
+import 'employees_screen.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -492,6 +504,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      drawer: _buildDrawer(context),
       appBar: AppBar(
         title: Text(S.t('owner_dash_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[900],
@@ -661,6 +674,59 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    final menuItems = [
+      {'icon': Icons.dashboard, 'label': S.t('nav_dashboard'), 'screen': null},
+      {'icon': Icons.point_of_sale, 'label': S.t('nav_pos'), 'screen': const PosScreenMobile()},
+      {'icon': Icons.inventory_2, 'label': S.t('nav_products'), 'screen': const ProductsScreen()},
+      {'icon': Icons.add_business, 'label': S.t('nav_add_product'), 'screen': const AddProductScreen()},
+      {'icon': Icons.people, 'label': S.t('nav_clients'), 'screen': const CustomersScreen()},
+      {'icon': Icons.business, 'label': S.t('nav_suppliers'), 'screen': const SuppliersScreen()},
+      {'icon': Icons.history, 'label': S.t('nav_sales'), 'screen': const SalesScreen()},
+      {'icon': Icons.shopping_cart, 'label': S.t('nav_purchases'), 'screen': const PurchasesScreen()},
+      {'icon': Icons.money_off, 'label': S.t('nav_expenses'), 'screen': const ExpensesScreen()},
+      {'icon': Icons.account_balance, 'label': S.t('nav_recovery'), 'screen': const DebtRecoveryScreen()},
+      {'icon': Icons.notifications, 'label': S.t('nav_activity'), 'screen': const ActivityLogsScreen()},
+      {'icon': Icons.store, 'label': S.t('nav_stores'), 'screen': const StoresScreen()},
+      {'icon': Icons.group, 'label': S.t('nav_employees'), 'screen': const EmployeesScreen()},
+    ];
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.indigo[900]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white24,
+                  child: Icon(Icons.storefront, color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 12),
+                Text(S.t('owner_dash_title'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(S.t('owner_role_label'), style: const TextStyle(color: Colors.white60, fontSize: 12)),
+              ],
+            ),
+          ),
+          ...menuItems.map((item) => ListTile(
+            leading: Icon(item['icon'] as IconData, color: Colors.indigo[900]),
+            title: Text(item['label'] as String, style: const TextStyle(fontWeight: FontWeight.w500)),
+            onTap: () {
+              Navigator.pop(context);
+              final screen = item['screen'] as Widget?;
+              if (screen != null) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+              }
+            },
+          )),
+        ],
       ),
     );
   }
