@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../core/app_colors.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
@@ -33,6 +35,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   List<dynamic> _lowStockAlerts = [];
   List<dynamic> _recentActivities = [];
   List<Map<String, dynamic>> _debtors = [];
+
+  List<dynamic> _stores = [];
+  String? _selectedStoreId;
+  List<Map<String, dynamic>> _chartData = [];
+  String _chartPeriod = 'month';
+  List<Map<String, dynamic>> _topProducts = [];
 
   bool _isLoading = true;
   late final RealtimeChannel _dashboardSubscription;
@@ -101,10 +109,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     if (!isRefresh) setState(() => _isLoading = true);
     try {
       await Future.wait([
+        _fetchStores(),
         _fetchGlobalFinancials(),
         _fetchStorePerformance(),
         _fetchLowStock(),
         _fetchActivities(),
+        _fetchChartData(),
+        _fetchTopProducts(),
       ]);
     } catch (e) {
       debugPrint("Dashboard update error: $e");
@@ -179,6 +190,46 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .limit(15);
       if (mounted) setState(() => _recentActivities = res);
     } catch (e) {}
+  }
+
+  Future<void> _fetchStores() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('stores')
+          .select()
+          .eq('is_active', true)
+          .order('name');
+      if (mounted) setState(() => _stores = res);
+    } catch (e) {
+      debugPrint('Error fetching stores: $e');
+    }
+  }
+
+  Future<void> _fetchChartData() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_revenue_chart_data', params: {
+        'p_store_id': _selectedStoreId,
+        'p_period': _chartPeriod,
+      });
+      if (mounted) {
+        setState(() => _chartData = List<Map<String, dynamic>>.from(res ?? []));
+      }
+    } catch (e) {
+      debugPrint('Error fetching chart data: $e');
+    }
+  }
+
+  Future<void> _fetchTopProducts() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_top_products', params: {
+        'p_store_id': _selectedStoreId,
+      });
+      if (mounted) {
+        setState(() => _topProducts = List<Map<String, dynamic>>.from(res ?? []));
+      }
+    } catch (e) {
+      debugPrint('Error fetching top products: $e');
+    }
   }
 
   // ─── WhatsApp / SMS ─────────────────────────────────────────
@@ -447,6 +498,37 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          if (_stores.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: _selectedStoreId,
+                    dropdownColor: Colors.indigo[800],
+                    icon: const Icon(Icons.store_outlined, color: Colors.white, size: 16),
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Tous', style: TextStyle(color: Colors.white70, fontSize: 12))),
+                      ..._stores.map((s) => DropdownMenuItem(
+                            value: s['id'] as String?,
+                            child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                          )),
+                    ],
+                    onChanged: (val) {
+                      setState(() => _selectedStoreId = val);
+                      _fetchDashboardData(isRefresh: true);
+                    },
+                  ),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchDashboardData(isRefresh: true),
@@ -522,6 +604,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
+                  _buildSectionHeader(S.t('dash_revenue_chart'), Icons.bar_chart, Colors.blue),
+                  _buildChartCard(),
+                  const SizedBox(height: 16),
+                  _buildSectionHeader(S.t('dash_top_products_title'), Icons.star, Colors.orange),
+                  _buildTopProductsCard(),
+                  const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Colors.red),
                     _buildLowStockList(),
@@ -573,6 +661,225 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildChartCard() {
+    final data = _chartData;
+    final maxRevenue = data.fold<double>(0, (p, v) {
+      final rev = (v['revenue'] as num?)?.toDouble() ?? 0;
+      return p > rev ? p : rev;
+    });
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(S.t('dash_revenue_chart'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.indigo)),
+                Row(
+                  children: [
+                    _periodChip('week', S.t('dash_week')),
+                    const SizedBox(width: 4),
+                    _periodChip('month', S.t('dash_month')),
+                    const SizedBox(width: 4),
+                    _periodChip('3months', S.t('dash_3months')),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: data.isEmpty
+                  ? Center(child: Text(S.t('dash_no_data'), style: const TextStyle(color: Colors.grey)))
+                  : LineChart(
+                      LineChartData(
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: maxRevenue > 0 ? (maxRevenue / 4).ceilToDouble() : 1,
+                          getDrawingHorizontalLine: (value) => FlLine(
+                            color: Colors.grey[200]!,
+                            strokeWidth: 0.5,
+                          ),
+                        ),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              getTitlesWidget: (value, meta) {
+                                final v = value.toInt();
+                                return Text('$v',
+                                    style: const TextStyle(color: Colors.grey, fontSize: 9));
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: (data.length / 5).ceilToDouble().clamp(1, double.infinity),
+                              getTitlesWidget: (value, meta) {
+                                final idx = value.toInt();
+                                if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
+                                final day = data[idx]['day'] as String? ?? '';
+                                final parts = day.split('-');
+                                final label = parts.length >= 3 ? '${parts[2]}/${parts[1]}' : day;
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(label,
+                                      style: const TextStyle(color: Colors.grey, fontSize: 9)),
+                                );
+                              },
+                            ),
+                          ),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: List.generate(data.length, (i) {
+                              final rev = (data[i]['revenue'] as num?)?.toDouble() ?? 0;
+                              return FlSpot(i.toDouble(), rev);
+                            }),
+                            isCurved: true,
+                            color: Colors.blue,
+                            barWidth: 2.5,
+                            isStrokeCapRound: true,
+                            dotData: FlDotData(
+                              show: data.length <= 31,
+                              getDotPainter: (spot, percent, barData, index) {
+                                if (index == data.length - 1) {
+                                  return FlDotCirclePainter(
+                                    radius: 4, color: Colors.blue,
+                                    strokeWidth: 2, strokeColor: Colors.white,
+                                  );
+                                }
+                                return FlDotCirclePainter(
+                                  radius: 2, color: Colors.blue.withOpacity(0.5), strokeWidth: 0,
+                                );
+                              },
+                            ),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: Colors.blue.withOpacity(0.08),
+                            ),
+                          ),
+                        ],
+                        lineTouchData: LineTouchData(
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                              final rev = spot.y.toInt();
+                              return LineTooltipItem(
+                                '$rev ${S.t('misc_currency')}',
+                                const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _periodChip(String period, String label) {
+    final isSelected = _chartPeriod == period;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _chartPeriod = period);
+        _fetchChartData();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isSelected ? Colors.blue.withOpacity(0.4) : Colors.grey[300]!,
+            width: 0.8,
+          ),
+        ),
+        child: Text(label,
+            style: TextStyle(
+              color: isSelected ? Colors.blue : Colors.grey,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            )),
+      ),
+    );
+  }
+
+  Widget _buildTopProductsCard() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _topProducts.isEmpty
+            ? Center(child: Text(S.t('dash_no_products_sold'), style: const TextStyle(color: Colors.grey)))
+            : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _topProducts.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final p = _topProducts[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24, height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Center(
+                            child: Text('${index + 1}',
+                                style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p['product_name'] ?? '',
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(p['variant_info'] ?? '',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('${p['total_sold'] ?? 0}',
+                                style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
+                            Text(S.t('dash_item_count'),
+                                style: const TextStyle(color: Colors.grey, fontSize: 9)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
