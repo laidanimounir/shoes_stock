@@ -102,6 +102,34 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityLogsScreen()));
               },
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: Text(S.t('auth_logout'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              onTap: () async {
+                Navigator.pop(context);
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(S.t('auth_logout')),
+                    content: Text(S.t('logout_confirm_msg')),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(S.t('action_cancel')),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(S.t('auth_logout'), style: const TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await Supabase.instance.client.auth.signOut();
+                }
+              },
+            ),
           ],
         ),
       ),
