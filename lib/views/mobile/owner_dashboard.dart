@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../widgets/offline_banner.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/product_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/store_local.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -142,7 +149,25 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .order('quantity', ascending: true)
           .limit(10);
       if (mounted) setState(() => _lowStockAlerts = res);
-    } catch (e) {}
+    } catch (e) {
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final items = await isar.inventoryLocals.where().findAll();
+        final low = items.where((i) => i.quantity < 3).take(10).toList();
+        if (mounted) {
+          setState(() => _lowStockAlerts = low.map((i) => {
+            'quantity': i.quantity,
+            'stores': {'name': i.storeId ?? ''},
+            'product_variants': {
+              'size': '',
+              'color': '',
+              'products': {'name': ''},
+            },
+          }).toList());
+        }
+      } catch (_) {}
+    }
   }
 
   Future<void> _fetchActivities() async {
@@ -428,11 +453,15 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () => _fetchDashboardData(isRefresh: true),
-              child: ListView(
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: () => _fetchDashboardData(isRefresh: true),
+                    child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 children: [
                   Padding(
@@ -504,6 +533,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _scanBarcode,
         backgroundColor: Colors.indigo[900],
@@ -720,7 +752,36 @@ class _InventorySheetState extends State<_InventorySheet> {
           .order('quantity', ascending: true);
       if (mounted) setState(() { _inventory = res; _isLoading = false; });
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final items = await isar.inventoryLocals.where().findAll();
+        items.sort((a, b) => a.quantity.compareTo(b.quantity));
+        final allVariants = await isar.productVariantLocals.where().findAll();
+        final allProducts = await isar.productLocals.where().findAll();
+        final result = <Map<String, dynamic>>[];
+        for (final item in items) {
+          final variant = allVariants.cast<ProductVariantLocal?>().firstWhere(
+            (v) => v?.supabaseId == item.variantId,
+            orElse: () => null,
+          );
+          final prod = variant != null ? allProducts.cast<ProductLocal?>().firstWhere(
+            (p) => p?.supabaseId == variant.productId,
+            orElse: () => null,
+          ) : null;
+          result.add({
+            'quantity': item.quantity,
+            'stores': {'name': item.storeId ?? ''},
+            'product_variants': {
+              'size': variant?.size ?? '', 'color': variant?.color ?? '',
+              'products': {'name': prod?.name ?? ''},
+            },
+          });
+        }
+        if (mounted) setState(() { _inventory = result; _isLoading = false; });
+      } catch (_) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 

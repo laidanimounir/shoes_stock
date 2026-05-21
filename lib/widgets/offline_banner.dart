@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/app_session.dart';
-import '../../core/connectivity_service.dart';
-import '../../core/sync_engine.dart';
-import '../../core/app_strings.dart';
+import '../core/app_session.dart';
+import '../core/connectivity_service.dart';
+import '../core/sync_engine.dart';
+import '../core/app_strings.dart';
 
 /// Persistent top banner shown when offline or when sync items are pending.
 /// Embed at the top of your main Column in each layout.

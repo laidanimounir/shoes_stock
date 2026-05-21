@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../widgets/offline_banner.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/product_local.dart';
+import '../../local_db/collections/product_variant_local.dart';
+import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/customer_local.dart';
+import '../../local_db/collections/transaction_local.dart';
 
 class EmployeeDashboard extends StatefulWidget {
   const EmployeeDashboard({super.key});
@@ -62,7 +70,12 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: screens[_currentIndex],
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: screens[_currentIndex]),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
@@ -129,7 +142,7 @@ class _PosTabState extends State<_PosTab> {
     try {
       final res = await Supabase.instance.client
           .from('product_variants')
-          .select('id, size, color, sell_price, products(name), inventory!inner(quantity, store_id)')
+          .select('id, size, color, sell_price, buy_price, products(name, image_url), inventory!inner(quantity, store_id)')
           .eq('barcode', barcode)
           .eq('inventory.store_id', AppSession.currentStoreId!)
           .maybeSingle();
@@ -137,19 +150,48 @@ class _PosTabState extends State<_PosTab> {
       if (res == null || !mounted) return;
       final qty = (res['inventory']?['quantity'] as int?) ?? 0;
 
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(res['products']['name']),
-          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${S.t('prod_size')}: ${res['size']} | ${S.t('prod_color')}: ${res['color']}'),
-            Text('${S.t('prod_sell_short')}${res['sell_price']} ${S.t('misc_currency')}'),
-            Text('${S.t('label_stock')}: $qty'),
-          ]),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_close')))],
-        ),
-      );
-    } catch (_) {}
+      if (mounted) {
+        _showProductDetail(res['products']['name'], res['size'], res['color'], (res['sell_price'] as num?)?.toDouble() ?? 0, qty, res['products']['image_url']);
+      }
+    } catch (_) {
+      // Offline: try Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final allVariants = await isar.productVariantLocals.where().findAll();
+        final variant = allVariants.cast<ProductVariantLocal?>().firstWhere(
+          (v) => v?.barcode == barcode,
+          orElse: () => null,
+        );
+        if (variant == null || !mounted) return;
+        final storeId = AppSession.currentStoreId;
+        final allInv = await isar.inventoryLocals.where().findAll();
+        final invItems = allInv.where((i) => i.variantId == variant.supabaseId && (storeId == null || i.storeId == storeId)).toList();
+        final qty = invItems.fold<int>(0, (s, i) => s + i.quantity);
+        final allProducts = await isar.productLocals.where().findAll();
+        final prod = allProducts.cast<ProductLocal?>().firstWhere(
+          (p) => p?.supabaseId == variant.productId,
+          orElse: () => null,
+        );
+        _showProductDetail(prod?.name ?? '', variant.size, variant.color, variant.sellPrice, qty, prod?.imageUrl);
+      } catch (_) {}
+    }
+  }
+
+  void _showProductDetail(String name, String size, String color, double price, int qty, String? imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(name),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (imageUrl != null) ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(imageUrl, height: 80)),
+          const SizedBox(height: 8),
+          Text('${S.t('prod_size')}: $size | ${S.t('prod_color')}: $color'),
+          Text('${S.t('prod_sell_short')}${price.toStringAsFixed(0)} ${S.t('misc_currency')}'),
+          Text('${S.t('label_stock')}: $qty'),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_close')))],
+      ),
+    );
   }
 
   @override
@@ -204,7 +246,33 @@ class _ProductsTabState extends State<_ProductsTab> {
           .eq('product_variants.inventory.store_id', AppSession.currentStoreId!);
       if (mounted) setState(() { _products = res; _isLoading = false; });
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final storeId = AppSession.currentStoreId;
+        final allProducts = await isar.productLocals.where().findAll();
+        final products = allProducts.where((p) => p.isActive).toList();
+        final allVariants = await isar.productVariantLocals.where().findAll();
+        final allInv = await isar.inventoryLocals.where().findAll();
+        final result = <Map<String, dynamic>>[];
+        for (final p in products) {
+          final variants = allVariants.where((v) => v.productId == p.supabaseId && v.isActive).toList();
+          final mappedVariants = <Map<String, dynamic>>[];
+          for (final v in variants) {
+            final inv = allInv.where((i) => i.variantId == v.supabaseId && (storeId == null || i.storeId == storeId)).toList();
+            final qty = inv.fold<int>(0, (s, i) => s + i.quantity);
+            mappedVariants.add({
+              'id': v.supabaseId, 'size': v.size, 'color': v.color, 'barcode': v.barcode,
+              'sell_price': v.sellPrice, 'is_active': true,
+              'inventory': [{'quantity': qty, 'store_id': storeId}],
+            });
+          }
+          result.add({'id': p.supabaseId, 'name': p.name, 'product_variants': mappedVariants});
+        }
+        if (mounted) setState(() { _products = result; _isLoading = false; });
+      } catch (_) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -265,7 +333,39 @@ class _InventoryTabState extends State<_InventoryTab> {
           .order('quantity');
       if (mounted) setState(() { _items = res; _isLoading = false; });
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final storeId = AppSession.currentStoreId;
+        var allInv = await isar.inventoryLocals.where().findAll();
+        if (storeId != null) {
+          allInv = allInv.where((i) => i.storeId == storeId).toList();
+        }
+        allInv.sort((a, b) => a.quantity.compareTo(b.quantity));
+        final allVariants = await isar.productVariantLocals.where().findAll();
+        final allProducts = await isar.productLocals.where().findAll();
+        final result = <Map<String, dynamic>>[];
+        for (final item in allInv) {
+          final variant = allVariants.cast<ProductVariantLocal?>().firstWhere(
+            (v) => v?.supabaseId == item.variantId,
+            orElse: () => null,
+          );
+          final prod = variant != null ? allProducts.cast<ProductLocal?>().firstWhere(
+            (p) => p?.supabaseId == variant.productId,
+            orElse: () => null,
+          ) : null;
+          result.add({
+            'quantity': item.quantity,
+            'product_variants': {
+              'id': variant?.supabaseId ?? '', 'size': variant?.size ?? '', 'color': variant?.color ?? '',
+              'products': {'name': prod?.name ?? ''},
+            },
+          });
+        }
+        if (mounted) setState(() { _items = result; _isLoading = false; });
+      } catch (_) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -324,7 +424,19 @@ class _CustomersTabState extends State<_CustomersTab> {
           .order('full_name');
       if (mounted) setState(() { _customers = res; _isLoading = false; });
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final allCustomers = await isar.customerLocals.where().findAll();
+        final customers = allCustomers.where((c) => c.isActive).toList();
+        customers.sort((a, b) => a.fullName.compareTo(b.fullName));
+        if (mounted) setState(() { _customers = customers.map((c) => {
+          'id': c.supabaseId, 'full_name': c.fullName, 'phone': c.phone,
+          'balance': c.balance, 'is_active': c.isActive,
+        }).toList(); _isLoading = false; });
+      } catch (_) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -469,7 +581,32 @@ class _SalesTabState extends State<_SalesTab> {
           .limit(50);
       if (mounted) setState(() { _sales = res; _isLoading = false; });
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // Offline fallback from Isar
+      try {
+        final isar = await IsarService.getInstance();
+        final storeId = AppSession.currentStoreId;
+        var allTxns = await isar.transactionLocals.where().findAll();
+        if (storeId != null) {
+          allTxns = allTxns.where((t) => t.storeId == storeId).toList();
+        }
+        final txns = allTxns.where((t) => t.type == 'out').toList();
+        txns.sort((a, b) {
+          final aDate = a.createdAt ?? DateTime(2000);
+          final bDate = b.createdAt ?? DateTime(2000);
+          return bDate.compareTo(aDate);
+        });
+        final result = txns.take(50).map((t) {
+          return {
+            'id': t.isarId, 'invoice_number': t.invoiceNumber, 'invoice_id': t.invoiceId,
+            'quantity': t.quantity, 'total_price': t.totalPrice, 'created_at': (t.createdAt ?? DateTime(2000)).toIso8601String(),
+            'type': t.type, 'invoices': {'status': ''},
+            'product_variants': {'id': '', 'products': {'name': ''}, 'size': '', 'color': ''},
+          };
+        }).toList();
+        if (mounted) setState(() { _sales = result; _isLoading = false; });
+      } catch (_) {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
