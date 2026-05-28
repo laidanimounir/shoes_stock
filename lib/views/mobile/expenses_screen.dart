@@ -91,7 +91,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ]),
             const SizedBox(height: 8),
             SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-              FilterChip(label: const Text('Tous'), selected: _catFilter == null, onSelected: (_) => setState(() => _catFilter = null)),
+              FilterChip(label: Text(S.t('filter_all')), selected: _catFilter == null, onSelected: (_) => setState(() => _catFilter = null)),
               const SizedBox(width: 4),
               ..._categories.map((c) => Padding(padding: const EdgeInsets.only(right: 4), child: FilterChip(
                 label: Text(c['name'] ?? ''),
@@ -101,14 +101,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ])),
           ]),
         ),
-        Expanded(child: filtered.isEmpty ? Center(child: Text(S.t('label_no_data'))) : ListView.builder(padding: const EdgeInsets.all(8), itemCount: filtered.length, itemBuilder: (_, i) {
-          final e = filtered[i];
-          return Card(margin: const EdgeInsets.only(bottom: 6), child: ListTile(
-            title: Text(e['description'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            subtitle: Text(e['created_at']?.toString().substring(0, 10) ?? '', style: const TextStyle(fontSize: 11)),
-            trailing: Text('-${(e['amount'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          ));
-        })),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(child: Text(S.t('label_no_data')))
+              : RefreshIndicator(
+                  onRefresh: _fetch,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) {
+                      final e = filtered[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        child: ListTile(
+                          title: Text(e['description'] ?? '',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          subtitle: Text(e['created_at']?.toString().substring(0, 10) ?? '',
+                              style: const TextStyle(fontSize: 11)),
+                          trailing: Text(
+                              '-${(e['amount'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}',
+                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+        ),
       ]),
     );
   }

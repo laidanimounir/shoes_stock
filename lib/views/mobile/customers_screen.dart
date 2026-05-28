@@ -233,7 +233,9 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                       Expanded(
                         child: _customers.isEmpty
                             ? Center(child: Text(S.t('cust_no_results')))
-                            : ListView.builder(
+                            : RefreshIndicator(
+                                onRefresh: () => _fetch(_searchCtrl.text),
+                                child: ListView.builder(
                                 itemCount: _customers.length,
                                 itemBuilder: (_, i) {
                                   final c = _customers[i];
@@ -255,7 +257,8 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                                         : const Icon(Icons.check_circle, color: Colors.green, size: 14),
                                     onTap: () { setState(() => _selected = c); _fetchHistory(c['id']); },
                                   );
-                                },
+                                  },
+                                ),
                               ),
                       ),
                     ],

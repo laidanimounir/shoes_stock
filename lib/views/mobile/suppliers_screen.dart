@@ -58,7 +58,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       ),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : _suppliers.isEmpty
           ? Center(child: Text(S.t('supplier_no_results')))
-          : ListView.builder(padding: const EdgeInsets.all(12), itemCount: _suppliers.length, itemBuilder: (_, i) {
+          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _suppliers.length, itemBuilder: (_, i) {
               final s = _suppliers[i]; final bal = (s['balance'] as num?)?.toDouble() ?? 0;
               return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
                 leading: CircleAvatar(child: Text((s['company_name'] as String? ?? '?')[0].toUpperCase())),
@@ -69,6 +69,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                     : const Icon(Icons.check_circle, color: Colors.green, size: 20),
               ));
             }),
+          ),
     );
   }
 }

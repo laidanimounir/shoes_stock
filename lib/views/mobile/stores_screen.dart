@@ -89,7 +89,7 @@ class _StoresScreenState extends State<StoresScreen> {
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _add)]),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : _stores.isEmpty
           ? Center(child: Text(S.t('label_no_data')))
-          : ListView.builder(padding: const EdgeInsets.all(12), itemCount: _stores.length, itemBuilder: (_, i) {
+          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _stores.length, itemBuilder: (_, i) {
               final s = _stores[i];
               return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
                 leading: CircleAvatar(child: Text((s['name'] as String? ?? '?')[0].toUpperCase())),
@@ -102,13 +102,14 @@ class _StoresScreenState extends State<StoresScreen> {
                           else if (v == 'delete') _delete(s);
                         },
                         itemBuilder: (_) => [
-                          const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'))),
-                          const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Colors.red), title: Text('Supprimer', style: TextStyle(color: Colors.red)))),
+                          PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
+                          PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Colors.red), title: Text(S.t('action_delete'), style: TextStyle(color: Colors.red)))),
                         ],
                       )
                     : null,
               ));
             }),
+          ),
     );
   }
 }

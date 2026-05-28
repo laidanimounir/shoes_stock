@@ -48,9 +48,9 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
     Color c;
     String l;
     switch (status) {
-      case 'pending': c = Colors.orange; l = 'En attente'; break;
-      case 'approved': c = Colors.green; l = 'Approuvée'; break;
-      case 'cancelled': c = Colors.red; l = 'Annulée'; break;
+      case 'pending': c = Colors.orange; l = S.t('order_status_pending'); break;
+      case 'approved': c = Colors.green; l = S.t('order_status_approved'); break;
+      case 'cancelled': c = Colors.red; l = S.t('order_status_cancelled'); break;
       default: c = Colors.grey; l = status;
     }
     return Container(
@@ -63,15 +63,15 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bons de Commande'), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(S.t('order_title')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _orders.isEmpty
               ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 12), const Text('Aucun bon de commande'),
+                  const SizedBox(height: 12), Text(S.t('order_no_orders')),
                 ]))
-              : ListView.builder(padding: const EdgeInsets.all(8), itemCount: _orders.length, itemBuilder: (_, i) {
+              : RefreshIndicator(onRefresh: _fetchOrders, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: _orders.length, itemBuilder: (_, i) {
                   final o = _orders[i];
                   final status = o['status'] as String? ?? '';
                   final items = o['purchase_order_items'] as List? ?? [];
@@ -86,7 +86,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       Text('${o['supplier_id']?['company_name'] ?? '—'}', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                       const SizedBox(height: 4),
                       Row(children: [
-                        Text('${items.length} articles', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                        Text('${items.length} ${S.t('order_items')}', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
                         const Spacer(),
                         Text('${o['total_amount'] ?? 0} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
                       ]),
@@ -94,14 +94,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                         const SizedBox(height: 8),
                         SizedBox(width: double.infinity, child: ElevatedButton.icon(
                           icon: const Icon(Icons.check_circle, size: 16),
-                          label: const Text('Approuver'),
+                          label: Text(S.t('order_approve')),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                           onPressed: () async {
                             final c = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                              title: const Text('Approuver'), content: Text('Valider ${o['order_number']} ?'),
+                              title: Text(S.t('order_approve')), content: Text(S.t('order_approve_confirm').replaceAll('{order}', o['order_number'] ?? '')),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Non')),
-                                ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white), child: const Text('Oui')),
+                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('no'))),
+                                ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white), child: Text(S.t('yes'))),
                               ],
                             ));
                             if (c == true) _approveOrder(o['id']);
@@ -111,6 +111,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                     ]),
                   ));
                 }),
+          ),
     );
   }
 }

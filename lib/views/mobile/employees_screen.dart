@@ -76,11 +76,11 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_employees')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white, bottom: TabBar(
         controller: _tabCtrl, labelColor: Colors.white, unselectedLabelColor: Colors.white60,
-        tabs: const [Tab(text: 'Actifs'), Tab(text: 'Suspendus'), Tab(text: 'Archivés')],
+        tabs: [Tab(text: S.t('filter_active')), Tab(text: S.t('filter_suspended')), Tab(text: S.t('filter_archived'))],
       )),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : _employees.isEmpty
           ? Center(child: Text(S.t('label_no_data')))
-          : ListView.builder(padding: const EdgeInsets.all(12), itemCount: _employees.length, itemBuilder: (_, i) {
+          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _employees.length, itemBuilder: (_, i) {
               final e = _employees[i];
               final empId = e['id'] as String;
               final isExpanded = _expandedIds.contains(empId);
@@ -138,8 +138,9 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
                       ),
                   ],
                 ),
-              );
-            }),
+            );
+          }),
+          ),
     );
   }
 
