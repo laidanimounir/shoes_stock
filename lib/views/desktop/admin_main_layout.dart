@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
+import '../../shared/widgets/language_toggle_button.dart';
 import '../admin/dashboard_screen.dart';
 import 'pos_screen.dart';
 import '../admin/ajouter_produit.dart';
@@ -286,32 +287,38 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                       ),
                     ),
                   ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () =>
-                          Supabase.instance.client.auth.signOut(),
-                      icon: const Icon(Icons.logout_rounded,
-                          size: 16, color: Colors.redAccent),
-                      label: Text(
-                        S.t('auth_logout'),
-                        style: GoogleFonts.raleway(
-                          color: Colors.redAccent,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                  child: Column(
+                    children: [
+                      const LanguageToggleButton(),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              Supabase.instance.client.auth.signOut(),
+                          icon: const Icon(Icons.logout_rounded,
+                              size: 16, color: Colors.redAccent),
+                          label: Text(
+                            S.t('auth_logout'),
+                            style: GoogleFonts.raleway(
+                              color: Colors.redAccent,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: BorderSide(
+                              color: Colors.redAccent.withValues(alpha: 0.4),
+                              width: 0.8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(
-                          color: Colors.redAccent.withValues(alpha: 0.4),
-                          width: 0.8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ],

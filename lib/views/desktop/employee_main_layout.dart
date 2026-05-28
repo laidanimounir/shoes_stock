@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
+import '../../shared/widgets/language_toggle_button.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/liste_produits.dart';
 import '../admin/inventory_screen.dart';
@@ -186,6 +187,8 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                   ),
                   child: Column(
                     children: [
+                      const LanguageToggleButton(),
+                      const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../shared/widgets/language_toggle_button.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -167,6 +168,9 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
         backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          const LanguageToggleButton(),
+        ],
       ),
       body: Column(
         children: [

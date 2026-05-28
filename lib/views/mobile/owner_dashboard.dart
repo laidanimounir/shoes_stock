@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../shared/widgets/language_toggle_button.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
@@ -504,6 +505,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ),
               ),
             ),
+          const LanguageToggleButton(),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchDashboardData(isRefresh: true),
