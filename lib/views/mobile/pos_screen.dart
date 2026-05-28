@@ -140,14 +140,46 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     } catch (_) { return 0; }
   }
 
+  Future<Map<String, dynamic>?> _lookupBarcode(String barcode) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final variant = await isar.productVariantLocals.filter().barcodeEqualTo(barcode).findFirst();
+      if (variant == null) return null;
+      final product = await isar.productLocals.filter().supabaseIdEqualTo(variant.productId).findFirst();
+      final invs = await isar.inventoryLocals.filter().variantIdEqualTo(variant.supabaseId).findAll();
+      return {
+        'id': variant.supabaseId, 'size': variant.size, 'color': variant.color,
+        'barcode': variant.barcode, 'sell_price': variant.sellPrice,
+        'products': {'name': product?.name ?? '', 'image_url': product?.imageUrl},
+        'inventory': invs.map((i) => {'quantity': i.quantity, 'store_id': i.storeId}).toList(),
+      };
+    }
+    try {
+      final res = await Supabase.instance.client
+          .from('product_variants')
+          .select('id, size, color, barcode, sell_price, products!inner(name, image_url), inventory(quantity, store_id)')
+          .eq('barcode', barcode)
+          .eq('is_active', true)
+          .maybeSingle();
+      return res;
+    } catch (_) { return null; }
+  }
+
   void _scanBarcode() {
     showModalBottomSheet(context: context, isScrollControlled: true, builder: (ctx) {
       return FractionallySizedBox(heightFactor: 0.8, child: Column(children: [
         AppBar(title: Text(S.t('owner_scanner_title')), automaticallyImplyLeading: false, backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
           actions: [IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx))]),
-        Expanded(child: MobileScanner(onDetect: (c) {
+        Expanded(child: MobileScanner(onDetect: (c) async {
           final b = c.barcodes.firstOrNull?.rawValue;
-          if (b != null) { Navigator.pop(ctx); _searchCtrl.text = b; _search(b); }
+          if (b == null) return;
+          Navigator.pop(ctx);
+          final variant = await _lookupBarcode(b);
+          if (variant == null) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Aucun produit trouvé pour ce code-barres'), backgroundColor: Colors.red));
+            return;
+          }
+          _addToCart(variant);
         })),
       ]));
     });
