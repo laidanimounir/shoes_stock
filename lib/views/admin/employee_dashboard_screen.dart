@@ -39,6 +39,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
     super.dispose();
   }
 
+  Map<String, dynamic> _commissionSummary = {};
+
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     _animController.reset();
@@ -56,10 +58,19 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
           .order('created_at', ascending: false)
           .limit(10);
 
+      Map<String, dynamic> commission = {};
+      try {
+        commission = await supabase.rpc('get_employee_commission_summary', params: {
+          'p_user_id': user.id,
+          'p_period': 'month',
+        }) as Map<String, dynamic>;
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _stats = statsRes as Map<String, dynamic>;
           _mySales = (mySalesRes as List<dynamic>).cast<Map<String, dynamic>>();
+          _commissionSummary = commission;
           _isLoading = false;
         });
         _animController.forward();
@@ -159,6 +170,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         children: [
           _buildKpiRow(),
           const SizedBox(height: 20),
+          _buildCommissionCard(),
+          const SizedBox(height: 20),
           _buildMySalesCard(),
           const SizedBox(height: 20),
           _buildLowStockCard(),
@@ -250,6 +263,46 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCommissionCard() {
+    final totalComm = (_commissionSummary['total_commission'] as num?)?.toDouble() ?? 0;
+    final rate = (_commissionSummary['avg_commission_rate'] as num?)?.toDouble() ?? 0;
+    final salesCount = (_commissionSummary['sales_count'] as num?)?.toInt() ?? 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3), width: 0.8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.monetization_on_rounded, color: AppColors.gold, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('COMMISSION DU MOIS', style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+              const SizedBox(height: 4),
+              Text('${totalComm.toStringAsFixed(0)} ${S.t('misc_currency')}',
+                  style: GoogleFonts.raleway(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Taux: $rate% | $salesCount vente(s)',
+                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 10)),
+            ],
+          )),
+        ],
       ),
     );
   }

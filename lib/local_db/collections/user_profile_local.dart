@@ -21,4 +21,5 @@ class UserProfileLocal {
   String? jobTitle;
   DateTime? hiredAt;
   bool isPermanentlyDeleted = false;
+  double commissionRate = 0;
 }

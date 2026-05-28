@@ -104,7 +104,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
   final _editKey = GlobalKey<FormState>();
   final _efn = TextEditingController(), _eln = TextEditingController(),
         _eph = TextEditingController(), _ead = TextEditingController(),
-        _ejt = TextEditingController(), _epw = TextEditingController();
+        _ejt = TextEditingController(), _epw = TextEditingController(),
+        _ecommission = TextEditingController();
   String? _storeEdit; DateTime? _hiredEdit;
   bool _hideEditPw = true, _updating = false;
 
@@ -176,7 +177,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     } catch (e) { if (mounted) setState(() => _loading = false); }
   }
 
-  Map<String, dynamic> _lm(UserProfileLocal e) => { 'id': e.supabaseId, 'full_name': e.fullName, 'first_name': e.firstName, 'last_name': e.lastName, 'role': e.role, 'store_id': e.storeId, 'phone': e.phone, 'address': e.address, 'job_title': e.jobTitle, 'hired_at': e.hiredAt?.toIso8601String(), 'is_active': e.isActive, 'is_permanently_deleted': e.isPermanentlyDeleted, 'created_at': e.createdAt?.toIso8601String(), 'stores': e.storeId != null ? {'name': null} : null };
+  Map<String, dynamic> _lm(UserProfileLocal e) => { 'id': e.supabaseId, 'full_name': e.fullName, 'first_name': e.firstName, 'last_name': e.lastName, 'role': e.role, 'store_id': e.storeId, 'phone': e.phone, 'address': e.address, 'job_title': e.jobTitle, 'hired_at': e.hiredAt?.toIso8601String(), 'is_active': e.isActive, 'is_permanently_deleted': e.isPermanentlyDeleted, 'created_at': e.createdAt?.toIso8601String(), 'stores': e.storeId != null ? {'name': null} : null, 'commission_rate': e.commissionRate };
 
   void _onSearch(String v) { _debounce?.cancel(); _debounce = Timer(const Duration(milliseconds: 380), () { if (mounted) { setState(() { _page = 0; _employees = []; _hasMore = true; }); _loadEmployees(query: v); } }); }
 
@@ -197,7 +198,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     if (_storeEdit == null) { _snack(S.t('pos_select_store'), _T.danger); return; }
     setState(() => _updating = true);
     try {
-      final body = <String, dynamic>{ 'employee_id': _selected!['id'], 'first_name': _efn.text.trim(), 'last_name': _eln.text.trim(), 'phone': _eph.text.trim().isEmpty ? null : _eph.text.trim(), 'address': _ead.text.trim().isEmpty ? null : _ead.text.trim(), 'job_title': _ejt.text.trim().isEmpty ? null : _ejt.text.trim(), 'store_id': _storeEdit, 'hired_at': _hiredEdit?.toIso8601String().split('T')[0] };
+      final body = <String, dynamic>{ 'employee_id': _selected!['id'], 'first_name': _efn.text.trim(), 'last_name': _eln.text.trim(), 'phone': _eph.text.trim().isEmpty ? null : _eph.text.trim(), 'address': _ead.text.trim().isEmpty ? null : _ead.text.trim(), 'job_title': _ejt.text.trim().isEmpty ? null : _ejt.text.trim(), 'store_id': _storeEdit, 'hired_at': _hiredEdit?.toIso8601String().split('T')[0], 'commission_rate': double.tryParse(_ecommission.text.trim()) ?? 0 };
       if (_epw.text.trim().isNotEmpty) body['new_password'] = _epw.text.trim();
       final res = await Supabase.instance.client.functions.invoke('update_employee', body: body);
       if (res.status == 200 && res.data['success'] == true) { _snack(S.t('emp_updated'), _T.active); setState(() { _editing = false; _selected = res.data['profile'] as Map<String, dynamic>?; _page = 0; _employees = []; _hasMore = true; }); _loadEmployees(); }
@@ -224,7 +225,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     ..createdAt = _dt(j['created_at']) ..updatedAt = _dt(j['updated_at'])
     ..firstName = j['first_name'] as String? ..lastName = j['last_name'] as String?
     ..phone = j['phone'] as String? ..address = j['address'] as String? ..jobTitle = j['job_title'] as String?
-    ..hiredAt = _dt(j['hired_at']) ..isPermanentlyDeleted = (j['is_permanently_deleted'] as bool?) ?? false;
+    ..hiredAt = _dt(j['hired_at']) ..isPermanentlyDeleted = (j['is_permanently_deleted'] as bool?) ?? false
+    ..commissionRate = (j['commission_rate'] as num?)?.toDouble() ?? 0;
 
   DateTime? _dt(dynamic v) { if (v == null) return null; if (v is DateTime) return v; if (v is String) return DateTime.tryParse(v); return null; }
 
@@ -250,7 +252,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     _fetchPerformance(e['id']);
   }
   void _beginCreate() { _clearCreate(); setState(() { _creating = true; _editing = false; _selected = null; }); }
-  void _beginEdit(Map<String, dynamic> e) { _efn.text = e['first_name'] as String? ?? ''; _eln.text = e['last_name'] as String? ?? ''; _eph.text = e['phone'] as String? ?? ''; _ead.text = e['address'] as String? ?? ''; _ejt.text = e['job_title'] as String? ?? ''; _epw.clear(); _storeEdit = e['store_id'] as String?; _hiredEdit = _dt(e['hired_at']); setState(() { _editing = true; _creating = false; }); }
+  void _beginEdit(Map<String, dynamic> e) { _efn.text = e['first_name'] as String? ?? ''; _eln.text = e['last_name'] as String? ?? ''; _eph.text = e['phone'] as String? ?? ''; _ead.text = e['address'] as String? ?? ''; _ejt.text = e['job_title'] as String? ?? ''; _epw.clear(); _storeEdit = e['store_id'] as String?; _hiredEdit = _dt(e['hired_at']); _ecommission.text = (e['commission_rate'] as num?)?.toString() ?? '0'; setState(() { _editing = true; _creating = false; }); }
   void _cancel() => setState(() { _creating = false; _editing = false; _clearCreate(); });
   void _clearCreate() { for (final c in [_fn,_ln,_em,_ph,_ad,_jt,_pw]) c.clear(); _storeCreate = _stores.isNotEmpty ? _stores.first['id'] as String? : null; _hiredCreate = DateTime.now(); _createKey.currentState?.reset(); }
   void _snack(String msg, Color bg) { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500)), backgroundColor: bg, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), margin: const EdgeInsets.fromLTRB(16, 0, 16, 20))); }
@@ -422,11 +424,47 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
           if (hired.isNotEmpty) _InfoRow(icon: Icons.work_history_outlined, label: S.t('emp_hired_at'), value: hired),
         ])),
       ]))),
+      _buildCommissionCard(e),
       if (_employeePerformance != null) ...[
         const SizedBox(height: 16),
         _buildPerformanceCard(),
       ],
     ]));
+  }
+
+  Widget _buildCommissionCard(Map<String, dynamic> e) {
+    final rate = (e['commission_rate'] as num?)?.toDouble() ?? 0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _T.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _T.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.monetization_on_rounded, size: 16, color: _T.brand),
+                const SizedBox(width: 8),
+                Text('COMMISSION',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _perfMetric('Taux de commission', '$rate%', _T.brand),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPerformanceCard() {
@@ -531,6 +569,10 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
         _Fld(ctl: _eph, label: S.t('emp_phone'), type: TextInputType.phone), const SizedBox(height: 12),
         _Fld(ctl: _ead, label: S.t('emp_address')), const SizedBox(height: 12),
         _Fld(ctl: _ejt, label: S.t('emp_job_title')),
+      ]),
+      const SizedBox(height: 14),
+      _FCard(title: 'COMMISSION', children: [
+        _Fld(ctl: _ecommission, label: 'Taux commission (%)', type: TextInputType.number),
       ]),
       const SizedBox(height: 14),
       _FCard(title: S.t('emp_assign_store'), children: [

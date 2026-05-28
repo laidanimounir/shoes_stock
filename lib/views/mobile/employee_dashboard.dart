@@ -31,6 +31,20 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
     _checkAccess();
   }
 
+  Future<Map<String, dynamic>> _fetchCommission() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return {};
+      final res = await Supabase.instance.client.rpc('get_employee_commission_summary', params: {
+        'p_user_id': userId,
+        'p_period': 'month',
+      });
+      return Map<String, dynamic>.from(res as Map);
+    } catch (_) {
+      return {};
+    }
+  }
+
   void _checkAccess() {
     if (!AppSession.isEmployee) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,6 +101,20 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                 ],
               ),
             ),
+            FutureBuilder<Map<String, dynamic>>(
+              future: _fetchCommission(),
+              builder: (ctx, snap) {
+                final comm = snap.data;
+                final total = (comm?['total_commission'] as num?)?.toDouble() ?? 0;
+                final rate = (comm?['avg_commission_rate'] as num?)?.toDouble() ?? 0;
+                return ListTile(
+                  leading: Icon(Icons.monetization_on, color: Colors.amber[700]),
+                  title: Text('Commission: ${total.toStringAsFixed(0)} DA'),
+                  subtitle: Text('Taux: $rate%'),
+                );
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: Icon(Icons.money_off, color: Colors.indigo[900]),
               title: Text(S.t('nav_expenses')),
