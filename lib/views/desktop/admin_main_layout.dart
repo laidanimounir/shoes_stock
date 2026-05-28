@@ -11,6 +11,7 @@ import '../admin/gestion_employes.dart';
 import '../admin/gestion_clients.dart';
 import '../admin/gestion_fournisseurs.dart';
 import '../admin/achat_fournisseur.dart';
+import '../admin/purchase_orders_screen.dart';
 import '../admin/activity_logs_screen.dart';
 import '../admin/gestion_stores.dart';
 import '../admin/inventory_screen.dart';
@@ -46,6 +47,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
       const GestionClientsScreen(),
       const GestionFournisseursScreen(),
       const AchatFournisseurScreen(),
+      const PurchaseOrdersScreen(),
       const GestionEmployesScreen(),
       const ActivityLogsScreen(),
       const SalesHistoryScreen(),
@@ -64,6 +66,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     (Icons.people_outline, Icons.people_rounded, S.t('nav_clients')),
     (Icons.local_shipping_outlined, Icons.local_shipping_rounded, S.t('nav_suppliers')),
     (Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, S.t('nav_purchases')),
+    (Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Bons de commande'),
     (Icons.badge_outlined, Icons.badge_rounded, S.t('nav_employees')),
     (Icons.history_outlined, Icons.history_rounded, S.t('nav_activity')),
     (Icons.history_edu_outlined, Icons.history_edu_rounded, S.t('nav_sales')),

@@ -3,15 +3,12 @@ import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
-import '../../local_db/collections/product_local.dart';
-import '../../local_db/collections/product_variant_local.dart';
 import 'products_screen.dart';
 import 'add_product_screen.dart';
 import 'pos_screen.dart';
@@ -19,11 +16,16 @@ import 'customers_screen.dart';
 import 'suppliers_screen.dart';
 import 'sales_screen.dart';
 import 'purchases_screen.dart';
+import 'purchase_orders_screen.dart';
 import 'expenses_screen.dart';
 import 'debt_recovery_screen.dart';
 import 'activity_logs_screen.dart';
 import 'stores_screen.dart';
 import 'employees_screen.dart';
+import 'owner/kpi_cards_section.dart';
+import 'owner/debtors_section.dart';
+import 'owner/inventory_section.dart';
+import 'owner/analytics_sheet.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -246,105 +248,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     }
   }
 
-  // ─── WhatsApp / SMS ─────────────────────────────────────────
-  String _cleanPhone(String phone) {
-    String cleaned = phone.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
-    if (cleaned.startsWith('00213')) {
-      cleaned = '+213${cleaned.substring(5)}';
-    } else if (cleaned.startsWith('0')) {
-      cleaned = '+213${cleaned.substring(1)}';
-    } else if (!cleaned.startsWith('+')) {
-      cleaned = '+213$cleaned';
-    }
-    return cleaned;
-  }
 
-  Future<void> _sendWhatsApp(String name, String phone, double balance) async {
-    final cleanedPhone = _cleanPhone(phone).replaceAll('+', '');
-    final message = S.t('contact_whatsapp_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  Future<void> _sendSMS(String name, String phone, double balance) async {
-    final cleanedPhone = _cleanPhone(phone);
-    final message = S.t('contact_sms_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('sms:$cleanedPhone?body=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
-  }
-
-  Widget _buildContactButtons(String? phone, String name, double balance) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.chat, color: Colors.green, size: 20),
-          tooltip: 'WhatsApp',
-          onPressed: () {
-            if (phone == null || phone.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-              );
-              return;
-            }
-            _sendWhatsApp(name, phone, balance);
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
-          tooltip: 'SMS',
-          onPressed: () {
-            if (phone == null || phone.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-              );
-              return;
-            }
-            _sendSMS(name, phone, balance);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDebtorsList() {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _debtors.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final debtor = _debtors[index];
-          final name = debtor['full_name'] ?? '—';
-          final phone = debtor['phone'] as String?;
-          final balance = (debtor['balance'] as num?)?.toDouble() ?? 0;
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.orange[50],
-              child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: TextStyle(color: Colors.orange[800], fontWeight: FontWeight.bold)),
-            ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            subtitle: Text("${balance.toStringAsFixed(0)} ${S.t('misc_currency')}",
-                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 12)),
-            trailing: _buildContactButtons(phone, name, balance),
-          );
-        },
-      ),
-    );
-  }
 
   // ─── زر Inventory ───────────────────────────────────────────
   void _showInventory() {
@@ -352,7 +256,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const _InventorySheet(),
+      builder: (context) => const InventorySection(),
     );
   }
 
@@ -362,7 +266,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const _AnalyticsSheet(),
+      builder: (context) => const AnalyticsSheet(),
     );
   }
 
@@ -565,43 +469,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     child: Text(S.t('owner_financial_health'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildMetricCard(S.t('dash_revenue'), "${_salesToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.point_of_sale, Colors.blue)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard(S.t('dash_net_profit'), "+${_profitToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.trending_up, Colors.green)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildMetricCard(S.t('dash_customer_debt'), "${_customerDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.account_balance_wallet, Colors.orange)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard(S.t('dash_supplier_debt'), "${_supplierDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.money_off, Colors.red)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildMetricCard(S.t('dash_total_profit'), "${_totalProfit.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.bar_chart, Colors.purple)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildMetricCard(S.t('dash_avg_margin'), "${_avgMargin.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.pie_chart, Colors.teal)),
-                      ],
-                    ),
+                  KpiCardsSection(
+                    salesToday: _salesToday,
+                    profitToday: _profitToday,
+                    customerDebt: _customerDebt,
+                    supplierDebt: _supplierDebt,
+                    totalProfit: _totalProfit,
+                    avgMargin: _avgMargin,
                   ),
                   const SizedBox(height: 16),
-                  if (_debtors.isNotEmpty) ...[
-                    _buildSectionHeader(S.t('contact_debt_list_title'), Icons.people_outline, Colors.orange),
-                    _buildDebtorsList(),
-                  ],
+                  DebtorsSection(debtors: _debtors),
                   const SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -701,6 +578,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       {'icon': Icons.business, 'label': S.t('nav_suppliers'), 'screen': const SuppliersScreen()},
       {'icon': Icons.history, 'label': S.t('nav_sales'), 'screen': const SalesScreen()},
       {'icon': Icons.shopping_cart, 'label': S.t('nav_purchases'), 'screen': const PurchasesScreen()},
+      {'icon': Icons.receipt_long, 'label': 'Bons de commande', 'screen': const PurchaseOrdersScreen()},
       {'icon': Icons.money_off, 'label': S.t('nav_expenses'), 'screen': const ExpensesScreen()},
       {'icon': Icons.account_balance, 'label': S.t('nav_recovery'), 'screen': const DebtRecoveryScreen()},
       {'icon': Icons.notifications, 'label': S.t('nav_activity'), 'screen': const ActivityLogsScreen()},
@@ -1019,34 +897,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-        border: Border(bottom: BorderSide(color: color, width: 3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 24),
-              CircleAvatar(radius: 4, backgroundColor: color),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -1105,386 +955,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             subtitle: Text("${log['user_profiles']['full_name']} • ${timeago.format(date, locale: 'fr')}", style: const TextStyle(fontSize: 11)),
           );
         },
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// 📦 INVENTORY SHEET
-// ════════════════════════════════════════════════════════════
-class _InventorySheet extends StatefulWidget {
-  const _InventorySheet();
-
-  @override
-  State<_InventorySheet> createState() => _InventorySheetState();
-}
-
-class _InventorySheetState extends State<_InventorySheet> {
-  List<dynamic> _inventory = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchInventory();
-  }
-
-  Future<void> _fetchInventory() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('inventory')
-          .select('quantity, stores(name), product_variants(size, color, products(name))')
-          .order('quantity', ascending: true);
-      if (mounted) setState(() { _inventory = res; _isLoading = false; });
-    } catch (e) {
-      // Offline fallback from Isar
-      try {
-        final isar = await IsarService.getInstance();
-        final items = await isar.inventoryLocals.where().findAll();
-        items.sort((a, b) => a.quantity.compareTo(b.quantity));
-        final allVariants = await isar.productVariantLocals.where().findAll();
-        final allProducts = await isar.productLocals.where().findAll();
-        final result = <Map<String, dynamic>>[];
-        for (final item in items) {
-          final variant = allVariants.cast<ProductVariantLocal?>().firstWhere(
-            (v) => v?.supabaseId == item.variantId,
-            orElse: () => null,
-          );
-          final prod = variant != null ? allProducts.cast<ProductLocal?>().firstWhere(
-            (p) => p?.supabaseId == variant.productId,
-            orElse: () => null,
-          ) : null;
-          result.add({
-            'quantity': item.quantity,
-            'stores': {'name': item.storeId},
-            'product_variants': {
-              'size': variant?.size ?? '', 'color': variant?.color ?? '',
-              'products': {'name': prod?.name ?? ''},
-            },
-          });
-        }
-        if (mounted) setState(() { _inventory = result; _isLoading = false; });
-      } catch (_) {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.inventory_2, color: Colors.indigo[900], size: 22),
-                    const SizedBox(width: 10),
-                    Text(S.t('owner_inv_all_stores'),
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              // Liste
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _inventory.isEmpty
-                        ? Center(child: Text(S.t('owner_no_items_stock')))
-                        : ListView.separated(
-                            controller: scrollController,
-                            itemCount: _inventory.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-                            itemBuilder: (context, index) {
-                              final item = _inventory[index];
-                              final qty = (item['quantity'] as num?)?.toInt() ?? 0;
-                              final isLow = qty < 3;
-                              final productName = item['product_variants']?['products']?['name'] ?? '—';
-                              final size = item['product_variants']?['size'] ?? '';
-                              final color = item['product_variants']?['color'] ?? '';
-                              final storeName = item['stores']?['name'] ?? '—';
-
-                              return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: isLow ? Colors.red[50] : Colors.indigo[50],
-                                  child: Icon(
-                                    isLow ? Icons.warning_amber_rounded : Icons.check_circle_outline,
-                                    color: isLow ? Colors.red : Colors.indigo,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text('$productName  •  ${S.t('pos_size')} $size',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                subtitle: Text('$storeName  |  ${S.t('pos_color')}: $color',
-                                    style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                                trailing: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isLow ? Colors.red[50] : Colors.green[50],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text('$qty ${S.t('inv_units')}',
-                                      style: TextStyle(
-                                        color: isLow ? Colors.red : Colors.green[700],
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      )),
-                                ),
-                              );
-                            },
-                          ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// 📊 ANALYTICS SHEET
-// ════════════════════════════════════════════════════════════
-class _AnalyticsSheet extends StatefulWidget {
-  const _AnalyticsSheet();
-
-  @override
-  State<_AnalyticsSheet> createState() => _AnalyticsSheetState();
-}
-
-class _AnalyticsSheetState extends State<_AnalyticsSheet> {
-  bool _isLoading = true;
-
-  double _salesToday = 0;
-  double _salesThisMonth = 0;
-  double _salesLastMonth = 0;
-  double _monthDiff = 0;
-  bool _isUp = true;
-  List<Map<String, dynamic>> _storeComparison = [];
-  List<Map<String, dynamic>> _topProducts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchAnalytics();
-  }
-
-  Future<void> _fetchAnalytics() async {
-    try {
-      // RPC 1: ملخص المبيعات + مقارنة المتاجر
-      final summary = await Supabase.instance.client.rpc('get_analytics_summary');
-      _salesToday = (summary['today_sales'] as num?)?.toDouble() ?? 0;
-      _salesThisMonth = (summary['this_month_sales'] as num?)?.toDouble() ?? 0;
-      _salesLastMonth = (summary['last_month_sales'] as num?)?.toDouble() ?? 0;
-      _monthDiff = (summary['monthDiff'] as num?)?.toDouble() ?? 0;
-      _isUp = summary['isUp'] as bool? ?? true;
-      _storeComparison = List<Map<String, dynamic>>.from(summary['store_comparison'] ?? []);
-
-      // RPC 2: Top 5 products
-      final topRes = await Supabase.instance.client.rpc('get_top_products_this_month');
-      _topProducts = List<Map<String, dynamic>>.from(topRes ?? []).map((e) => {
-        'name': e['product_name'],
-        'size': e['size'],
-        'qty': e['total_sold'],
-      }).toList();
-
-      if (mounted) setState(() => _isLoading = false);
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    // Handle
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 12),
-                        width: 40, height: 4,
-                        decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-                      ),
-                    ),
-                    // Header
-                    Row(
-                      children: [
-                        Icon(Icons.analytics, color: Colors.indigo[900], size: 22),
-                        const SizedBox(width: 10),
-                        Text(S.t('owner_analytics'), style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // ── Section 1: Ventes ──
-                    _sectionTitle(S.t('owner_sales_section'), Icons.point_of_sale, Colors.blue),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: _analyticsCard(S.t('dash_today'), "${_salesToday.toStringAsFixed(0)} ${S.t('misc_currency')}", Colors.blue)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _analyticsCard(S.t('dash_this_month'), "${_salesThisMonth.toStringAsFixed(0)} ${S.t('misc_currency')}", Colors.indigo)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _isUp ? Colors.green[50] : Colors.red[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${S.t('owner_vs_last_month')} (${_salesLastMonth.toStringAsFixed(0)} ${S.t('misc_currency')})',
-                              style: TextStyle(color: Colors.grey[700], fontSize: 12)),
-                          Row(
-                            children: [
-                              Icon(_isUp ? Icons.trending_up : Icons.trending_down,
-                                  color: _isUp ? Colors.green : Colors.red, size: 18),
-
-                              Text('${_monthDiff.toStringAsFixed(1)}%',
-                                  style: TextStyle(
-                                    color: _isUp ? Colors.green[700] : Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  )),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── Section 2: Top Produits ──
-                    _sectionTitle(S.t('owner_top_5_products'), Icons.star, Colors.orange),
-                    const SizedBox(height: 12),
-                    ..._topProducts.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final p = entry.value;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 14,
-                              backgroundColor: Colors.orange[100],
-                              child: Text('${i + 1}', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text('${p['name']}  ${S.t('pos_size')} ${p['size']}',
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                            ),
-                            Text('${p['qty']} ${S.t('owner_qty_sold')}',
-                                style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 24),
-
-                    // ── Section 3: Comparaison Magasins ──
-                    _sectionTitle(S.t('owner_store_comp_today'), Icons.storefront, Colors.purple),
-                    const SizedBox(height: 12),
-                    ..._storeComparison.map((store) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(store['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                Text('${(store['sales'] as double).toStringAsFixed(0)} ${S.t('misc_currency')}',
-                                    style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 12)),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            LinearProgressIndicator(
-                              value: (store['ratio'] as double).clamp(0.0, 1.0),
-                              backgroundColor: Colors.grey[200],
-                              color: Colors.purple,
-                              minHeight: 8,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 30),
-                  ],
-                ),
-        );
-      },
-    );
-  }
-
-  Widget _sectionTitle(String title, IconData icon, Color color) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 18),
-        const SizedBox(width: 8),
-        Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
-      ],
-    );
-  }
-
-  Widget _analyticsCard(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 15)),
-        ],
       ),
     );
   }
