@@ -169,15 +169,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   Future<void> _fetchLowStock() async {
     try {
-      final res = await Supabase.instance.client
-          .from('inventory')
-          .select('quantity, stores(name), product_variants(size, color, products(name))')
-          .lt('quantity', 3)
-          .order('quantity', ascending: true)
-          .limit(10);
-      if (mounted) setState(() => _lowStockAlerts = res);
+      final res = await Supabase.instance.client.rpc('get_low_stock_items', params: {
+        'p_store_id': _selectedStoreId,
+        'p_threshold': 3,
+      });
+      if (mounted) setState(() => _lowStockAlerts = List<dynamic>.from(res ?? []));
     } catch (e) {
-      // Offline fallback from Isar
       try {
         final isar = await IsarService.getInstance();
         final items = await isar.inventoryLocals.where().findAll();
@@ -185,12 +182,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         if (mounted) {
           setState(() => _lowStockAlerts = low.map((i) => {
             'quantity': i.quantity,
-            'stores': {'name': i.storeId},
-            'product_variants': {
-              'size': '',
-              'color': '',
-              'products': {'name': ''},
-            },
+            'store_name': i.storeId,
+            'product_name': '',
+            'size': '',
+            'color': '',
           }).toList());
         }
       } catch (_) {}
@@ -923,8 +918,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         itemBuilder: (context, index) {
           final alert = _lowStockAlerts[index];
           return ListTile(
-            title: Text("${alert['product_variants']['products']['name']} (${alert['product_variants']['size']})", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Text("${S.t('label_store')}: ${alert['stores']['name']}", style: const TextStyle(fontSize: 12)),
+            title: Text("${alert['product_name'] ?? ''} (${alert['size'] ?? ''})", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            subtitle: Text("${S.t('label_store')}: ${alert['store_name'] ?? ''}", style: const TextStyle(fontSize: 12)),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(12)),

@@ -25,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _recentActivity = [];
   List<Map<String, dynamic>> _debtClients = [];
+  List<dynamic> _lowStockItems = [];
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -90,6 +91,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           .eq('is_active', true)
           .order('balance', ascending: false)
           .limit(5);
+      final lowStockRes = await supabase.rpc('get_low_stock_items', params: {
+        'p_store_id': _selectedStoreId,
+        'p_threshold': 3,
+      });
 
       if (mounted) {
         setState(() {
@@ -98,6 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _topProducts = (topRes as List<dynamic>).cast<Map<String, dynamic>>();
           _recentActivity = (activityRes as List<dynamic>).cast<Map<String, dynamic>>();
           _debtClients = (debtRes as List<dynamic>).cast<Map<String, dynamic>>();
+          _lowStockItems = List<Map<String, dynamic>>.from(lowStockRes ?? []);
           _isLoading = false;
         });
         _animController.forward();
@@ -361,14 +367,21 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(width: 16),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Column(
               children: [
                 Expanded(
+                  flex: 3,
                   child: _buildRecentActivityCard(),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
+                  flex: 2,
+                  child: _buildLowStockCard(),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  flex: 2,
                   child: _buildDebtClientsCard(),
                 ),
               ],
@@ -849,6 +862,73 @@ class _DashboardScreenState extends State<DashboardScreen>
                               '${((c['balance'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
                               style: GoogleFonts.raleway(
                                   color: AppColors.warning, fontSize: 11,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLowStockCard() {
+    final items = _lowStockItems;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Stock Faible',
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 13,
+                      fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: items.isEmpty
+                ? Center(child: Text('Aucun stock faible',
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                : ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6, height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.danger.withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
+                                style: GoogleFonts.raleway(
+                                    color: AppColors.textPrimary, fontSize: 10),
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              '${item['quantity'] ?? 0}',
+                              style: GoogleFonts.raleway(
+                                  color: AppColors.danger, fontSize: 10,
                                   fontWeight: FontWeight.bold),
                             ),
                           ],
