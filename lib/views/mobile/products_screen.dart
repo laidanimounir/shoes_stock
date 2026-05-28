@@ -1,6 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:barcode/barcode.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../local_db/isar_service.dart';
@@ -9,6 +15,34 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/supplier_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import 'add_product_screen.dart';
+
+Future<void> _generateBarcodePdf(Map<String, dynamic> variant) async {
+  final barcodeStr = (variant['barcode'] as String?) ?? '';
+  if (barcodeStr.isEmpty) return;
+  final pdf = pw.Document();
+  final code128 = Barcode.code128();
+  final svg = code128.toSvg(barcodeStr, height: 80, width: 300);
+  pdf.addPage(pw.Page(
+    pageFormat: PdfPageFormat(100, 60, marginAll: 4),
+    build: (ctx) => pw.Center(
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.center,
+        children: [
+          pw.Text(barcodeStr, style: pw.TextStyle(fontSize: 10)),
+          pw.SizedBox(height: 4),
+          pw.SvgImage(svg: svg),
+        ],
+      ),
+    ),
+  ));
+  final dir = await getTemporaryDirectory();
+  final file = File('${dir.path}/barcode_$barcodeStr.pdf');
+  await file.writeAsBytes(await pdf.save());
+  await Share.shareXFiles(
+    [XFile(file.path)],
+    text: 'Code-barres: $barcodeStr',
+  );
+}
 
 void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) {
   final nameCtrl = TextEditingController(text: product['name'] ?? '');
@@ -307,13 +341,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       dense: true,
                                       title: Text('${v['size']} - ${v['color']}', style: const TextStyle(fontSize: 13)),
                                       subtitle: Text('${S.t('prod_sell_price')}: ${v['sell_price']} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11)),
-                                      trailing: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: qty < 3 ? Colors.red[50] : Colors.green[50],
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty < 3 ? Colors.red : Colors.green[800])),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (v['barcode'] != null)
+                                            IconButton(
+                                              icon: const Icon(Icons.qr_code_2, size: 18, color: Colors.indigo),
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              onPressed: () => _generateBarcodePdf(v as Map<String, dynamic>),
+                                              tooltip: 'Générer PDF code-barres',
+                                            ),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: qty < 3 ? Colors.red[50] : Colors.green[50],
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty < 3 ? Colors.red : Colors.green[800])),
+                                          ),
+                                        ],
                                       ),
                                     );
                                   }).toList(),
