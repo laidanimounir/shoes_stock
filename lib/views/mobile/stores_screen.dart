@@ -125,28 +125,28 @@ class _StoresScreenState extends State<StoresScreen> {
                       ? Center(child: Text(S.t('label_no_data')))
                       : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _filtered.length, itemBuilder: (_, i) {
                           final s = _filtered[i];
-              return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
-                leading: CircleAvatar(child: Text((s['name'] as String? ?? '?')[0].toUpperCase())),
-                title: Text(s['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(s['address'] ?? '', style: const TextStyle(fontSize: 12)),
-                trailing: AppSession.isOwner
-                    ? PopupMenuButton<String>(
-                        onSelected: (v) {
-                          if (v == 'edit') _edit(s);
-                          else if (v == 'delete') _delete(s);
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
-                          PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Colors.red), title: Text(S.t('action_delete'), style: TextStyle(color: Colors.red)))),
-                        ],
-                      )
-                    : null,
-              ));
-            }),
-          ),
-          ),
-                ],
-              ),
+                          return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
+                            leading: CircleAvatar(child: Text((s['name'] as String? ?? '?')[0].toUpperCase())),
+                            title: Text(s['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(s['address'] ?? '', style: const TextStyle(fontSize: 12)),
+                            trailing: AppSession.isOwner
+                                ? PopupMenuButton<String>(
+                                    onSelected: (v) {
+                                      if (v == 'edit') _edit(s);
+                                      else if (v == 'delete') _delete(s);
+                                    },
+                                    itemBuilder: (_) => [
+                                      PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
+                                      PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Colors.red), title: Text(S.t('action_delete'), style: TextStyle(color: Colors.red)))),
+                                    ],
+                                  )
+                                : null,
+                          ));
+                        }),
+                      ),
+                ),
+              ],
+            ),
     );
   }
 }
