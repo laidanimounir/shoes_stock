@@ -61,6 +61,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _sizeAnalytics = [];
   List<Map<String, dynamic>> _inventoryTurnover = [];
+  List<Map<String, dynamic>> _salesForecast = [];
 
   bool _isLoading = true;
   late final RealtimeChannel _dashboardSubscription;
@@ -139,6 +140,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         _fetchTopProducts(),
         _fetchSizeAnalytics(),
         _fetchInventoryTurnover(),
+        _fetchSalesForecast(),
       ]);
     } catch (e) {
       debugPrint("Dashboard update error: $e");
@@ -286,6 +288,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       }
     } catch (e) {
       debugPrint('Error fetching inventory turnover: $e');
+    }
+  }
+
+  Future<void> _fetchSalesForecast() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_sales_forecast', params: {
+        'p_store_id': _selectedStoreId,
+      });
+      if (mounted) {
+        setState(() => _salesForecast = List<Map<String, dynamic>>.from(res ?? []));
+      }
+    } catch (e) {
+      debugPrint('Error fetching sales forecast: $e');
     }
   }
 
@@ -575,6 +590,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   const SizedBox(height: 16),
                   _buildSectionHeader(S.t('turnover_title'), Icons.repeat, Colors.deepPurple),
                   _buildInventoryTurnoverCard(),
+                  const SizedBox(height: 16),
+                  _buildSectionHeader(S.t('forecast_title'), Icons.trending_up, Colors.green),
+                  _buildSalesForecastCard(),
                   const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Colors.red),
@@ -1093,6 +1111,113 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   );
                 }).toList(),
               ),
+      ),
+    );
+  }
+
+  Widget _buildSalesForecastCard() {
+    final data = _salesForecast;
+    final maxVal = data.fold<double>(0, (p, v) => p > ((v['predicted_revenue'] as num?)?.toDouble() ?? 0) ? p : ((v['predicted_revenue'] as num?)?.toDouble() ?? 0));
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.show_chart, color: Colors.green, size: 18),
+                const SizedBox(width: 8),
+                Text(S.t('forecast_next_3'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.green)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (data.isEmpty)
+              Text(S.t('dash_no_data'), style: const TextStyle(color: Colors.grey))
+            else
+              SizedBox(
+                height: 160,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxVal > 0 ? maxVal * 1.2 : 1,
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final rev = rod.toY.toInt();
+                          return BarTooltipItem(
+                            '$rev ${S.t('misc_currency')}',
+                            const TextStyle(
+                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= data.length) return const SizedBox.shrink();
+                            final month = data[idx]['month'] as String? ?? '';
+                            final parts = month.split('-');
+                            final label = parts.length >= 2 ? '${parts[1]}/${parts[0]}' : month;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(label,
+                                  style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            return Text('${value.toInt()}',
+                                style: const TextStyle(color: Colors.grey, fontSize: 9));
+                          },
+                        ),
+                      ),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: maxVal > 0 ? (maxVal / 4).ceilToDouble() : 1,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: Colors.grey[200]!,
+                        strokeWidth: 0.5,
+                      ),
+                    ),
+                    barGroups: List.generate(data.length, (i) {
+                      final rev = (data[i]['predicted_revenue'] as num?)?.toDouble() ?? 0;
+                      return BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: rev,
+                            color: Colors.green,
+                            width: 24,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
