@@ -60,7 +60,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           if (amount == null || amount <= 0) return;
           Navigator.pop(ctx);
           try {
-            await Supabase.instance.client.from('expenses').insert({'store_id': AppSession.currentStoreId, 'category_id': catId, 'amount': amount, 'description': descCtrl.text.trim(), 'user_id': AppSession.currentUserId, 'created_at': DateTime.now().toIso8601String()});
+            await ExpenseService.instance.addExpense(storeId: AppSession.currentStoreId!, categoryId: catId, amount: amount, description: descCtrl.text.trim(), paymentMethod: 'cash', expenseDate: DateTime.now());
             _fetch();
           } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
         }, child: Text(S.t('action_save'))),
