@@ -177,7 +177,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     } catch (e) { if (mounted) setState(() => _loading = false); }
   }
 
-  Map<String, dynamic> _lm(UserProfileLocal e) => { 'id': e.supabaseId, 'full_name': e.fullName, 'first_name': e.firstName, 'last_name': e.lastName, 'role': e.role, 'store_id': e.storeId, 'phone': e.phone, 'address': e.address, 'job_title': e.jobTitle, 'hired_at': e.hiredAt?.toIso8601String(), 'is_active': e.isActive, 'is_permanently_deleted': e.isPermanentlyDeleted, 'created_at': e.createdAt?.toIso8601String(), 'stores': e.storeId != null ? {'name': null} : null, 'commission_rate': e.commissionRate };
+  Map<String, dynamic> _lm(UserProfileLocal e) => { 'id': e.supabaseId, 'full_name': e.fullName, 'first_name': e.firstName, 'last_name': e.lastName, 'role': e.role, 'store_id': e.storeId, 'phone': e.phone, 'address': e.address, 'job_title': e.jobTitle, 'hired_at': e.hiredAt?.toIso8601String(), 'is_active': e.isActive, 'is_permanently_deleted': e.isPermanentlyDeleted, 'created_at': e.createdAt?.toIso8601String(), 'stores': e.storeId != null ? {'name': null} : null, 'commission_rate': e.commissionRate, 'login_at': e.loginAt?.toIso8601String() };
 
   void _onSearch(String v) { _debounce?.cancel(); _debounce = Timer(const Duration(milliseconds: 380), () { if (mounted) { setState(() { _page = 0; _employees = []; _hasMore = true; }); _loadEmployees(query: v); } }); }
 
@@ -226,7 +226,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     ..firstName = j['first_name'] as String? ..lastName = j['last_name'] as String?
     ..phone = j['phone'] as String? ..address = j['address'] as String? ..jobTitle = j['job_title'] as String?
     ..hiredAt = _dt(j['hired_at']) ..isPermanentlyDeleted = (j['is_permanently_deleted'] as bool?) ?? false
-    ..commissionRate = (j['commission_rate'] as num?)?.toDouble() ?? 0;
+    ..commissionRate = (j['commission_rate'] as num?)?.toDouble() ?? 0
+    ..loginAt = _dt(j['login_at']);
 
   DateTime? _dt(dynamic v) { if (v == null) return null; if (v is DateTime) return v; if (v is String) return DateTime.tryParse(v); return null; }
 
@@ -374,6 +375,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     final address  = e['address']   as String? ?? '';
     final store    = e['stores']?['name'] as String? ?? '';
     final hired    = (e['hired_at'] as String?)?.split('T')[0] ?? '';
+    final loginAt  = (e['login_at'] as String?)?.split('T')[0] ?? '';
     final isActive = (e['is_active'] as bool?) ?? true;
     final isDeleted= (e['is_permanently_deleted'] as bool?) ?? false;
     final na       = S.t('misc_not_available');
@@ -422,6 +424,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
           _InfoRow(icon: Icons.store_outlined, label: S.t('emp_assign_store'), value: store.isEmpty ? na : store),
           _InfoRow(icon: Icons.badge_outlined, label: S.t('label_role'), value: S.t('emp_role_label')),
           if (hired.isNotEmpty) _InfoRow(icon: Icons.work_history_outlined, label: S.t('emp_hired_at'), value: hired),
+          if (loginAt.isNotEmpty) _InfoRow(icon: Icons.login_rounded, label: 'Dernière connexion', value: loginAt),
         ])),
       ]))),
       _buildCommissionCard(e),

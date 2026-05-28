@@ -22,4 +22,5 @@ class UserProfileLocal {
   DateTime? hiredAt;
   bool isPermanentlyDeleted = false;
   double commissionRate = 0;
+  DateTime? loginAt;
 }
