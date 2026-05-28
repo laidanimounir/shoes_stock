@@ -32,38 +32,48 @@ const CustomerLocalSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'email': PropertySchema(
+    r'customerType': PropertySchema(
       id: 3,
+      name: r'customerType',
+      type: IsarType.string,
+    ),
+    r'email': PropertySchema(
+      id: 4,
       name: r'email',
       type: IsarType.string,
     ),
     r'fullName': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'fullName',
       type: IsarType.string,
     ),
     r'imageUrl': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isActive': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'isActive',
       type: IsarType.bool,
     ),
+    r'loyaltyPoints': PropertySchema(
+      id: 8,
+      name: r'loyaltyPoints',
+      type: IsarType.long,
+    ),
     r'phone': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'phone',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -90,6 +100,12 @@ int _customerLocalEstimateSize(
   var bytesCount = offsets.last;
   {
     final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.customerType;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -126,13 +142,15 @@ void _customerLocalSerialize(
   writer.writeString(offsets[0], object.address);
   writer.writeDouble(offsets[1], object.balance);
   writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeString(offsets[3], object.email);
-  writer.writeString(offsets[4], object.fullName);
-  writer.writeString(offsets[5], object.imageUrl);
-  writer.writeBool(offsets[6], object.isActive);
-  writer.writeString(offsets[7], object.phone);
-  writer.writeString(offsets[8], object.supabaseId);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeString(offsets[3], object.customerType);
+  writer.writeString(offsets[4], object.email);
+  writer.writeString(offsets[5], object.fullName);
+  writer.writeString(offsets[6], object.imageUrl);
+  writer.writeBool(offsets[7], object.isActive);
+  writer.writeLong(offsets[8], object.loyaltyPoints);
+  writer.writeString(offsets[9], object.phone);
+  writer.writeString(offsets[10], object.supabaseId);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 CustomerLocal _customerLocalDeserialize(
@@ -145,14 +163,16 @@ CustomerLocal _customerLocalDeserialize(
   object.address = reader.readStringOrNull(offsets[0]);
   object.balance = reader.readDouble(offsets[1]);
   object.createdAt = reader.readDateTimeOrNull(offsets[2]);
-  object.email = reader.readStringOrNull(offsets[3]);
-  object.fullName = reader.readString(offsets[4]);
-  object.imageUrl = reader.readStringOrNull(offsets[5]);
-  object.isActive = reader.readBool(offsets[6]);
+  object.customerType = reader.readStringOrNull(offsets[3]);
+  object.email = reader.readStringOrNull(offsets[4]);
+  object.fullName = reader.readString(offsets[5]);
+  object.imageUrl = reader.readStringOrNull(offsets[6]);
+  object.isActive = reader.readBool(offsets[7]);
   object.isarId = id;
-  object.phone = reader.readStringOrNull(offsets[7]);
-  object.supabaseId = reader.readString(offsets[8]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
+  object.loyaltyPoints = reader.readLong(offsets[8]);
+  object.phone = reader.readStringOrNull(offsets[9]);
+  object.supabaseId = reader.readString(offsets[10]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[11]);
   return object;
 }
 
@@ -172,16 +192,20 @@ P _customerLocalDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
-    case 6:
-      return (reader.readBool(offset)) as P;
-    case 7:
-      return (reader.readStringOrNull(offset)) as P;
-    case 8:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
+      return (reader.readLong(offset)) as P;
     case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -573,6 +597,160 @@ extension CustomerLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'customerType',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'customerType',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customerType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customerType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customerType',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customerType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      customerTypeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customerType',
+        value: '',
       ));
     });
   }
@@ -1088,6 +1266,62 @@ extension CustomerLocalQueryFilter
   }
 
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      loyaltyPointsEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'loyaltyPoints',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      loyaltyPointsGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'loyaltyPoints',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      loyaltyPointsLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'loyaltyPoints',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      loyaltyPointsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'loyaltyPoints',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
       phoneIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1497,6 +1731,20 @@ extension CustomerLocalQuerySortBy
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      sortByCustomerType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      sortByCustomerTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerType', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> sortByEmail() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'email', Sort.asc);
@@ -1545,6 +1793,20 @@ extension CustomerLocalQuerySortBy
       sortByIsActiveDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      sortByLoyaltyPoints() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'loyaltyPoints', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      sortByLoyaltyPointsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'loyaltyPoints', Sort.desc);
     });
   }
 
@@ -1626,6 +1888,20 @@ extension CustomerLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      thenByCustomerType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      thenByCustomerTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerType', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByEmail() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'email', Sort.asc);
@@ -1689,6 +1965,20 @@ extension CustomerLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      thenByLoyaltyPoints() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'loyaltyPoints', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      thenByLoyaltyPointsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'loyaltyPoints', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByPhone() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phone', Sort.asc);
@@ -1749,6 +2039,13 @@ extension CustomerLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByCustomerType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customerType', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByEmail(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1773,6 +2070,13 @@ extension CustomerLocalQueryWhereDistinct
   QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isActive');
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QDistinct>
+      distinctByLoyaltyPoints() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'loyaltyPoints');
     });
   }
 
@@ -1823,6 +2127,13 @@ extension CustomerLocalQueryProperty
     });
   }
 
+  QueryBuilder<CustomerLocal, String?, QQueryOperations>
+      customerTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customerType');
+    });
+  }
+
   QueryBuilder<CustomerLocal, String?, QQueryOperations> emailProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'email');
@@ -1844,6 +2155,12 @@ extension CustomerLocalQueryProperty
   QueryBuilder<CustomerLocal, bool, QQueryOperations> isActiveProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isActive');
+    });
+  }
+
+  QueryBuilder<CustomerLocal, int, QQueryOperations> loyaltyPointsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'loyaltyPoints');
     });
   }
 

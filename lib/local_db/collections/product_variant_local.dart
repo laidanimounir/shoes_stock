@@ -16,6 +16,7 @@ class ProductVariantLocal {
 
   double sellPrice = 0.0;
   double buyPrice = 0.0;
+  double? wholesalePrice;
   String? unitType;
   int? unitsPerCarton;
   bool isActive = true;

@@ -14,6 +14,8 @@ class CustomerLocal {
   String? imageUrl;
   bool isActive = true;
   double balance = 0.0;
+  int loyaltyPoints = 0;
+  String? customerType; // 'retail' or 'wholesale'
   DateTime? createdAt;
   DateTime? updatedAt;
 }

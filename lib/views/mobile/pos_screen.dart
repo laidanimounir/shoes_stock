@@ -30,6 +30,10 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
   double _discountPercent = 0;
   bool _hasDiscount = false;
   final Map<String, int> _cachedStock = {};
+  String? _customerType; // retail or wholesale
+  int _customerPoints = 0;
+  List<dynamic> _activePromotions = [];
+  bool _isWholesale = false;
 
   @override
   void initState() {
@@ -61,8 +65,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       return;
     }
     try {
-      final res = await Supabase.instance.client.from('customers').select('id, full_name, balance, credit_limit').eq('is_active', true).order('full_name');
+      final res = await Supabase.instance.client.from('customers').select('id, full_name, balance, credit_limit, loyalty_points, customer_type').eq('is_active', true).order('full_name');
       if (mounted) setState(() { _customers = res; _isLoading = false; });
+      _fetchActivePromotions();
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
   }
 
@@ -85,14 +90,14 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         }).map((v) {
           final p = pMap[v.productId]!;
           final invs = inv.where((i) => i.variantId == v.supabaseId).map((i) => {'quantity': i.quantity, 'store_id': i.storeId}).toList();
-          return {'id': v.supabaseId, 'size': v.size, 'color': v.color, 'barcode': v.barcode, 'sell_price': v.sellPrice, 'products': {'name': p.name, 'image_url': p.imageUrl}, 'inventory': invs};
+          return {'id': v.supabaseId, 'size': v.size, 'color': v.color, 'barcode': v.barcode, 'sell_price': v.sellPrice, 'wholesale_price': v.wholesalePrice, 'products': {'name': p.name, 'image_url': p.imageUrl, 'category': p.category}, 'inventory': invs};
         }).take(40).toList();
         if (mounted) setState(() { _searchResults = results; _isSearching = false; });
       } catch (_) { if (mounted) setState(() => _isSearching = false); }
       return;
     }
     try {
-      var qb = Supabase.instance.client.from('product_variants').select('id, size, color, barcode, sell_price, products!inner(name, image_url), inventory(quantity, store_id)').eq('is_active', true);
+      var qb = Supabase.instance.client.from('product_variants').select('id, size, color, barcode, sell_price, wholesale_price, products!inner(name, image_url, category), inventory(quantity, store_id)').eq('is_active', true);
       if (q.isNotEmpty) qb = qb.or('barcode.ilike.%$q%,products.name.ilike.%$q%');
       final res = await qb.limit(40);
       if (mounted) setState(() { _searchResults = res; _isSearching = false; });
@@ -109,11 +114,33 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     final idx = _cart.indexWhere((i) => i.variantId == vid);
     if (idx >= 0) { setState(() => _cart[idx].quantity++); }
     else {
-      setState(() => _cart.add(CartItem(variantId: vid, productName: v['products']['name'], size: v['size'], color: v['color'], quantity: 1, unitPrice: (v['sell_price'] as num?)?.toDouble() ?? 0)));
+      final price = _getEffectivePrice(v);
+      setState(() => _cart.add(CartItem(variantId: vid, productName: v['products']['name'], size: v['size'], color: v['color'], quantity: 1, unitPrice: price)));
       _cachedStock[vid] = avail;
     }
     _searchCtrl.clear();
     _search('');
+  }
+
+  Future<void> _fetchActivePromotions() async {
+    try {
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final res = await Supabase.instance.client.rpc('get_active_promotions', params: {
+        'p_store_id': _storeId,
+        'p_date': today,
+      });
+      if (mounted) {
+        setState(() => _activePromotions = List<dynamic>.from(res ?? []));
+      }
+    } catch (_) {}
+  }
+
+  double _getEffectivePrice(dynamic variant) {
+    if (_isWholesale) {
+      final wp = (variant['wholesale_price'] as num?)?.toDouble();
+      if (wp != null && wp > 0) return wp;
+    }
+    return (variant['sell_price'] as num?)?.toDouble() ?? 0;
   }
 
   Future<int> _getStockForVariant(String variantId) async {
@@ -197,6 +224,17 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         totalAmount: _subtotal, paidAmount: paidAmount, paymentMethod: method,
         customerId: _customerId, discountPercent: _discountPercent,
       );
+
+      // Award loyalty points
+      if (_customerId != null && paidAmount > 0) {
+        try {
+          await Supabase.instance.client.rpc('award_loyalty_points', params: {
+            'p_customer_id': _customerId,
+            'p_amount_spent': paidAmount,
+          });
+        } catch (_) {}
+      }
+
       if (mounted) {
         final receiptItems = _cart.map((i) => {
           'product_name': i.productName,
@@ -425,6 +463,26 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                         ],
                                         Row(
                                           children: [
+                                            if (_customerId != null && _customerPoints > 0)
+                                              GestureDetector(
+                                                onTap: () => _showRedeemPointsDialog(),
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                  margin: const EdgeInsets.only(right: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.purple[50],
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(Icons.card_giftcard, size: 14, color: Colors.purple),
+                                                      const SizedBox(width: 4),
+                                                      Text(S.t('pos_redeem_points'), style: TextStyle(fontSize: 11, color: Colors.purple)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
                                             Expanded(
                                               child: GestureDetector(
                                                 onTap: () => _showDiscountDialog(),
@@ -490,22 +548,78 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
           ..._customers.map((c) {
             final balance = (c['balance'] as num?)?.toDouble() ?? 0;
             final creditLimit = (c['credit_limit'] as num?)?.toDouble() ?? 0;
+            final points = (c['loyalty_points'] as int?) ?? 0;
+            final custType = c['customer_type'] as String? ?? 'retail';
             return ListTile(
-              title: Text(c['full_name'] ?? ''),
+              title: Row(children: [
+                Expanded(child: Text(c['full_name'] ?? '')),
+                if (custType == 'wholesale')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(color: Colors.orange[100], borderRadius: BorderRadius.circular(4)),
+                    child: Text(S.t('pos_customer_type_wholesale'), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.orange[800])),
+                  ),
+                const SizedBox(width: 4),
+                if (points > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(color: Colors.purple[100], borderRadius: BorderRadius.circular(4)),
+                    child: Text('$points pts', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.purple[800])),
+                  ),
+              ]),
               subtitle: Text('${S.t('pos_customer_balance')} ${balance.toStringAsFixed(0)} ${S.t('misc_currency')}${creditLimit > 0 ? '  ${S.t('pos_customer_credit_limit')} ${creditLimit.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
                   style: TextStyle(fontSize: 11, color: balance > 0 ? Colors.orange : Colors.grey)),
               trailing: c['id'] == _customerId ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () { Navigator.pop(ctx); setState(() => _customerId = c['id']); },
+              onTap: () {
+                Navigator.pop(ctx);
+                setState(() {
+                  _customerId = c['id'];
+                  _customerType = custType;
+                  _customerPoints = points;
+                  _isWholesale = custType == 'wholesale';
+                });
+              },
             );
           }),
           ListTile(
             leading: const Icon(Icons.remove_circle_outline, color: Colors.grey),
             title: Text(S.t('pos_no_client')),
-            onTap: () { Navigator.pop(ctx); setState(() => _customerId = null); },
+            onTap: () { Navigator.pop(ctx); setState(() { _customerId = null; _customerType = null; _customerPoints = 0; _isWholesale = false; }); },
           ),
         ]),
       ),
     );
+  }
+
+  void _showRedeemPointsDialog() {
+    final ctrl = TextEditingController();
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: Text(S.t('pos_redeem_title')),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('${S.t('pos_points_balance').replaceAll('{points}', '$_customerPoints')}'),
+        const SizedBox(height: 8),
+        TextField(controller: ctrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: S.t('pos_redeem_hint'), border: const OutlineInputBorder())),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+        ElevatedButton(onPressed: () async {
+          final pts = int.tryParse(ctrl.text) ?? 0;
+          if (pts <= 0 || pts > _customerPoints) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_insufficient').replaceAll('{points}', '$_customerPoints')), backgroundColor: Colors.red));
+            return;
+          }
+          try {
+            final discount = await Supabase.instance.client.rpc('redeem_loyalty_points', params: {'p_customer_id': _customerId, 'p_points': pts});
+            if (ctx.mounted) Navigator.pop(ctx);
+            final discAmount = (discount as num?)?.toDouble() ?? 0;
+            setState(() { _hasDiscount = true; _discountPercent = discAmount / _subtotal * 100; _customerPoints -= pts; });
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_success').replaceAll('{points}', '$pts').replaceAll('{amount}', discAmount.toStringAsFixed(2))), backgroundColor: Colors.green));
+          } catch (e) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_error')), backgroundColor: Colors.red));
+          }
+        }, child: Text(S.t('pos_redeem_confirm'))),
+      ],
+    ));
   }
 
   void _showDiscountDialog() {

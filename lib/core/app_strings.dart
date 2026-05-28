@@ -843,6 +843,110 @@ class S {
       'form_product_edited': 'Produit modifié',
       'form_product_reactivated': 'Produit réactivé',
       'form_product_archived': 'Produit archivé',
+
+      // ── Loyalty Points ──
+      'pos_loyalty_points': 'Points fidélité',
+      'pos_redeem_points': 'Utiliser points',
+      'pos_points_balance': 'Points: {points}',
+      'pos_redeem_title': 'Échanger des points',
+      'pos_redeem_hint': 'Nombre de points (100 pts = 1 DA)',
+      'pos_redeem_confirm': 'Échanger',
+      'pos_redeem_success': 'Points échangés: {points} pts = {amount} DA de réduction',
+      'pos_redeem_insufficient': 'Points insuffisants. Vous avez {points} pts',
+      'pos_redeem_error': 'Erreur lors de l\'échange',
+
+      // ── Customer Type ──
+      'pos_customer_type_wholesale': 'GROS',
+      'pos_customer_type_retail': 'DÉTAIL',
+      'pos_wholesale_price': 'Prix gros',
+
+      // ── Promotions ──
+      'promo_title': 'Promotions',
+      'promo_add': 'Nouvelle Promotion',
+      'promo_edit': 'Modifier Promotion',
+      'promo_name': 'Nom',
+      'promo_discount_percent': 'Réduction %',
+      'promo_start': 'Date début',
+      'promo_end': 'Date fin',
+      'promo_applies_to': 'Appliquer à',
+      'promo_category': 'Catégorie',
+      'promo_all': 'Tous les produits',
+      'promo_active': 'Active',
+      'promo_inactive': 'Inactive',
+      'promo_no_promos': 'Aucune promotion',
+      'promo_applied': 'Promotion appliquée : -{percent}%',
+      'promo_save': 'Enregistrer',
+      'promo_delete': 'Supprimer',
+      'promo_saved': 'Promotion enregistrée',
+      'promo_deleted': 'Promotion supprimée',
+
+      // ── Inventory Adjustment ──
+      'inv_adjust': 'Ajuster',
+      'inv_adjust_title': 'Ajustement de stock',
+      'inv_adjust_qty': 'Quantité (+/-)',
+      'inv_adjust_reason': 'Motif',
+      'inv_reason_breakage': 'Casse',
+      'inv_reason_theft': 'Vol',
+      'inv_reason_counting': 'Erreur comptage',
+      'inv_reason_other': 'Autre',
+      'inv_adjust_confirm': 'Confirmer l\'ajustement',
+      'inv_adjusted': 'Stock ajusté avec succès',
+
+      // ── Stock Count ──
+      'stock_count_title': 'Comptage Stock',
+      'stock_count_new': 'Nouveau comptage',
+      'stock_count_open': 'Ouvert',
+      'stock_count_closed': 'Fermé',
+      'stock_count_enter_qty': 'Saisir quantité réelle',
+      'stock_count_expected': 'Attendu',
+      'stock_count_actual': 'Réel',
+      'stock_count_delta': 'Écart',
+      'stock_count_close': 'Fermer le comptage',
+      'stock_count_confirm_close': 'Fermer et mettre à jour le stock ?',
+      'stock_count_closed_success': 'Comptage fermé, stock mis à jour',
+      'stock_count_no_counts': 'Aucun comptage',
+
+      // ── Product Bundles ──
+      'bundle_title': 'Packages',
+      'bundle_name': 'Nom du pack',
+      'bundle_price': 'Prix du pack',
+      'bundle_no_bundles': 'Aucun pack',
+      'bundle_added': 'Pack ajouté au panier',
+
+      // ── Size Analytics ──
+      'size_analytics_title': 'Analyse par taille',
+      'size_label': 'Taille',
+      'size_sold': 'Vendus',
+      'size_revenue': 'Revenu',
+      'size_pct': '%',
+
+      // ── Inventory Turnover ──
+      'turnover_title': 'Rotation Stock',
+      'turnover_fast': 'Rotation rapide',
+      'turnover_slow': 'Rotation lente',
+      'turnover_rate': 'Taux',
+      'turnover_sold_30d': 'Vendus 30j',
+      'turnover_current': 'Stock actuel',
+
+      // ── Sales Forecast ──
+      'forecast_title': 'Prévisions ventes',
+      'forecast_month': 'Mois',
+      'forecast_revenue': 'Revenu prévu',
+      'forecast_next_3': '3 prochains mois',
+
+      // ── Stock Transfers ──
+      'transfer_title': 'Transferts Stock',
+      'transfer_new': 'Nouveau transfert',
+      'transfer_from': 'De',
+      'transfer_to': 'Vers',
+      'transfer_qty': 'Quantité',
+      'transfer_variant': 'Variante',
+      'transfer_status_pending': 'En attente',
+      'transfer_status_done': 'Effectué',
+      'transfer_execute': 'Exécuter',
+      'transfer_execute_confirm': 'Confirmer le transfert ?',
+      'transfer_done': 'Transfert effectué avec succès',
+      'transfer_no_transfers': 'Aucun transfert',
     },
 
     // ────────────────────────────────────────────────────────────
@@ -1663,6 +1767,110 @@ class S {
       'form_product_edited': 'تم تعديل المنتج',
       'form_product_reactivated': 'تم إعادة تنشيط المنتج',
       'form_product_archived': 'تم أرشفة المنتج',
+
+      // ── Loyalty Points ──
+      'pos_loyalty_points': 'نقاط الولاء',
+      'pos_redeem_points': 'استخدام النقاط',
+      'pos_points_balance': 'النقاط: {points}',
+      'pos_redeem_title': 'استبدال النقاط',
+      'pos_redeem_hint': 'عدد النقاط (100 نقطة = 1 د.ج)',
+      'pos_redeem_confirm': 'استبدال',
+      'pos_redeem_success': 'تم استبدال {points} نقطة = {amount} د.ج خصم',
+      'pos_redeem_insufficient': 'نقاط غير كافية. لديك {points} نقطة',
+      'pos_redeem_error': 'خطأ في الاستبدال',
+
+      // ── Customer Type ──
+      'pos_customer_type_wholesale': 'جملة',
+      'pos_customer_type_retail': 'قطاعي',
+      'pos_wholesale_price': 'سعر الجملة',
+
+      // ── Promotions ──
+      'promo_title': 'العروض',
+      'promo_add': 'عرض جديد',
+      'promo_edit': 'تعديل العرض',
+      'promo_name': 'الاسم',
+      'promo_discount_percent': 'نسبة الخصم %',
+      'promo_start': 'تاريخ البداية',
+      'promo_end': 'تاريخ النهاية',
+      'promo_applies_to': 'يطبق على',
+      'promo_category': 'الفئة',
+      'promo_all': 'جميع المنتجات',
+      'promo_active': 'نشط',
+      'promo_inactive': 'غير نشط',
+      'promo_no_promos': 'لا توجد عروض',
+      'promo_applied': 'تم تطبيق العرض: -{percent}%',
+      'promo_save': 'حفظ',
+      'promo_delete': 'حذف',
+      'promo_saved': 'تم حفظ العرض',
+      'promo_deleted': 'تم حذف العرض',
+
+      // ── Inventory Adjustment ──
+      'inv_adjust': 'تعديل',
+      'inv_adjust_title': 'تعديل المخزون',
+      'inv_adjust_qty': 'الكمية (+/-)',
+      'inv_adjust_reason': 'السبب',
+      'inv_reason_breakage': 'كسر',
+      'inv_reason_theft': 'سرقة',
+      'inv_reason_counting': 'خطأ في العد',
+      'inv_reason_other': 'أخرى',
+      'inv_adjust_confirm': 'تأكيد التعديل',
+      'inv_adjusted': 'تم تعديل المخزون بنجاح',
+
+      // ── Stock Count ──
+      'stock_count_title': 'جرد المخزون',
+      'stock_count_new': 'جرد جديد',
+      'stock_count_open': 'مفتوح',
+      'stock_count_closed': 'مغلق',
+      'stock_count_enter_qty': 'إدخال الكمية الفعلية',
+      'stock_count_expected': 'متوقع',
+      'stock_count_actual': 'فعلي',
+      'stock_count_delta': 'الفرق',
+      'stock_count_close': 'إغلاق الجرد',
+      'stock_count_confirm_close': 'إغلاق وتحديث المخزون؟',
+      'stock_count_closed_success': 'تم إغلاق الجرد وتحديث المخزون',
+      'stock_count_no_counts': 'لا يوجد جرد',
+
+      // ── Product Bundles ──
+      'bundle_title': 'الباقات',
+      'bundle_name': 'اسم الباقة',
+      'bundle_price': 'سعر الباقة',
+      'bundle_no_bundles': 'لا توجد باقات',
+      'bundle_added': 'تمت إضافة الباقة للسلة',
+
+      // ── Size Analytics ──
+      'size_analytics_title': 'تحليل المقاسات',
+      'size_label': 'المقاس',
+      'size_sold': 'مباع',
+      'size_revenue': 'الإيراد',
+      'size_pct': '%',
+
+      // ── Inventory Turnover ──
+      'turnover_title': 'دوران المخزون',
+      'turnover_fast': 'دوران سريع',
+      'turnover_slow': 'دوران بطيء',
+      'turnover_rate': 'المعدل',
+      'turnover_sold_30d': 'مباع 30 يوم',
+      'turnover_current': 'المخزون الحالي',
+
+      // ── Sales Forecast ──
+      'forecast_title': 'توقعات المبيعات',
+      'forecast_month': 'الشهر',
+      'forecast_revenue': 'الإيراد المتوقع',
+      'forecast_next_3': 'الأشهر الثلاثة القادمة',
+
+      // ── Stock Transfers ──
+      'transfer_title': 'تحويلات المخزون',
+      'transfer_new': 'تحويل جديد',
+      'transfer_from': 'من',
+      'transfer_to': 'إلى',
+      'transfer_qty': 'الكمية',
+      'transfer_variant': 'النوع',
+      'transfer_status_pending': 'قيد الانتظار',
+      'transfer_status_done': 'تم',
+      'transfer_execute': 'تنفيذ',
+      'transfer_execute_confirm': 'تأكيد التحويل؟',
+      'transfer_done': 'تم التحويل بنجاح',
+      'transfer_no_transfers': 'لا توجد تحويلات',
     },
   };
 }

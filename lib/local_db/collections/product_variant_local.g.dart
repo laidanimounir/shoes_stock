@@ -77,6 +77,11 @@ const ProductVariantLocalSchema = CollectionSchema(
       id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
+    ),
+    r'wholesalePrice': PropertySchema(
+      id: 12,
+      name: r'wholesalePrice',
+      type: IsarType.double,
     )
   },
   estimateSize: _productVariantLocalEstimateSize,
@@ -150,6 +155,7 @@ void _productVariantLocalSerialize(
   writer.writeString(offsets[9], object.unitType);
   writer.writeLong(offsets[10], object.unitsPerCarton);
   writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeDouble(offsets[12], object.wholesalePrice);
 }
 
 ProductVariantLocal _productVariantLocalDeserialize(
@@ -172,6 +178,7 @@ ProductVariantLocal _productVariantLocalDeserialize(
   object.unitType = reader.readStringOrNull(offsets[9]);
   object.unitsPerCarton = reader.readLongOrNull(offsets[10]);
   object.updatedAt = reader.readDateTimeOrNull(offsets[11]);
+  object.wholesalePrice = reader.readDoubleOrNull(offsets[12]);
   return object;
 }
 
@@ -206,6 +213,8 @@ P _productVariantLocalDeserializeProp<P>(
       return (reader.readLongOrNull(offset)) as P;
     case 11:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 12:
+      return (reader.readDoubleOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1646,6 +1655,90 @@ extension ProductVariantLocalQueryFilter on QueryBuilder<ProductVariantLocal,
       ));
     });
   }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'wholesalePrice',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'wholesalePrice',
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'wholesalePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'wholesalePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'wholesalePrice',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterFilterCondition>
+      wholesalePriceBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'wholesalePrice',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
 }
 
 extension ProductVariantLocalQueryObject on QueryBuilder<ProductVariantLocal,
@@ -1821,6 +1914,20 @@ extension ProductVariantLocalQuerySortBy
       sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByWholesalePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wholesalePrice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      sortByWholesalePriceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wholesalePrice', Sort.desc);
     });
   }
 }
@@ -2008,6 +2115,20 @@ extension ProductVariantLocalQuerySortThenBy
       return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByWholesalePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wholesalePrice', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QAfterSortBy>
+      thenByWholesalePriceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wholesalePrice', Sort.desc);
+    });
+  }
 }
 
 extension ProductVariantLocalQueryWhereDistinct
@@ -2093,6 +2214,13 @@ extension ProductVariantLocalQueryWhereDistinct
       distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, ProductVariantLocal, QDistinct>
+      distinctByWholesalePrice() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'wholesalePrice');
     });
   }
 }
@@ -2183,6 +2311,13 @@ extension ProductVariantLocalQueryProperty
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'updatedAt');
+    });
+  }
+
+  QueryBuilder<ProductVariantLocal, double?, QQueryOperations>
+      wholesalePriceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'wholesalePrice');
     });
   }
 }
