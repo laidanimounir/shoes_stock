@@ -71,6 +71,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   String? _selectedCustomerId;
   double? _selectedCustomerBalance;
   double? _selectedCustomerCreditLimit;
+  String? _customerType;
+  int _customerPoints = 0;
+  bool _isWholesale = false;
 
   Set<int> _stockConflictItems = {};
   final Map<String, int> _cachedStock = {};
@@ -229,7 +232,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         }
 
         final customersRes = await Supabase.instance.client
-            .from('customers').select('id, full_name, balance, credit_limit').eq('is_active', true).order('full_name');
+            .from('customers').select('id, full_name, balance, credit_limit, loyalty_points, customer_type').eq('is_active', true).order('full_name');
         _customers = customersRes;
 
         if (mounted) setState(() => _isLoading = false);
@@ -305,8 +308,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
     try {
       var qb = Supabase.instance.client.from('product_variants').select('''
-            id, size, color, barcode, sell_price,
-            products!inner(name, image_url),
+            id, size, color, barcode, sell_price, wholesale_price,
+            products!inner(name, image_url, category),
             inventory(quantity, store_id)
           ''').eq('is_active', true);
 
@@ -351,6 +354,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     if (existIndex >= 0) {
       setState(() => _cart[existIndex].quantity++);
     } else {
+      final price = _getEffectivePrice(variantData);
       setState(() {
         _cart.add(CartItem(
           variantId:   variantId,
@@ -358,7 +362,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           size:        variantData['size'],
           color:       variantData['color'],
           quantity:    1,
-          unitPrice:   double.tryParse(variantData['sell_price']?.toString() ?? '0') ?? 0.0,
+          unitPrice:   price,
         ));
       });
       _cachedStock[variantId] = availability;
@@ -392,6 +396,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 3),
     ));
+  }
+
+  double _getEffectivePrice(dynamic variant) {
+    if (_isWholesale) {
+      final wp = (variant['wholesale_price'] as num?)?.toDouble();
+      if (wp != null && wp > 0) return wp;
+    }
+    return double.tryParse(variant['sell_price']?.toString() ?? '0') ?? 0.0;
   }
 
   // ── STOCK HELPERS ─────────────────────────────
@@ -759,6 +771,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                   discountAmount: _discountMode == 1 ? _discountAmount : 0,
                                 );
                                 if (_isDiscountApplied) _logDiscount(invoiceNumber, items, totalAmount);
+                                // Award loyalty points
+                                if (_selectedCustomerId != null && paidAmount > 0) {
+                                  try {
+                                    await Supabase.instance.client.rpc('award_loyalty_points', params: {
+                                      'p_customer_id': _selectedCustomerId,
+                                      'p_amount_spent': paidAmount,
+                                    });
+                                  } catch (_) {}
+                                }
                                 setState(() => _isProcessingPayment = false);
                                 Navigator.pop(context);
                                 if (mounted) _handlePostSaleAction(invoiceNumber, paidAmount);
@@ -847,6 +868,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   void _handlePostSaleAction(String invoiceNumber, double paidAmount) {
     setState(() {
       _cart.clear(); _selectedCustomerId = null; _selectedCustomerBalance = null; _selectedCustomerCreditLimit = null;
+      _customerType = null; _customerPoints = 0; _isWholesale = false;
       _stockConflictItems = {}; _cachedStock.clear();
       _isDiscountApplied = false; _discountAmount = 0; _discountInput = 0; _discountMode = 0;
       _cartSearchQuery = ''; _cartSearchController.clear();
@@ -1785,6 +1807,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             ..._customers.map((c) {
               final bal = (c['balance'] as num?)?.toDouble() ?? 0;
               final lim = (c['credit_limit'] as num?)?.toDouble() ?? 0;
+              final pts = (c['loyalty_points'] as int?) ?? 0;
+              final ctype = c['customer_type'] as String? ?? 'retail';
               return DropdownMenuItem(
                 value: c['id'] as String,
                 child: Row(children: [
@@ -1792,8 +1816,28 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   const Icon(Icons.person_rounded, size: 15, color: _C.accent),
                   const SizedBox(width: 8),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(c['full_name'] as String,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    Row(children: [
+                      Text(c['full_name'] as String,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                      if (ctype == 'wholesale') ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(color: Colors.orange[100], borderRadius: BorderRadius.circular(3)),
+                          child: Text(S.t('pos_customer_type_wholesale'),
+                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.orange[800])),
+                        ),
+                      ],
+                      if (pts > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(color: Colors.purple[100], borderRadius: BorderRadius.circular(3)),
+                          child: Text('$pts pts',
+                              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.purple[800])),
+                        ),
+                      ],
+                    ]),
                     Text('${S.t('pos_customer_balance')} ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}${lim > 0 ? '  ${S.t('pos_customer_credit_limit')} ${lim.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
                         style: TextStyle(fontSize: 9, color: bal > 0 ? _C.warning : _C.textLight)),
                   ]),
@@ -1803,7 +1847,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           ],
           onChanged: (val) {
             setState(() { _selectedCustomerId = val; _selectedCustomerBalance = null; _selectedCustomerCreditLimit = null; });
-            if (val != null) _cacheCustomerBalance(val);
+            if (val != null) {
+              _cacheCustomerBalance(val);
+              final c = _customers.firstWhere((c) => c['id'] == val, orElse: () => {});
+              final ctype = c['customer_type'] as String? ?? 'retail';
+              final pts = (c['loyalty_points'] as int?) ?? 0;
+              setState(() { _customerType = ctype; _customerPoints = pts; _isWholesale = ctype == 'wholesale'; });
+            } else {
+              setState(() { _customerType = null; _customerPoints = 0; _isWholesale = false; });
+            }
           },
         ),
       ),
