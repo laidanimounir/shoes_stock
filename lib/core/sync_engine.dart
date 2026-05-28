@@ -42,10 +42,10 @@ class SyncEngine {
       debugPrint('⏳ SyncEngine: Already syncing, skipping');
       return;
     }
+    _isSyncing = true;
     debugPrint('🔄 SyncEngine: Starting sync...');
 
     try {
-      _isSyncing = true;
       final isar = await IsarService.getInstance();
       final pending = await isar.syncQueueItems
           .filter()
