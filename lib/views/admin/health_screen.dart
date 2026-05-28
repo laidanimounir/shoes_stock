@@ -20,6 +20,7 @@ import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
 import '../../local_db/collections/transaction_local.dart';
 import '../../local_db/collections/expense_local.dart';
+import '../../services/backup_service.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -170,6 +171,27 @@ class _HealthScreenState extends State<HealthScreen> {
             ],
           ),
           const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.backup_rounded, color: AppColors.gold, size: 18),
+            onPressed: () async {
+              try {
+                final path = await BackupService.instance.exportToJson();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Sauvegarde créée: $path'), backgroundColor: Colors.green),
+                  );
+                }
+                await BackupService.instance.shareBackup();
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            tooltip: 'Exporter la base locale',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
             onPressed: _refresh,
