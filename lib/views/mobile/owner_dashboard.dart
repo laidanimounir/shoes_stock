@@ -27,6 +27,7 @@ import 'owner/kpi_cards_section.dart';
 import 'owner/debtors_section.dart';
 import 'owner/inventory_section.dart';
 import 'owner/analytics_sheet.dart';
+import 'owner/store_comparison_section.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -44,6 +45,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   double _supplierDebt = 0;
 
   List<Map<String, dynamic>> _storePerformance = [];
+  List<Map<String, dynamic>> _storeComparison = [];
   int _currentStorePage = 0;
   final PageController _pageController = PageController(viewportFraction: 0.85);
 
@@ -127,6 +129,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         _fetchStores(),
         _fetchGlobalFinancials(),
         _fetchStorePerformance(),
+        _fetchStoreComparison(),
         _fetchLowStock(),
         _fetchActivities(),
         _fetchChartData(),
@@ -165,6 +168,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       if (mounted) setState(() => _storePerformance = list);
     } catch (e) {
       debugPrint("Error store performance: $e");
+    }
+  }
+
+  Future<void> _fetchStoreComparison() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_store_comparison', params: {'p_period': 'today'});
+      final list = List<Map<String, dynamic>>.from(res ?? []);
+      if (mounted) setState(() => _storeComparison = list);
+    } catch (e) {
+      debugPrint("Error store comparison: $e");
     }
   }
 
@@ -516,6 +529,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       );
                     }).toList(),
                   ),
+                  const SizedBox(height: 16),
+                  StoreComparisonSection(data: _storeComparison),
                   const SizedBox(height: 16),
                   _buildSectionHeader(S.t('dash_revenue_chart'), Icons.bar_chart, Colors.blue),
                   _buildChartCard(),
@@ -906,6 +921,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       ),
     );
   }
+
+  // Store comparison moved to StoreComparisonSection widget
 
   Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Padding(
