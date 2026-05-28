@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_session.dart';
 
 class StoresScreen extends StatefulWidget {
   const StoresScreen({super.key});
@@ -37,6 +38,50 @@ class _StoresScreenState extends State<StoresScreen> {
     ));
   }
 
+  void _edit(Map<String, dynamic> store) {
+    final nameCtrl = TextEditingController(text: store['name']);
+    final addrCtrl = TextEditingController(text: store['address']);
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: Text(S.t('store_edit')), content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+        const SizedBox(height: 8), TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Adresse', border: OutlineInputBorder())),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+        ElevatedButton(onPressed: () async {
+          if (nameCtrl.text.isEmpty) return;
+          Navigator.pop(ctx);
+          try {
+            await Supabase.instance.client.from('stores').update({'name': nameCtrl.text.trim(), 'address': addrCtrl.text.trim()}).eq('id', store['id']);
+            _fetch();
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_updated')), backgroundColor: Colors.green));
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+        }, child: Text(S.t('action_save'))),
+      ],
+    ));
+  }
+
+  Future<void> _delete(Map<String, dynamic> store) async {
+    final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(S.t('action_confirm_delete')),
+      content: Text(S.t('store_delete_msg').replaceAll('{name}', store['name'] ?? '')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
+        ElevatedButton(onPressed: () async {
+          Navigator.pop(ctx, true);
+        }, style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: Text(S.t('action_delete'))),
+      ],
+    ));
+    if (confirm != true) return;
+    try {
+      await Supabase.instance.client.from('stores').delete().eq('id', store['id']);
+      _fetch();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_deleted')), backgroundColor: Colors.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_delete_error')), backgroundColor: Colors.red));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,6 +95,18 @@ class _StoresScreenState extends State<StoresScreen> {
                 leading: CircleAvatar(child: Text((s['name'] as String? ?? '?')[0].toUpperCase())),
                 title: Text(s['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(s['address'] ?? '', style: const TextStyle(fontSize: 12)),
+                trailing: AppSession.isOwner
+                    ? PopupMenuButton<String>(
+                        onSelected: (v) {
+                          if (v == 'edit') _edit(s);
+                          else if (v == 'delete') _delete(s);
+                        },
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'))),
+                          const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Colors.red), title: Text('Supprimer', style: TextStyle(color: Colors.red)))),
+                        ],
+                      )
+                    : null,
               ));
             }),
     );
