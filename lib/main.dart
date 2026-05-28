@@ -143,7 +143,7 @@ class _AuthGateState extends State<AuthGate> {
     try {
       final response = await supabase
           .from('user_profiles')
-          .select('role, store_id')
+          .select('role, store_id, preferred_language')
           .eq('id', userId)
           .maybeSingle();
 
@@ -168,6 +168,11 @@ class _AuthGateState extends State<AuthGate> {
       AppSession.currentUserId = userId;
       AppSession.currentStoreId = response['store_id'] as String?;
       AppSession.setRole(role);
+
+      final prefLang = response['preferred_language'] as String?;
+      if (prefLang != null && prefLang.isNotEmpty) {
+        AppSession.setLocale(prefLang);
+      }
 
       if (AppSession.currentStoreId != null) {
         try {

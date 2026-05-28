@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/collections/settings_local.dart';
 import 'app_strings.dart';
@@ -93,7 +94,18 @@ class AppSession {
         await isar.settingsLocals.put(SettingsLocal()..locale = lang);
       });
     } catch (e) {
-      debugPrint('AppSession.setLocale error: $e');
+      debugPrint('AppSession.setLocale isar error: $e');
+    }
+
+    if (currentUserId != null) {
+      try {
+        await Supabase.instance.client
+            .from('user_profiles')
+            .update({'preferred_language': lang})
+            .eq('id', currentUserId!);
+      } catch (e) {
+        debugPrint('AppSession.setLocale supabase error: $e');
+      }
     }
   }
 }

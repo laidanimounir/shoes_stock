@@ -23,4 +23,5 @@ class UserProfileLocal {
   bool isPermanentlyDeleted = false;
   double commissionRate = 0;
   DateTime? loginAt;
+  String preferredLanguage = 'ar';
 }
