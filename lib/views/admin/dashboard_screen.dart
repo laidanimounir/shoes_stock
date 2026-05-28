@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
+import '../../services/report_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -227,6 +228,21 @@ class _DashboardScreenState extends State<DashboardScreen>
               onPressed: _fetchAll,
               tooltip: S.t('action_refresh'),
             ),
+          ),
+          const SizedBox(width: 4),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.download_rounded, color: AppColors.gold, size: 18),
+            tooltip: 'Exporter',
+            onSelected: (v) async {
+              if (v == 'sales') await ReportService.instance.generateDailySalesReport(DateTime.now(), _selectedStoreId);
+              else if (v == 'inventory') await ReportService.instance.generateInventoryReport(_selectedStoreId);
+              else if (v == 'debts') await ReportService.instance.generateDebtReport(_selectedStoreId);
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'sales', child: ListTile(leading: Icon(Icons.receipt, size: 18), title: Text('Rapport ventes'))),
+              const PopupMenuItem(value: 'inventory', child: ListTile(leading: Icon(Icons.inventory, size: 18), title: Text("Rapport inventaire"))),
+              const PopupMenuItem(value: 'debts', child: ListTile(leading: Icon(Icons.money_off, size: 18), title: Text('Rapport dettes'))),
+            ],
           ),
         ],
       ),

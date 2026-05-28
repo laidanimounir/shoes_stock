@@ -9,6 +9,7 @@ import '../../core/app_session.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
+import '../../services/report_service.dart';
 import 'products_screen.dart';
 import 'add_product_screen.dart';
 import 'pos_screen.dart';
@@ -446,6 +447,20 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchDashboardData(isRefresh: true),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.download),
+            tooltip: 'Exporter',
+            onSelected: (v) async {
+              if (v == 'sales') await ReportService.instance.generateDailySalesReport(DateTime.now(), _selectedStoreId);
+              else if (v == 'inventory') await ReportService.instance.generateInventoryReport(_selectedStoreId);
+              else if (v == 'debts') await ReportService.instance.generateDebtReport(_selectedStoreId);
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'sales', child: ListTile(leading: Icon(Icons.receipt, size: 18), title: Text('Rapport ventes'))),
+              const PopupMenuItem(value: 'inventory', child: ListTile(leading: Icon(Icons.inventory, size: 18), title: Text("Rapport inventaire"))),
+              const PopupMenuItem(value: 'debts', child: ListTile(leading: Icon(Icons.money_off, size: 18), title: Text('Rapport dettes'))),
+            ],
           ),
         ],
       ),
