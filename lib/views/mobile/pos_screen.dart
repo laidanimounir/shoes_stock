@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/invoice_service.dart';
+import '../../services/receipt_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
@@ -166,14 +167,38 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     try {
       final items = _cart.map((i) => {'variant_id': i.variantId, 'quantity': i.quantity, 'unit_price': i.unitPrice, 'total_price': i.totalPrice}).toList();
       final invoiceNum = 'INV-${DateTime.now().millisecondsSinceEpoch}';
+      final discountAmount = _hasDiscount ? _subtotal * _discountPercent / 100 : 0.0;
+      final finalTotal = _subtotal - discountAmount;
       await InvoiceService.instance.processSale(
         storeId: _storeId!, invoiceNumber: invoiceNum, items: items,
         totalAmount: _subtotal, paidAmount: paidAmount, paymentMethod: method,
         customerId: _customerId, discountPercent: _discountPercent,
       );
       if (mounted) {
+        final receiptItems = _cart.map((i) => {
+          'product_name': i.productName,
+          'size': i.size,
+          'color': i.color,
+          'quantity': i.quantity,
+          'unit_price': i.unitPrice,
+          'total_price': i.totalPrice,
+        }).toList();
+        final change = paidAmount - finalTotal;
+        final discPct = _discountPercent;
         setState(() { _cart.clear(); _customerId = null; _hasDiscount = false; _discountPercent = 0; _processing = false; });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_sale_success')} $invoiceNum'), backgroundColor: Colors.green));
+        ReceiptService.instance.showReceiptBottomSheet(
+          context,
+          storeName: _storeName ?? S.t('pos_title'),
+          invoiceNumber: invoiceNum,
+          date: DateTime.now(),
+          items: receiptItems,
+          subtotal: _subtotal,
+          discountPercent: discPct,
+          discountAmount: discountAmount,
+          total: finalTotal,
+          paid: paidAmount.clamp(0, finalTotal) >= finalTotal ? paidAmount : finalTotal,
+          change: change > 0 ? change : 0,
+        );
       }
     } catch (e) {
       if (mounted) {
