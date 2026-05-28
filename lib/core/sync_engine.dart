@@ -200,12 +200,12 @@ class SyncEngine {
       item.errorMessage = e.toString();
       item.lastAttemptAt = DateTime.now();
 
-      if (item.retryCount >= 3) {
+      if (item.retryCount >= _maxRetries) {
         item.status = 'failed';
         debugPrint('    ✗ FAILED permanently after ${item.retryCount} retries: $e');
       } else {
         item.status = 'pending';
-        debugPrint('    ⟳ Will retry (attempt ${item.retryCount}/3): $e');
+        debugPrint('    ⟳ Will retry (attempt ${item.retryCount}/$_maxRetries): $e');
       }
 
       await isar.writeTxn(() async {
