@@ -74,6 +74,59 @@ void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) 
   );
 }
 
+Future<void> _showPriceHistory(BuildContext context, String variantId) async {
+  try {
+    final res = await Supabase.instance.client
+        .from('v_arrivage_price_history')
+        .select('size, color, arrivage_date, purchase_price, sell_price_at_arrival')
+        .eq('variant_id', variantId)
+        .order('arrivage_date', ascending: false);
+    if (!context.mounted) return;
+    final history = List<Map<String, dynamic>>.from(res);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Historique des prix'),
+        content: history.isEmpty
+            ? const Text('Aucun historique')
+            : SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: history.length,
+                  itemBuilder: (_, i) {
+                    final h = history[i];
+                    final date = (h['arrivage_date'] as String?)?.substring(0, 10) ?? '-';
+                    return ListTile(
+                      dense: true,
+                      title: Text('${h['size']} - ${h['color']}'),
+                      subtitle: Text(date),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('Achat: ${(h['purchase_price'] as num?)?.toStringAsFixed(0) ?? '-'}',
+                            style: const TextStyle(fontSize: 11, color: Colors.orange)),
+                          Text('Vente: ${(h['sell_price_at_arrival'] as num?)?.toStringAsFixed(0) ?? '-'}',
+                            style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_close')))],
+      ),
+    );
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur chargement historique'), backgroundColor: Colors.red),
+      );
+    }
+  }
+}
+
 void _toggleProductActive(BuildContext context, Map<String, dynamic> product) async {
   final newActive = !(product['is_active'] ?? true);
   try {
@@ -352,6 +405,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                               onPressed: () => _generateBarcodePdf(v as Map<String, dynamic>),
                                               tooltip: 'Générer PDF code-barres',
                                             ),
+                                          IconButton(
+                                            icon: const Icon(Icons.history, size: 18, color: Colors.brown),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () => _showPriceHistory(context, v['id'] as String? ?? ''),
+                                            tooltip: 'Historique des prix',
+                                          ),
                                           const SizedBox(width: 4),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

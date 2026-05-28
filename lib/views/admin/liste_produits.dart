@@ -810,6 +810,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
               const SizedBox(height: 20),
 
+              // Price History Tab
+              Text('Historique des prix',
+                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: kPrimaryColor),
+              ),
+              const SizedBox(height: 8),
+              _buildPriceHistorySection(product['id']),
+
+              const SizedBox(height: 20),
+
               // Footer
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -891,6 +900,98 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       color: Colors.grey[200],
       child: const Center(child: Icon(Icons.shopping_bag, size: 40, color: Colors.grey)),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchPriceHistory(String productId) async {
+    try {
+      final res = await Supabase.instance.client
+          .from('v_arrivage_price_history')
+          .select('inventory_id, variant_id, size, color, arrivage_date, purchase_price, sell_price_at_arrival')
+          .eq('product_id', productId)
+          .order('arrivage_date', ascending: false);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Widget _buildPriceHistorySection(String productId) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _fetchPriceHistory(productId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+          );
+        }
+        final history = snapshot.data ?? [];
+        if (history.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: Text('Aucun historique', style: TextStyle(color: Colors.grey))),
+          );
+        }
+        return Flexible(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  color: const Color(0xFF795548),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('Variante',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                      Expanded(flex: 2, child: Text('Date arrivage',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                      Expanded(flex: 1, child: Text('Prix achat',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                      Expanded(flex: 1, child: Text('Prix vente',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: history.length,
+                    itemBuilder: (_, i) {
+                      final h = history[i];
+                      final arrivalDate = h['arrivage_date'] as String?;
+                      final formattedDate = arrivalDate != null
+                          ? arrivalDate.substring(0, 10)
+                          : '-';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
+                          border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(flex: 2, child: Text('${h['size']} - ${h['color']}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))),
+                            Expanded(flex: 2, child: Text(formattedDate,
+                              style: const TextStyle(fontSize: 11, color: Colors.grey))),
+                            Expanded(flex: 1, child: Text('${(h['purchase_price'] as num?)?.toStringAsFixed(0) ?? '-'}',
+                              style: TextStyle(fontSize: 12, color: Colors.orange[700]))),
+                            Expanded(flex: 1, child: Text('${(h['sell_price_at_arrival'] as num?)?.toStringAsFixed(0) ?? '-'}',
+                              style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
