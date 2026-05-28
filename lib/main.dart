@@ -1,11 +1,11 @@
-import 'dart:io';
+import 'dart:io' show exit;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'views/auth/login_screen.dart';
 import 'views/desktop/admin_main_layout.dart';
@@ -17,8 +17,41 @@ import 'core/connectivity_service.dart';
 import 'services/inactivity_timer.dart';
 import 'views/auth/pin_lock_screen.dart';
 
+/// Used for exit() call — on web this is a no-op
+void _exitApp(int code) {
+  if (kIsWeb) return;
+  exit(code);
+}
+
 Future<void> main() async {
-  await SentryFlutter.init(
+  if (!kIsWeb) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0';
+        options.tracesSampleRate = 1.0;
+        options.enableAppLifecycleBreadcrumbs = true;
+        options.beforeSend = (event, hint) {
+          if (AppSession.currentUserId != null || AppSession.currentStoreId != null) {
+            event = event.copyWith(
+              user: event.user?.copyWith(
+                id: AppSession.currentUserId,
+                data: {
+                  if (AppSession.currentStoreId != null) 'store_id': AppSession.currentStoreId,
+                },
+              ),
+            );
+          }
+          return event;
+        };
+      },
+      appRunner: () => _runApp(),
+    );
+  } else {
+    await _runApp();
+  }
+}
+
+Future<void> _runApp() async {
     (options) {
       options.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0';
       options.tracesSampleRate = 1.0;
@@ -365,7 +398,7 @@ class _StartupScreenState extends State<_StartupScreen> {
             content: Text('Votre version ($current) est obsolète. Veuillez mettre à jour vers la version $minVer ou supérieure.'),
             actions: [
               ElevatedButton(
-                onPressed: () => exit(0),
+                onPressed: () => _exitApp(0),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                 child: const Text('Fermer l\'application'),
               ),
