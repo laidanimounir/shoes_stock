@@ -5,6 +5,7 @@ import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/transaction_local.dart';
+import '../../services/refund_service.dart';
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
@@ -63,7 +64,7 @@ class _SalesScreenState extends State<SalesScreen> {
     if (confirm != true) return;
     try {
       final items = [{'variant_id': sale['variant_id'] ?? sale['product_variants']?['id'], 'quantity': sale['quantity']}];
-      await Supabase.instance.client.rpc('process_refund', params: {'p_invoice_id': sale['invoice_id'] ?? sale['id'], 'p_items': items, 'p_refund_amount': sale['total_price'], 'p_user_id': AppSession.currentUserId});
+      await RefundService.instance.processRefund(invoiceId: sale['invoice_id'] ?? sale['id'], items: items, refundAmount: (sale['total_price'] as num).toDouble(), reason: '', storeId: AppSession.currentStoreId ?? '');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('refund_success')), backgroundColor: Colors.green));
       _fetch();
     } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
