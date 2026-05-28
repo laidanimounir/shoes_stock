@@ -11,6 +11,7 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/transaction_local.dart';
+import '../../services/debt_recovery_service.dart';
 import 'expenses_screen.dart';
 import 'activity_logs_screen.dart';
 
@@ -563,16 +564,7 @@ class _CustomersTabState extends State<_CustomersTab> {
             if (amount == null || amount <= 0) return;
             Navigator.pop(ctx);
             try {
-              await Supabase.instance.client.from('payments').insert({
-                'customer_id': customer['id'], 'user_id': AppSession.currentUserId, 'amount': amount,
-                'payment_method': 'cash', 'notes': 'Paiement mobile employee',
-              });
-              try {
-                await Supabase.instance.client.from('activity_logs').insert({
-                  'user_id': AppSession.currentUserId, 'action_type': 'debt_payment',
-                  'description': 'Paiement reçu de ${customer['full_name']} — $amount ${S.t('misc_currency')}',
-                });
-              } catch (_) {}
+              await DebtRecoveryService.instance.recordDebtPayment(customerId: customer['id'], amount: amount, paymentMethod: 'cash', storeId: AppSession.currentStoreId ?? '', notes: 'Paiement mobile employee');
               _fetch();
             } catch (e) {
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
