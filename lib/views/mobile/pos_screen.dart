@@ -107,13 +107,11 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     } catch (_) { if (mounted) setState(() => _isSearching = false); }
   }
 
-  void _addToCart(dynamic v) {
+  void _addToCart(dynamic v) async {
     if (_storeId == null) return;
-    final invList = (v['inventory'] as List?) ?? [];
-    int avail = 0;
-    for (var i in invList) { if (i['store_id'] == _storeId) avail += (i['quantity'] as int?) ?? 0; }
-    if (avail <= 0) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_stock_empty_warning')), backgroundColor: Colors.orange)); return; }
     final vid = v['id'];
+    int avail = await _getStockForVariant(vid);
+    if (avail <= 0) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_stock_empty_warning')), backgroundColor: Colors.orange)); return; }
     final inCart = _cart.where((i) => i.variantId == vid).fold(0, (s, i) => s + i.quantity);
     if (inCart >= avail) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_stock_insufficient')} $avail'), backgroundColor: Colors.red)); return; }
     final idx = _cart.indexWhere((i) => i.variantId == vid);
@@ -124,6 +122,21 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     }
     _searchCtrl.clear();
     _search('');
+  }
+
+  Future<int> _getStockForVariant(String variantId) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final inv = await isar.inventoryLocals
+          .filter().variantIdEqualTo(variantId).and().storeIdEqualTo(_storeId!).findFirst();
+      return inv?.quantity ?? 0;
+    }
+    try {
+      final res = await Supabase.instance.client
+          .from('inventory').select('quantity')
+          .eq('variant_id', variantId).eq('store_id', _storeId!).maybeSingle();
+      return (res?['quantity'] as int?) ?? 0;
+    } catch (_) { return 0; }
   }
 
   void _scanBarcode() {

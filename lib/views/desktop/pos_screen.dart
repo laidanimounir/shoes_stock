@@ -347,26 +347,20 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   }
 
   // ── CART LOGIC ────────────────────────────────
-  void _addToCart(dynamic variantData) {
+  void _addToCart(dynamic variantData) async {
     if (_selectedStoreId == null) {
       _snack(S.t('pos_select_store_first'), _C.danger);
       return;
     }
 
-    final inventoryList = variantData['inventory'] as List<dynamic>? ?? [];
-    int availability = 0;
-    for (var inv in inventoryList) {
-      if (inv['store_id'] == _selectedStoreId) {
-        availability += (inv['quantity'] as int?) ?? 0;
-      }
-    }
+    final variantId = variantData['id'];
+    final availability = await _getCurrentStock(variantId);
 
     if (availability <= 0) {
       _snack(S.t('pos_stock_empty_warning'), _C.warning);
       return;
     }
 
-    final variantId = variantData['id'];
     final alreadyInCart = _cart.where((i) => i.variantId == variantId)
         .fold(0, (int sum, CartItem i) => sum + i.quantity);
     if (alreadyInCart >= availability) {
@@ -388,9 +382,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           unitPrice:   double.tryParse(variantData['sell_price']?.toString() ?? '0') ?? 0.0,
         ));
       });
-      _getCurrentStock(variantId).then((s) {
-        if (mounted) setState(() => _cachedStock[variantId] = s);
-      });
+      _cachedStock[variantId] = availability;
     }
     _searchController.clear();
   }
