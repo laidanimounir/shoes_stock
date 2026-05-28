@@ -29,6 +29,7 @@ import 'owner/inventory_section.dart';
 import 'owner/analytics_sheet.dart';
 import 'owner/store_comparison_section.dart';
 import 'owner/slow_moving_section.dart';
+import '../admin/stock_transfer_screen.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -665,6 +666,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       {'icon': Icons.notifications, 'label': S.t('nav_activity'), 'screen': const ActivityLogsScreen()},
       {'icon': Icons.store, 'label': S.t('nav_stores'), 'screen': const StoresScreen()},
       {'icon': Icons.group, 'label': S.t('nav_employees'), 'screen': const EmployeesScreen()},
+      {'icon': Icons.swap_horiz, 'label': S.t('transfer_title'), 'screen': const StockTransferScreen()},
     ];
     return Drawer(
       child: ListView(
