@@ -86,7 +86,9 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       }
       final invs = await iq.order('created_at', ascending: false);
       final pays = await pq.order('payment_date', ascending: false);
-      if (mounted) setState(() { _invoices = invs; _payments = pays; _balance = _invoices.fold(0.0, (s, i) => s + ((i['total_amount'] as num?)?.toDouble() ?? 0)) - _payments.fold(0.0, (s, p) => s + ((p['amount'] as num?)?.toDouble() ?? 0)); _loadingHistory = false; });
+      if (mounted) setState(() { _invoices = invs; _payments = pays; _loadingHistory = false; });
+      final balRes = await Supabase.instance.client.rpc('get_customer_balance', params: {'p_customer_id': id});
+      if (mounted) setState(() { _balance = (balRes as num?)?.toDouble() ?? 0; });
     } catch (_) { if (mounted) setState(() => _loadingHistory = false); }
   }
 

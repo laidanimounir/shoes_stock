@@ -197,27 +197,16 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         setState(() {
           _invoices = invoicesRes;
           _payments = paymentsRes;
-
-          if (AppSession.isEmployee && AppSession.currentStoreId != null) {
-            // Employee: compute balance from filtered invoices/payments
-            double totalInvoiced = 0.0;
-            for (var inv in _invoices) {
-              totalInvoiced += (inv['total_amount'] as num?)?.toDouble() ?? 0.0;
-            }
-            double totalPaid = 0.0;
-            for (var pay in _payments) {
-              totalPaid += (pay['amount'] as num?)?.toDouble() ?? 0.0;
-            }
-            _currentBalance = totalInvoiced - totalPaid;
-          } else {
-            // Owner: read global balance from DB (unchanged behavior)
-            _fetchGlobalBalance(customerId);
-          }
-
+          _isLoadingHistory = false;
+        });
+      }
+      final balRes = await Supabase.instance.client.rpc('get_customer_balance', params: {'p_customer_id': customerId});
+      if (mounted) {
+        setState(() {
+          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
           if (_selectedCustomer != null) {
             _selectedCustomer!['balance'] = _currentBalance;
           }
-          _isLoadingHistory = false;
         });
       }
     } catch (e) {
@@ -245,14 +234,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     }
 
     try {
-      final balanceRes = await Supabase.instance.client
-          .from('customers')
-          .select('balance')
-          .eq('id', customerId)
-          .single();
+      final balRes = await Supabase.instance.client.rpc('get_customer_balance', params: {'p_customer_id': customerId});
       if (mounted) {
         setState(() {
-          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
           if (_selectedCustomer != null) {
             _selectedCustomer!['balance'] = _currentBalance;
           }
