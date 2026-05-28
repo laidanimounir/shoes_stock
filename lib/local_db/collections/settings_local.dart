@@ -12,4 +12,5 @@ class SettingsLocal {
   int lowStockThreshold = 3;
   String? pinHash;
   bool biometricEnabled = false;
+  int? lastApiVersionCheck;
 }

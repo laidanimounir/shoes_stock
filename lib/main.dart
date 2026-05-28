@@ -14,6 +14,7 @@ import 'views/mobile/owner_dashboard.dart';
 import 'views/mobile/employee_dashboard.dart';
 import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
+import 'core/api_version_service.dart';
 import 'services/inactivity_timer.dart';
 import 'views/auth/pin_lock_screen.dart';
 
@@ -51,42 +52,16 @@ Future<void> main() async {
   }
 }
 
-Future<void> _runApp() async {
-    (options) {
-      options.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0';
-      options.tracesSampleRate = 1.0;
-      options.enableAppLifecycleBreadcrumbs = true;
-      options.beforeSend = (event, hint) {
-        if (AppSession.currentUserId != null || AppSession.currentStoreId != null) {
-          event = event.copyWith(
-            user: event.user?.copyWith(
-              id: AppSession.currentUserId,
-              data: {
-                if (AppSession.currentStoreId != null) 'store_id': AppSession.currentStoreId,
-              },
-            ),
-          );
-        }
-        return event;
-      };
-    },
-    appRunner: () => _runApp(),
-  );
-}
-
 String? _appCurrentVersion;
-String? _appMinVersion;
 String? _appLatestVersion;
+ApiVersionInfo? _apiVersionInfo;
 
 Future<void> _checkVersion() async {
   try {
     final pkg = await PackageInfo.fromPlatform();
     _appCurrentVersion = pkg.version;
-    final res = await Supabase.instance.client.functions.invoke('get_minimum_version');
-    final data = res.data as Map<String, dynamic>?;
-    if (data == null) return;
-    _appMinVersion = data['min_version'] as String?;
-    _appLatestVersion = data['latest_version'] as String?;
+    _apiVersionInfo = await ApiVersionService.instance.checkVersion();
+    _appLatestVersion = _apiVersionInfo?.latestVersion ?? _apiVersionInfo?.version;
   } catch (_) {}
 }
 
@@ -385,28 +360,47 @@ class _StartupScreenState extends State<_StartupScreen> {
     if (!mounted) return;
 
     final current = _appCurrentVersion;
-    final minVer = _appMinVersion;
+    final info = _apiVersionInfo;
     final latestVer = _appLatestVersion;
 
-    if (current != null && minVer != null && _compareVersions(current, minVer) < 0) {
-      if (mounted) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Mise à jour requise'),
-            content: Text('Votre version ($current) est obsolète. Veuillez mettre à jour vers la version $minVer ou supérieure.'),
-            actions: [
-              ElevatedButton(
-                onPressed: () => _exitApp(0),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                child: const Text('Fermer l\'application'),
-              ),
-            ],
-          ),
-        );
+    if (info != null && current != null) {
+      if (ApiVersionService.instance.isMinFlutterVersionExceeded(info, current)) {
+        if (mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Mise à jour requise'),
+              content: Text('Votre version ($current) est obsolète. Veuillez mettre à jour vers la version ${info.minFlutterVersion} ou supérieure.'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => _exitApp(0),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  child: const Text('Fermer l\'application'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
       }
-      return;
+
+      if (info.deprecated) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Cette version est dépréciée. Veuillez mettre à jour dès que possible.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        }
+      }
     }
 
     if (mounted) widget.onNavigate();

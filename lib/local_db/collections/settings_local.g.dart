@@ -32,18 +32,23 @@ const SettingsLocalSchema = CollectionSchema(
       name: r'inactivityTimeoutMinutes',
       type: IsarType.long,
     ),
-    r'locale': PropertySchema(
+    r'lastApiVersionCheck': PropertySchema(
       id: 3,
+      name: r'lastApiVersionCheck',
+      type: IsarType.long,
+    ),
+    r'locale': PropertySchema(
+      id: 4,
       name: r'locale',
       type: IsarType.string,
     ),
     r'lowStockThreshold': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'lowStockThreshold',
       type: IsarType.long,
     ),
     r'pinHash': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'pinHash',
       type: IsarType.string,
     )
@@ -87,9 +92,10 @@ void _settingsLocalSerialize(
   writer.writeBool(offsets[0], object.biometricEnabled);
   writer.writeLong(offsets[1], object.debtOverdueDays);
   writer.writeLong(offsets[2], object.inactivityTimeoutMinutes);
-  writer.writeString(offsets[3], object.locale);
-  writer.writeLong(offsets[4], object.lowStockThreshold);
-  writer.writeString(offsets[5], object.pinHash);
+  writer.writeLong(offsets[3], object.lastApiVersionCheck);
+  writer.writeString(offsets[4], object.locale);
+  writer.writeLong(offsets[5], object.lowStockThreshold);
+  writer.writeString(offsets[6], object.pinHash);
 }
 
 SettingsLocal _settingsLocalDeserialize(
@@ -103,9 +109,10 @@ SettingsLocal _settingsLocalDeserialize(
   object.debtOverdueDays = reader.readLong(offsets[1]);
   object.inactivityTimeoutMinutes = reader.readLong(offsets[2]);
   object.isarId = id;
-  object.locale = reader.readString(offsets[3]);
-  object.lowStockThreshold = reader.readLong(offsets[4]);
-  object.pinHash = reader.readStringOrNull(offsets[5]);
+  object.lastApiVersionCheck = reader.readLongOrNull(offsets[3]);
+  object.locale = reader.readString(offsets[4]);
+  object.lowStockThreshold = reader.readLong(offsets[5]);
+  object.pinHash = reader.readStringOrNull(offsets[6]);
   return object;
 }
 
@@ -123,10 +130,12 @@ P _settingsLocalDeserializeProp<P>(
     case 2:
       return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readLong(offset)) as P;
+    case 6:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -398,6 +407,80 @@ extension SettingsLocalQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'isarId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastApiVersionCheck',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastApiVersionCheck',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastApiVersionCheck',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastApiVersionCheck',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastApiVersionCheck',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      lastApiVersionCheckBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastApiVersionCheck',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -803,6 +886,20 @@ extension SettingsLocalQuerySortBy
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByLastApiVersionCheck() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastApiVersionCheck', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByLastApiVersionCheckDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastApiVersionCheck', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByLocale() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'locale', Sort.asc);
@@ -898,6 +995,20 @@ extension SettingsLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByLastApiVersionCheck() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastApiVersionCheck', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByLastApiVersionCheckDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastApiVersionCheck', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByLocale() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'locale', Sort.asc);
@@ -960,6 +1071,13 @@ extension SettingsLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct>
+      distinctByLastApiVersionCheck() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastApiVersionCheck');
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> distinctByLocale(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1007,6 +1125,13 @@ extension SettingsLocalQueryProperty
       inactivityTimeoutMinutesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'inactivityTimeoutMinutes');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, int?, QQueryOperations>
+      lastApiVersionCheckProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastApiVersionCheck');
     });
   }
 
