@@ -89,6 +89,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
   final Map<int, ScrollController> _sc = {};
 
   Map<String, dynamic>? _selected;
+  Map<String, dynamic>? _employeePerformance;
   bool _creating = false, _editing = false;
   List<dynamic> _stores = [];
 
@@ -227,7 +228,27 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
   DateTime? _dt(dynamic v) { if (v == null) return null; if (v is DateTime) return v; if (v is String) return DateTime.tryParse(v); return null; }
 
-  void _pick(Map<String, dynamic> e) => setState(() { _selected = e; _creating = false; _editing = false; });
+  Future<void> _fetchPerformance(String userId) async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_employee_performance', params: {
+        'p_store_id': _selected?['store_id'],
+        'p_period': 'month',
+      });
+      final list = List<Map<String, dynamic>>.from(res ?? []);
+      final myPerf = list.cast<Map<String, dynamic>?>().firstWhere(
+        (p) => p?['user_id'] == userId,
+        orElse: () => null,
+      );
+      if (mounted) setState(() => _employeePerformance = myPerf);
+    } catch (e) {
+      if (mounted) setState(() => _employeePerformance = null);
+    }
+  }
+
+  void _pick(Map<String, dynamic> e) {
+    setState(() { _selected = e; _creating = false; _editing = false; _employeePerformance = null; });
+    _fetchPerformance(e['id']);
+  }
   void _beginCreate() { _clearCreate(); setState(() { _creating = true; _editing = false; _selected = null; }); }
   void _beginEdit(Map<String, dynamic> e) { _efn.text = e['first_name'] as String? ?? ''; _eln.text = e['last_name'] as String? ?? ''; _eph.text = e['phone'] as String? ?? ''; _ead.text = e['address'] as String? ?? ''; _ejt.text = e['job_title'] as String? ?? ''; _epw.clear(); _storeEdit = e['store_id'] as String?; _hiredEdit = _dt(e['hired_at']); setState(() { _editing = true; _creating = false; }); }
   void _cancel() => setState(() { _creating = false; _editing = false; _clearCreate(); });
@@ -401,7 +422,70 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
           if (hired.isNotEmpty) _InfoRow(icon: Icons.work_history_outlined, label: S.t('emp_hired_at'), value: hired),
         ])),
       ]))),
+      if (_employeePerformance != null) ...[
+        const SizedBox(height: 16),
+        _buildPerformanceCard(),
+      ],
     ]));
+  }
+
+  Widget _buildPerformanceCard() {
+    final p = _employeePerformance!;
+    final sales = (p['total_sales'] as num?)?.toDouble() ?? 0;
+    final refunds = (p['total_refunds'] as num?)?.toDouble() ?? 0;
+    final discount = (p['total_discount_given'] as num?)?.toDouble() ?? 0;
+    final count = (p['transactions_count'] as num?)?.toInt() ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _T.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _T.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.bar_chart_rounded, size: 16, color: _T.brand),
+                const SizedBox(width: 8),
+                Text('PERFORMANCE (30 JOURS)',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _perfMetric('Ventes', '${sales.toStringAsFixed(0)} ${S.t('misc_currency')}', _T.active),
+                const SizedBox(width: 24),
+                _perfMetric('Transactions', '$count', _T.brand),
+                const SizedBox(width: 24),
+                _perfMetric('Remboursements', '${refunds.toStringAsFixed(0)} ${S.t('misc_currency')}', _T.danger),
+                const SizedBox(width: 24),
+                _perfMetric('Remises', '${discount.toStringAsFixed(0)} ${S.t('misc_currency')}', _T.suspended),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _perfMetric(String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: _T.inkLight, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(value, style: TextStyle(fontSize: 16, color: color, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
   }
 
   Widget _buildActionBtn(String label, IconData icon, Color color, VoidCallback onTap) =>

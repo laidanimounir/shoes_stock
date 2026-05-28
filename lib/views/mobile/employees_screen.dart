@@ -13,22 +13,45 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
   bool _isLoading = true;
   late TabController _tabCtrl;
   String _statusFilter = 'active';
+  final Set<String> _expandedIds = {};
+  final Map<String, Map<String, dynamic>> _performances = {};
 
   @override
-  void initState() { super.initState(); _tabCtrl = TabController(length: 3, vsync: this); _tabCtrl.addListener(() { if (!_tabCtrl.indexIsChanging) { setState(() { _statusFilter = ['active', 'suspended', 'archived'][_tabCtrl.index]; }); _fetch(); } }); _fetch(); }
+  void initState() { super.initState(); _tabCtrl = TabController(length: 3, vsync: this); _tabCtrl.addListener(() { if (!_tabCtrl.indexIsChanging) { setState(() { _statusFilter = ['active', 'suspended', 'archived'][_tabCtrl.index]; _expandedIds.clear(); _performances.clear(); }); _fetch(); } }); _fetch(); }
   @override
   void dispose() { _tabCtrl.dispose(); super.dispose(); }
 
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
     try {
-      var qb = Supabase.instance.client.from('user_profiles').select('id, full_name, email, phone, is_active, role, stores(name)');
+      var qb = Supabase.instance.client.from('user_profiles').select('id, full_name, email, phone, is_active, role, store_id, stores(name)');
       if (_statusFilter == 'active') qb = qb.eq('is_active', true);
       else if (_statusFilter == 'suspended') qb = qb.eq('is_active', false);
       qb = qb.eq('role', 'employee');
       final res = await qb.order('full_name');
       if (mounted) setState(() { _employees = res; _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
+  }
+
+  Future<void> _loadPerformance(String userId, String? storeId) async {
+    if (_performances.containsKey(userId)) return;
+    try {
+      final res = await Supabase.instance.client.rpc('get_employee_performance', params: {
+        'p_store_id': storeId,
+        'p_period': 'month',
+      });
+      final list = List<Map<String, dynamic>>.from(res ?? []);
+      final perf = list.cast<Map<String, dynamic>?>().firstWhere(
+        (p) => p?['user_id'] == userId,
+        orElse: () => null,
+      );
+      if (mounted) setState(() {
+        if (perf != null) _performances[userId] = perf;
+        else _performances[userId] = {};
+      });
+    } catch (e) {
+      if (mounted) setState(() => _performances[userId] = {});
+    }
   }
 
   Future<void> _toggleStatus(Map<String, dynamic> emp) async {
@@ -59,21 +82,74 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
           ? Center(child: Text(S.t('label_no_data')))
           : ListView.builder(padding: const EdgeInsets.all(12), itemCount: _employees.length, itemBuilder: (_, i) {
               final e = _employees[i];
-              return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
-                leading: CircleAvatar(child: Text(((e['full_name'] as String?)?[0] ?? '?').toUpperCase())),
-                title: Text(e['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${e['phone'] ?? ''} • ${e['stores']?['name'] ?? ''}', style: const TextStyle(fontSize: 12)),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'toggle') _toggleStatus(e);
-                    else if (v == 'archive') _toggleStatus(e);
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(value: 'toggle', child: Text((e['is_active'] ?? true) ? 'Suspendre' : 'Activer')),
+              final empId = e['id'] as String;
+              final isExpanded = _expandedIds.contains(empId);
+              final perf = _performances[empId];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: CircleAvatar(child: Text(((e['full_name'] as String?)?[0] ?? '?').toUpperCase())),
+                      title: Text(e['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${e['phone'] ?? ''} • ${e['stores']?['name'] ?? ''}', style: const TextStyle(fontSize: 12)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more, color: Colors.indigo),
+                            onPressed: () {
+                              setState(() {
+                                if (isExpanded) { _expandedIds.remove(empId); }
+                                else { _expandedIds.add(empId); _loadPerformance(empId, e['store_id'] as String?); }
+                              });
+                            },
+                          ),
+                          PopupMenuButton<String>(
+                            onSelected: (v) {
+                              if (v == 'toggle') _toggleStatus(e);
+                            },
+                            itemBuilder: (_) => [
+                              PopupMenuItem(value: 'toggle', child: Text((e['is_active'] ?? true) ? 'Suspendre' : 'Activer')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isExpanded)
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: perf == null
+                            ? const SizedBox(height: 40, child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))))
+                            : perf.isEmpty
+                                ? const Text('Aucune performance', style: TextStyle(color: Colors.grey, fontSize: 12))
+                                : Column(
+                                    children: [
+                                      const Divider(),
+                                      _perfRow('Ventes', '${(perf['total_sales'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.green),
+                                      const SizedBox(height: 6),
+                                      _perfRow('Transactions', '${(perf['transactions_count'] as num?)?.toInt() ?? 0}', Colors.blue),
+                                      const SizedBox(height: 6),
+                                      _perfRow('Remboursements', '${(perf['total_refunds'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.red),
+                                      const SizedBox(height: 6),
+                                      _perfRow('Remises', '${(perf['total_discount_given'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.orange),
+                                    ],
+                                  ),
+                      ),
                   ],
                 ),
-              ));
+              );
             }),
+    );
+  }
+
+  Widget _perfRow(String label, String value, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      ],
     );
   }
 }
