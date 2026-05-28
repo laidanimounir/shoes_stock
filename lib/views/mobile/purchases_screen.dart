@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../services/purchase_service.dart';
 
 class PurchasesScreen extends StatefulWidget {
   const PurchasesScreen({super.key});
@@ -66,12 +67,21 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     if (_supplierId == null || _storeId == null || _cart.isEmpty) return;
     setState(() => _loading = true);
     try {
-      for (final item in _cart) {
-        await Supabase.instance.client.rpc('process_purchase', params: {
-          'p_supplier_id': _supplierId, 'p_store_id': _storeId, 'p_variant_id': item['variant_id'],
-          'p_quantity': item['quantity'], 'p_unit_price': item['unit_price'],
-        });
-      }
+      final items = _cart.map((item) => {
+        'variant_id': item['variant_id'],
+        'quantity': item['quantity'],
+        'unit_price': item['unit_price'],
+        'total_price': (item['quantity'] as int) * (item['unit_price'] as num).toDouble(),
+      }).toList();
+
+      await PurchaseService.instance.processPurchase(
+        storeId: _storeId!,
+        supplierId: _supplierId!,
+        items: items,
+        totalAmount: _totalCost,
+        paidAmount: _totalCost,
+        paymentMethod: 'cash',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Achat enregistré'), backgroundColor: Colors.green));
         setState(() { _cart.clear(); _totalQty = 0; _totalCost = 0; });

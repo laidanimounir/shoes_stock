@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../services/purchase_service.dart';
 
 class AchatFournisseurScreen extends StatefulWidget {
   const AchatFournisseurScreen({super.key});
@@ -692,37 +693,38 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  
   Future<void> _processPurchaseTransaction(double totalAmount, double paidAmount) async {
     setState(() => _isSubmitting = true);
-    
-    try {
-      final invoiceNumber = 'ACH-${DateTime.now().millisecondsSinceEpoch}';
 
-      await Supabase.instance.client.rpc('process_purchase', params: {
-        'p_store_id': _selectedStoreId,
-        'p_supplier_id': _selectedSupplierId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': _purchaseItems.map((item) => {
-          'variant_id': item.variantId,
-          'quantity': item.quantity,
-          'unit_price': item.unitPrice,
-          'total_price': item.unitPrice * item.quantity,
-        }).toList(),
-        'p_total_amount': totalAmount,
-        'p_paid_amount': paidAmount,
-        'p_payment_method': 'cash',
-        'p_notes': 'Paiement à la création de la facture $invoiceNumber',
-      });
+    try {
+      final items = _purchaseItems.map((item) => {
+        'variant_id': item.variantId,
+        'quantity': item.quantity,
+        'unit_price': item.unitPrice,
+        'total_price': item.unitPrice * item.quantity,
+      }).toList();
+
+      await PurchaseService.instance.processPurchase(
+        storeId: _selectedStoreId!,
+        supplierId: _selectedSupplierId!,
+        items: items,
+        totalAmount: totalAmount,
+        paidAmount: paidAmount,
+        paymentMethod: 'cash',
+        notes: 'Paiement à la création de la facture ACH-${DateTime.now().millisecondsSinceEpoch}',
+      );
 
       // Update inventory for nouvelle arrivage items
-      for (final item in _purchaseItems.where((i) => i.isNouvelleArrivage)) {
-        await Supabase.instance.client
-          .from('inventory')
-          .update({
-            'arrivage_id': item.arrivageId,
-            'arrivage_date': DateTime.now().toIso8601String(),
-            'purchase_price': item.purchasePrice,
-          })
-          .eq('variant_id', item.variantId)
-          .eq('store_id', _selectedStoreId!);
+      if (!AppSession.isOfflineMode) {
+        for (final item in _purchaseItems.where((i) => i.isNouvelleArrivage)) {
+          await Supabase.instance.client
+            .from('inventory')
+            .update({
+              'arrivage_id': item.arrivageId,
+              'arrivage_date': DateTime.now().toIso8601String(),
+              'purchase_price': item.purchasePrice,
+            })
+            .eq('variant_id', item.variantId)
+            .eq('store_id', _selectedStoreId!);
+        }
       }
 
       if (mounted) {

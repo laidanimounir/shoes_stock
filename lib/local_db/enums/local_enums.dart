@@ -164,6 +164,7 @@ enum SyncOperationType {
   createExpense,
   createDebtRecoveryPayment,
   createLogDiscount,
+  createPurchase,
 }
 
 extension SyncOperationTypeExt on SyncOperationType {
@@ -183,6 +184,8 @@ extension SyncOperationTypeExt on SyncOperationType {
         return 'create_debt_recovery_payment';
       case SyncOperationType.createLogDiscount:
         return 'create_log_discount';
+      case SyncOperationType.createPurchase:
+        return 'create_purchase';
     }
   }
 
@@ -202,6 +205,8 @@ extension SyncOperationTypeExt on SyncOperationType {
         return SyncOperationType.createDebtRecoveryPayment;
       case 'create_log_discount':
         return SyncOperationType.createLogDiscount;
+      case 'create_purchase':
+        return SyncOperationType.createPurchase;
       default:
         throw ArgumentError('Unknown SyncOperationType: $value');
     }

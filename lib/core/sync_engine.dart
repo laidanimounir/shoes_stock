@@ -174,6 +174,9 @@ class SyncEngine {
         case SyncOperationType.createLogDiscount:
           result = await _insertActivityLog(payload);
           break;
+        case SyncOperationType.createPurchase:
+          result = await _rpcProcessPurchase(payload);
+          break;
       }
 
       // ── Success ──
@@ -229,6 +232,7 @@ class SyncEngine {
       case SyncOperationType.createExpense:
       case SyncOperationType.createDebtRecoveryPayment:
       case SyncOperationType.createLogDiscount:
+      case SyncOperationType.createPurchase:
         return 3;
     }
   }
@@ -281,6 +285,14 @@ class SyncEngine {
       Map<String, dynamic> p) async {
     await _client.rpc('add_debt_recovery_payment', params: p)
         .timeout(_timeout);
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _rpcProcessPurchase(
+      Map<String, dynamic> p) async {
+    final res = await _client.rpc('process_purchase', params: p)
+        .timeout(_timeout);
+    if (res is Map) return Map<String, dynamic>.from(res);
     return null;
   }
 
