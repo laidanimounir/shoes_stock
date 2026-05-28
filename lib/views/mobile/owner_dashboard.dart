@@ -59,6 +59,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   List<Map<String, dynamic>> _chartData = [];
   String _chartPeriod = 'month';
   List<Map<String, dynamic>> _topProducts = [];
+  List<Map<String, dynamic>> _sizeAnalytics = [];
 
   bool _isLoading = true;
   late final RealtimeChannel _dashboardSubscription;
@@ -135,6 +136,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         _fetchActivities(),
         _fetchChartData(),
         _fetchTopProducts(),
+        _fetchSizeAnalytics(),
       ]);
     } catch (e) {
       debugPrint("Dashboard update error: $e");
@@ -255,6 +257,20 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       }
     } catch (e) {
       debugPrint('Error fetching top products: $e');
+    }
+  }
+
+  Future<void> _fetchSizeAnalytics() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_size_analytics', params: {
+        'p_store_id': _selectedStoreId,
+        'p_period': 'month',
+      });
+      if (mounted) {
+        setState(() => _sizeAnalytics = List<Map<String, dynamic>>.from(res ?? []));
+      }
+    } catch (e) {
+      debugPrint('Error fetching size analytics: $e');
     }
   }
 
@@ -540,6 +556,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   const SizedBox(height: 16),
                   _buildSectionHeader(S.t('dash_top_products_title'), Icons.star, Colors.orange),
                   _buildTopProductsCard(),
+                  const SizedBox(height: 16),
+                  _buildSectionHeader('Performance par Taille', Icons.straighten, Colors.teal),
+                  _buildSizeAnalyticsCard(),
                   const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Colors.red),
@@ -936,6 +955,62 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           const SizedBox(width: 8),
           Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSizeAnalyticsCard() {
+    final data = _sizeAnalytics;
+    final maxSold = data.fold<int>(0, (p, v) => p > ((v['total_sold'] as num?)?.toInt() ?? 0) ? p : ((v['total_sold'] as num?)?.toInt() ?? 0));
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: data.isEmpty
+            ? Text(S.t('dash_no_data'), style: const TextStyle(color: Colors.grey))
+            : Column(
+                children: data.map((item) {
+                  final size = item['size'] as String? ?? '-';
+                  final sold = (item['total_sold'] as num?)?.toInt() ?? 0;
+                  final revenue = (item['revenue'] as num?)?.toDouble() ?? 0;
+                  final pct = (item['pct_of_total'] as num?)?.toDouble() ?? 0;
+                  final barWidth = maxSold > 0 ? (sold / maxSold) : 0.0;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          child: Text(size, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: barWidth.clamp(0.0, 1.0),
+                              backgroundColor: Colors.teal[50],
+                              color: Colors.teal,
+                              minHeight: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 60,
+                          child: Text('$sold vendus', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                        ),
+                        SizedBox(
+                          width: 50,
+                          child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
       ),
     );
   }

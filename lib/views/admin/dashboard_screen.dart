@@ -29,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<dynamic> _lowStockItems = [];
   List<Map<String, dynamic>> _slowMoving = [];
   int _slowDays = 60;
+  List<Map<String, dynamic>> _sizeAnalytics = [];
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -102,6 +103,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         'p_store_id': _selectedStoreId,
         'p_days': _slowDays,
       });
+      final sizeRes = await supabase.rpc('get_size_analytics', params: {
+        'p_store_id': _selectedStoreId,
+        'p_period': 'month',
+      });
 
       if (mounted) {
         setState(() {
@@ -112,6 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _debtClients = (debtRes as List<dynamic>).cast<Map<String, dynamic>>();
           _lowStockItems = List<Map<String, dynamic>>.from(lowStockRes ?? []);
           _slowMoving = (slowMovingRes as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+          _sizeAnalytics = List<Map<String, dynamic>>.from(sizeRes ?? []);
           _isLoading = false;
         });
         _animController.forward();
@@ -269,6 +275,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildBottomRow(),
           const SizedBox(height: 20),
           _buildSlowMovingSection(),
+          const SizedBox(height: 20),
+          _buildSizeAnalyticsSection(),
         ],
       ),
     );
@@ -1063,6 +1071,93 @@ class _DashboardScreenState extends State<DashboardScreen>
                 },
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSizeAnalyticsSection() {
+    final data = _sizeAnalytics;
+    final maxSold = data.fold<int>(0, (p, v) => p > ((v['total_sold'] as num?)?.toInt() ?? 0) ? p : ((v['total_sold'] as num?)?.toInt() ?? 0));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.straighten, color: AppColors.teal, size: 18),
+              const SizedBox(width: 8),
+              Text(S.t('size_analytics_title'),
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (data.isEmpty)
+            Center(child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(S.t('dash_no_data'),
+                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+            ))
+          else
+            ...data.map((item) {
+              final size = item['size'] as String? ?? '-';
+              final sold = (item['total_sold'] as num?)?.toInt() ?? 0;
+              final revenue = (item['revenue'] as num?)?.toDouble() ?? 0;
+              final pct = (item['pct_of_total'] as num?)?.toDouble() ?? 0;
+              final barWidth = maxSold > 0 ? (sold / maxSold) : 0.0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 36,
+                      child: Text(size,
+                          style: GoogleFonts.raleway(
+                              color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: barWidth.clamp(0.0, 1.0),
+                          backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                          color: AppColors.teal,
+                          minHeight: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 70,
+                      child: Text('$sold ${S.t('dash_item_count')}',
+                          style: GoogleFonts.raleway(
+                              color: AppColors.textSecondary, fontSize: 11)),
+                    ),
+                    SizedBox(
+                      width: 60,
+                      child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}',
+                          style: GoogleFonts.raleway(
+                              color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text('${pct.toStringAsFixed(1)}%',
+                          style: GoogleFonts.raleway(
+                              color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
