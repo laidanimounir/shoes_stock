@@ -52,8 +52,6 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
   }
 
   double get _subtotal => _cart.fold(0.0, (s, i) => s + i.totalPrice);
-  double get _discountAmount => _hasDiscount ? _subtotal * _discountPercent / 100 : 0;
-  double get _total => _subtotal - _discountAmount;
 
   Future<void> _init() async {
     _storeId = AppSession.currentStoreId;
@@ -144,21 +142,21 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
   Future<void> _checkout() async {
     if (_cart.isEmpty) return;
     final result = await showDialog<String>(context: context, builder: (ctx) => _PaymentDialog(
-      total: _total, discountAmount: _discountAmount, hasDiscount: _hasDiscount,
+      subtotal: _subtotal, discountPercent: _discountPercent, hasDiscount: _hasDiscount,
       customerId: _customerId, customers: _customers,
     ));
     if (result == null) return;
     final parts = result.split('|');
     final method = parts[0];
-    final paidAmount = double.tryParse(parts[1]) ?? _total;
+    final paidAmount = double.tryParse(parts[1]) ?? _subtotal;
     setState(() => _processing = true);
     try {
       final items = _cart.map((i) => {'variant_id': i.variantId, 'quantity': i.quantity, 'unit_price': i.unitPrice, 'total_price': i.totalPrice}).toList();
       final invoiceNum = 'INV-${DateTime.now().millisecondsSinceEpoch}';
       await InvoiceService.instance.processSale(
         storeId: _storeId!, invoiceNumber: invoiceNum, items: items,
-        totalAmount: _total, paidAmount: paidAmount, paymentMethod: method,
-        customerId: _customerId,
+        totalAmount: _subtotal, paidAmount: paidAmount, paymentMethod: method,
+        customerId: _customerId, discountPercent: _discountPercent,
       );
       if (mounted) {
         setState(() { _cart.clear(); _customerId = null; _hasDiscount = false; _discountPercent = 0; _processing = false; });
@@ -377,7 +375,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                             ),
                                             const SizedBox(width: 12),
                                             Text('${S.t('pos_total')}: ', style: const TextStyle(fontSize: 16)),
-                                            Text('${_total.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
+                                            Text('${_subtotal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
                                           ],
                                         ),
                                         const SizedBox(height: 8),
@@ -467,14 +465,15 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
 
 // ─── PAYMENT DIALOG ─────────────────────────────
 class _PaymentDialog extends StatefulWidget {
-  final double total;
-  final double discountAmount;
+  final double subtotal;
+  final double discountPercent;
   final bool hasDiscount;
   final String? customerId;
   final List<dynamic> customers;
-  const _PaymentDialog({required this.total, required this.discountAmount, required this.hasDiscount, this.customerId, required this.customers});
+
+  const _PaymentDialog({required this.subtotal, required this.discountPercent, required this.hasDiscount, this.customerId, required this.customers});
   @override
-  State<_PaymentDialog> createState() => _PaymentDialogState();
+  _PaymentDialogState createState() => _PaymentDialogState();
 }
 
 class _PaymentDialogState extends State<_PaymentDialog> {
@@ -483,7 +482,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final total = widget.total;
+    final total = widget.subtotal;
     final cashAmount = double.tryParse(_numpadValue) ?? 0;
     final change = cashAmount - total;
 

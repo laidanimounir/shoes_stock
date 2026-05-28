@@ -471,7 +471,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       }
     }
 
-    final totalAmount = _discountedTotal;
+    final totalAmount = _cartTotal;
     final isRegisteredClient = _selectedCustomerId != null;
     String selectedMethod = 'cash';
     String numpadValue    = totalAmount.toStringAsFixed(2);
@@ -753,18 +753,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                 'unit_price': item.unitPrice, 'total_price': item.totalPrice,
                               }).toList();
 
-                              String notes = '';
-                              if (_isDiscountApplied) {
-                                notes = '{"discount_amount": ${_discountAmount.toStringAsFixed(2)}, "discount_percent": ${_discountMode == 0 ? _discountInput.toStringAsFixed(1) : 'null'}}';
-                              }
-
                               try {
                                 final invoiceNumber = _generateInvoiceNumber();
                                 await InvoiceService.instance.processSale(
                                   storeId: _selectedStoreId!, invoiceNumber: invoiceNumber,
                                   items: items, totalAmount: totalAmount,
                                   paidAmount: paidAmount, paymentMethod: selectedMethod,
-                                  customerId: _selectedCustomerId, notes: notes,
+                                  customerId: _selectedCustomerId,
+                                  discountPercent: _discountMode == 0 ? _discountInput : 0,
+                                  discountAmount: _discountMode == 1 ? _discountAmount : 0,
                                 );
                                 if (_isDiscountApplied) _logDiscount(invoiceNumber, items, totalAmount);
                                 setState(() => _isProcessingPayment = false);

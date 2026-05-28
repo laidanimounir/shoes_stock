@@ -24,6 +24,8 @@ class InvoiceService {
     required String paymentMethod,
     String? customerId,
     String notes = '',
+    double discountPercent = 0,
+    double discountAmount = 0,
   }) async {
     // ════════════════════════════════════
     // ONLINE PATH — call Supabase RPC
@@ -39,6 +41,8 @@ class InvoiceService {
         'p_paid_amount': paidAmount,
         'p_payment_method': paymentMethod,
         'p_notes': notes,
+        'p_discount_percent': discountPercent,
+        'p_discount_amount': discountAmount,
       });
       if (result is Map) {
         return Map<String, dynamic>.from(result);
@@ -51,11 +55,15 @@ class InvoiceService {
     // ════════════════════════════════════
     final isar = await IsarService.getInstance();
 
-    // 1. Determine status
+    final calculatedDiscount = discountAmount > 0
+        ? discountAmount
+        : (discountPercent > 0 ? totalAmount * discountPercent / 100 : 0);
+    final finalAmount = totalAmount - calculatedDiscount;
+
     String status;
     if (paidAmount == 0) {
       status = InvoiceStatusExt.fromString('unpaid').toSupabaseString();
-    } else if (paidAmount < totalAmount) {
+    } else if (paidAmount < finalAmount) {
       status = InvoiceStatusExt.fromString('partial').toSupabaseString();
     } else {
       status = InvoiceStatusExt.fromString('paid').toSupabaseString();
@@ -68,9 +76,9 @@ class InvoiceService {
       ..userId = AppSession.currentUserId ?? ''
       ..customerId = customerId
       ..type = InvoiceTypeExt.fromString('out').toSupabaseString()
-      ..totalAmount = totalAmount
+      ..totalAmount = finalAmount
       ..paidAmount = paidAmount
-      ..discount = 0
+      ..discount = calculatedDiscount.toDouble()
       ..status = status
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now()
@@ -78,7 +86,6 @@ class InvoiceService {
 
     late int localInvoiceId;
 
-    // Single atomic transaction: invoice + transactions + inventory + sync queue
     await isar.writeTxn(() async {
       localInvoiceId = await isar.invoiceLocals.put(invoice);
 
@@ -124,6 +131,8 @@ class InvoiceService {
           'p_paid_amount': paidAmount,
           'p_payment_method': paymentMethod,
           'p_notes': notes,
+          'p_discount_percent': discountPercent,
+          'p_discount_amount': discountAmount,
         },
       );
     });
