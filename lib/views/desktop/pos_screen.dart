@@ -57,6 +57,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   final _invoiceSearchController = TextEditingController();
 
   List<dynamic> _searchResults = [];
+  List<dynamic> _bundles = [];
   bool _isSearching  = false;
   bool _isLoading    = true;
   bool _isProcessingPayment = false;
@@ -238,6 +239,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         if (mounted) setState(() => _isLoading = false);
         _searchProduct('');
         _loadTodayInvoices();
+        _fetchBundles();
       }
     } catch (e) {
       debugPrint("Error fetching initial data: $e");
@@ -326,6 +328,41 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       if (mounted) setState(() => _isSearching = false);
       debugPrint("Search error: $e");
     }
+  }
+
+  Future<void> _fetchBundles() async {
+    if (_selectedStoreId == null) return;
+    try {
+      final res = await Supabase.instance.client.rpc('get_store_bundles', params: {
+        'p_store_id': _selectedStoreId,
+      });
+      if (mounted) setState(() => _bundles = List<dynamic>.from(res ?? []));
+    } catch (_) {}
+  }
+
+  void _addBundleToCart(dynamic bundle) {
+    final items = bundle['items'] as List<dynamic>? ?? [];
+    if (items.isEmpty) return;
+    final price = (bundle['bundle_price'] as num?)?.toDouble() ?? 0;
+    final perItemPrice = items.isNotEmpty ? price / items.length : 0.0;
+    for (final bi in items) {
+      final vid = bi['variant_id'] as String?;
+      if (vid == null) continue;
+      final qty = (bi['quantity'] as int?) ?? 1;
+      for (int i = 0; i < qty; i++) {
+        setState(() {
+          _cart.add(CartItem(
+            variantId: vid,
+            productName: bi['product_name'] ?? '',
+            size: bi['size'] ?? '',
+            color: bi['color'] ?? '',
+            quantity: 1,
+            unitPrice: perItemPrice,
+          ));
+        });
+      }
+    }
+    _snack('Pack ${bundle['name']} ajouté au panier', _C.success);
   }
 
   // ── CART LOGIC ────────────────────────────────
@@ -1266,11 +1303,75 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 ),
               ),
 
+              // Bundles carousel
+              if (_bundles.isNotEmpty && _searchController.text.isEmpty && !_isSearching)
+                SizedBox(
+                  height: 90,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.inventory_2, size: 14, color: _C.accent),
+                            const SizedBox(width: 6),
+                            Text('Packs', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _C.textDark)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: _bundles.length,
+                          itemBuilder: (_, i) {
+                            final b = _bundles[i];
+                            final price = (b['bundle_price'] as num?)?.toDouble() ?? 0;
+                            return GestureDetector(
+                              onTap: () => _addBundleToCart(b),
+                              child: Container(
+                                width: 160,
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: _C.chip,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: _C.accent.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _C.textDark), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          const Spacer(),
+                                          Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: _C.accent)),
+                                          Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: _C.textMid)),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 24, height: 24,
+                                      decoration: BoxDecoration(color: _C.accent, borderRadius: BorderRadius.circular(6)),
+                                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               // Product grid — 4 columns
               Expanded(
                 child: _isSearching
                     ? const Center(child: CircularProgressIndicator(color: _C.accent, strokeWidth: 2))
-                    : _searchResults.isEmpty
+                    : _searchResults.isEmpty && _searchController.text.isNotEmpty
                         ? Center(
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                               const Icon(Icons.inventory_2_outlined, size: 56, color: _C.border),

@@ -23,6 +23,7 @@ class PosScreenMobile extends StatefulWidget {
 class _PosScreenMobileState extends State<PosScreenMobile> {
   final _searchCtrl = TextEditingController();
   List<dynamic> _searchResults = [];
+  List<dynamic> _bundles = [];
   bool _isSearching = false, _isLoading = true, _processing = false;
   final List<CartItem> _cart = [];
   String? _storeId, _storeName, _customerId;
@@ -30,7 +31,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
   double _discountPercent = 0;
   bool _hasDiscount = false;
   final Map<String, int> _cachedStock = {};
-  String? _customerType; // retail or wholesale
+  String? _customerType;
   int _customerPoints = 0;
   List<dynamic> _activePromotions = [];
   bool _isWholesale = false;
@@ -68,6 +69,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       final res = await Supabase.instance.client.from('customers').select('id, full_name, balance, credit_limit, loyalty_points, customer_type').eq('is_active', true).order('full_name');
       if (mounted) setState(() { _customers = res; _isLoading = false; });
       _fetchActivePromotions();
+      _fetchBundles();
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
   }
 
@@ -135,12 +137,87 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     } catch (_) {}
   }
 
+  Future<void> _fetchBundles() async {
+    if (_storeId == null) return;
+    try {
+      final res = await Supabase.instance.client.rpc('get_store_bundles', params: {
+        'p_store_id': _storeId,
+      });
+      if (mounted) {
+        setState(() => _bundles = List<dynamic>.from(res ?? []));
+      }
+    } catch (_) {}
+  }
+
+  void _addBundleToCart(dynamic bundle) {
+    final items = bundle['items'] as List<dynamic>? ?? [];
+    if (items.isEmpty) return;
+    if (_storeId == null) return;
+    final itemPrice = (bundle['bundle_price'] as num?)?.toDouble() ?? 0;
+    final perItemPrice = items.isNotEmpty ? itemPrice / items.length : 0.0;
+    for (final bi in items) {
+      final vid = bi['variant_id'] as String?;
+      if (vid == null) continue;
+      final qty = (bi['quantity'] as int?) ?? 1;
+      for (int i = 0; i < qty; i++) {
+        setState(() {
+          _cart.add(CartItem(
+            variantId: vid,
+            productName: bi['product_name'] ?? '',
+            size: bi['size'] ?? '',
+            color: bi['color'] ?? '',
+            quantity: 1,
+            unitPrice: perItemPrice,
+          ));
+        });
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Pack ${bundle['name']} ajouté au panier'),
+      backgroundColor: Colors.green,
+    ));
+  }
+
   double _getEffectivePrice(dynamic variant) {
     if (_isWholesale) {
       final wp = (variant['wholesale_price'] as num?)?.toDouble();
       if (wp != null && wp > 0) return wp;
     }
     return (variant['sell_price'] as num?)?.toDouble() ?? 0;
+  }
+
+  Widget _buildProductItem(dynamic v, int stock) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        dense: true,
+        leading: v['products']?['image_url'] != null
+            ? ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.network(v['products']['image_url'], width: 36, height: 36, fit: BoxFit.cover))
+            : Container(width: 36, height: 36, color: Colors.grey[200], child: const Icon(Icons.image, size: 18)),
+        title: Text(v['products']?['name'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        subtitle: Text('${v['size']} / ${v['color']} — ${v['sell_price']} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: stock < 3 ? Colors.red[50] : Colors.green[50],
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('$stock', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: stock < 3 ? Colors.red : Colors.green[800])),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.add_shopping_cart, size: 18, color: Colors.indigo),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: stock > 0 ? () => _addToCart(v) : null,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<int> _getStockForVariant(String variantId) async {
@@ -341,49 +418,82 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                         flex: 3,
                         child: _isSearching
                             ? const Center(child: CircularProgressIndicator())
-                            : _searchResults.isEmpty
+                            : _searchCtrl.text.isNotEmpty && _searchResults.isEmpty
                                 ? Center(child: Text(S.t('prod_no_results'), style: const TextStyle(color: Colors.grey)))
-                                : ListView.builder(
-                                    padding: const EdgeInsets.all(4),
-                                    itemCount: _searchResults.length,
-                                    itemBuilder: (_, i) {
-                                      final v = _searchResults[i];
-                                      final invList = (v['inventory'] as List?) ?? [];
-                                      int stock = 0;
-                                      for (var inv in invList) { if (inv['store_id'] == _storeId) stock += (inv['quantity'] as int?) ?? 0; }
-                                      return Card(
-                                        margin: const EdgeInsets.only(bottom: 4),
-                                        child: ListTile(
-                                          dense: true,
-                                          leading: v['products']?['image_url'] != null
-                                              ? ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.network(v['products']['image_url'], width: 36, height: 36, fit: BoxFit.cover))
-                                              : Container(width: 36, height: 36, color: Colors.grey[200], child: const Icon(Icons.image, size: 18)),
-                                          title: Text(v['products']?['name'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                                          subtitle: Text('${v['size']} / ${v['color']} — ${v['sell_price']} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11)),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: stock < 3 ? Colors.red[50] : Colors.green[50],
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text('$stock', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: stock < 3 ? Colors.red : Colors.green[800])),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              IconButton(
-                                                icon: const Icon(Icons.add_shopping_cart, size: 18, color: Colors.indigo),
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                                onPressed: stock > 0 ? () => _addToCart(v) : null,
-                                              ),
-                                            ],
+                                : _bundles.isNotEmpty && _searchCtrl.text.isEmpty
+                                    ? Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.inventory, size: 16, color: Colors.indigo[900]),
+                                                const SizedBox(width: 6),
+                                                Text('Packs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.indigo[900])),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                          SizedBox(
+                                            height: 100,
+                                            child: ListView.builder(
+                                              scrollDirection: Axis.horizontal,
+                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                              itemCount: _bundles.length,
+                                              itemBuilder: (_, i) {
+                                                final b = _bundles[i];
+                                                final price = (b['bundle_price'] as num?)?.toDouble() ?? 0;
+                                                return GestureDetector(
+                                                  onTap: () => _addBundleToCart(b),
+                                                  child: Container(
+                                                    width: 140,
+                                                    margin: const EdgeInsets.only(right: 8),
+                                                    padding: const EdgeInsets.all(10),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.indigo[50],
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(color: Colors.indigo.withOpacity(0.3)),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.indigo), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                                        const Spacer(),
+                                                        Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.indigo[900])),
+                                                        Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const Divider(height: 8),
+                                          Expanded(
+                                            child: ListView.builder(
+                                              padding: const EdgeInsets.all(4),
+                                              itemCount: _searchResults.length,
+                                              itemBuilder: (_, i) {
+                                                final v = _searchResults[i];
+                                                final invList = (v['inventory'] as List?) ?? [];
+                                                int stock = 0;
+                                                for (var inv in invList) { if (inv['store_id'] == _storeId) stock += (inv['quantity'] as int?) ?? 0; }
+                                                return _buildProductItem(v, stock);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : ListView.builder(
+                                        padding: const EdgeInsets.all(4),
+                                        itemCount: _searchResults.length,
+                                        itemBuilder: (_, i) {
+                                          final v = _searchResults[i];
+                                          final invList = (v['inventory'] as List?) ?? [];
+                                          int stock = 0;
+                                          for (var inv in invList) { if (inv['store_id'] == _storeId) stock += (inv['quantity'] as int?) ?? 0; }
+                                          return _buildProductItem(v, stock);
+                                        },
+                                      ),
                       ),
                       // Cart panel
                       Container(
