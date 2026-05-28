@@ -28,6 +28,7 @@ import 'owner/debtors_section.dart';
 import 'owner/inventory_section.dart';
 import 'owner/analytics_sheet.dart';
 import 'owner/store_comparison_section.dart';
+import 'owner/slow_moving_section.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -531,6 +532,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   ),
                   const SizedBox(height: 16),
                   StoreComparisonSection(data: _storeComparison),
+                  const SizedBox(height: 16),
+                  const SlowMovingSection(),
                   const SizedBox(height: 16),
                   _buildSectionHeader(S.t('dash_revenue_chart'), Icons.bar_chart, Colors.blue),
                   _buildChartCard(),

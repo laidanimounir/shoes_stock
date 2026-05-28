@@ -27,6 +27,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<Map<String, dynamic>> _recentActivity = [];
   List<Map<String, dynamic>> _debtClients = [];
   List<dynamic> _lowStockItems = [];
+  List<Map<String, dynamic>> _slowMoving = [];
+  int _slowDays = 60;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -96,6 +98,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         'p_store_id': _selectedStoreId,
         'p_threshold': 3,
       });
+      final slowMovingRes = await supabase.rpc('get_slow_moving_products', params: {
+        'p_store_id': _selectedStoreId,
+        'p_days': _slowDays,
+      });
 
       if (mounted) {
         setState(() {
@@ -105,6 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _recentActivity = (activityRes as List<dynamic>).cast<Map<String, dynamic>>();
           _debtClients = (debtRes as List<dynamic>).cast<Map<String, dynamic>>();
           _lowStockItems = List<Map<String, dynamic>>.from(lowStockRes ?? []);
+          _slowMoving = (slowMovingRes as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
           _isLoading = false;
         });
         _animController.forward();
@@ -260,6 +267,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildSecondaryKpiRow(),
           const SizedBox(height: 20),
           _buildBottomRow(),
+          const SizedBox(height: 20),
+          _buildSlowMovingSection(),
         ],
       ),
     );
@@ -953,6 +962,107 @@ class _DashboardScreenState extends State<DashboardScreen>
                     },
                   ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlowMovingSection() {
+    final items = _slowMoving;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.slow_motion_video, color: Colors.orange, size: 18),
+                  const SizedBox(width: 8),
+                  Text('Produits à rotation lente',
+                      style: GoogleFonts.playfairDisplay(
+                          color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _slowDays,
+                    dropdownColor: AppColors.surface,
+                    style: GoogleFonts.raleway(
+                        fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold),
+                    items: const [
+                      DropdownMenuItem(value: 30, child: Text('30j')),
+                      DropdownMenuItem(value: 60, child: Text('60j')),
+                      DropdownMenuItem(value: 90, child: Text('90j')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) { setState(() => _slowDays = v); _fetchAll(); }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (items.isEmpty)
+            Center(child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text('Aucun produit lent',
+                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+            ))
+          else
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final days = (item['days_since_last_sale'] as num?)?.toInt() ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6, height: 6,
+                          decoration: BoxDecoration(
+                            color: days > 90 ? AppColors.danger.withValues(alpha: 0.5) : Colors.orange.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
+                            style: GoogleFonts.raleway(color: AppColors.textPrimary, fontSize: 11),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '$days j',
+                          style: GoogleFonts.raleway(
+                              color: days > 90 ? AppColors.danger : Colors.orange,
+                              fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
