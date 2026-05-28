@@ -47,7 +47,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         Container(
           padding: const EdgeInsets.all(8), color: Colors.white,
           child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-            FilterChip(label: const Text('Tous'), selected: _actionFilter == null, onSelected: (_) { setState(() { _actionFilter = null; _page = 0; }); _fetch(); }),
+            FilterChip(label: Text(S.t('filter_all')), selected: _actionFilter == null, onSelected: (_) { setState(() { _actionFilter = null; _page = 0; }); _fetch(); }),
             const SizedBox(width: 4),
             ..._actions.map((a) => Padding(padding: const EdgeInsets.only(right: 4), child: FilterChip(
               label: Text(a['label']!, style: const TextStyle(fontSize: 11)),

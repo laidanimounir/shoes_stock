@@ -62,7 +62,7 @@ void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) 
             try {
               await Supabase.instance.client.from('products').update({'name': nameCtrl.text.trim()}).eq('id', product['id']);
               if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produit modifié'), backgroundColor: Colors.green));
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('form_product_edited')), backgroundColor: Colors.green));
             } catch (e) {
               if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
             }
@@ -79,7 +79,7 @@ void _toggleProductActive(BuildContext context, Map<String, dynamic> product) as
   try {
     await Supabase.instance.client.from('products').update({'is_active': newActive}).eq('id', product['id']);
     if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(newActive ? 'Produit réactivé' : 'Produit archivé'),
+      content: Text(newActive ? S.t('form_product_reactivated') : S.t('form_product_archived')),
       backgroundColor: newActive ? Colors.green : Colors.orange,
     ));
   } catch (e) {
@@ -235,23 +235,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _chip('Tous', null, _filterCategory, () => setState(() => _filterCategory = null)),
+                        _chip(S.t('filter_all'), null, _filterCategory, () => setState(() => _filterCategory = null)),
                         const SizedBox(width: 6),
-                        _chip('Homme', 'homme', _filterCategory, () => setState(() => _filterCategory = 'homme')),
+                        _chip(S.t('filter_men'), 'homme', _filterCategory, () => setState(() => _filterCategory = 'homme')),
                         const SizedBox(width: 6),
-                        _chip('Femme', 'femme', _filterCategory, () => setState(() => _filterCategory = 'femme')),
+                        _chip(S.t('filter_women'), 'femme', _filterCategory, () => setState(() => _filterCategory = 'femme')),
                         const SizedBox(width: 6),
-                        _chip('Enfant', 'enfant', _filterCategory, () => setState(() => _filterCategory = 'enfant')),
+                        _chip(S.t('filter_kid'), 'enfant', _filterCategory, () => setState(() => _filterCategory = 'enfant')),
                         const SizedBox(width: 6),
-                        _chip('En stock', 'healthy', _filterStockStatus, () => setState(() => _filterStockStatus = 'healthy')),
+                        _chip(S.t('filter_instock'), 'healthy', _filterStockStatus, () => setState(() => _filterStockStatus = 'healthy')),
                         const SizedBox(width: 6),
-                        _chip('Faible', 'low', _filterStockStatus, () => setState(() => _filterStockStatus = 'low')),
+                        _chip(S.t('filter_low_stock'), 'low', _filterStockStatus, () => setState(() => _filterStockStatus = 'low')),
                         const SizedBox(width: 6),
-                        _chip('Rupture', 'empty', _filterStockStatus, () => setState(() => _filterStockStatus = 'empty')),
+                        _chip(S.t('filter_out_of_stock'), 'empty', _filterStockStatus, () => setState(() => _filterStockStatus = 'empty')),
                         const SizedBox(width: 6),
-                        _chip('Actifs', 'active', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'active' ? null : 'active')),
+                        _chip(S.t('filter_active'), 'active', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'active' ? null : 'active')),
                         const SizedBox(width: 6),
-                        _chip('Archivés', 'archived', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'archived' ? null : 'archived')),
+                        _chip(S.t('filter_archived'), 'archived', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'archived' ? null : 'archived')),
                       ],
                     ),
                   ),
@@ -312,10 +312,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             }
                                           },
                                           itemBuilder: (_) => [
-                                            const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'))),
+                                            PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
                                             PopupMenuItem(value: 'archive', child: ListTile(
                                               leading: Icon(Icons.archive, size: 18, color: Colors.orange),
-                                              title: Text((p['is_active'] ?? true) ? 'Archiver' : 'Réactiver'),
+                                              title: Text((p['is_active'] ?? true) ? S.t('form_archive') : S.t('form_reactivate')),
                                             )),
                                           ],
                                         )
@@ -327,7 +327,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                           margin: const EdgeInsets.only(right: 4),
                                           decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(4)),
-                                          child: Text('Archivé', style: TextStyle(fontSize: 9, color: Colors.orange[800])),
+                                          child: Text(S.t('filter_archived_single'), style: TextStyle(fontSize: 9, color: Colors.orange[800])),
                                         ),
                                       Text('${variants.length} var.', style: const TextStyle(fontSize: 12)),
                                       const SizedBox(width: 8),

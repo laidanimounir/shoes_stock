@@ -444,7 +444,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     icon: const Icon(Icons.store_outlined, color: Colors.white, size: 16),
                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Tous', style: TextStyle(color: Colors.white70, fontSize: 12))),
+                      DropdownMenuItem(value: null, child: Text(S.t('filter_all'), style: TextStyle(color: Colors.white70, fontSize: 12))),
                       ..._stores.map((s) => DropdownMenuItem(
                             value: s['id'] as String?,
                             child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),

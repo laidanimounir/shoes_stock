@@ -809,6 +809,40 @@ class S {
       'day_mon': 'Lun', 'day_tue': 'Mar', 'day_wed': 'Mer', 'day_thu': 'Jeu', 'day_fri': 'Ven', 'day_sat': 'Sam', 'day_sun': 'Dim',
       'month_1': 'Jan', 'month_2': 'Fév', 'month_3': 'Mar', 'month_4': 'Avr', 'month_5': 'Mai', 'month_6': 'Jun',
       'month_7': 'Jul', 'month_8': 'Aoû', 'month_9': 'Sep', 'month_10': 'Oct', 'month_11': 'Nov', 'month_12': 'Déc',
+
+      // ── Filters ──
+      'filter_all': 'Tous',
+      'filter_men': 'Homme',
+      'filter_women': 'Femme',
+      'filter_kid': 'Enfant',
+      'filter_instock': 'En stock',
+      'filter_low_stock': 'Faible',
+      'filter_out_of_stock': 'Rupture',
+      'filter_active': 'Actifs',
+      'filter_suspended': 'Suspendus',
+      'filter_archived': 'Archivés',
+      'filter_archived_single': 'Archivé',
+
+      // ── Purchase Orders ──
+      'order_title': 'Bons de Commande',
+      'order_no_orders': 'Aucun bon de commande',
+      'order_status_pending': 'En attente',
+      'order_status_approved': 'Approuvée',
+      'order_status_cancelled': 'Annulée',
+      'order_approve': 'Approuver',
+      'order_approve_confirm': 'Valider {order} ?',
+      'order_approved_msg': 'Commande approuvée',
+      'order_items': 'articles',
+
+      // ── Common form ──
+      'yes': 'Oui',
+      'no': 'Non',
+      'form_edit': 'Modifier',
+      'form_archive': 'Archiver',
+      'form_reactivate': 'Réactiver',
+      'form_product_edited': 'Produit modifié',
+      'form_product_reactivated': 'Produit réactivé',
+      'form_product_archived': 'Produit archivé',
     },
 
     // ────────────────────────────────────────────────────────────
@@ -1595,6 +1629,40 @@ class S {
       'day_mon': 'الإثنين', 'day_tue': 'الثلاثاء', 'day_wed': 'الأربعاء', 'day_thu': 'الخميس', 'day_fri': 'الجمعة', 'day_sat': 'السبت', 'day_sun': 'الأحد',
       'month_1': 'جانفي', 'month_2': 'فيفري', 'month_3': 'مارس', 'month_4': 'أفريل', 'month_5': 'ماي', 'month_6': 'جوان',
       'month_7': 'جويلية', 'month_8': 'أوت', 'month_9': 'سبتمبر', 'month_10': 'أكتوبر', 'month_11': 'نوفمبر', 'month_12': 'ديسمبر',
+
+      // ── Filters ──
+      'filter_all': 'الكل',
+      'filter_men': 'رجل',
+      'filter_women': 'امرأة',
+      'filter_kid': 'طفل',
+      'filter_instock': 'متوفر',
+      'filter_low_stock': 'منخفض',
+      'filter_out_of_stock': 'نفد',
+      'filter_active': 'نشطون',
+      'filter_suspended': 'موقوفون',
+      'filter_archived': 'مؤرشفون',
+      'filter_archived_single': 'مؤرشف',
+
+      // ── Purchase Orders ──
+      'order_title': 'أوامر الشراء',
+      'order_no_orders': 'لا توجد أوامر شراء',
+      'order_status_pending': 'قيد الانتظار',
+      'order_status_approved': 'تمت الموافقة',
+      'order_status_cancelled': 'ملغاة',
+      'order_approve': 'موافقة',
+      'order_approve_confirm': 'تأكيد {order} ؟',
+      'order_approved_msg': 'تمت الموافقة على الأمر',
+      'order_items': 'عناصر',
+
+      // ── Common form ──
+      'yes': 'نعم',
+      'no': 'لا',
+      'form_edit': 'تعديل',
+      'form_archive': 'أرشفة',
+      'form_reactivate': 'إعادة تنشيط',
+      'form_product_edited': 'تم تعديل المنتج',
+      'form_product_reactivated': 'تم إعادة تنشيط المنتج',
+      'form_product_archived': 'تم أرشفة المنتج',
     },
   };
 }
