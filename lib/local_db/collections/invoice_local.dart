@@ -17,7 +17,6 @@ class InvoiceLocal {
   double paidAmount = 0.0;
   double discount = 0.0;
   late String status;      // InvoiceStatus: 'paid' | 'partial' | 'unpaid' | ...
-  String? shiftId;
   DateTime? createdAt;
   DateTime? updatedAt;
 

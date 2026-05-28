@@ -126,31 +126,6 @@ extension InvoiceTypeExt on InvoiceType {
   }
 }
 
-// ── shift_status (text + CHECK constraint) ─────────────────
-enum ShiftStatus { open, closed }
-
-extension ShiftStatusExt on ShiftStatus {
-  String toSupabaseString() {
-    switch (this) {
-      case ShiftStatus.open:
-        return 'open';
-      case ShiftStatus.closed:
-        return 'closed';
-    }
-  }
-
-  static ShiftStatus fromString(String value) {
-    switch (value) {
-      case 'open':
-        return ShiftStatus.open;
-      case 'closed':
-        return ShiftStatus.closed;
-      default:
-        throw ArgumentError('Unknown ShiftStatus: $value');
-    }
-  }
-}
-
 // ── sync_status (local only — offline queue) ───────────────
 enum SyncStatus { pending, synced, failed }
 

@@ -57,38 +57,33 @@ const PaymentLocalSchema = CollectionSchema(
       name: r'paymentType',
       type: IsarType.string,
     ),
-    r'shiftId': PropertySchema(
-      id: 8,
-      name: r'shiftId',
-      type: IsarType.string,
-    ),
     r'storeId': PropertySchema(
-      id: 9,
+      id: 8,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 10,
+      id: 9,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'supplierId': PropertySchema(
-      id: 11,
+      id: 10,
       name: r'supplierId',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 12,
+      id: 11,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'updatedAt': PropertySchema(
-      id: 13,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 14,
+      id: 13,
       name: r'userId',
       type: IsarType.string,
     )
@@ -134,12 +129,6 @@ int _paymentLocalEstimateSize(
   bytesCount += 3 + object.paymentMethod.length * 3;
   bytesCount += 3 + object.paymentType.length * 3;
   {
-    final value = object.shiftId;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
-  {
     final value = object.storeId;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -175,13 +164,12 @@ void _paymentLocalSerialize(
   writer.writeDateTime(offsets[5], object.paymentDate);
   writer.writeString(offsets[6], object.paymentMethod);
   writer.writeString(offsets[7], object.paymentType);
-  writer.writeString(offsets[8], object.shiftId);
-  writer.writeString(offsets[9], object.storeId);
-  writer.writeString(offsets[10], object.supabaseId);
-  writer.writeString(offsets[11], object.supplierId);
-  writer.writeBool(offsets[12], object.synced);
-  writer.writeDateTime(offsets[13], object.updatedAt);
-  writer.writeString(offsets[14], object.userId);
+  writer.writeString(offsets[8], object.storeId);
+  writer.writeString(offsets[9], object.supabaseId);
+  writer.writeString(offsets[10], object.supplierId);
+  writer.writeBool(offsets[11], object.synced);
+  writer.writeDateTime(offsets[12], object.updatedAt);
+  writer.writeString(offsets[13], object.userId);
 }
 
 PaymentLocal _paymentLocalDeserialize(
@@ -200,13 +188,12 @@ PaymentLocal _paymentLocalDeserialize(
   object.paymentDate = reader.readDateTimeOrNull(offsets[5]);
   object.paymentMethod = reader.readString(offsets[6]);
   object.paymentType = reader.readString(offsets[7]);
-  object.shiftId = reader.readStringOrNull(offsets[8]);
-  object.storeId = reader.readStringOrNull(offsets[9]);
-  object.supabaseId = reader.readString(offsets[10]);
-  object.supplierId = reader.readStringOrNull(offsets[11]);
-  object.synced = reader.readBool(offsets[12]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[13]);
-  object.userId = reader.readStringOrNull(offsets[14]);
+  object.storeId = reader.readStringOrNull(offsets[8]);
+  object.supabaseId = reader.readString(offsets[9]);
+  object.supplierId = reader.readStringOrNull(offsets[10]);
+  object.synced = reader.readBool(offsets[11]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[12]);
+  object.userId = reader.readStringOrNull(offsets[13]);
   return object;
 }
 
@@ -236,16 +223,14 @@ P _paymentLocalDeserializeProp<P>(
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
-    case 10:
       return (reader.readString(offset)) as P;
-    case 11:
+    case 10:
       return (reader.readStringOrNull(offset)) as P;
-    case 12:
+    case 11:
       return (reader.readBool(offset)) as P;
-    case 13:
+    case 12:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 14:
+    case 13:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1348,160 +1333,6 @@ extension PaymentLocalQueryFilter
   }
 
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'shiftId',
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'shiftId',
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdLessThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdBetween(
-    String? lower,
-    String? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'shiftId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'shiftId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'shiftId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'shiftId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
-      shiftIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'shiftId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterFilterCondition>
       storeIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2291,18 +2122,6 @@ extension PaymentLocalQuerySortBy
     });
   }
 
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> sortByShiftId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'shiftId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> sortByShiftIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'shiftId', Sort.desc);
-    });
-  }
-
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> sortByStoreId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'storeId', Sort.asc);
@@ -2492,18 +2311,6 @@ extension PaymentLocalQuerySortThenBy
     });
   }
 
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> thenByShiftId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'shiftId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> thenByShiftIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'shiftId', Sort.desc);
-    });
-  }
-
   QueryBuilder<PaymentLocal, PaymentLocal, QAfterSortBy> thenByStoreId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'storeId', Sort.asc);
@@ -2635,13 +2442,6 @@ extension PaymentLocalQueryWhereDistinct
     });
   }
 
-  QueryBuilder<PaymentLocal, PaymentLocal, QDistinct> distinctByShiftId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'shiftId', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<PaymentLocal, PaymentLocal, QDistinct> distinctByStoreId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2737,12 +2537,6 @@ extension PaymentLocalQueryProperty
   QueryBuilder<PaymentLocal, String, QQueryOperations> paymentTypeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'paymentType');
-    });
-  }
-
-  QueryBuilder<PaymentLocal, String?, QQueryOperations> shiftIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'shiftId');
     });
   }
 

@@ -17,7 +17,6 @@ class PaymentLocal {
   DateTime? paymentDate;
   String? notes;
   String paymentType = 'invoice'; // 'invoice' | 'debt_recovery'
-  String? shiftId;
   DateTime? createdAt;
   DateTime? updatedAt;
 
