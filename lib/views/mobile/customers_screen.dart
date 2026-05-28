@@ -7,6 +7,7 @@ import '../../local_db/isar_service.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
+import '../../services/debt_recovery_service.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -184,10 +185,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           if (amount == null || amount <= 0) return;
           Navigator.pop(ctx);
           try {
-            await Supabase.instance.client.from('payments').insert({
-              'customer_id': _selected!['id'], 'user_id': AppSession.currentUserId, 'amount': amount,
-              'payment_method': 'cash', 'store_id': AppSession.currentStoreId,
-            });
+            await DebtRecoveryService.instance.recordDebtPayment(customerId: _selected!['id'], amount: amount, paymentMethod: 'cash', storeId: AppSession.currentStoreId ?? '');
             _fetchHistory(_selected!['id']);
           } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
         }, child: Text(S.t('action_confirm'))),
