@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'views/auth/login_screen.dart';
 import 'views/desktop/admin_main_layout.dart';
@@ -39,6 +41,33 @@ Future<void> main() async {
   );
 }
 
+String? _appCurrentVersion;
+String? _appMinVersion;
+String? _appLatestVersion;
+
+Future<void> _checkVersion() async {
+  try {
+    final pkg = await PackageInfo.fromPlatform();
+    _appCurrentVersion = pkg.version;
+    final res = await Supabase.instance.client.functions.invoke('get_minimum_version');
+    final data = res.data as Map<String, dynamic>?;
+    if (data == null) return;
+    _appMinVersion = data['min_version'] as String?;
+    _appLatestVersion = data['latest_version'] as String?;
+  } catch (_) {}
+}
+
+int _compareVersions(String a, String b) {
+  final partsA = a.split('.').map(int.parse).toList();
+  final partsB = b.split('.').map(int.parse).toList();
+  for (int i = 0; i < 3; i++) {
+    final va = i < partsA.length ? partsA[i] : 0;
+    final vb = i < partsB.length ? partsB[i] : 0;
+    if (va != vb) return va.compareTo(vb);
+  }
+  return 0;
+}
+
 Future<void> _runApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -61,6 +90,8 @@ Future<void> _runApp() async {
   );
 
   await AppSession.loadLocale();
+
+  await _checkVersion();
 
   runApp(const GestionStockApp());
 }
@@ -319,7 +350,50 @@ class _StartupScreenState extends State<_StartupScreen> {
     });
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
-    widget.onNavigate();
+
+    final current = _appCurrentVersion;
+    final minVer = _appMinVersion;
+    final latestVer = _appLatestVersion;
+
+    if (current != null && minVer != null && _compareVersions(current, minVer) < 0) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Mise à jour requise'),
+            content: Text('Votre version ($current) est obsolète. Veuillez mettre à jour vers la version $minVer ou supérieure.'),
+            actions: [
+              ElevatedButton(
+                onPressed: () => exit(0),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                child: const Text('Fermer l\'application'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) widget.onNavigate();
+
+    if (current != null && latestVer != null && _compareVersions(current, latestVer) < 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Une nouvelle version ($latestVer) est disponible sur le Play Store.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.blue,
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
