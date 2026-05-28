@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
+import '../local_db/collections/expense_category_local.dart';
 import '../local_db/collections/sync_queue_item.dart';
 import '../local_db/collections/sync_metadata.dart';
 import 'app_session.dart';
@@ -149,6 +150,23 @@ class SyncEngine {
     debugPrint('  ▸ Processing: ${item.operationType} '
         '(retry ${item.retryCount}, key=${item.idempotencyKey})');
 
+    // ── Conflict detection — check if references are stale ──
+    try {
+      final conflict = await _detectConflict(isar, opType, payload);
+      if (conflict != null) {
+        debugPrint('    ⚠ CONFLICT: ${conflict['reason']}');
+        await isar.writeTxn(() async {
+          item.status = 'conflict';
+          item.errorMessage = conflict['reason'] as String?;
+          item.lastAttemptAt = DateTime.now();
+          await isar.syncQueueItems.put(item);
+        });
+        return;
+      }
+    } catch (e) {
+      debugPrint('    ⚠ Conflict check error: $e (proceeding)');
+    }
+
     try {
       Map<String, dynamic>? result;
 
@@ -198,22 +216,96 @@ class SyncEngine {
 
       debugPrint('    ✓ Synced successfully');
     } catch (e) {
+      final errorStr = e.toString();
+
+      // ── Detect idempotency (already processed) ──
+      if (errorStr.contains('already been processed') ||
+          errorStr.contains('duplicate key') ||
+          errorStr.contains('unique constraint') ||
+          errorStr.contains('23505')) {
+        debugPrint('    ✓ Already processed (idempotent), marking synced');
+        await isar.writeTxn(() async {
+          item.status = 'synced';
+          item.lastAttemptAt = DateTime.now();
+          await isar.syncQueueItems.put(item);
+        });
+        _syncCompleteController.add(null);
+        return;
+      }
+
       // ── Failure ──
       item.retryCount += 1;
-      item.errorMessage = e.toString();
+      item.errorMessage = errorStr;
       item.lastAttemptAt = DateTime.now();
 
       if (item.retryCount >= _maxRetries) {
         item.status = 'failed';
-        debugPrint('    ✗ FAILED permanently after ${item.retryCount} retries: $e');
+        debugPrint('    ✗ FAILED permanently after ${item.retryCount} retries: $errorStr');
       } else {
         item.status = 'pending';
-        debugPrint('    ⟳ Will retry (attempt ${item.retryCount}/$_maxRetries): $e');
+        debugPrint('    ⟳ Will retry (attempt ${item.retryCount}/$_maxRetries): $errorStr');
       }
 
       await isar.writeTxn(() async {
         await isar.syncQueueItems.put(item);
       });
+    }
+  }
+
+  /// Checks if the local record being pushed is stale compared to the server.
+  /// Returns a conflict reason map if conflict detected, null otherwise.
+  Future<Map<String, dynamic>?> _detectConflict(
+    Isar isar,
+    SyncOperationType opType,
+    Map<String, dynamic> payload,
+  ) async {
+    switch (opType) {
+      case SyncOperationType.createExpense: {
+        final categoryId = payload['p_category_id'] as String?;
+        final localInvoiceNumber = payload['p_invoice_number'] as String?;
+        if (categoryId == null) return null;
+        final serverCategory = await _client
+            .from('expense_categories')
+            .select('id, updated_at')
+            .eq('id', categoryId)
+            .maybeSingle();
+        if (serverCategory == null) {
+          return {'reason': 'Referenced expense category ($categoryId) no longer exists on server'};
+        }
+        final localCat = await isar.expenseCategoryLocals
+            .filter()
+            .supabaseIdEqualTo(categoryId)
+            .findFirst();
+        if (localCat?.updatedAt != null && serverCategory['updated_at'] != null) {
+          final serverUpdated = DateTime.tryParse(serverCategory['updated_at'].toString());
+          if (serverUpdated != null && localCat!.updatedAt != null &&
+              serverUpdated.isAfter(localCat.updatedAt!)) {
+            return {'reason': 'Expense category has been updated on server since local sync'};
+          }
+        }
+        return null;
+      }
+
+      case SyncOperationType.createTransaction: {
+        final invoiceId = payload['invoice_id'] as String?;
+        if (invoiceId == null || invoiceId.isEmpty) return null;
+        final serverInvoice = await _client
+            .from('invoices')
+            .select('id, status')
+            .eq('id', invoiceId)
+            .maybeSingle();
+        if (serverInvoice == null) {
+          return {'reason': 'Referenced invoice ($invoiceId) no longer exists on server'};
+        }
+        final status = serverInvoice['status'] as String?;
+        if (status == 'refunded') {
+          return {'reason': 'Invoice $invoiceId is refunded, cannot add transactions'};
+        }
+        return null;
+      }
+
+      default:
+        return null;
     }
   }
 

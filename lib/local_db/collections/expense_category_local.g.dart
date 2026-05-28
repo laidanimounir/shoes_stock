@@ -37,6 +37,11 @@ const ExpenseCategoryLocalSchema = CollectionSchema(
       id: 3,
       name: r'supabaseId',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 4,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _expenseCategoryLocalEstimateSize,
@@ -89,6 +94,7 @@ void _expenseCategoryLocalSerialize(
   writer.writeString(offsets[1], object.name);
   writer.writeString(offsets[2], object.storeId);
   writer.writeString(offsets[3], object.supabaseId);
+  writer.writeDateTime(offsets[4], object.updatedAt);
 }
 
 ExpenseCategoryLocal _expenseCategoryLocalDeserialize(
@@ -103,6 +109,7 @@ ExpenseCategoryLocal _expenseCategoryLocalDeserialize(
   object.name = reader.readString(offsets[1]);
   object.storeId = reader.readString(offsets[2]);
   object.supabaseId = reader.readString(offsets[3]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[4]);
   return object;
 }
 
@@ -121,6 +128,8 @@ P _expenseCategoryLocalDeserializeProp<P>(
       return (reader.readString(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -868,6 +877,80 @@ extension ExpenseCategoryLocalQueryFilter on QueryBuilder<ExpenseCategoryLocal,
       ));
     });
   }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal,
+      QAfterFilterCondition> updatedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension ExpenseCategoryLocalQueryObject on QueryBuilder<ExpenseCategoryLocal,
@@ -931,6 +1014,20 @@ extension ExpenseCategoryLocalQuerySortBy
       sortBySupabaseIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'supabaseId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal, QAfterSortBy>
+      sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal, QAfterSortBy>
+      sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1006,6 +1103,20 @@ extension ExpenseCategoryLocalQuerySortThenBy
       return query.addSortBy(r'supabaseId', Sort.desc);
     });
   }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal, QAfterSortBy>
+      thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal, QAfterSortBy>
+      thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension ExpenseCategoryLocalQueryWhereDistinct
@@ -1035,6 +1146,13 @@ extension ExpenseCategoryLocalQueryWhereDistinct
       distinctBySupabaseId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'supabaseId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, ExpenseCategoryLocal, QDistinct>
+      distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1071,6 +1189,13 @@ extension ExpenseCategoryLocalQueryProperty on QueryBuilder<
       supabaseIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'supabaseId');
+    });
+  }
+
+  QueryBuilder<ExpenseCategoryLocal, DateTime?, QQueryOperations>
+      updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

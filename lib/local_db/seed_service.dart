@@ -29,75 +29,86 @@ class SeedService {
   final _client = Supabase.instance.client;
 
   /// Main entry point — seeds all tables in FK-safe order.
-  Future<void> seedAll(String storeId) async {
+  Future<void> seedAll(String storeId, {bool force = false}) async {
     final isar = await IsarService.getInstance();
-    debugPrint('🌱 SeedService: Starting full seed for store=$storeId');
+    final isFirstRun = await isSeeded() == false;
 
+    if (isFirstRun || force) {
+      debugPrint('🌱 SeedService: Starting full seed for store=$storeId');
+      await _fullSeed(isar, storeId);
+      return;
+    }
+
+    debugPrint('🌱 SeedService: Starting incremental pull for store=$storeId');
+    await _incrementalPull(isar, storeId);
+  }
+
+  Future<void> _fullSeed(Isar isar, String storeId) async {
     final thirtyDaysAgo =
         DateTime.now().subtract(const Duration(days: 30)).toIso8601String();
 
-    // ── 1. stores ──────────────────────────
     await _seedCollection<StoreLocal>(
       isar: isar,
       name: 'stores',
+      full: true,
       fetch: () => _client.from('stores').select().eq('is_active', true),
       mapper: _mapStore,
     );
 
-    // ── 2. user_profiles ───────────────────
     await _seedCollection<UserProfileLocal>(
       isar: isar,
       name: 'user_profiles',
+      full: true,
       fetch: () => _client.from('user_profiles').select().eq('is_active', true),
       mapper: _mapUserProfile,
     );
 
-    // ── 3. customers ───────────────────────
     await _seedCollection<CustomerLocal>(
       isar: isar,
       name: 'customers',
+      full: true,
       fetch: () => _client.from('customers').select().eq('is_active', true),
       mapper: _mapCustomer,
     );
 
-    // ── 4. suppliers ───────────────────────
     await _seedCollection<SupplierLocal>(
       isar: isar,
       name: 'suppliers',
+      full: true,
       fetch: () => _client.from('suppliers').select().eq('is_active', true),
       mapper: _mapSupplier,
     );
 
-    // ── 5. products ────────────────────────
     await _seedCollection<ProductLocal>(
       isar: isar,
       name: 'products',
+      full: true,
       fetch: () => _client.from('products').select().eq('is_active', true),
       mapper: _mapProduct,
     );
 
-    // ── 6. product_variants ────────────────
     await _seedCollection<ProductVariantLocal>(
       isar: isar,
       name: 'product_variants',
+      full: true,
       fetch: () =>
           _client.from('product_variants').select().eq('is_active', true),
       mapper: _mapProductVariant,
     );
 
-    // ── 7. inventory ───────────────────────
     await _seedCollection<InventoryLocal>(
       isar: isar,
       name: 'inventory',
+      full: true,
       fetch: () =>
           _client.from('inventory').select().eq('store_id', storeId),
       mapper: _mapInventory,
     );
 
-    // ── 8. invoices (last 30 days) ─────────
     await _seedCollection<InvoiceLocal>(
       isar: isar,
       name: 'invoices',
+      full: true,
       fetch: () => _client
           .from('invoices')
           .select()
@@ -106,10 +117,10 @@ class SeedService {
       mapper: _mapInvoice,
     );
 
-    // ── 9. payments (last 30 days) ─────────
     await _seedCollection<PaymentLocal>(
       isar: isar,
       name: 'payments',
+      full: true,
       fetch: () => _client
           .from('payments')
           .select()
@@ -118,10 +129,10 @@ class SeedService {
       mapper: _mapPayment,
     );
 
-    // ── 10. transactions (last 30 days) ─────
     await _seedCollection<TransactionLocal>(
       isar: isar,
       name: 'transactions',
+      full: true,
       fetch: () => _client
           .from('transactions')
           .select()
@@ -129,19 +140,19 @@ class SeedService {
           .gte('created_at', thirtyDaysAgo),
       mapper: _mapTransaction,
     );
-    
-    // ── 11. expense_categories ──────────────
+
     await _seedCollection<ExpenseCategoryLocal>(
       isar: isar,
       name: 'expense_categories',
+      full: true,
       fetch: () => _client.from('expense_categories').select().eq('store_id', storeId),
       mapper: _mapExpenseCategory,
     );
 
-    // ── 12. expenses (last 30 days) ─────────
     await _seedCollection<ExpenseLocal>(
       isar: isar,
       name: 'expenses',
+      full: true,
       fetch: () => _client
           .from('expenses')
           .select()
@@ -154,6 +165,68 @@ class SeedService {
     debugPrint('✅ SeedService: Full seed complete');
   }
 
+  Future<void> _incrementalPull(Isar isar, String storeId) async {
+    final meta = await isar.syncMetadatas.get(1);
+    final lastSync = meta?.lastSyncAt;
+    final since = lastSync?.toIso8601String() ?? '2000-01-01T00:00:00Z';
+    final thirtyDaysAgo =
+        DateTime.now().subtract(const Duration(days: 30)).toIso8601String();
+
+    await _pullUpdated('stores', since, _mapStore,
+        (s) => _client.from('stores').select().gte('updated_at', s));
+    await _pullUpdated('user_profiles', since, _mapUserProfile,
+        (s) => _client.from('user_profiles').select().gte('updated_at', s));
+    await _pullUpdated('customers', since, _mapCustomer,
+        (s) => _client.from('customers').select().gte('updated_at', s));
+    await _pullUpdated('suppliers', since, _mapSupplier,
+        (s) => _client.from('suppliers').select().gte('updated_at', s));
+    await _pullUpdated('products', since, _mapProduct,
+        (s) => _client.from('products').select().gte('updated_at', s));
+    await _pullUpdated('product_variants', since, _mapProductVariant,
+        (s) => _client.from('product_variants').select().gte('updated_at', s));
+    await _pullUpdated('inventory', since, _mapInventory,
+        (s) => _client.from('inventory').select().eq('store_id', storeId).gte('updated_at', s));
+    await _pullUpdated('invoices', since, _mapInvoice,
+        (s) => _client.from('invoices').select().eq('store_id', storeId).gte('updated_at', s).gte('created_at', thirtyDaysAgo));
+    await _pullUpdated('payments', since, _mapPayment,
+        (s) => _client.from('payments').select().eq('store_id', storeId).gte('updated_at', s).gte('created_at', thirtyDaysAgo));
+    await _pullUpdated('transactions', since, _mapTransaction,
+        (s) => _client.from('transactions').select().eq('store_id', storeId).gte('updated_at', s).gte('created_at', thirtyDaysAgo));
+    await _pullUpdated('expense_categories', since, _mapExpenseCategory,
+        (s) => _client.from('expense_categories').select().eq('store_id', storeId).gte('updated_at', s));
+    await _pullUpdated('expenses', since, _mapExpense,
+        (s) => _client.from('expenses').select().eq('store_id', storeId).gte('expense_date', thirtyDaysAgo).gte('updated_at', s));
+
+    await updateLastSyncAt();
+    debugPrint('✅ SeedService: Incremental pull complete');
+  }
+
+  /// Fetches records updated since [since] and upserts them into Isar.
+  Future<void> _pullUpdated<T>(
+    String name,
+    String since,
+    T Function(Map<String, dynamic>) mapper,
+    Future<List<dynamic>> Function(String since) fetch,
+  ) async {
+    try {
+      final rows = await fetch(since);
+      if (rows.isEmpty) return;
+      final isar = await IsarService.getInstance();
+      final items = rows
+          .map((r) => mapper(Map<String, dynamic>.from(r as Map)))
+          .toList();
+      await isar.writeTxn(() async {
+        // Upsert: find existing by supabaseId and replace, or insert new
+        for (final item in items) {
+          await isar.collection<T>().put(item);
+        }
+      });
+      debugPrint('  📥 $name: ${items.length} rows pulled');
+    } catch (e) {
+      debugPrint('  ⚠️ $name incremental error: $e');
+    }
+  }
+
   // ══════════════════════════════════════════
   // Generic seed helper
   // ══════════════════════════════════════════
@@ -161,6 +234,7 @@ class SeedService {
   Future<void> _seedCollection<T>({
     required Isar isar,
     required String name,
+    required bool full,
     required Future<List<dynamic>> Function() fetch,
     required T Function(Map<String, dynamic>) mapper,
   }) async {
@@ -171,11 +245,13 @@ class SeedService {
           .toList();
 
       await isar.writeTxn(() async {
-        await isar.collection<T>().clear();
+        if (full) {
+          await isar.collection<T>().clear();
+        }
         await isar.collection<T>().putAll(items);
       });
 
-      debugPrint('  📦 $name: ${items.length} rows seeded');
+      debugPrint('  📦 $name: ${items.length} rows ${full ? 'seeded' : 'upserted'}');
     } catch (e) {
       debugPrint('  ❌ $name seed error: $e');
     }
@@ -344,7 +420,8 @@ class SeedService {
         ..supabaseId = j['id'] as String
         ..name = j['name'] as String
         ..storeId = j['store_id'] as String
-        ..createdAt = _parseDate(j['created_at']);
+        ..createdAt = _parseDate(j['created_at'])
+        ..updatedAt = _parseDate(j['updated_at']);
 
   ExpenseLocal _mapExpense(Map<String, dynamic> j) => ExpenseLocal()
     ..supabaseId = j['id'] as String
@@ -356,6 +433,7 @@ class SeedService {
     ..userId = j['user_id'] as String?
     ..expenseDate = _parseDate(j['expense_date']) ?? DateTime.now()
     ..createdAt = _parseDate(j['created_at'])
+    ..updatedAt = _parseDate(j['updated_at'])
     ..synced = true; // came from server
 
   // ══════════════════════════════════════════

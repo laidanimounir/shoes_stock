@@ -12,4 +12,5 @@ class ExpenseCategoryLocal {
   late String name;
   late String storeId;
   DateTime? createdAt;
+  DateTime? updatedAt;
 }

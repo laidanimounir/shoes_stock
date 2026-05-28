@@ -14,7 +14,7 @@ class SyncQueueItem {
   /// jsonEncode of the RPC params map
   late String payloadJson;
 
-  /// SyncStatus: 'pending' | 'synced' | 'failed'
+  /// SyncStatus: 'pending' | 'synced' | 'failed' | 'conflict'
   late String status;
 
   /// Unique UUID per operation for idempotent replay

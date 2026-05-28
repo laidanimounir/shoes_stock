@@ -17,6 +17,7 @@ class ExpenseLocal {
   String? userId;
   late DateTime expenseDate;
   DateTime? createdAt;
+  DateTime? updatedAt;
 
   /// false = created offline, not yet pushed to Supabase
   bool synced = false;

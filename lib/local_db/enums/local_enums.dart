@@ -127,7 +127,7 @@ extension InvoiceTypeExt on InvoiceType {
 }
 
 // ── sync_status (local only — offline queue) ───────────────
-enum SyncStatus { pending, synced, failed }
+enum SyncStatus { pending, synced, failed, conflict }
 
 extension SyncStatusExt on SyncStatus {
   String toSupabaseString() {
@@ -138,6 +138,8 @@ extension SyncStatusExt on SyncStatus {
         return 'synced';
       case SyncStatus.failed:
         return 'failed';
+      case SyncStatus.conflict:
+        return 'conflict';
     }
   }
 
@@ -149,6 +151,8 @@ extension SyncStatusExt on SyncStatus {
         return SyncStatus.synced;
       case 'failed':
         return SyncStatus.failed;
+      case 'conflict':
+        return SyncStatus.conflict;
       default:
         throw ArgumentError('Unknown SyncStatus: $value');
     }
