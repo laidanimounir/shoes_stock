@@ -92,6 +92,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   List<dynamic> _customers = [];
   String? _selectedCustomerId;
   double? _selectedCustomerBalance;
+  double? _selectedCustomerCreditLimit;
 
   Set<int> _stockConflictItems = {};
   final Map<String, int> _cachedStock = {};
@@ -229,7 +230,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         _storeName = store?.name ?? S.t('misc_unknown');
       }
       final customers = await isar.customerLocals.filter().isActiveEqualTo(true).findAll();
-      _customers = customers.map((c) => {'id': c.supabaseId, 'full_name': c.fullName}).toList();
+      _customers = customers.map((c) => {'id': c.supabaseId, 'full_name': c.fullName, 'balance': c.balance, 'credit_limit': 0}).toList();
       if (mounted) setState(() => _isLoading = false);
       _searchProduct('');
       _loadTodayInvoices();
@@ -250,7 +251,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         }
 
         final customersRes = await Supabase.instance.client
-            .from('customers').select('id, full_name').eq('is_active', true).order('full_name');
+            .from('customers').select('id, full_name, balance, credit_limit').eq('is_active', true).order('full_name');
         _customers = customersRes;
 
         if (mounted) setState(() => _isLoading = false);
@@ -444,12 +445,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       final isar = await IsarService.getInstance();
       final c = await isar.customerLocals.filter().supabaseIdEqualTo(customerId).findFirst();
       _selectedCustomerBalance = c?.balance ?? 0;
+      _selectedCustomerCreditLimit = 0;
     } else {
       try {
         final res = await Supabase.instance.client
-            .from('customers').select('balance').eq('id', customerId).single();
+            .from('customers').select('balance, credit_limit').eq('id', customerId).single();
         _selectedCustomerBalance = (res['balance'] as num?)?.toDouble() ?? 0;
-      } catch (_) { _selectedCustomerBalance = 0; }
+        _selectedCustomerCreditLimit = (res['credit_limit'] as num?)?.toDouble() ?? 0;
+      } catch (_) { _selectedCustomerBalance = 0; _selectedCustomerCreditLimit = 0; }
     }
   }
 
@@ -673,6 +676,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                     Text('${_selectedCustomerBalance!.toStringAsFixed(2)} ${S.t('misc_currency')}',
                                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.warning)),
                                   ]),
+                                  if (_selectedCustomerCreditLimit != null && _selectedCustomerCreditLimit! > 0) ...[
+                                    const SizedBox(height: 4),
+                                    Row(children: [
+                                      Text(S.t('pos_credit_limit'),
+                                          style: const TextStyle(fontSize: 12, color: _C.textMid)),
+                                      const Spacer(),
+                                      Text('${_selectedCustomerCreditLimit!.toStringAsFixed(2)} ${S.t('misc_currency')}',
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.accent)),
+                                    ]),
+                                  ],
                                   const SizedBox(height: 6),
                                   Row(children: [
                                     Text(S.t('pos_balance_new_warning'),
@@ -724,6 +737,18 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                               elevation: 0,
                             ),
                             onPressed: () async {
+                              // Pre-check credit limit
+                              if (isRegisteredClient && selectedMethod != 'cash' &&
+                                  _selectedCustomerCreditLimit != null && _selectedCustomerCreditLimit! > 0) {
+                                final newDebt = _selectedCustomerBalance! + creditAmount;
+                                if (newDebt > _selectedCustomerCreditLimit!) {
+                                  _snack(S.t('pos_credit_limit_exceeded')
+                                      .replaceAll('{balance}', _selectedCustomerBalance!.toStringAsFixed(2))
+                                      .replaceAll('{limit}', _selectedCustomerCreditLimit!.toStringAsFixed(2)), _C.danger);
+                                  return;
+                                }
+                              }
+
                               final conflicts = <int>{};
                               for (int i = 0; i < _cart.length; i++) {
                                 final currentStock = await _getCurrentStock(_cart[i].variantId);
@@ -761,7 +786,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                 if (mounted) _handlePostSaleAction(invoiceNumber, paidAmount);
                               } catch (e) {
                                 setState(() => _isProcessingPayment = false);
-                                _snack('${S.t('pos_error')} $e', _C.danger);
+                                final msg = e.toString();
+                                if (msg.contains('CREDIT_LIMIT_EXCEEDED')) {
+                                  final parts = msg.split('|');
+                                  final bal = parts.length > 1 ? parts[1] : '0';
+                                  final lim = parts.length > 2 ? parts[2] : '0';
+                                  _snack(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim), _C.danger);
+                                } else {
+                                  _snack('${S.t('pos_error')} $e', _C.danger);
+                                }
                               }
                             },
                             child: _isProcessingPayment
@@ -835,7 +868,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   void _handlePostSaleAction(String invoiceNumber, double paidAmount) {
     setState(() {
-      _cart.clear(); _selectedCustomerId = null; _selectedCustomerBalance = null;
+      _cart.clear(); _selectedCustomerId = null; _selectedCustomerBalance = null; _selectedCustomerCreditLimit = null;
       _stockConflictItems = {}; _cachedStock.clear();
       _isDiscountApplied = false; _discountAmount = 0; _discountInput = 0; _discountMode = 0;
       _cartSearchQuery = ''; _cartSearchController.clear();
@@ -1771,19 +1804,27 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.textMid)),
               ]),
             ),
-            ..._customers.map((c) => DropdownMenuItem(
-              value: c['id'] as String,
-              child: Row(children: [
-                const SizedBox(width: 10),
-                const Icon(Icons.person_rounded, size: 15, color: _C.accent),
-                const SizedBox(width: 8),
-                Text(c['full_name'] as String,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-              ]),
-            )),
+            ..._customers.map((c) {
+              final bal = (c['balance'] as num?)?.toDouble() ?? 0;
+              final lim = (c['credit_limit'] as num?)?.toDouble() ?? 0;
+              return DropdownMenuItem(
+                value: c['id'] as String,
+                child: Row(children: [
+                  const SizedBox(width: 10),
+                  const Icon(Icons.person_rounded, size: 15, color: _C.accent),
+                  const SizedBox(width: 8),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(c['full_name'] as String,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                    Text('${S.t('pos_customer_balance')} ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}${lim > 0 ? '  ${S.t('pos_customer_credit_limit')} ${lim.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
+                        style: TextStyle(fontSize: 9, color: bal > 0 ? _C.warning : _C.textLight)),
+                  ]),
+                ]),
+              );
+            }),
           ],
           onChanged: (val) {
-            setState(() { _selectedCustomerId = val; _selectedCustomerBalance = null; });
+            setState(() { _selectedCustomerId = val; _selectedCustomerBalance = null; _selectedCustomerCreditLimit = null; });
             if (val != null) _cacheCustomerBalance(val);
           },
         ),

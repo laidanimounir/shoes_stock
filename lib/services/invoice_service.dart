@@ -7,6 +7,7 @@ import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/transaction_local.dart';
 import '../local_db/collections/inventory_local.dart';
+import '../local_db/collections/customer_local.dart';
 
 /// Offline-aware invoice service.
 /// Online path → Supabase RPC directly.
@@ -27,6 +28,23 @@ class InvoiceService {
     double discountPercent = 0,
     double discountAmount = 0,
   }) async {
+    // Check credit limit if this is a credit sale (partial or unpaid)
+    if (customerId != null && paidAmount < totalAmount) {
+      final debtAmount = totalAmount - paidAmount;
+      if (!AppSession.isOfflineMode) {
+        final custRes = await Supabase.instance.client
+            .from('customers')
+            .select('balance, credit_limit')
+            .eq('id', customerId)
+            .single();
+        final balance = (custRes['balance'] as num?)?.toDouble() ?? 0;
+        final creditLimit = (custRes['credit_limit'] as num?)?.toDouble() ?? 0;
+        if (creditLimit > 0 && (balance + debtAmount) > creditLimit) {
+          throw Exception('CREDIT_LIMIT_EXCEEDED|$balance|$creditLimit');
+        }
+      }
+    }
+
     // ════════════════════════════════════
     // ONLINE PATH — call Supabase RPC
     // ════════════════════════════════════

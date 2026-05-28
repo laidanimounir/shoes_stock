@@ -69,7 +69,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       return;
     }
     try {
-      final res = await Supabase.instance.client.from('customers').select('id, full_name').eq('is_active', true).order('full_name');
+      final res = await Supabase.instance.client.from('customers').select('id, full_name, balance, credit_limit').eq('is_active', true).order('full_name');
       if (mounted) setState(() { _customers = res; _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
   }
@@ -176,7 +176,18 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_sale_success')} $invoiceNum'), backgroundColor: Colors.green));
       }
     } catch (e) {
-      if (mounted) { setState(() => _processing = false); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+      if (mounted) {
+        setState(() => _processing = false);
+        final msg = e.toString();
+        if (msg.contains('CREDIT_LIMIT_EXCEEDED')) {
+          final parts = msg.split('|');
+          final bal = parts.length > 1 ? parts[1] : '0';
+          final lim = parts.length > 2 ? parts[2] : '0';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim)), backgroundColor: Colors.red));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+        }
+      }
     }
   }
 
@@ -428,11 +439,17 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(S.t('pos_select_client'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
-          ..._customers.map((c) => ListTile(
-            title: Text(c['full_name'] ?? ''),
-            trailing: c['id'] == _customerId ? const Icon(Icons.check, color: Colors.green) : null,
-            onTap: () { Navigator.pop(ctx); setState(() => _customerId = c['id']); },
-          )),
+          ..._customers.map((c) {
+            final balance = (c['balance'] as num?)?.toDouble() ?? 0;
+            final creditLimit = (c['credit_limit'] as num?)?.toDouble() ?? 0;
+            return ListTile(
+              title: Text(c['full_name'] ?? ''),
+              subtitle: Text('${S.t('pos_customer_balance')} ${balance.toStringAsFixed(0)} ${S.t('misc_currency')}${creditLimit > 0 ? '  ${S.t('pos_customer_credit_limit')} ${creditLimit.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
+                  style: TextStyle(fontSize: 11, color: balance > 0 ? Colors.orange : Colors.grey)),
+              trailing: c['id'] == _customerId ? const Icon(Icons.check, color: Colors.green) : null,
+              onTap: () { Navigator.pop(ctx); setState(() => _customerId = c['id']); },
+            );
+          }),
           ListTile(
             leading: const Icon(Icons.remove_circle_outline, color: Colors.grey),
             title: Text(S.t('pos_no_client')),
