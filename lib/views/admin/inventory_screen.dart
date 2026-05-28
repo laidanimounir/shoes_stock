@@ -701,6 +701,59 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
+  void _showAdjustDialog(Map<String, dynamic> item) {
+    final qtyCtrl = TextEditingController();
+    String reason = 'other';
+    showDialog(context: context, builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(S.t('inv_adjust_title')),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('${item['product_variants']?['products']?['name'] ?? ''} (${item['product_variants']?['size'] ?? ''})',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('${S.t('label_stock')}: ${item['quantity']}'),
+          const SizedBox(height: 12),
+          TextField(controller: qtyCtrl, keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: S.t('inv_adjust_qty'), hintText: 'Ex: -5 ou +10', border: const OutlineInputBorder())),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: reason,
+            decoration: InputDecoration(labelText: S.t('inv_adjust_reason'), border: const OutlineInputBorder()),
+            items: [
+              DropdownMenuItem(value: 'breakage', child: Text(S.t('inv_reason_breakage'))),
+              DropdownMenuItem(value: 'theft', child: Text(S.t('inv_reason_theft'))),
+              DropdownMenuItem(value: 'counting', child: Text(S.t('inv_reason_counting'))),
+              DropdownMenuItem(value: 'other', child: Text(S.t('inv_reason_other'))),
+            ],
+            onChanged: (v) => setDialogState(() => reason = v ?? 'other'),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+          ElevatedButton(onPressed: () async {
+            final delta = int.tryParse(qtyCtrl.text);
+            if (delta == null || delta == 0) return;
+            try {
+              await Supabase.instance.client.rpc('adjust_inventory', params: {
+                'p_variant_id': item['variant_id'],
+                'p_store_id': _selectedStoreId,
+                'p_quantity_delta': delta,
+                'p_reason': reason,
+              });
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('inv_adjusted')), backgroundColor: Colors.green));
+              }
+              _fetchInventoryData();
+            } catch (e) {
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+            }
+          }, child: Text(S.t('inv_adjust_confirm'))),
+        ],
+      ),
+    ));
+  }
+
   Widget _buildInventoryList() {
     return ListView.separated(
       padding: const EdgeInsets.all(8),
@@ -737,28 +790,39 @@ class _InventoryScreenState extends State<InventoryScreen> {
             '${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'} | ${S.t('prod_barcode')}: ${variant['barcode'] ?? '-'}',
             style: const TextStyle(fontSize: 12),
           ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isLow ? Colors.red[50] : Colors.green[50],
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isLow ? Colors.red : Colors.green),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isLow) const Icon(Icons.warning_amber, size: 16, color: Colors.red),
-                if (isLow) const SizedBox(width: 4),
-                Text(
-                  '$qty',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: isLow ? Colors.red : Colors.green[800],
-                  ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (AppSession.isOwner)
+                IconButton(
+                  icon: const Icon(Icons.tune, size: 18, color: Colors.orange),
+                  tooltip: S.t('inv_adjust'),
+                  onPressed: () => _showAdjustDialog(item),
                 ),
-              ],
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isLow ? Colors.red[50] : Colors.green[50],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isLow ? Colors.red : Colors.green),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLow) const Icon(Icons.warning_amber, size: 16, color: Colors.red),
+                    if (isLow) const SizedBox(width: 4),
+                    Text(
+                      '$qty',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: isLow ? Colors.red : Colors.green[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
