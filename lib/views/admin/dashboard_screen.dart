@@ -318,6 +318,18 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
+            title: S.t('dash_total_profit'),
+            value: '${(stats['total_profit'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            color: AppColors.purple,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
+            title: S.t('dash_avg_margin'),
+            value: '${(stats['avg_margin'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
+            color: AppColors.teal,
+          ),
+          const SizedBox(width: 10),
+          _miniKpiCard(
             title: S.t('dash_low_stock'),
             value: '${(stats['low_stock_count'] as num?)?.toInt() ?? 0}',
             color: AppColors.danger,

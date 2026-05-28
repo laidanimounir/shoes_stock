@@ -35,6 +35,8 @@ class OwnerDashboard extends StatefulWidget {
 class _OwnerDashboardState extends State<OwnerDashboard> {
   double _salesToday = 0;
   double _profitToday = 0;
+  double _totalProfit = 0;
+  double _avgMargin = 0;
   double _customerDebt = 0;
   double _supplierDebt = 0;
 
@@ -141,6 +143,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         setState(() {
           _salesToday = (res['today_revenue'] as num?)?.toDouble() ?? 0;
           _profitToday = (res['today_profit'] as num?)?.toDouble() ?? 0;
+          _totalProfit = (res['total_profit'] as num?)?.toDouble() ?? 0;
+          _avgMargin = (res['avg_margin'] as num?)?.toDouble() ?? 0;
           _customerDebt = (res['customer_debt'] as num?)?.toDouble() ?? 0;
           _supplierDebt = (res['supplier_debt'] as num?)?.toDouble() ?? 0;
           _debtors = List<Map<String, dynamic>>.from(res['debtors'] ?? []);
@@ -579,6 +583,17 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         Expanded(child: _buildMetricCard(S.t('dash_customer_debt'), "${_customerDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.account_balance_wallet, Colors.orange)),
                         const SizedBox(width: 12),
                         Expanded(child: _buildMetricCard(S.t('dash_supplier_debt'), "${_supplierDebt.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.money_off, Colors.red)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildMetricCard(S.t('dash_total_profit'), "${_totalProfit.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.bar_chart, Colors.purple)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricCard(S.t('dash_avg_margin'), "${_avgMargin.toStringAsFixed(0)} ${S.t('misc_currency')}", Icons.pie_chart, Colors.teal)),
                       ],
                     ),
                   ),
