@@ -144,17 +144,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }).select('id').single();
       final productId = productRes['id'];
 
-      for (final size in _sizes) {
-        for (final color in _colors) {
-          final vRes = await Supabase.instance.client.from('product_variants').insert({
-            'product_id': productId, 'size': size, 'color': color,
-            'buy_price': _buyPrice, 'sell_price': _sellPrice, 'is_active': true,
-          }).select('id').single();
-          await Supabase.instance.client.from('inventory').insert({
-            'variant_id': vRes['id'], 'store_id': _storeId, 'quantity': 0,
-          });
-        }
-      }
+      final variants = [
+        for (final size in _sizes)
+          for (final color in _colors)
+            {
+              'size': size, 'color': color,
+              'buy_price': _buyPrice, 'sell_price': _sellPrice, 'is_active': true,
+            }
+      ];
+      await Supabase.instance.client.rpc('insert_variants_batch', params: {
+        'p_product_id': productId,
+        'p_variants': variants,
+        'p_store_id': _storeId,
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Colors.green));
         Navigator.pop(context);

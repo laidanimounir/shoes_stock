@@ -407,27 +407,22 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
       final productId = productRes['id'];
 
-      for (var variant in _variants) {
-        final variantRes = await Supabase.instance.client.from('product_variants').insert({
-          'product_id': productId,
-          'size': variant['size'].toString().trim(),
-          'color': variant['color'].toString().trim(),
-          'barcode': null,
-          'buy_price': double.tryParse(variant['buy_price'].toString()) ?? 0.0,
-          'sell_price': double.tryParse(variant['sell_price'].toString()) ?? 0.0,
-          'unit_type': variant['unit_type'] ?? 'piece',
-          'units_per_carton': variant['units_per_carton'],
-          'is_active': true,
-        }).select('id').single();
+      final batchVariants = _variants.map((v) => {
+        'size': v['size'].toString().trim(),
+        'color': v['color'].toString().trim(),
+        'barcode': null,
+        'buy_price': double.tryParse(v['buy_price'].toString()) ?? 0.0,
+        'sell_price': double.tryParse(v['sell_price'].toString()) ?? 0.0,
+        'unit_type': v['unit_type'] ?? 'piece',
+        'units_per_carton': v['units_per_carton'],
+        'is_active': true,
+      }).toList();
 
-        final variantId = variantRes['id'];
-
-        await Supabase.instance.client.from('inventory').insert({
-          'variant_id': variantId,
-          'store_id': _selectedStoreId,
-          'quantity': 0,
-        });
-      }
+      await Supabase.instance.client.rpc('insert_variants_batch', params: {
+        'p_product_id': productId,
+        'p_variants': batchVariants,
+        'p_store_id': _selectedStoreId,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
