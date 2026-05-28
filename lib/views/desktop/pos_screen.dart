@@ -19,6 +19,7 @@ import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../services/invoice_service.dart';
 import '../../services/refund_service.dart';
+import '../../shared/models/cart_item.dart';
 
 // ─────────────────────────────────────────────
 //  DESIGN TOKENS — Odoo-inspired clean palette
@@ -38,29 +39,6 @@ class _C {
   static const rowEven   = Color(0xFFFAFAFC);
   static const rowHover  = Color(0xFFF0F4FF);
   static const chip      = Color(0xFFEEF2FF);
-}
-
-// ─────────────────────────────────────────────
-//  CART ITEM MODEL
-// ─────────────────────────────────────────────
-class CartItem {
-  final String variantId;
-  final String productName;
-  final String size;
-  final String color;
-  int quantity;
-  double unitPrice;
-
-  CartItem({
-    required this.variantId,
-    required this.productName,
-    required this.size,
-    required this.color,
-    required this.quantity,
-    required this.unitPrice,
-  });
-
-  double get totalPrice => quantity * unitPrice;
 }
 
 // ─────────────────────────────────────────────

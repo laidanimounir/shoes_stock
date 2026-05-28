@@ -12,16 +12,7 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
-class CartItem {
-  final String variantId;
-  final String productName;
-  final String size;
-  final String color;
-  int quantity;
-  double unitPrice;
-  CartItem({required this.variantId, required this.productName, required this.size, required this.color, required this.quantity, required this.unitPrice});
-  double get totalPrice => quantity * unitPrice;
-}
+import '../../shared/models/cart_item.dart';
 
 class PosScreenMobile extends StatefulWidget {
   const PosScreenMobile({super.key});
