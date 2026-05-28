@@ -17,6 +17,8 @@ import 'core/connectivity_service.dart';
 import 'core/api_version_service.dart';
 import 'services/inactivity_timer.dart';
 import 'views/auth/pin_lock_screen.dart';
+import 'local_db/isar_service.dart';
+import 'local_db/collections/settings_local.dart';
 
 /// Used for exit() call — on web this is a no-op
 void _exitApp(int code) {
@@ -148,7 +150,7 @@ class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   bool _loadingTimedOut = false;
   bool _pinEnabled = false;
-  Widget _currentScreen = const Center(child: CircularProgressIndicator();
+  Widget _currentScreen = const Center(child: CircularProgressIndicator());
 
   @override
   void initState() {
