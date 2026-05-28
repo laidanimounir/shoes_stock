@@ -14,6 +14,7 @@ import '../../local_db/collections/product_variant_local.dart';
 import '../../local_db/collections/supplier_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/store_local.dart';
+import '../../shared/constants/shoe_constants.dart';
 
 const Color kPrimaryColor = Color(0xFF1B4F72);
 const Color kAccentGreen = Color(0xFF2ECC71);
@@ -24,21 +25,6 @@ const Color kBackgroundColor = Color(0xFFF5F7FA);
 const double kBorderRadius = 12.0;
 
 enum StockStatus { healthy, low, empty, negative }
-
-const List<Map<String, dynamic>> kShoeColors = [
-  {'name': 'Noir', 'hex': '#000000'},
-  {'name': 'Blanc', 'hex': '#FFFFFF'},
-  {'name': 'Marron', 'hex': '#8B4513'},
-  {'name': 'Beige', 'hex': '#F5F0DC'},
-  {'name': 'Rouge', 'hex': '#E53935'},
-  {'name': 'Bleu', 'hex': '#1E88E5'},
-  {'name': 'Bleu Marine', 'hex': '#1A237E'},
-  {'name': 'Vert', 'hex': '#43A047'},
-  {'name': 'Gris', 'hex': '#757575'},
-  {'name': 'Or', 'hex': '#FFD700'},
-  {'name': 'Argent', 'hex': '#C0C0C0'},
-  {'name': 'Rose', 'hex': '#E91E8C'},
-];
 
 const Map<String, Map<String, dynamic>> kCategoryConfig = {
   'homme': {'icon': '👨', 'label': 'Homme', 'color': Color(0xFF1B4F72)},
