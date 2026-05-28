@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/app_strings.dart';
+import '../../../shared/utils/contact_utils.dart';
 
 class DebtorsSection extends StatelessWidget {
   final List<Map<String, dynamic>> debtors;
@@ -69,64 +69,14 @@ class DebtorsSection extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.chat, color: Colors.green, size: 20),
           tooltip: 'WhatsApp',
-          onPressed: () {
-            if (phone == null || phone.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-              );
-              return;
-            }
-            _sendWhatsApp(name, phone, balance);
-          },
+          onPressed: () => ContactUtils.sendWhatsApp(context, phone ?? '', name, balance),
         ),
         IconButton(
           icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
           tooltip: 'SMS',
-          onPressed: () {
-            if (phone == null || phone.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-              );
-              return;
-            }
-            _sendSMS(name, phone, balance);
-          },
+          onPressed: () => ContactUtils.sendSMS(context, phone ?? '', name, balance),
         ),
       ],
     );
-  }
-
-  String _cleanPhone(String phone) {
-    String cleaned = phone.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
-    if (cleaned.startsWith('00213')) {
-      cleaned = '+213${cleaned.substring(5)}';
-    } else if (cleaned.startsWith('0')) {
-      cleaned = '+213${cleaned.substring(1)}';
-    } else if (!cleaned.startsWith('+')) {
-      cleaned = '+213$cleaned';
-    }
-    return cleaned;
-  }
-
-  Future<void> _sendWhatsApp(String name, String phone, double balance) async {
-    final cleanedPhone = _cleanPhone(phone).replaceAll('+', '');
-    final message = S.t('contact_whatsapp_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  Future<void> _sendSMS(String name, String phone, double balance) async {
-    final cleanedPhone = _cleanPhone(phone);
-    final message = S.t('contact_sms_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('sms:$cleanedPhone?body=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
   }
 }

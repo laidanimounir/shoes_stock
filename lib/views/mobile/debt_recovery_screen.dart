@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/settings_local.dart';
+import '../../shared/utils/contact_utils.dart';
 
 class DebtRecoveryScreen extends StatefulWidget {
   const DebtRecoveryScreen({super.key});
@@ -78,53 +78,6 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
     ));
   }
 
-  // ─── WhatsApp / SMS ─────────────────────────────────────────
-  String _cleanPhone(String phone) {
-    String cleaned = phone.replaceAll(RegExp(r'[\s\-\.\(\)]'), '');
-    if (cleaned.startsWith('00213')) {
-      cleaned = '+213${cleaned.substring(5)}';
-    } else if (cleaned.startsWith('0')) {
-      cleaned = '+213${cleaned.substring(1)}';
-    } else if (!cleaned.startsWith('+')) {
-      cleaned = '+213$cleaned';
-    }
-    return cleaned;
-  }
-
-  Future<void> _sendWhatsApp(String phone, String name, double balance) async {
-    if (phone == null || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-      );
-      return;
-    }
-    final cleanedPhone = _cleanPhone(phone).replaceAll('+', '');
-    final message = S.t('contact_whatsapp_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  Future<void> _sendSMS(String phone, String name, double balance) async {
-    if (phone == null || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
-      );
-      return;
-    }
-    final cleanedPhone = _cleanPhone(phone);
-    final message = S.t('contact_sms_msg')
-        .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
-    final url = Uri.parse('sms:$cleanedPhone?body=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final filtered = _searchCtrl.text.isEmpty ? _debts : _debts.where((d) => (d['full_name'] ?? '').toString().toLowerCase().contains(_searchCtrl.text.toLowerCase())).toList();
@@ -159,7 +112,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
         ),
         Expanded(child: _isLoading ? const Center(child: CircularProgressIndicator()) : filtered.isEmpty
             ? Center(child: Text(S.t('label_no_data')))
-            : ListView.builder(padding: const EdgeInsets.all(8), itemCount: filtered.length, itemBuilder: (_, i) {
+            : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: filtered.length, itemBuilder: (_, i) {
                 final d = filtered[i];
                 final bal = (d['balance'] as num?)?.toDouble() ?? 0;
                 final overdueCustomer = _overdueCustomers.cast<Map<String, dynamic>?>().firstWhere(
@@ -190,12 +143,12 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                       IconButton(
                         icon: const Icon(Icons.chat, color: Colors.green, size: 20),
                         tooltip: 'WhatsApp',
-                        onPressed: () => _sendWhatsApp(d['phone'], d['full_name'], bal),
+                        onPressed: () => ContactUtils.sendWhatsApp(context, d['phone'] ?? '', d['full_name'], bal),
                       ),
                       IconButton(
                         icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
                         tooltip: 'SMS',
-                        onPressed: () => _sendSMS(d['phone'], d['full_name'], bal),
+                        onPressed: () => ContactUtils.sendSMS(context, d['phone'] ?? '', d['full_name'], bal),
                       ),
                       IconButton(
                         icon: const Icon(Icons.payments, color: Colors.green, size: 20),
@@ -205,6 +158,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                   ),
                 ));
               }),
+        ),
         ),
       ]),
     );
