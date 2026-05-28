@@ -11,6 +11,7 @@ import 'views/mobile/owner_dashboard.dart';
 import 'views/mobile/employee_dashboard.dart';
 import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
+import 'services/inactivity_timer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -236,7 +237,7 @@ class _AuthGateState extends State<AuthGate> {
     return Scaffold(
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) 
-          : _currentScreen,
+          : InactivityTimer(child: _currentScreen),
     );
   }
 }
