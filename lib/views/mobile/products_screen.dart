@@ -10,6 +10,49 @@ import '../../local_db/collections/supplier_local.dart';
 import '../../local_db/collections/inventory_local.dart';
 import 'add_product_screen.dart';
 
+void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) {
+  final nameCtrl = TextEditingController(text: product['name'] ?? '');
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Modifier le produit'),
+      content: TextField(
+        controller: nameCtrl,
+        decoration: const InputDecoration(labelText: 'Nom du produit', border: OutlineInputBorder()),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+        ElevatedButton(
+          onPressed: () async {
+            if (nameCtrl.text.trim().isEmpty) return;
+            try {
+              await Supabase.instance.client.from('products').update({'name': nameCtrl.text.trim()}).eq('id', product['id']);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produit modifié'), backgroundColor: Colors.green));
+            } catch (e) {
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+            }
+          },
+          child: Text(S.t('action_save')),
+        ),
+      ],
+    ),
+  );
+}
+
+void _toggleProductActive(BuildContext context, Map<String, dynamic> product) async {
+  final newActive = !(product['is_active'] ?? true);
+  try {
+    await Supabase.instance.client.from('products').update({'is_active': newActive}).eq('id', product['id']);
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(newActive ? 'Produit réactivé' : 'Produit archivé'),
+      backgroundColor: newActive ? Colors.green : Colors.orange,
+    ));
+  } catch (e) {
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+  }
+}
+
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
 
@@ -43,14 +86,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
       try {
         final isar = await IsarService.getInstance();
         final localProducts = await isar.productLocals.where().findAll();
-        final activeProducts = localProducts.where((p) => p.isActive).toList();
         final localSuppliers = await isar.supplierLocals.where().findAll();
         final supplierMap = {for (var s in localSuppliers) s.supabaseId: s};
         final localVariants = await isar.productVariantLocals.where().findAll();
         final localInv = await isar.inventoryLocals.where().findAll();
 
-        final results = activeProducts.map((p) {
-          final variants = localVariants.where((v) => v.productId == p.supabaseId && v.isActive).map((v) {
+        final results = localProducts.map((p) {
+          final variants = localVariants.where((v) => v.productId == p.supabaseId).map((v) {
             final invs = localInv.where((i) => i.variantId == v.supabaseId).map((i) => {
               'quantity': i.quantity, 'store_id': i.storeId,
             }).toList();
@@ -63,6 +105,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           final supplier = supplierMap[p.supplierId];
           return {
             'id': p.supabaseId, 'name': p.name, 'image_url': p.imageUrl, 'category': p.category,
+            'is_active': p.isActive,
             'suppliers': supplier != null ? {'company_name': supplier.companyName} : null,
             'product_variants': variants,
           };
@@ -75,17 +118,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
     try {
       final res = await Supabase.instance.client
           .from('products')
-          .select('id, name, image_url, category, suppliers(company_name), product_variants(id, size, color, barcode, sell_price, buy_price, is_active, inventory(quantity, store_id))')
-          .eq('is_active', true).order('created_at', ascending: false);
+          .select('id, name, image_url, category, is_active, suppliers(company_name), product_variants(id, size, color, barcode, sell_price, buy_price, is_active, inventory(quantity, store_id))')
+          .order('created_at', ascending: false);
       if (mounted) setState(() { _products = res; _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
   }
+
+  String? _filterArchiveStatus;
 
   List<dynamic> get _filtered {
     return _products.where((p) {
       final name = (p['name'] ?? '').toString().toLowerCase();
       final q = _searchQuery.toLowerCase();
       if (q.isNotEmpty && !name.contains(q)) return false;
+      final isActive = p['is_active'] ?? true;
+      if (_filterArchiveStatus == 'archived' && isActive == true) return false;
+      if (_filterArchiveStatus == 'active' && isActive == false) return false;
       if (_filterCategory != null && p['category'] != _filterCategory) return false;
       if (_filterStockStatus != null) {
         final variants = (p['product_variants'] as List?) ?? [];
@@ -166,6 +214,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         _chip('Faible', 'low', _filterStockStatus, () => setState(() => _filterStockStatus = 'low')),
                         const SizedBox(width: 6),
                         _chip('Rupture', 'empty', _filterStockStatus, () => setState(() => _filterStockStatus = 'empty')),
+                        const SizedBox(width: 6),
+                        _chip('Actifs', 'active', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'active' ? null : 'active')),
+                        const SizedBox(width: 6),
+                        _chip('Archivés', 'archived', _filterArchiveStatus, () => setState(() => _filterArchiveStatus = _filterArchiveStatus == 'archived' ? null : 'archived')),
                       ],
                     ),
                   ),
@@ -190,21 +242,59 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 child: ExpansionTile(
-                                  leading: Container(
-                                    width: 48, height: 48,
-                                    decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-                                    child: p['image_url'] != null
-                                        ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p['image_url'], fit: BoxFit.cover))
-                                        : const Icon(Icons.image, color: Colors.grey),
+                                  leading: Stack(
+                                    children: [
+                                      Container(
+                                        width: 48, height: 48,
+                                        decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
+                                        child: p['image_url'] != null
+                                            ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p['image_url'], fit: BoxFit.cover))
+                                            : const Icon(Icons.image, color: Colors.grey),
+                                      ),
+                                      if (p['is_active'] == false)
+                                        Positioned(
+                                          top: 0, right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(2),
+                                            decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                                            child: const Icon(Icons.archive, size: 12, color: Colors.white),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   title: Row(
                                     children: [
-                                      Expanded(child: Text(p['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                      Expanded(child: Text(p['name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: p['is_active'] == false ? Colors.grey : null))),
                                       _catBadge(p['category']),
                                     ],
                                   ),
+                                  trailing: AppSession.isOwner
+                                      ? PopupMenuButton<String>(
+                                          onSelected: (v) {
+                                            if (v == 'edit') {
+                                              _showEditProductDialog(context, p);
+                                            } else if (v == 'archive') {
+                                              _toggleProductActive(context, p);
+                                            }
+                                          },
+                                          itemBuilder: (_) => [
+                                            const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'))),
+                                            PopupMenuItem(value: 'archive', child: ListTile(
+                                              leading: Icon(Icons.archive, size: 18, color: Colors.orange),
+                                              title: Text((p['is_active'] ?? true) ? 'Archiver' : 'Réactiver'),
+                                            )),
+                                          ],
+                                        )
+                                      : null,
                                   subtitle: Row(
                                     children: [
+                                      if (p['is_active'] == false)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                          margin: const EdgeInsets.only(right: 4),
+                                          decoration: BoxDecoration(color: Colors.orange[50], borderRadius: BorderRadius.circular(4)),
+                                          child: Text('Archivé', style: TextStyle(fontSize: 9, color: Colors.orange[800])),
+                                        ),
                                       Text('${variants.length} var.', style: const TextStyle(fontSize: 12)),
                                       const SizedBox(width: 8),
                                       _stockBadge(totalStock),
