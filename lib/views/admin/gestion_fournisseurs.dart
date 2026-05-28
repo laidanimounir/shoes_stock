@@ -431,16 +431,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         setState(() {
           _invoices = mappedInvoices;
           _payments = mappedPayments;
-
-          if (_userRole == 'employee' && _userStoreId != null) {
-            double totalInvoiced = mappedInvoices.fold(0, (sum, inv) => sum + (inv['total_amount'] as num).toDouble());
-            double totalPaid = mappedPayments.fold(0, (sum, p) => sum + (p['amount'] as num).toDouble());
-            _currentBalance = totalInvoiced - totalPaid;
-          } else {
-            _fetchGlobalBalance(supplierId);
-          }
-
           _isLoading = false;
+        });
+      }
+      final balRes = await Supabase.instance.client.rpc('get_supplier_balance', params: {'p_supplier_id': supplierId});
+      if (mounted) {
+        setState(() {
+          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
         });
       }
       return;
@@ -469,24 +466,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         setState(() {
           _invoices = invoicesRes;
           _payments = paymentsRes;
-
-          if (_userRole == 'employee' && _userStoreId != null) {
-            // Employee: compute balance from filtered invoices/payments
-            double totalInvoiced = 0.0;
-            for (var inv in _invoices) {
-              totalInvoiced += (inv['total_amount'] as num?)?.toDouble() ?? 0.0;
-            }
-            double totalPaid = 0.0;
-            for (var pay in _payments) {
-              totalPaid += (pay['amount'] as num?)?.toDouble() ?? 0.0;
-            }
-            _currentBalance = totalInvoiced - totalPaid;
-          } else {
-            // Owner: read global balance from DB
-            _fetchGlobalBalance(supplierId);
-          }
-
           _isLoading = false;
+        });
+      }
+      final balRes = await Supabase.instance.client.rpc('get_supplier_balance', params: {'p_supplier_id': supplierId});
+      if (mounted) {
+        setState(() {
+          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
         });
       }
     } catch (e) {
@@ -511,13 +497,10 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     }
 
     try {
-      final balanceRes = await Supabase.instance.client.from('suppliers')
-          .select('balance')
-          .eq('id', supplierId)
-          .single();
+      final balRes = await Supabase.instance.client.rpc('get_supplier_balance', params: {'p_supplier_id': supplierId});
       if (mounted) {
         setState(() {
-          _currentBalance = (balanceRes['balance'] as num?)?.toDouble() ?? 0.0;
+          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
         });
       }
     } catch (e) {
