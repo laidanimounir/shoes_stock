@@ -85,18 +85,19 @@ class RefundService {
           await isar.inventoryLocals.put(inv);
         }
       }
-    });
 
-    await SyncEngine.instance.enqueue(
-      SyncOperationType.processRefund,
-      {
-        'p_invoice_id': invoiceId,
-        'p_items': items,
-        'p_refund_amount': refundAmount,
-        'p_reason': reason,
-        'p_user_id': AppSession.currentUserId,
-      },
-    );
+      await SyncEngine.instance.enqueueInTransaction(
+        isar,
+        SyncOperationType.processRefund,
+        {
+          'p_invoice_id': invoiceId,
+          'p_items': items,
+          'p_refund_amount': refundAmount,
+          'p_reason': reason,
+          'p_user_id': AppSession.currentUserId,
+        },
+      );
+    });
 
     return {'success': true, 'new_status': 'refunded', 'offline': true};
   }

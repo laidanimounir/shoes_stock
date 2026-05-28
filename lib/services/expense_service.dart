@@ -58,21 +58,23 @@ class ExpenseService {
       ..synced = false;
 
     late int localId;
+
+    // Single atomic transaction: expense + sync queue
     await isar.writeTxn(() async {
       localId = await isar.expenseLocals.put(expense);
+      await SyncEngine.instance.enqueueInTransaction(
+        isar,
+        SyncOperationType.createExpense,
+        {
+          'p_category_id': categoryId,
+          'p_amount': amount,
+          'p_description': description ?? '',
+          'p_payment_method': paymentMethod,
+          'p_store_id': storeId,
+          'p_expense_date': expenseDate.toIso8601String().split('T').first,
+        },
+      );
     });
-
-    await SyncEngine.instance.enqueue(
-      SyncOperationType.createExpense,
-      {
-        'p_category_id': categoryId,
-        'p_amount': amount,
-        'p_description': description ?? '',
-        'p_payment_method': paymentMethod,
-        'p_store_id': storeId,
-        'p_expense_date': expenseDate.toIso8601String().split('T').first,
-      },
-    );
 
     return {'success': true, 'expense_id': 'local_$localId'};
   }

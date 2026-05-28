@@ -61,7 +61,6 @@ class InvoiceService {
       status = InvoiceStatusExt.fromString('paid').toSupabaseString();
     }
 
-    // 2. Create InvoiceLocal
     final invoice = InvoiceLocal()
       ..supabaseId = ''
       ..invoiceNumber = invoiceNumber
@@ -78,61 +77,56 @@ class InvoiceService {
       ..synced = false;
 
     late int localInvoiceId;
+
+    // Single atomic transaction: invoice + transactions + inventory + sync queue
     await isar.writeTxn(() async {
       localInvoiceId = await isar.invoiceLocals.put(invoice);
-    });
 
-    // 3. Create TransactionLocal per item + deduct inventory
-    for (final item in items) {
-      final tx = TransactionLocal()
-        ..supabaseId = ''
-        ..type = TransactionTypeExt.fromString('out').toSupabaseString()
-        ..variantId = item['variant_id'] as String
-        ..quantity = item['quantity'] as int
-        ..unitPrice = (item['unit_price'] as num).toDouble()
-        ..totalPrice = (item['total_price'] as num).toDouble()
-        ..storeId = storeId
-        ..userId = AppSession.currentUserId ?? ''
-        ..customerId = customerId
-        ..invoiceId = ''
-        ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now()
-        ..synced = false;
-
-      await isar.writeTxn(() async {
+      for (final item in items) {
+        final tx = TransactionLocal()
+          ..supabaseId = ''
+          ..type = TransactionTypeExt.fromString('out').toSupabaseString()
+          ..variantId = item['variant_id'] as String
+          ..quantity = item['quantity'] as int
+          ..unitPrice = (item['unit_price'] as num).toDouble()
+          ..totalPrice = (item['total_price'] as num).toDouble()
+          ..storeId = storeId
+          ..userId = AppSession.currentUserId ?? ''
+          ..customerId = customerId
+          ..invoiceId = ''
+          ..createdAt = DateTime.now()
+          ..updatedAt = DateTime.now()
+          ..synced = false;
         await isar.transactionLocals.put(tx);
-      });
 
-      // Deduct from local inventory
-      final inv = await isar.inventoryLocals
-          .filter()
-          .variantIdEqualTo(item['variant_id'] as String)
-          .and()
-          .storeIdEqualTo(storeId)
-          .findFirst();
-      if (inv != null) {
-        await isar.writeTxn(() async {
+        final inv = await isar.inventoryLocals
+            .filter()
+            .variantIdEqualTo(item['variant_id'] as String)
+            .and()
+            .storeIdEqualTo(storeId)
+            .findFirst();
+        if (inv != null) {
           inv.quantity -= (item['quantity'] as int);
           inv.updatedAt = DateTime.now();
           await isar.inventoryLocals.put(inv);
-        });
+        }
       }
-    }
 
-    // 4. Enqueue for sync when back online
-    await SyncEngine.instance.enqueue(
-      SyncOperationType.createInvoice,
-      {
-        'p_store_id': storeId,
-        'p_customer_id': customerId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': items,
-        'p_total_amount': totalAmount,
-        'p_paid_amount': paidAmount,
-        'p_payment_method': paymentMethod,
-        'p_notes': notes,
-      },
-    );
+      await SyncEngine.instance.enqueueInTransaction(
+        isar,
+        SyncOperationType.createInvoice,
+        {
+          'p_store_id': storeId,
+          'p_customer_id': customerId,
+          'p_invoice_number': invoiceNumber,
+          'p_items': items,
+          'p_total_amount': totalAmount,
+          'p_paid_amount': paidAmount,
+          'p_payment_method': paymentMethod,
+          'p_notes': notes,
+        },
+      );
+    });
 
     return {'success': true, 'invoice_id': 'local_$localInvoiceId'};
   }

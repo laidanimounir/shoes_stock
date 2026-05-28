@@ -57,32 +57,31 @@ class DebtRecoveryService {
       ..updatedAt = DateTime.now()
       ..synced = false;
 
+    // Single atomic transaction: payment + customer balance + sync queue
     await isar.writeTxn(() async {
       await isar.paymentLocals.put(payment);
-    });
 
-    // Also update local customer balance
-    final customer = await isar.customerLocals
-        .filter()
-        .supabaseIdEqualTo(customerId)
-        .findFirst();
-    if (customer != null) {
-      await isar.writeTxn(() async {
+      final customer = await isar.customerLocals
+          .filter()
+          .supabaseIdEqualTo(customerId)
+          .findFirst();
+      if (customer != null) {
         customer.balance -= amount;
         await isar.customerLocals.put(customer);
-      });
-    }
+      }
 
-    await SyncEngine.instance.enqueue(
-      SyncOperationType.createDebtRecoveryPayment,
-      {
-        'p_customer_id': customerId,
-        'p_amount': amount,
-        'p_payment_method': paymentMethod,
-        'p_store_id': storeId,
-        'p_notes': notes,
-      },
-    );
+      await SyncEngine.instance.enqueueInTransaction(
+        isar,
+        SyncOperationType.createDebtRecoveryPayment,
+        {
+          'p_customer_id': customerId,
+          'p_amount': amount,
+          'p_payment_method': paymentMethod,
+          'p_store_id': storeId,
+          'p_notes': notes,
+        },
+      );
+    });
   }
 
   // ══════════════════════════════════════════

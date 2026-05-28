@@ -78,14 +78,8 @@ class SyncEngine {
   // PUBLIC — Enqueue a new offline operation
   // ══════════════════════════════════════════
 
-  /// Creates a SyncQueueItem and increments pendingCount.
-  Future<void> enqueue(
-    SyncOperationType op,
-    Map<String, dynamic> payload,
-  ) async {
-    final isar = await IsarService.getInstance();
-
-    final item = SyncQueueItem()
+  SyncQueueItem _buildItem(SyncOperationType op, Map<String, dynamic> payload) {
+    return SyncQueueItem()
       ..operationType = op.toSupabaseString()
       ..payloadJson = jsonEncode(payload)
       ..status = 'pending'
@@ -94,15 +88,34 @@ class SyncEngine {
       ..priority = _priorityForOp(op)
       ..retryCount = 0
       ..createdAt = DateTime.now();
+  }
 
+  /// Creates a SyncQueueItem and inserts it within a caller-owned Isar writeTxn.
+  /// The caller is responsible for calling [enqueuePendingCount] after the
+  /// transaction commits to keep the metadata counter in sync.
+  Future<SyncQueueItem> enqueueInTransaction(
+    Isar isar,
+    SyncOperationType op,
+    Map<String, dynamic> payload,
+  ) async {
+    final item = _buildItem(op, payload);
+    await isar.syncQueueItems.put(item);
+    debugPrint('📥 SyncEngine: Enqueued ${op.toSupabaseString()} in txn');
+    return item;
+  }
+
+  /// Standalone convenience — full separate transaction for callers that
+  /// do not have an ongoing writeTxn.
+  Future<void> enqueue(
+    SyncOperationType op,
+    Map<String, dynamic> payload,
+  ) async {
+    final isar = await IsarService.getInstance();
     await isar.writeTxn(() async {
-      await isar.syncQueueItems.put(item);
+      await enqueueInTransaction(isar, op, payload);
     });
-
     await _incrementPendingCount(isar, 1);
     AppSession.pendingSync = await getPendingCount();
-
-    debugPrint('📥 SyncEngine: Enqueued ${op.toSupabaseString()}');
   }
 
   // ══════════════════════════════════════════
@@ -355,16 +368,31 @@ class SyncEngine {
   }
 
   // ══════════════════════════════════════════
-  // FIX 2 — Periodic retry timer
+  // FIX 2 — Exponential backoff retry timer
   // ══════════════════════════════════════════
+
+  static const _maxRetries = 5;
 
   void _startRetryTimer() {
     _retryTimer?.cancel();
-    _retryTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+    _scheduleRetry(0);
+  }
+
+  void _scheduleRetry(int attempt) {
+    if (attempt >= _maxRetries) {
+      debugPrint('⏰ SyncEngine: Max retries ($_maxRetries) reached — giving up');
+      return;
+    }
+    final delay = Duration(seconds: 30 * (1 << attempt)); // 30, 60, 120, 240, 480
+    debugPrint('⏰ SyncEngine: Next retry in ${delay.inSeconds}s (attempt ${attempt + 1}/$_maxRetries)');
+    _retryTimer = Timer(delay, () async {
       final count = await getPendingCount();
       if (count > 0) {
         debugPrint('⏰ SyncEngine: Retry timer fired — $count pending items');
         await syncPending();
+        _scheduleRetry(attempt + 1);
+      } else {
+        _scheduleRetry(0);
       }
     });
   }
