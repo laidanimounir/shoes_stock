@@ -129,6 +129,19 @@ class _AuthGateState extends State<AuthGate> {
       AppSession.currentStoreId = response['store_id'] as String?;
       AppSession.setRole(role);
 
+      if (AppSession.currentStoreId != null) {
+        try {
+          final storeRes = await supabase
+              .from('stores')
+              .select('max_discount_percent')
+              .eq('id', AppSession.currentStoreId!)
+              .maybeSingle();
+          if (storeRes != null && storeRes['max_discount_percent'] != null) {
+            AppSession.maxDiscountPercent = (storeRes['max_discount_percent'] as num).toDouble();
+          }
+        } catch (_) {}
+      }
+
       final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
                         defaultTargetPlatform == TargetPlatform.macOS ||
                         defaultTargetPlatform == TargetPlatform.linux;

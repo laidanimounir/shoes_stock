@@ -36,6 +36,9 @@ class AppSession {
   /// Whether the print preference dialog has been shown this session
   static bool posTicketPreferenceSet = false;
 
+  /// Maximum discount percentage allowed for this store (default 30)
+  static double maxDiscountPercent = 30;
+
   /// Resets all session state. Call on logout.
   static void clearSession() {
     currentUserId = null;
@@ -45,6 +48,7 @@ class AppSession {
     pendingSync = 0;
     autoPrintTicket = null;
     posTicketPreferenceSet = false;
+    maxDiscountPercent = 30;
   }
 
   // ══════════════════════════════════════════

@@ -59,6 +59,8 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
   void _showAddEditDialog([Map<String, dynamic>? store]) {
     final isEdit = store != null;
     final nameCtrl = TextEditingController(text: store?['name'] ?? '');
+    final maxDiscCtrl = TextEditingController(
+        text: store?['max_discount_percent']?.toString() ?? '30');
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -76,15 +78,32 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
           key: formKey,
           child: SizedBox(
             width: 400,
-            child: TextFormField(
-              controller: nameCtrl,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: S.t('store_name'),
-                prefixIcon: const Icon(Icons.warehouse),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) => v!.trim().isEmpty ? S.t('msg_required') : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: S.t('store_name'),
+                    prefixIcon: const Icon(Icons.warehouse),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (v) => v!.trim().isEmpty ? S.t('msg_required') : null,
+                ),
+                if (isEdit) ...[
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: maxDiscCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: S.t('store_max_discount'),
+                      prefixIcon: const Icon(Icons.percent),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
@@ -98,8 +117,12 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
               if (!formKey.currentState!.validate()) return;
               Navigator.pop(ctx);
               try {
-                final data = {'name': nameCtrl.text.trim()};
+                final data = <String, dynamic>{'name': nameCtrl.text.trim()};
                 if (isEdit) {
+                  final maxDisc = double.tryParse(maxDiscCtrl.text);
+                  if (maxDisc != null) {
+                    data['max_discount_percent'] = maxDisc;
+                  }
                   await Supabase.instance.client
                       .from('stores')
                       .update(data)

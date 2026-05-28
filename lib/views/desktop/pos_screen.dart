@@ -1867,6 +1867,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         const SizedBox(width: 8),
         GestureDetector(
           onTap: _discountInput <= 0 ? null : () {
+            if (_discountMode == 0 && _discountInput > AppSession.maxDiscountPercent) {
+              _snack(S.t('pos_discount_exceeds').replaceAll('{max}', AppSession.maxDiscountPercent.toStringAsFixed(0)), _C.danger);
+              return;
+            }
             setState(() {
               _discountAmount = _discountMode == 0
                   ? _cartTotal * (_discountInput / 100)

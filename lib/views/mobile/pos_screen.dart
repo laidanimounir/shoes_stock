@@ -445,16 +445,24 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
 
   void _showDiscountDialog() {
     final ctrl = TextEditingController(text: _hasDiscount ? _discountPercent.toString() : '');
+    final maxDisc = AppSession.maxDiscountPercent;
     showDialog(context: context, builder: (ctx) => AlertDialog(
       title: Text(S.t('pos_discount')),
-      content: TextField(controller: ctrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Pourcentage %', border: OutlineInputBorder())),
+      content: TextField(controller: ctrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Pourcentage % (max: $maxDisc%)', border: OutlineInputBorder())),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
         TextButton(onPressed: () { Navigator.pop(ctx); setState(() { _hasDiscount = false; _discountPercent = 0; }); }, child: Text(S.t('action_remove'), style: const TextStyle(color: Colors.red))),
         ElevatedButton(onPressed: () {
           final p = double.tryParse(ctrl.text) ?? 0;
+          if (p > maxDisc) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(S.t('pos_discount_exceeds').replaceAll('{max}', maxDisc.toStringAsFixed(0))),
+              backgroundColor: Colors.red,
+            ));
+            return;
+          }
           Navigator.pop(ctx);
-          setState(() { _hasDiscount = p > 0; _discountPercent = p.clamp(0, 100); });
+          setState(() { _hasDiscount = p > 0; _discountPercent = p.clamp(0, maxDisc); });
         }, child: Text(S.t('action_apply'))),
       ],
     ));
