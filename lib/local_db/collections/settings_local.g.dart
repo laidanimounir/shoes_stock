@@ -17,8 +17,18 @@ const SettingsLocalSchema = CollectionSchema(
   name: r'SettingsLocal',
   id: -4766441457459943005,
   properties: {
-    r'locale': PropertySchema(
+    r'debtOverdueDays': PropertySchema(
       id: 0,
+      name: r'debtOverdueDays',
+      type: IsarType.long,
+    ),
+    r'inactivityTimeoutMinutes': PropertySchema(
+      id: 1,
+      name: r'inactivityTimeoutMinutes',
+      type: IsarType.long,
+    ),
+    r'locale': PropertySchema(
+      id: 2,
       name: r'locale',
       type: IsarType.string,
     )
@@ -53,7 +63,9 @@ void _settingsLocalSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.locale);
+  writer.writeLong(offsets[0], object.debtOverdueDays);
+  writer.writeLong(offsets[1], object.inactivityTimeoutMinutes);
+  writer.writeString(offsets[2], object.locale);
 }
 
 SettingsLocal _settingsLocalDeserialize(
@@ -63,8 +75,10 @@ SettingsLocal _settingsLocalDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = SettingsLocal();
+  object.debtOverdueDays = reader.readLong(offsets[0]);
+  object.inactivityTimeoutMinutes = reader.readLong(offsets[1]);
   object.isarId = id;
-  object.locale = reader.readString(offsets[0]);
+  object.locale = reader.readString(offsets[2]);
   return object;
 }
 
@@ -76,6 +90,10 @@ P _settingsLocalDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readLong(offset)) as P;
+    case 1:
+      return (reader.readLong(offset)) as P;
+    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -177,6 +195,118 @@ extension SettingsLocalQueryWhere
 
 extension SettingsLocalQueryFilter
     on QueryBuilder<SettingsLocal, SettingsLocal, QFilterCondition> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      debtOverdueDaysEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'debtOverdueDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      debtOverdueDaysGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'debtOverdueDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      debtOverdueDaysLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'debtOverdueDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      debtOverdueDaysBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'debtOverdueDays',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      inactivityTimeoutMinutesEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'inactivityTimeoutMinutes',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      inactivityTimeoutMinutesGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'inactivityTimeoutMinutes',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      inactivityTimeoutMinutesLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'inactivityTimeoutMinutes',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      inactivityTimeoutMinutesBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'inactivityTimeoutMinutes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
       isarIdEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -378,6 +508,34 @@ extension SettingsLocalQueryLinks
 
 extension SettingsLocalQuerySortBy
     on QueryBuilder<SettingsLocal, SettingsLocal, QSortBy> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByDebtOverdueDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'debtOverdueDays', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByDebtOverdueDaysDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'debtOverdueDays', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByInactivityTimeoutMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'inactivityTimeoutMinutes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByInactivityTimeoutMinutesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'inactivityTimeoutMinutes', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByLocale() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'locale', Sort.asc);
@@ -393,6 +551,34 @@ extension SettingsLocalQuerySortBy
 
 extension SettingsLocalQuerySortThenBy
     on QueryBuilder<SettingsLocal, SettingsLocal, QSortThenBy> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByDebtOverdueDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'debtOverdueDays', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByDebtOverdueDaysDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'debtOverdueDays', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByInactivityTimeoutMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'inactivityTimeoutMinutes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByInactivityTimeoutMinutesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'inactivityTimeoutMinutes', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.asc);
@@ -420,6 +606,20 @@ extension SettingsLocalQuerySortThenBy
 
 extension SettingsLocalQueryWhereDistinct
     on QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct>
+      distinctByDebtOverdueDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'debtOverdueDays');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct>
+      distinctByInactivityTimeoutMinutes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'inactivityTimeoutMinutes');
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> distinctByLocale(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -433,6 +633,19 @@ extension SettingsLocalQueryProperty
   QueryBuilder<SettingsLocal, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, int, QQueryOperations> debtOverdueDaysProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'debtOverdueDays');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, int, QQueryOperations>
+      inactivityTimeoutMinutesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'inactivityTimeoutMinutes');
     });
   }
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
+import '../../local_db/isar_service.dart';
+import '../../local_db/collections/settings_local.dart';
 
 class DebtRecoveryScreen extends StatefulWidget {
   const DebtRecoveryScreen({super.key});
@@ -17,7 +20,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
 
   List<Map<String, dynamic>> _customers = [];
   List<Map<String, dynamic>> _allCustomers = [];
+  List<Map<String, dynamic>> _overdueCustomers = [];
   bool _isLoading = true;
+  int _overdueDaysThreshold = 30;
 
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _payments = [];
@@ -37,15 +42,36 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
     final storeId = AppSession.currentStoreId;
     if (storeId == null) return;
 
+    _overdueDaysThreshold = await _loadOverdueThreshold();
+
     final customers = await DebtRecoveryService.instance.fetchCustomersWithDebt(storeId);
+
+    List<Map<String, dynamic>> overdue = [];
+    try {
+      final res = await Supabase.instance.client.rpc('get_overdue_customers', params: {
+        'p_store_id': storeId,
+        'p_days_threshold': _overdueDaysThreshold,
+      });
+      overdue = List<Map<String, dynamic>>.from(res ?? []);
+    } catch (_) {}
 
     if (mounted) {
       setState(() {
         _allCustomers = customers;
         _customers = customers;
+        _overdueCustomers = overdue;
         _isLoading = false;
       });
     }
+  }
+
+  Future<int> _loadOverdueThreshold() async {
+    try {
+      final isar = await IsarService.getInstance();
+      final settings = await isar.settingsLocals.get(1);
+      if (settings != null) return settings.debtOverdueDays;
+    } catch (_) {}
+    return 30;
   }
 
   void _filterCustomers(String query) {
@@ -295,45 +321,66 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           ),
         ],
       ),
-      body: Row(
+      body: Column(
         children: [
-          // ── LEFT PANEL: Customer List ──
-          Expanded(
-            flex: 4,
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-              ),
-              child: Column(
+          if (_overdueCustomers.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: Colors.red[50],
+              child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: S.t('debt_search_hint'),
-                        prefixIcon: const Icon(Icons.search),
-                        border: const OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onChanged: _filterCustomers,
+                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${_overdueCustomers.length} ${S.t('debt_overdue_clients')} (${_overdueDaysThreshold}j)',
+                      style: GoogleFonts.raleway(color: Colors.red[800], fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
+                ],
+              ),
+            ),
+          Expanded(
+            child: Row(
+              children: [
+                // ── LEFT PANEL: Customer List ──
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
                       children: [
-                        Icon(Icons.people, size: 16, color: Colors.grey[600]),
-                        const SizedBox(width: 8),
-                        Text('${_customers.length} ${S.t('debt_clients_count')}',
-                            style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: S.t('debt_search_hint'),
+                              prefixIcon: const Icon(Icons.search),
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            onChanged: _filterCustomers,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Icon(Icons.people, size: 16, color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Text('${_customers.length} ${S.t('debt_clients_count')}',
+                                  style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                        const Divider(),
                   Expanded(
                     child: _isLoading
                         ? const Center(child: CircularProgressIndicator())
@@ -394,129 +441,129 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
             ),
           ),
 
-          // ── RIGHT PANEL: Customer Detail ──
-          Expanded(
-            flex: 6,
-            child: Container(
-              margin: const EdgeInsetsDirectional.only(top: 16, bottom: 16, end: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-              ),
-              child: _selectedCustomer == null
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey[300]),
-                          const SizedBox(height: 12),
-                          Text(S.t('debt_select_client'),
-                              style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
-                        ],
-                      ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // ── Header ──
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.indigo.withOpacity(0.05),
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                // ── RIGHT PANEL: Customer Detail ──
+                Expanded(
+                  flex: 6,
+                  child: Container(
+                    margin: const EdgeInsetsDirectional.only(top: 16, bottom: 16, end: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: _selectedCustomer == null
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey[300]),
+                                const SizedBox(height: 12),
+                                Text(S.t('debt_select_client'),
+                                    style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                child: Column(
+                              // ── Header ──
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: Colors.indigo.withOpacity(0.05),
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                ),
+                                child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      _selectedCustomer!['full_name'] ?? '',
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.indigo[800],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _selectedCustomer!['full_name'] ?? '',
+                                            style: GoogleFonts.playfairDisplay(
+                                              fontSize: 26,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.indigo[800],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.phone, size: 16, color: Colors.grey),
+                                              const SizedBox(width: 8),
+                                              Text(_selectedCustomer!['phone'] ?? S.t('misc_not_specified'),
+                                                  style: GoogleFonts.raleway()),
+                                              const SizedBox(width: 24),
+                                              const Icon(Icons.email, size: 16, color: Colors.grey),
+                                              const SizedBox(width: 8),
+                                              Text(_selectedCustomer!['email'] ?? S.t('misc_not_specified'),
+                                                  style: GoogleFonts.raleway()),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    Row(
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
-                                        const Icon(Icons.phone, size: 16, color: Colors.grey),
-                                        const SizedBox(width: 8),
-                                        Text(_selectedCustomer!['phone'] ?? S.t('misc_not_specified'),
-                                            style: GoogleFonts.raleway()),
-                                        const SizedBox(width: 24),
-                                        const Icon(Icons.email, size: 16, color: Colors.grey),
-                                        const SizedBox(width: 8),
-                                        Text(_selectedCustomer!['email'] ?? S.t('misc_not_specified'),
-                                            style: GoogleFonts.raleway()),
+                                        Text(S.t('cust_debt'), style: GoogleFonts.raleway(color: Colors.grey[600])),
+                                        Text(
+                                          '${((_selectedCustomer!['balance'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)} DA',
+                                          style: GoogleFonts.raleway(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ],
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(S.t('cust_debt'), style: GoogleFonts.raleway(color: Colors.grey[600])),
-                                  Text(
-                                    '${((_selectedCustomer!['balance'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)} DA',
-                                    style: GoogleFonts.raleway(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.red,
-                                    ),
-                                  ),
+                              // ── Tabs ──
+                              TabBar(
+                                controller: _tabController,
+                                labelColor: Colors.indigo,
+                                indicatorColor: Colors.indigo,
+                                tabs: [
+                                  Tab(icon: const Icon(Icons.history), text: S.t('debt_payment_history')),
+                                  Tab(icon: const Icon(Icons.info_outline), text: S.t('debt_client_info')),
                                 ],
+                              ),
+                              // ── Tab Content ──
+                              Expanded(
+                                child: _isLoadingPayments
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : TabBarView(
+                                        controller: _tabController,
+                                        children: [
+                                          _buildPaymentsTab(),
+                                          _buildInfoTab(),
+                                        ],
+                                      ),
+                              ),
+                              // ── Payment Button ──
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: ElevatedButton.icon(
+                                  onPressed: _showDebtPaymentDialog,
+                                  icon: const Icon(Icons.payments),
+                                  label: Text(S.t('debt_receive_payment'),
+                                      style: GoogleFonts.raleway(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-
-                        // ── Tabs ──
-                        TabBar(
-                          controller: _tabController,
-                          labelColor: Colors.indigo,
-                          indicatorColor: Colors.indigo,
-                          tabs: [
-                            Tab(icon: const Icon(Icons.history), text: S.t('debt_payment_history')),
-                            Tab(icon: const Icon(Icons.info_outline), text: S.t('debt_client_info')),
-                          ],
-                        ),
-
-                        // ── Tab Content ──
-                        Expanded(
-                          child: _isLoadingPayments
-                              ? const Center(child: CircularProgressIndicator())
-                              : TabBarView(
-                                  controller: _tabController,
-                                  children: [
-                                    _buildPaymentsTab(),
-                                    _buildInfoTab(),
-                                  ],
-                                ),
-                        ),
-
-                        // ── Payment Button ──
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: ElevatedButton.icon(
-                            onPressed: _showDebtPaymentDialog,
-                            icon: const Icon(Icons.payments),
-                            label: Text(S.t('debt_receive_payment'),
-                                style: GoogleFonts.raleway(fontSize: 16, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

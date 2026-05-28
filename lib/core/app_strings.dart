@@ -575,6 +575,9 @@ class S {
       'debt_clients_count': 'clients endettés',
       'debt_select_client': 'Sélectionnez un client pour voir les détails',
       'debt_not_specified': 'Non renseigné',
+      'debt_overdue_clients': 'clients en retard de paiement',
+      'debt_days_overdue': 'Retard',
+      'debt_days': 'jours',
 
       // ── Dashboard ──
       'dash_title': 'Tableau de Bord',
@@ -1351,6 +1354,9 @@ class S {
       'debt_clients_count': 'عملاء مدينون',
       'debt_select_client': 'اختر عميلاً لعرض التفاصيل',
       'debt_not_specified': 'غير محدد',
+      'debt_overdue_clients': 'عملاء متأخرين في السداد',
+      'debt_days_overdue': 'متأخر',
+      'debt_days': 'أيام',
 
       // ── Dashboard ──
       'dash_title': 'لوحة التحكم',
