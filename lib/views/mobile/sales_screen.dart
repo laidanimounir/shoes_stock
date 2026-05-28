@@ -15,10 +15,14 @@ class SalesScreen extends StatefulWidget {
 
 class _SalesScreenState extends State<SalesScreen> {
   List<dynamic> _sales = [];
+  List<dynamic> _filtered = [];
   bool _isLoading = true;
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() { super.initState(); _fetch(); }
+  @override
+  void dispose() { _searchCtrl.dispose(); super.dispose(); }
 
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
@@ -31,7 +35,7 @@ class _SalesScreenState extends State<SalesScreen> {
         txns = txns.where((t) => t.type == 'out').toList();
         txns.sort((a, b) => (b.createdAt ?? DateTime(2000)).compareTo(a.createdAt ?? DateTime(2000)));
         final result = txns.take(100).map((t) => {'id': t.isarId, 'invoice_number': t.invoiceNumber, 'quantity': t.quantity, 'total_price': t.totalPrice, 'created_at': (t.createdAt ?? DateTime(2000)).toIso8601String(), 'type': t.type, 'variant_id': t.variantId}).toList();
-        if (mounted) setState(() { _sales = result; _isLoading = false; });
+        if (mounted) setState(() { _sales = result; _applyFilter(); _isLoading = false; });
       } catch (_) { if (mounted) setState(() => _isLoading = false); }
       return;
     }
@@ -40,8 +44,22 @@ class _SalesScreenState extends State<SalesScreen> {
           .from('transactions')
           .select('id, invoice_number, invoice_id, quantity, total_price, created_at, type, invoices(status), product_variants(id, products(name), size, color)')
           .eq('type', 'out').eq('store_id', AppSession.currentStoreId!).order('created_at', ascending: false).limit(100);
-      if (mounted) setState(() { _sales = res; _isLoading = false; });
+      if (mounted) setState(() { _sales = res; _applyFilter(); _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
+  }
+
+  void _applyFilter() {
+    final q = _searchCtrl.text.toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? List.from(_sales)
+          : _sales.where((s) {
+              final pv = s['product_variants'];
+              final name = pv?['products']?['name']?.toString() ?? '';
+              final invNum = s['invoice_number']?.toString() ?? '';
+              return name.toLowerCase().contains(q) || invNum.toLowerCase().contains(q);
+            }).toList();
+    });
   }
 
   void _refund(Map<String, dynamic> sale) async {
@@ -74,10 +92,25 @@ class _SalesScreenState extends State<SalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_sales')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white, actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetch)]),
-      body: _isLoading ? const Center(child: CircularProgressIndicator()) : _sales.isEmpty
+      body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: S.t('search_hint'),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              isDense: true,
+            ),
+            onChanged: (_) => _applyFilter(),
+          ),
+        ),
+        Expanded(child: _filtered.isEmpty
           ? Center(child: Text(S.t('label_no_data')))
-          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: _sales.length, itemBuilder: (_, i) {
-              final s = _sales[i];
+          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: _filtered.length, itemBuilder: (_, i) {
+              final s = _filtered[i];
               final status = s['invoices']?['status'] as String?;
               final isRefunded = status == 'refunded';
               final pv = s['product_variants'];
@@ -93,7 +126,10 @@ class _SalesScreenState extends State<SalesScreen> {
                   ]),
                 ),
               );
-            })),
+            }),
+          ),
+        ),
+      ],
     );
   }
 }

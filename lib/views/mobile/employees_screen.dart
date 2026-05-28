@@ -10,16 +10,18 @@ class EmployeesScreen extends StatefulWidget {
 
 class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProviderStateMixin {
   List<dynamic> _employees = [];
+  List<dynamic> _filtered = [];
   bool _isLoading = true;
   late TabController _tabCtrl;
   String _statusFilter = 'active';
   final Set<String> _expandedIds = {};
   final Map<String, Map<String, dynamic>> _performances = {};
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() { super.initState(); _tabCtrl = TabController(length: 3, vsync: this); _tabCtrl.addListener(() { if (!_tabCtrl.indexIsChanging) { setState(() { _statusFilter = ['active', 'suspended', 'archived'][_tabCtrl.index]; _expandedIds.clear(); _performances.clear(); }); _fetch(); } }); _fetch(); }
   @override
-  void dispose() { _tabCtrl.dispose(); super.dispose(); }
+  void dispose() { _tabCtrl.dispose(); _searchCtrl.dispose(); super.dispose(); }
 
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
@@ -29,8 +31,20 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
       else if (_statusFilter == 'suspended') qb = qb.eq('is_active', false);
       qb = qb.eq('role', 'employee');
       final res = await qb.order('full_name');
-      if (mounted) setState(() { _employees = res; _isLoading = false; });
+      if (mounted) setState(() { _employees = res; _applyFilter(); _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
+  }
+
+  void _applyFilter() {
+    final q = _searchCtrl.text.toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? List.from(_employees)
+          : _employees.where((e) =>
+              (e['full_name'] ?? '').toString().toLowerCase().contains(q) ||
+              (e['email'] ?? '').toString().toLowerCase().contains(q) ||
+              (e['phone'] ?? '').toString().toLowerCase().contains(q)).toList();
+    });
   }
 
   Future<void> _loadPerformance(String userId, String? storeId) async {
@@ -78,10 +92,25 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
         controller: _tabCtrl, labelColor: Colors.white, unselectedLabelColor: Colors.white60,
         tabs: [Tab(text: S.t('filter_active')), Tab(text: S.t('filter_suspended')), Tab(text: S.t('filter_archived'))],
       )),
-      body: _isLoading ? const Center(child: CircularProgressIndicator()) : _employees.isEmpty
+      body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
+        if (_isLoading == false) Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: S.t('search_hint'),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              isDense: true,
+            ),
+            onChanged: (_) => _applyFilter(),
+          ),
+        ),
+        Expanded(child: _filtered.isEmpty
           ? Center(child: Text(S.t('label_no_data')))
-          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _employees.length, itemBuilder: (_, i) {
-              final e = _employees[i];
+          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _filtered.length, itemBuilder: (_, i) {
+              final e = _filtered[i];
               final empId = e['id'] as String;
               final isExpanded = _expandedIds.contains(empId);
               final perf = _performances[empId];
@@ -141,6 +170,8 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
             );
           }),
           ),
+        ),
+      ],
     );
   }
 

@@ -19,9 +19,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   List<dynamic> _categories = [];
   bool _isLoading = true;
   String? _catFilter;
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() { super.initState(); _fetch(); }
+  @override
+  void dispose() { _searchCtrl.dispose(); super.dispose(); }
 
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
@@ -76,12 +79,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _catFilter == null ? _expenses : _expenses.where((e) => e['category_id'] == _catFilter).toList();
+    final q = _searchCtrl.text.toLowerCase();
+    var filtered = _catFilter == null ? _expenses : _expenses.where((e) => e['category_id'] == _catFilter).toList();
+    if (q.isNotEmpty) {
+      filtered = filtered.where((e) =>
+        (e['description'] ?? '').toString().toLowerCase().contains(q)
+      ).toList();
+    }
     final total = filtered.fold(0.0, (s, e) => s + ((e['amount'] as num?)?.toDouble() ?? 0));
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_expenses')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _add)]),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: S.t('search_hint'),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              isDense: true,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
         Container(
           padding: const EdgeInsets.all(12), color: Colors.white,
           child: Column(children: [

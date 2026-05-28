@@ -11,17 +11,32 @@ class StoresScreen extends StatefulWidget {
 
 class _StoresScreenState extends State<StoresScreen> {
   List<dynamic> _stores = [];
+  List<dynamic> _filtered = [];
   bool _isLoading = true;
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() { super.initState(); _fetch(); }
+  @override
+  void dispose() { _searchCtrl.dispose(); super.dispose(); }
 
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
     try {
       final res = await Supabase.instance.client.from('stores').select().eq('is_active', true);
-      if (mounted) setState(() { _stores = res; _isLoading = false; });
+      if (mounted) setState(() { _stores = res; _applyFilter(); _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
+  }
+
+  void _applyFilter() {
+    final q = _searchCtrl.text.toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? List.from(_stores)
+          : _stores.where((s) =>
+              (s['name'] ?? '').toString().toLowerCase().contains(q) ||
+              (s['address'] ?? '').toString().toLowerCase().contains(q)).toList();
+    });
   }
 
   void _add() {
@@ -87,10 +102,29 @@ class _StoresScreenState extends State<StoresScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_stores')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _add)]),
-      body: _isLoading ? const Center(child: CircularProgressIndicator()) : _stores.isEmpty
-          ? Center(child: Text(S.t('label_no_data')))
-          : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _stores.length, itemBuilder: (_, i) {
-              final s = _stores[i];
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: S.t('search_hint'),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      isDense: true,
+                    ),
+                    onChanged: (_) => _applyFilter(),
+                  ),
+                ),
+                Expanded(
+                  child: _filtered.isEmpty
+                      ? Center(child: Text(S.t('label_no_data')))
+                      : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(12), itemCount: _filtered.length, itemBuilder: (_, i) {
+                          final s = _filtered[i];
               return Card(margin: const EdgeInsets.only(bottom: 8), child: ListTile(
                 leading: CircleAvatar(child: Text((s['name'] as String? ?? '?')[0].toUpperCase())),
                 title: Text(s['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -110,6 +144,9 @@ class _StoresScreenState extends State<StoresScreen> {
               ));
             }),
           ),
+          ),
+                ],
+              ),
     );
   }
 }
