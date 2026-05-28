@@ -60,6 +60,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   String _chartPeriod = 'month';
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _sizeAnalytics = [];
+  List<Map<String, dynamic>> _inventoryTurnover = [];
 
   bool _isLoading = true;
   late final RealtimeChannel _dashboardSubscription;
@@ -137,6 +138,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         _fetchChartData(),
         _fetchTopProducts(),
         _fetchSizeAnalytics(),
+        _fetchInventoryTurnover(),
       ]);
     } catch (e) {
       debugPrint("Dashboard update error: $e");
@@ -274,7 +276,18 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     }
   }
 
-
+  Future<void> _fetchInventoryTurnover() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_inventory_turnover', params: {
+        'p_store_id': _selectedStoreId,
+      });
+      if (mounted) {
+        setState(() => _inventoryTurnover = List<Map<String, dynamic>>.from(res ?? []));
+      }
+    } catch (e) {
+      debugPrint('Error fetching inventory turnover: $e');
+    }
+  }
 
   // ─── زر Inventory ───────────────────────────────────────────
   void _showInventory() {
@@ -559,6 +572,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   const SizedBox(height: 16),
                   _buildSectionHeader('Performance par Taille', Icons.straighten, Colors.teal),
                   _buildSizeAnalyticsCard(),
+                  const SizedBox(height: 16),
+                  _buildSectionHeader(S.t('turnover_title'), Icons.repeat, Colors.deepPurple),
+                  _buildInventoryTurnoverCard(),
                   const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
                     _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Colors.red),
@@ -975,7 +991,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   final size = item['size'] as String? ?? '-';
                   final sold = (item['total_sold'] as num?)?.toInt() ?? 0;
                   final revenue = (item['revenue'] as num?)?.toDouble() ?? 0;
-                  final pct = (item['pct_of_total'] as num?)?.toDouble() ?? 0;
                   final barWidth = maxSold > 0 ? (sold / maxSold) : 0.0;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -1005,6 +1020,73 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         SizedBox(
                           width: 50,
                           child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildInventoryTurnoverCard() {
+    final data = _inventoryTurnover;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: data.isEmpty
+            ? Text(S.t('dash_no_data'), style: const TextStyle(color: Colors.grey))
+            : Column(
+                children: data.take(10).map((item) {
+                  final name = item['product_name'] as String? ?? '';
+                  final variant = '${item['size'] ?? ''} ${item['color'] ?? ''}'.trim();
+                  final stock = (item['current_stock'] as num?)?.toInt() ?? 0;
+                  final sold = (item['units_sold_30d'] as num?)?.toInt() ?? 0;
+                  final rate = (item['turnover_rate'] as num?)?.toDouble() ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(name,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                              if (variant.isNotEmpty)
+                                Text(variant,
+                                    style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Text('$stock',
+                              style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+                        ),
+                        Expanded(
+                          child: Text('$sold',
+                              style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+                        ),
+                        SizedBox(
+                          width: 60,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: rate > 2 ? Colors.green[50] : rate > 0.5 ? Colors.orange[50] : Colors.red[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('${rate.toStringAsFixed(1)}x',
+                                style: TextStyle(
+                                    fontSize: 11, fontWeight: FontWeight.bold,
+                                    color: rate > 2 ? Colors.green[800] : rate > 0.5 ? Colors.orange[800] : Colors.red[800]),
+                                textAlign: TextAlign.center),
+                          ),
                         ),
                       ],
                     ),
