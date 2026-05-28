@@ -42,10 +42,10 @@ class SyncEngine {
       debugPrint('⏳ SyncEngine: Already syncing, skipping');
       return;
     }
-    _isSyncing = true;
     debugPrint('🔄 SyncEngine: Starting sync...');
 
     try {
+      _isSyncing = true;
       final isar = await IsarService.getInstance();
       final pending = await isar.syncQueueItems
           .filter()
@@ -224,51 +224,57 @@ class SyncEngine {
   // PRIVATE — RPC Calls
   // ══════════════════════════════════════════
 
+  static const _timeout = Duration(seconds: 30);
+
   Future<Map<String, dynamic>?> _rpcProcessSale(
       Map<String, dynamic> p) async {
-    final res = await _client.rpc('process_sale', params: p);
+    final res = await _client.rpc('process_sale', params: p)
+        .timeout(_timeout);
     if (res is Map) return Map<String, dynamic>.from(res);
     return null;
   }
 
   Future<Map<String, dynamic>?> _insertPayment(
       Map<String, dynamic> p) async {
-    final res = await _client.from('payments').insert(p).select().single();
+    final res = await _client.from('payments').insert(p).select().single()
+        .timeout(_timeout);
     return Map<String, dynamic>.from(res);
   }
 
   Future<Map<String, dynamic>?> _insertTransaction(
       Map<String, dynamic> p) async {
-    final res =
-        await _client.from('transactions').insert(p).select().single();
+    final res = await _client.from('transactions').insert(p).select().single()
+        .timeout(_timeout);
     return Map<String, dynamic>.from(res);
   }
 
   Future<Map<String, dynamic>?> _rpcProcessRefund(
       Map<String, dynamic> p) async {
-    final res = await _client.rpc('process_refund', params: p);
+    final res = await _client.rpc('process_refund', params: p)
+        .timeout(_timeout);
     if (res is Map) return Map<String, dynamic>.from(res);
     return null;
   }
 
   Future<Map<String, dynamic>?> _rpcAddExpense(
       Map<String, dynamic> p) async {
-    final res = await _client.rpc('add_expense', params: p);
-    // add_expense returns a UUID string directly
+    final res = await _client.rpc('add_expense', params: p)
+        .timeout(_timeout);
     if (res is String) return {'id': res};
     return null;
   }
 
   Future<Map<String, dynamic>?> _rpcAddDebtRecoveryPayment(
       Map<String, dynamic> p) async {
-    await _client.rpc('add_debt_recovery_payment', params: p);
-    // add_debt_recovery_payment returns void
+    await _client.rpc('add_debt_recovery_payment', params: p)
+        .timeout(_timeout);
     return null;
   }
 
   Future<Map<String, dynamic>?> _insertActivityLog(
       Map<String, dynamic> p) async {
-    final res = await _client.from('activity_logs').insert(p).select().single();
+    final res = await _client.from('activity_logs').insert(p).select().single()
+        .timeout(_timeout);
     return Map<String, dynamic>.from(res);
   }
 
