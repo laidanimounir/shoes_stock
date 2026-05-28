@@ -12,6 +12,7 @@ import 'views/mobile/employee_dashboard.dart';
 import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
 import 'services/inactivity_timer.dart';
+import 'views/auth/pin_lock_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -234,10 +235,14 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    Widget body = _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) 
+        : _currentScreen;
+    if (!_isLoading && _currentScreen is! LoginScreen) {
+      body = PinLockScreen(child: body);
+    }
     return Scaffold(
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) 
-          : InactivityTimer(child: _currentScreen),
+      body: InactivityTimer(child: body),
     );
   }
 }

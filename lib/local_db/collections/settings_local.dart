@@ -9,4 +9,6 @@ class SettingsLocal {
   String locale = 'ar';
   int debtOverdueDays = 30;
   int inactivityTimeoutMinutes = 15;
+  String? pinHash;
+  bool biometricEnabled = false;
 }

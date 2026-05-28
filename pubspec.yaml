@@ -29,6 +29,7 @@ dependencies:
   printing: ^5.13.1
   barcode: ^2.2.8
   share_plus: ^10.1.4
+  local_auth: ^2.3.0
   fl_chart: ^0.69.0
 
 dev_dependencies:

@@ -17,19 +17,29 @@ const SettingsLocalSchema = CollectionSchema(
   name: r'SettingsLocal',
   id: -4766441457459943005,
   properties: {
-    r'debtOverdueDays': PropertySchema(
+    r'biometricEnabled': PropertySchema(
       id: 0,
+      name: r'biometricEnabled',
+      type: IsarType.bool,
+    ),
+    r'debtOverdueDays': PropertySchema(
+      id: 1,
       name: r'debtOverdueDays',
       type: IsarType.long,
     ),
     r'inactivityTimeoutMinutes': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'inactivityTimeoutMinutes',
       type: IsarType.long,
     ),
     r'locale': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'locale',
+      type: IsarType.string,
+    ),
+    r'pinHash': PropertySchema(
+      id: 4,
+      name: r'pinHash',
       type: IsarType.string,
     )
   },
@@ -54,6 +64,12 @@ int _settingsLocalEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.locale.length * 3;
+  {
+    final value = object.pinHash;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -63,9 +79,11 @@ void _settingsLocalSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.debtOverdueDays);
-  writer.writeLong(offsets[1], object.inactivityTimeoutMinutes);
-  writer.writeString(offsets[2], object.locale);
+  writer.writeBool(offsets[0], object.biometricEnabled);
+  writer.writeLong(offsets[1], object.debtOverdueDays);
+  writer.writeLong(offsets[2], object.inactivityTimeoutMinutes);
+  writer.writeString(offsets[3], object.locale);
+  writer.writeString(offsets[4], object.pinHash);
 }
 
 SettingsLocal _settingsLocalDeserialize(
@@ -75,10 +93,12 @@ SettingsLocal _settingsLocalDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = SettingsLocal();
-  object.debtOverdueDays = reader.readLong(offsets[0]);
-  object.inactivityTimeoutMinutes = reader.readLong(offsets[1]);
+  object.biometricEnabled = reader.readBool(offsets[0]);
+  object.debtOverdueDays = reader.readLong(offsets[1]);
+  object.inactivityTimeoutMinutes = reader.readLong(offsets[2]);
   object.isarId = id;
-  object.locale = reader.readString(offsets[2]);
+  object.locale = reader.readString(offsets[3]);
+  object.pinHash = reader.readStringOrNull(offsets[4]);
   return object;
 }
 
@@ -90,11 +110,15 @@ P _settingsLocalDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 1:
       return (reader.readLong(offset)) as P;
     case 2:
+      return (reader.readLong(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -195,6 +219,16 @@ extension SettingsLocalQueryWhere
 
 extension SettingsLocalQueryFilter
     on QueryBuilder<SettingsLocal, SettingsLocal, QFilterCondition> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      biometricEnabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'biometricEnabled',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
       debtOverdueDaysEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
@@ -498,6 +532,160 @@ extension SettingsLocalQueryFilter
       ));
     });
   }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'pinHash',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'pinHash',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'pinHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'pinHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'pinHash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pinHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'pinHash',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension SettingsLocalQueryObject
@@ -508,6 +696,20 @@ extension SettingsLocalQueryLinks
 
 extension SettingsLocalQuerySortBy
     on QueryBuilder<SettingsLocal, SettingsLocal, QSortBy> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByBiometricEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'biometricEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByBiometricEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'biometricEnabled', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
       sortByDebtOverdueDays() {
     return QueryBuilder.apply(this, (query) {
@@ -547,10 +749,36 @@ extension SettingsLocalQuerySortBy
       return query.addSortBy(r'locale', Sort.desc);
     });
   }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByPinHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByPinHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinHash', Sort.desc);
+    });
+  }
 }
 
 extension SettingsLocalQuerySortThenBy
     on QueryBuilder<SettingsLocal, SettingsLocal, QSortThenBy> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByBiometricEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'biometricEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByBiometricEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'biometricEnabled', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
       thenByDebtOverdueDays() {
     return QueryBuilder.apply(this, (query) {
@@ -602,10 +830,29 @@ extension SettingsLocalQuerySortThenBy
       return query.addSortBy(r'locale', Sort.desc);
     });
   }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByPinHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByPinHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinHash', Sort.desc);
+    });
+  }
 }
 
 extension SettingsLocalQueryWhereDistinct
     on QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> {
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct>
+      distinctByBiometricEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'biometricEnabled');
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QDistinct>
       distinctByDebtOverdueDays() {
     return QueryBuilder.apply(this, (query) {
@@ -626,6 +873,13 @@ extension SettingsLocalQueryWhereDistinct
       return query.addDistinctBy(r'locale', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> distinctByPinHash(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'pinHash', caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension SettingsLocalQueryProperty
@@ -633,6 +887,13 @@ extension SettingsLocalQueryProperty
   QueryBuilder<SettingsLocal, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, bool, QQueryOperations>
+      biometricEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'biometricEnabled');
     });
   }
 
@@ -652,6 +913,12 @@ extension SettingsLocalQueryProperty
   QueryBuilder<SettingsLocal, String, QQueryOperations> localeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'locale');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, String?, QQueryOperations> pinHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pinHash');
     });
   }
 }
