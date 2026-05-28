@@ -75,7 +75,6 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
     DateTime? startDate = promo?['start_date'] != null ? DateTime.tryParse(promo!['start_date']) : null;
     DateTime? endDate = promo?['end_date'] != null ? DateTime.tryParse(promo!['end_date']) : null;
     String appliesTo = promo?['applies_to'] ?? 'all';
-    String? category = promo?['category'];
     bool isActive = promo?['is_active'] ?? true;
 
     showDialog(context: context, builder: (ctx) => StatefulBuilder(

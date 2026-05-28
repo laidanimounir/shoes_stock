@@ -19,7 +19,6 @@ class PinLockScreen extends StatefulWidget {
 class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserver {
   final _localAuth = LocalAuthentication();
   String _pin = '';
-  bool _isFirstTime = false;
   bool _setupMode = false;
   String _confirmPin = '';
   bool _error = false;
@@ -62,7 +61,7 @@ class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserv
       final isar = await IsarService.getInstance();
       final settings = await isar.settingsLocals.get(1);
       if (settings == null || settings.pinHash == null || settings.pinHash!.isEmpty) {
-        setState(() { _isFirstTime = true; _setupMode = true; _isLoading = false; });
+        setState(() { _setupMode = true; _isLoading = false; });
         return;
       }
       setState(() => _isLoading = false);

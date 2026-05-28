@@ -219,16 +219,6 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     } catch (e) { _snack('${S.t('msg_error')}: $e', _T.danger); }
   }
 
-  UserProfileLocal _toLocal(Map<String, dynamic> j) => UserProfileLocal()
-    ..supabaseId = j['id'] as String ..fullName = (j['full_name'] as String?) ?? '' ..role = (j['role'] as String?) ?? 'employee'
-    ..storeId = j['store_id'] as String? ..isActive = (j['is_active'] as bool?) ?? true
-    ..createdAt = _dt(j['created_at']) ..updatedAt = _dt(j['updated_at'])
-    ..firstName = j['first_name'] as String? ..lastName = j['last_name'] as String?
-    ..phone = j['phone'] as String? ..address = j['address'] as String? ..jobTitle = j['job_title'] as String?
-    ..hiredAt = _dt(j['hired_at']) ..isPermanentlyDeleted = (j['is_permanently_deleted'] as bool?) ?? false
-    ..commissionRate = (j['commission_rate'] as num?)?.toDouble() ?? 0
-    ..loginAt = _dt(j['login_at']);
-
   DateTime? _dt(dynamic v) { if (v == null) return null; if (v is DateTime) return v; if (v is String) return DateTime.tryParse(v); return null; }
 
   Future<void> _fetchPerformance(String userId) async {

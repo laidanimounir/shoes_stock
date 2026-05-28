@@ -145,7 +145,7 @@ class BackupService {
     'supabase_id': e.supabaseId, 'category_id': e.categoryId,
     'amount': e.amount, 'description': e.description,
     'payment_method': e.paymentMethod, 'store_id': e.storeId,
-    'user_id': e.userId, 'expense_date': e.expenseDate?.toIso8601String(),
+    'user_id': e.userId,     'expense_date': e.expenseDate.toIso8601String(),
     'created_at': e.createdAt?.toIso8601String(), 'updated_at': e.updatedAt?.toIso8601String(),
   };
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
-import '../../core/app_session.dart';
 
 class PurchaseOrdersScreen extends StatefulWidget {
   const PurchaseOrdersScreen({super.key});

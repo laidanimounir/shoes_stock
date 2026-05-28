@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -48,9 +47,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
   String _selectedCategory = 'homme';
   List<String> _selectedColors = [];
-  String? _customColorName;
   List<String> _selectedSizes = [];
-  String? _customSize;
   String _unitType = 'piece';
   int _unitsPerCarton = 1;
   double _unifiedBuyPrice = 0;
@@ -166,22 +163,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     }
   }
 
-  Map<String, dynamic> _emptyVariant() => {
-    'size': '',
-    'color': '',
-    'barcode': null,
-    'buy_price': _unifiedBuyPrice.toString(),
-    'sell_price': _unifiedSellPrice.toString(),
-    'unit_type': _unitType,
-    'units_per_carton': _unitType == 'carton' ? _unitsPerCarton : null,
-  };
-
-  void _addVariant() {
-    setState(() {
-      _variants.add(_emptyVariant());
-    });
-  }
-
   void _removeVariant(int index) {
     if (_variants.length > 1) {
       setState(() {
@@ -216,13 +197,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     }
   }
 
-  int get _totalUnits =>
-    _unitType == 'carton'
-      ? _quantityInput * _unitsPerCarton
-      : _quantityInput;
-
-  int _quantityInput = 0;
-
   void _generateVariants() {
     if (_selectedSizes.isEmpty || _selectedColors.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -256,12 +230,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         v['sell_price'] = _unifiedSellPrice.toString();
       }
     });
-  }
-
-  String _generateLocalBarcode() {
-    final random = Random();
-    final number = 100000 + random.nextInt(900000);
-    return 'SHO-$number';
   }
 
   Future<void> _copyFromExistingProduct() async {
@@ -478,24 +446,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     _selectedColors.isNotEmpty &&
     _variants.isNotEmpty;
 
-  bool get _canSave {
-    if (_variants.isEmpty) return false;
-    for (var v in _variants) {
-      final buy = double.tryParse(v['buy_price'].toString()) ?? 0;
-      final sell = double.tryParse(v['sell_price'].toString()) ?? 0;
-      if (buy <= 0 || sell <= buy) return false;
-    }
-    return true;
-  }
-
-  TextStyle get _titleStyle =>
-    GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold, color: kPrimaryColor);
-
   TextStyle get _sectionStyle =>
     GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w600, color: kPrimaryColor);
-
-  TextStyle get _labelStyle =>
-    GoogleFonts.raleway(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700]);
 
   // ─── Step Indicator ────────────────────────────────────────
 

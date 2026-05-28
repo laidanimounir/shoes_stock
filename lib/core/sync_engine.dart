@@ -262,7 +262,6 @@ class SyncEngine {
     switch (opType) {
       case SyncOperationType.createExpense: {
         final categoryId = payload['p_category_id'] as String?;
-        final localInvoiceNumber = payload['p_invoice_number'] as String?;
         if (categoryId == null) return null;
         final serverCategory = await _client
             .from('expense_categories')

@@ -146,20 +146,50 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   final supabase = Supabase.instance.client;
   bool _isLoading = true;
+  bool _loadingTimedOut = false;
   Widget _currentScreen = const Center(child: CircularProgressIndicator());
 
   @override
   void initState() {
     super.initState();
     _setupAuthListener();
+    _loadingTimeout();
+  }
+
+  void _loadingTimeout() {
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted && _isLoading && !_loadingTimedOut) {
+        _loadingTimedOut = true;
+        setState(() {
+          _currentScreen = const LoginScreen();
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   void _setupAuthListener() {
-    supabase.auth.onAuthStateChange.listen((data) async {
-      final session = data.session;
-      final event = data.event;
+    supabase.auth.onAuthStateChange.listen(
+      (data) async {
+        final session = data.session;
+        final event = data.event;
 
-      if (event == AuthChangeEvent.signedOut || session == null) {
+        if (event == AuthChangeEvent.signedOut || session == null) {
+          AppSession.clearSession();
+          if (mounted) {
+            setState(() {
+              _currentScreen = const LoginScreen();
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+
+        await _handleRouting(session.user.id);
+      },
+      onError: (error) {
+        debugPrint('Auth error: $error');
+        Supabase.instance.client.auth.signOut();
         AppSession.clearSession();
         if (mounted) {
           setState(() {
@@ -167,12 +197,8 @@ class _AuthGateState extends State<AuthGate> {
             _isLoading = false;
           });
         }
-        return;
-      }
-
-      // User logged in, check role
-      await _handleRouting(session.user.id);
-    });
+      },
+    );
   }
 
   Future<void> _handleRouting(String userId) async {

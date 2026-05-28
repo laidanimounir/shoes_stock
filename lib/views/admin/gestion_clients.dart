@@ -215,39 +215,6 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     }
   }
 
-  Future<void> _fetchGlobalBalance(String customerId) async {
-    if (AppSession.isOfflineMode) {
-      final isar = await IsarService.getInstance();
-      final customer = await isar.customerLocals
-          .filter()
-          .supabaseIdEqualTo(customerId)
-          .findFirst();
-      if (customer != null && mounted) {
-        setState(() {
-          _currentBalance = customer.balance;
-          if (_selectedCustomer != null) {
-            _selectedCustomer!['balance'] = _currentBalance;
-          }
-        });
-      }
-      return;
-    }
-
-    try {
-      final balRes = await Supabase.instance.client.rpc('get_customer_balance', params: {'p_customer_id': customerId});
-      if (mounted) {
-        setState(() {
-          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
-          if (_selectedCustomer != null) {
-            _selectedCustomer!['balance'] = _currentBalance;
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching global balance: $e");
-    }
-  }
-
   void _showAddEditCustomerDialog([Map<String, dynamic>? customer]) {
     final isEdit = customer != null;
     final formKey = GlobalKey<FormState>();

@@ -7,7 +7,6 @@ import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/transaction_local.dart';
 import '../local_db/collections/inventory_local.dart';
-import '../local_db/collections/customer_local.dart';
 
 /// Offline-aware invoice service.
 /// Online path → Supabase RPC directly.

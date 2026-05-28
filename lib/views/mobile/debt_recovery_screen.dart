@@ -120,7 +120,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                   orElse: () => null,
                 );
                 final isOverdue = overdueCustomer != null;
-                final daysOverdue = isOverdue ? (overdueCustomer!['days_overdue'] as int?) ?? 0 : 0;
+                final daysOverdue = isOverdue ? (overdueCustomer['days_overdue'] as int?) ?? 0 : 0;
                 final tileColor = isOverdue ? Colors.red.withOpacity(0.05) : null;
                 return Card(margin: const EdgeInsets.only(bottom: 8), color: tileColor, child: ListTile(
                   leading: CircleAvatar(

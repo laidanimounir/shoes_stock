@@ -481,34 +481,6 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     }
   }
 
-  Future<void> _fetchGlobalBalance(String supplierId) async {
-    if (AppSession.isOfflineMode) {
-      final isar = await IsarService.getInstance();
-      final supplier = await isar.supplierLocals
-          .filter()
-          .supabaseIdEqualTo(supplierId)
-          .findFirst();
-      if (supplier != null && mounted) {
-        setState(() {
-          _currentBalance = supplier.balance;
-        });
-      }
-      return;
-    }
-
-    try {
-      final balRes = await Supabase.instance.client.rpc('get_supplier_balance', params: {'p_supplier_id': supplierId});
-      if (mounted) {
-        setState(() {
-          _currentBalance = (balRes as num?)?.toDouble() ?? 0.0;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching global balance: $e");
-    }
-  }
-
-  
   void _showAddPaymentDialog() {
     final amountCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
