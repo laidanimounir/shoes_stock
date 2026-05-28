@@ -1262,9 +1262,10 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
   double _salesToday = 0;
   double _salesThisMonth = 0;
   double _salesLastMonth = 0;
-
-  List<Map<String, dynamic>> _topProducts = [];
+  double _monthDiff = 0;
+  bool _isUp = true;
   List<Map<String, dynamic>> _storeComparison = [];
+  List<Map<String, dynamic>> _topProducts = [];
 
   @override
   void initState() {
@@ -1279,14 +1280,9 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
       _salesToday = (summary['today_sales'] as num?)?.toDouble() ?? 0;
       _salesThisMonth = (summary['this_month_sales'] as num?)?.toDouble() ?? 0;
       _salesLastMonth = (summary['last_month_sales'] as num?)?.toDouble() ?? 0;
-
-      // مقارنة المتاجر
-      final storeList = List<Map<String, dynamic>>.from(summary['store_comparison'] ?? []);
-      final maxSales = storeList.fold(0.0, (max, s) => (s['sales'] as num).toDouble() > max ? (s['sales'] as num).toDouble() : max);
-      for (var s in storeList) {
-        s['ratio'] = maxSales > 0 ? (s['sales'] as num).toDouble() / maxSales : 0.0;
-      }
-      _storeComparison = storeList;
+      _monthDiff = (summary['monthDiff'] as num?)?.toDouble() ?? 0;
+      _isUp = summary['isUp'] as bool? ?? true;
+      _storeComparison = List<Map<String, dynamic>>.from(summary['store_comparison'] ?? []);
 
       // RPC 2: Top 5 products
       final topRes = await Supabase.instance.client.rpc('get_top_products_this_month');
@@ -1304,10 +1300,6 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final monthDiff = _salesLastMonth > 0
-        ? ((_salesThisMonth - _salesLastMonth) / _salesLastMonth * 100)
-        : 0.0;
-    final isUp = monthDiff >= 0;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
@@ -1357,7 +1349,7 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isUp ? Colors.green[50] : Colors.red[50],
+                        color: _isUp ? Colors.green[50] : Colors.red[50],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1367,12 +1359,12 @@ class _AnalyticsSheetState extends State<_AnalyticsSheet> {
                               style: TextStyle(color: Colors.grey[700], fontSize: 12)),
                           Row(
                             children: [
-                              Icon(isUp ? Icons.trending_up : Icons.trending_down,
-                                  color: isUp ? Colors.green : Colors.red, size: 18),
-                              const SizedBox(width: 4),
-                              Text('${monthDiff.toStringAsFixed(1)}%',
+                              Icon(_isUp ? Icons.trending_up : Icons.trending_down,
+                                  color: _isUp ? Colors.green : Colors.red, size: 18),
+
+                              Text('${_monthDiff.toStringAsFixed(1)}%',
                                   style: TextStyle(
-                                    color: isUp ? Colors.green[700] : Colors.red,
+                                    color: _isUp ? Colors.green[700] : Colors.red,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   )),
