@@ -61,7 +61,11 @@ class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserv
       final isar = await IsarService.getInstance();
       final settings = await isar.settingsLocals.get(1);
       if (settings == null || settings.pinHash == null || settings.pinHash!.isEmpty) {
-        setState(() { _setupMode = true; _isLoading = false; });
+        // PIN not set up yet — pass through, don't force setup
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _unlock();
+        });
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
       setState(() => _isLoading = false);

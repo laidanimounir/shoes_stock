@@ -9,6 +9,7 @@ import '../../core/app_session.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
+import '../../local_db/collections/settings_local.dart';
 import '../../services/report_service.dart';
 import 'products_screen.dart';
 import 'add_product_screen.dart';
@@ -1288,11 +1289,21 @@ class _ProfileSheetState extends State<_ProfileSheet> {
   String _fullName = '';
   String _email = '';
   bool _isLoading = true;
+  bool _pinEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
+    _loadPinSetting();
+  }
+
+  Future<void> _loadPinSetting() async {
+    try {
+      final isar = await IsarService.getInstance();
+      final settings = await isar.settingsLocals.get(1);
+      if (mounted) setState(() => _pinEnabled = settings?.pinEnabled ?? false);
+    } catch (_) {}
   }
 
   Future<void> _fetchProfile() async {
@@ -1480,6 +1491,31 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                       title: Text(S.t('owner_change_password'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: _changePassword,
+                    ),
+                    const SizedBox(height: 12),
+                    // PIN Lock toggle
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      tileColor: Colors.grey[50],
+                      leading: Icon(Icons.lock_outline, color: Colors.indigo[900]),
+                      title: Text('Verrouillage PIN', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Protéger l\'application par code PIN', style: TextStyle(fontSize: 12)),
+                      trailing: Switch(
+                        value: _pinEnabled,
+                        onChanged: (val) async {
+                          final isar = await IsarService.getInstance();
+                          final settings = (await isar.settingsLocals.get(1)) ?? SettingsLocal();
+                          if (!val) {
+                            settings.pinEnabled = false;
+                            settings.pinHash = null;
+                            settings.biometricEnabled = false;
+                          } else {
+                            settings.pinEnabled = true;
+                          }
+                          await isar.writeTxn(() async => await isar.settingsLocals.put(settings));
+                          if (mounted) setState(() => _pinEnabled = val);
+                        },
+                      ),
                     ),
                     const SizedBox(height: 12),
                     // Déconnexion

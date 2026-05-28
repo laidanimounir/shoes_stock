@@ -147,13 +147,23 @@ class _AuthGateState extends State<AuthGate> {
   final supabase = Supabase.instance.client;
   bool _isLoading = true;
   bool _loadingTimedOut = false;
-  Widget _currentScreen = const Center(child: CircularProgressIndicator());
+  bool _pinEnabled = false;
+  Widget _currentScreen = const Center(child: CircularProgressIndicator();
 
   @override
   void initState() {
     super.initState();
     _setupAuthListener();
     _loadingTimeout();
+    _loadPinSetting();
+  }
+
+  Future<void> _loadPinSetting() async {
+    try {
+      final isar = await IsarService.getInstance();
+      final settings = await isar.settingsLocals.get(1);
+      if (mounted) setState(() => _pinEnabled = settings?.pinEnabled ?? false);
+    } catch (_) {}
   }
 
   void _loadingTimeout() {
@@ -346,7 +356,7 @@ class _AuthGateState extends State<AuthGate> {
     Widget body = _isLoading 
         ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) 
         : _currentScreen;
-    if (!_isLoading && _currentScreen is! LoginScreen) {
+    if (!_isLoading && _currentScreen is! LoginScreen && _pinEnabled) {
       body = PinLockScreen(child: body);
     }
     return Scaffold(

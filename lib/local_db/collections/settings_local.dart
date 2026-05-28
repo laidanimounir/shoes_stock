@@ -10,6 +10,8 @@ class SettingsLocal {
   int debtOverdueDays = 30;
   int inactivityTimeoutMinutes = 15;
   int lowStockThreshold = 3;
+  @Index()
+  bool pinEnabled = false;
   String? pinHash;
   bool biometricEnabled = false;
   int? lastApiVersionCheck;

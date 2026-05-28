@@ -47,8 +47,13 @@ const SettingsLocalSchema = CollectionSchema(
       name: r'lowStockThreshold',
       type: IsarType.long,
     ),
-    r'pinHash': PropertySchema(
+    r'pinEnabled': PropertySchema(
       id: 6,
+      name: r'pinEnabled',
+      type: IsarType.bool,
+    ),
+    r'pinHash': PropertySchema(
+      id: 7,
       name: r'pinHash',
       type: IsarType.string,
     )
@@ -58,7 +63,21 @@ const SettingsLocalSchema = CollectionSchema(
   deserialize: _settingsLocalDeserialize,
   deserializeProp: _settingsLocalDeserializeProp,
   idName: r'isarId',
-  indexes: {},
+  indexes: {
+    r'pinEnabled': IndexSchema(
+      id: -7684293254337560115,
+      name: r'pinEnabled',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'pinEnabled',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _settingsLocalGetId,
@@ -95,7 +114,8 @@ void _settingsLocalSerialize(
   writer.writeLong(offsets[3], object.lastApiVersionCheck);
   writer.writeString(offsets[4], object.locale);
   writer.writeLong(offsets[5], object.lowStockThreshold);
-  writer.writeString(offsets[6], object.pinHash);
+  writer.writeBool(offsets[6], object.pinEnabled);
+  writer.writeString(offsets[7], object.pinHash);
 }
 
 SettingsLocal _settingsLocalDeserialize(
@@ -112,7 +132,8 @@ SettingsLocal _settingsLocalDeserialize(
   object.lastApiVersionCheck = reader.readLongOrNull(offsets[3]);
   object.locale = reader.readString(offsets[4]);
   object.lowStockThreshold = reader.readLong(offsets[5]);
-  object.pinHash = reader.readStringOrNull(offsets[6]);
+  object.pinEnabled = reader.readBool(offsets[6]);
+  object.pinHash = reader.readStringOrNull(offsets[7]);
   return object;
 }
 
@@ -136,6 +157,8 @@ P _settingsLocalDeserializeProp<P>(
     case 5:
       return (reader.readLong(offset)) as P;
     case 6:
+      return (reader.readBool(offset)) as P;
+    case 7:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -160,6 +183,14 @@ extension SettingsLocalQueryWhereSort
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterWhere> anyIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterWhere> anyPinEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'pinEnabled'),
+      );
     });
   }
 }
@@ -231,6 +262,51 @@ extension SettingsLocalQueryWhere
         upper: upperIsarId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterWhereClause>
+      pinEnabledEqualTo(bool pinEnabled) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'pinEnabled',
+        value: [pinEnabled],
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterWhereClause>
+      pinEnabledNotEqualTo(bool pinEnabled) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'pinEnabled',
+              lower: [],
+              upper: [pinEnabled],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'pinEnabled',
+              lower: [pinEnabled],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'pinEnabled',
+              lower: [pinEnabled],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'pinEnabled',
+              lower: [],
+              upper: [pinEnabled],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -682,6 +758,16 @@ extension SettingsLocalQueryFilter
   }
 
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
+      pinEnabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pinEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterFilterCondition>
       pinHashIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -926,6 +1012,19 @@ extension SettingsLocalQuerySortBy
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByPinEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      sortByPinEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinEnabled', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> sortByPinHash() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pinHash', Sort.asc);
@@ -1035,6 +1134,19 @@ extension SettingsLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByPinEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy>
+      thenByPinEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pinEnabled', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QAfterSortBy> thenByPinHash() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pinHash', Sort.asc);
@@ -1092,6 +1204,12 @@ extension SettingsLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> distinctByPinEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'pinEnabled');
+    });
+  }
+
   QueryBuilder<SettingsLocal, SettingsLocal, QDistinct> distinctByPinHash(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1145,6 +1263,12 @@ extension SettingsLocalQueryProperty
       lowStockThresholdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lowStockThreshold');
+    });
+  }
+
+  QueryBuilder<SettingsLocal, bool, QQueryOperations> pinEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pinEnabled');
     });
   }
 
