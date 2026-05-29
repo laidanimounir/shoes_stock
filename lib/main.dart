@@ -16,6 +16,7 @@ import 'core/app_session.dart';
 import 'core/connectivity_service.dart';
 import 'core/api_version_service.dart';
 import 'services/inactivity_timer.dart';
+import 'services/notification_service.dart';
 import 'views/auth/pin_lock_screen.dart';
 import 'local_db/isar_service.dart';
 import 'local_db/collections/settings_local.dart';
@@ -245,6 +246,8 @@ class _AuthGateState extends State<AuthGate> {
       AppSession.currentUserId = userId;
       AppSession.currentStoreId = response['store_id'] as String?;
       AppSession.setRole(role);
+
+      NotificationService.instance.startPolling();
 
       final prefLang = response['preferred_language'] as String?;
       if (prefLang != null && prefLang.isNotEmpty) {

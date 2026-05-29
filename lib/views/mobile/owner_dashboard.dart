@@ -32,6 +32,8 @@ import 'owner/analytics_sheet.dart';
 import 'owner/store_comparison_section.dart';
 import 'owner/slow_moving_section.dart';
 import '../admin/stock_transfer_screen.dart';
+import '../admin/notifications_screen.dart';
+import '../../services/notification_service.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -505,6 +507,44 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ),
               ),
             ),
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationService.instance.unreadCount,
+            builder: (context, count, _) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen()),
+                      );
+                    },
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           const LanguageToggleButton(),
           IconButton(
             icon: const Icon(Icons.refresh),

@@ -21,6 +21,8 @@ import '../admin/expenses_screen.dart';
 import '../admin/debt_recovery_screen.dart';
 import '../admin/health_screen.dart';
 import '../../widgets/offline_banner.dart';
+import '../../services/notification_service.dart';
+import '../admin/notifications_screen.dart';
 
 class AdminMainLayout extends StatefulWidget {
   const AdminMainLayout({super.key});
@@ -289,6 +291,46 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                   ),
                   child: Column(
                     children: [
+                      ValueListenableBuilder<int>(
+                        valueListenable: NotificationService.instance.unreadCount,
+                        builder: (context, count, _) {
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_outlined,
+                                    color: Colors.white70),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NotificationsScreen()),
+                                  );
+                                },
+                              ),
+                              if (count > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '$count',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       const LanguageToggleButton(),
                       const SizedBox(height: 8),
                       SizedBox(

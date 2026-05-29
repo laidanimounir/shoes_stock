@@ -6,6 +6,7 @@ import 'package:barcode/barcode.dart' as bc;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../services/report_service.dart';
@@ -807,8 +808,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 Flexible(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    child: ListView(
+                      shrinkWrap: true,
                       children: [
                         // Header
                         Container(
@@ -835,110 +836,103 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             ],
                           ),
                         ),
-                        // Rows
-                        Flexible(
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: activeVariants.length,
-                            itemBuilder: (_, i) {
-                              final v = activeVariants[i];
-                              final inv = v['inventory'] as List<dynamic>? ?? [];
-                              int qty = 0;
-                              for (var invItem in inv) {
-                                qty += (invItem['quantity'] as int?) ?? 0;
-                              }
-                              final buy = (v['buy_price'] as num?)?.toDouble() ?? 0;
-                              final sell = (v['sell_price'] as num?)?.toDouble() ?? 0;
-                              final margin = sell - buy;
-                              final varStatus = _getStockStatus(qty);
-                              final barcodeText = v['barcode'] as String? ?? '';
+                        // Rows as ExpansionTiles with price history
+                        ...activeVariants.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final v = entry.value;
+                          final inv = v['inventory'] as List<dynamic>? ?? [];
+                          int qty = 0;
+                          for (var invItem in inv) {
+                            qty += (invItem['quantity'] as int?) ?? 0;
+                          }
+                          final buy = (v['buy_price'] as num?)?.toDouble() ?? 0;
+                          final sell = (v['sell_price'] as num?)?.toDouble() ?? 0;
+                          final margin = sell - buy;
+                          final varStatus = _getStockStatus(qty);
+                          final barcodeText = v['barcode'] as String? ?? '';
 
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
-                                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-                                ),
-                                child: Row(
+                          return ExpansionTile(
+                            key: PageStorageKey(v['id']),
+                            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            childrenPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+                            leading: null,
+                            title: Row(
+                              children: [
+                                Expanded(flex: 2, child: Text(barcodeText.isNotEmpty ? barcodeText : '-',
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 11,
+                                    color: barcodeText.isNotEmpty ? Colors.black87 : Colors.grey,
+                                  ),
+                                )),
+                                Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+                                Expanded(flex: 1, child: Row(
                                   children: [
-                                    Expanded(flex: 2, child: Text(barcodeText.isNotEmpty ? barcodeText : '-',
-                                      style: TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 11,
-                                        color: barcodeText.isNotEmpty ? Colors.black87 : Colors.grey,
-                                      ),
-                                    )),
-                                    Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-                                    Expanded(flex: 1, child: Row(
-                                      children: [
-                                        Container(
-                                          width: 12, height: 12,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: _getColorForName(v['color'] as String? ?? ''),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Flexible(child: Text(v['color'] as String? ?? '',
-                                          style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
-                                      ],
-                                    )),
-                                    Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
-                                    Expanded(flex: 1, child: Text('${buy.toStringAsFixed(0)}',
-                                      style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
-                                    Expanded(flex: 1, child: Text('${sell.toStringAsFixed(0)}',
-                                      style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold))),
-                                    Expanded(flex: 1, child: Text(
-                                      margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: margin >= 0 ? kAccentGreen : kDangerRed,
-                                      ),
-                                    )),
-                                    SizedBox(
-                                      width: 64,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          if (barcodeText.isNotEmpty)
-                                            IconButton(
-                                              icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
-                                              tooltip: 'Imprimer',
-                                              onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                            ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
-                                            tooltip: 'Modifier',
-                                            onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                        ],
+                                    Container(
+                                      width: 12, height: 12,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _getColorForName(v['color'] as String? ?? ''),
                                       ),
                                     ),
+                                    const SizedBox(width: 4),
+                                    Flexible(child: Text(v['color'] as String? ?? '',
+                                      style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
                                   ],
+                                )),
+                                Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
+                                Expanded(flex: 1, child: Text('${buy.toStringAsFixed(0)}',
+                                  style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
+                                Expanded(flex: 1, child: Text('${sell.toStringAsFixed(0)}',
+                                  style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold))),
+                                Expanded(flex: 1, child: Text(
+                                  margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: margin >= 0 ? kAccentGreen : kDangerRed,
+                                  ),
+                                )),
+                                SizedBox(
+                                  width: 64,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      if (barcodeText.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
+                                          tooltip: 'Imprimer',
+                                          onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                        tooltip: 'Modifier',
+                                        onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
+                              ],
+                            ),
+                            children: [
+                              Text('Historique des prix',
+                                style: GoogleFonts.cairo(fontSize: 13, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildVariantPriceHistory(v['id']),
+                            ],
+                          );
+                        }).toList(),
                       ],
                     ),
                   ),
                 ),
-
-              const SizedBox(height: 20),
-
-              // Price History Tab
-              Text('Historique des prix',
-                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: kPrimaryColor),
-              ),
-              const SizedBox(height: 8),
-              _buildPriceHistorySection(product['id']),
 
               const SizedBox(height: 20),
 
@@ -1026,93 +1020,218 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _fetchPriceHistory(String productId) async {
+  Future<List<Map<String, dynamic>>> _fetchVariantPriceHistory(String variantId) async {
     try {
-      final res = await Supabase.instance.client
-          .from('v_arrivage_price_history')
-          .select('inventory_id, variant_id, size, color, arrivage_date, purchase_price, sell_price_at_arrival')
-          .eq('product_id', productId)
-          .order('arrivage_date', ascending: false);
-      return List<Map<String, dynamic>>.from(res);
+      final res = await Supabase.instance.client.rpc('get_price_history', params: {
+        'p_variant_id': variantId,
+      });
+      return List<Map<String, dynamic>>.from(res as List);
     } catch (_) {
       return [];
     }
   }
 
-  Widget _buildPriceHistorySection(String productId) {
+  Widget _buildVariantPriceHistory(String variantId) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _fetchPriceHistory(productId),
+      future: _fetchVariantPriceHistory(variantId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+          return const SizedBox(
+            height: 60,
+            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
           );
         }
         final history = snapshot.data ?? [];
         if (history.isEmpty) {
           return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: Text('Aucun historique', style: TextStyle(color: Colors.grey))),
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('Aucun historique', style: TextStyle(color: Colors.grey, fontSize: 12)),
           );
         }
-        return Flexible(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  color: const Color(0xFF795548),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 2, child: Text('Variante',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
-                      Expanded(flex: 2, child: Text('Date arrivage',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
-                      Expanded(flex: 1, child: Text('Prix achat',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
-                      Expanded(flex: 1, child: Text('Prix vente',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
-                    ],
+
+        final spots = <FlSpot>[];
+        for (int i = 0; i < history.length; i++) {
+          final price = (history[i]['purchase_price'] as num?)?.toDouble() ?? 0;
+          spots.add(FlSpot(i.toDouble(), price));
+        }
+
+        final minY = spots.fold<double>(double.infinity, (s, e) => e.y < s ? e.y : s);
+        final maxY = spots.fold<double>(double.negativeInfinity, (s, e) => e.y > s ? e.y : s);
+        final yRange = maxY - minY;
+        final adjustedMin = minY - (yRange * 0.1);
+        final adjustedMax = maxY + (yRange * 0.1);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 120,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Colors.grey.withOpacity(0.2),
+                      strokeWidth: 0.5,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                        getTitlesWidget: (value, meta) {
+                          return Text('${value.toInt()}',
+                            style: const TextStyle(fontSize: 8, color: Colors.grey),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final idx = value.toInt();
+                          if (idx < 0 || idx >= history.length) return const SizedBox.shrink();
+                          final date = history[idx]['purchased_at'] as String? ?? '';
+                          final label = date.length >= 10 ? date.substring(0, 10) : date;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(label,
+                              style: const TextStyle(fontSize: 7, color: Colors.grey),
+                            ),
+                          );
+                        },
+                        interval: (history.length / 4).ceilToDouble().clamp(1, double.infinity),
+                      ),
+                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  minY: adjustedMin,
+                  maxY: adjustedMax,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true,
+                      color: kWarningOrange,
+                      barWidth: 2,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: history.length <= 20,
+                        getDotPainter: (spot, percent, barData, index) {
+                          return FlDotCirclePainter(
+                            radius: 3,
+                            color: kWarningOrange,
+                            strokeWidth: 1,
+                            strokeColor: Colors.white,
+                          );
+                        },
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: kWarningOrange.withOpacity(0.1),
+                      ),
+                    ),
+                  ],
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                        final idx = spot.spotIndex;
+                        final date = idx < history.length
+                            ? (history[idx]['purchased_at'] as String? ?? '').substring(0, 10)
+                            : '';
+                        return LineTooltipItem(
+                          '$date\n${spot.y.toStringAsFixed(0)} DA',
+                          const TextStyle(color: Colors.white, fontSize: 10),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: history.length,
-                    itemBuilder: (_, i) {
-                      final h = history[i];
-                      final arrivalDate = h['arrivage_date'] as String?;
-                      final formattedDate = arrivalDate != null
-                          ? arrivalDate.substring(0, 10)
-                          : '-';
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
-                          border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(flex: 2, child: Text('${h['size']} - ${h['color']}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))),
-                            Expanded(flex: 2, child: Text(formattedDate,
-                              style: const TextStyle(fontSize: 11, color: Colors.grey))),
-                            Expanded(flex: 1, child: Text('${(h['purchase_price'] as num?)?.toStringAsFixed(0) ?? '-'}',
-                              style: TextStyle(fontSize: 12, color: Colors.orange[700]))),
-                            Expanded(flex: 1, child: Text('${(h['sell_price_at_arrival'] as num?)?.toStringAsFixed(0) ?? '-'}',
-                              style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.bold))),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            // Table
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    color: const Color(0xFF795548),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 2, child: Text('Date',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                        Expanded(flex: 2, child: Text('Fournisseur',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                        Expanded(flex: 1, child: Text('Prix',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                        Expanded(flex: 1, child: Text('Variation',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                      ],
+                    ),
+                  ),
+                  ...history.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final h = entry.value;
+                    final date = (h['purchased_at'] as String? ?? '').substring(0, 10);
+                    final supplier = h['supplier_name'] as String? ?? '-';
+                    final price = (h['purchase_price'] as num?)?.toDouble() ?? 0;
+                    final prev = h['prev_price'] as num?;
+                    final change = prev != null ? price - prev.toDouble() : 0.0;
+                    final hasChange = prev != null;
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
+                        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 2, child: Text(date,
+                            style: const TextStyle(fontSize: 10, color: Colors.grey))),
+                          Expanded(flex: 2, child: Text(supplier,
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500))),
+                          Expanded(flex: 1, child: Text('${price.toStringAsFixed(0)} DA',
+                            style: TextStyle(fontSize: 10, color: Colors.orange[700], fontWeight: FontWeight.bold))),
+                          Expanded(flex: 1, child: hasChange
+                              ? Row(
+                                  children: [
+                                    Icon(
+                                      change >= 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                      size: 16,
+                                      color: change >= 0 ? kDangerRed : kAccentGreen,
+                                    ),
+                                    Text(
+                                      '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: change >= 0 ? kDangerRed : kAccentGreen,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Text('-',
+                                  style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

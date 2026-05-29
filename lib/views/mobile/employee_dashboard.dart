@@ -16,6 +16,8 @@ import '../../local_db/collections/transaction_local.dart';
 import '../../services/debt_recovery_service.dart';
 import 'expenses_screen.dart';
 import 'activity_logs_screen.dart';
+import '../admin/notifications_screen.dart';
+import '../../services/notification_service.dart';
 
 class EmployeeDashboard extends StatefulWidget {
   const EmployeeDashboard({super.key});
@@ -185,6 +187,44 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationService.instance.unreadCount,
+            builder: (context, count, _) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen()),
+                      );
+                    },
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           const LanguageToggleButton(),
         ],
       ),

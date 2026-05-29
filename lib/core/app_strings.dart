@@ -479,6 +479,20 @@ class S {
       'supp_no_payments': 'Aucun versement enregistré.',
       'supp_payment_of': 'Versement de ',
       'supp_reason': 'Motif: ',
+      'supp_compare': 'Comparer',
+
+      // ── Supplier Comparison ──
+      'comparison_select_product': 'Sélectionner un produit',
+      'comparison_search_hint': 'Rechercher par nom ou code-barres...',
+      'comparison_no_variants': 'Aucun produit trouvé',
+      'comparison_title': 'Comparaison',
+      'comparison_no_data': 'Aucune donnée de comparaison pour ce produit',
+      'comparison_supplier': 'Fournisseur',
+      'comparison_last_price': 'Dernier prix',
+      'comparison_avg_price': 'Prix moyen',
+      'comparison_min_price': 'Min',
+      'comparison_max_price': 'Max',
+      'comparison_purchases': 'Achats',
 
       // ── Employees ──
       'emp_title': 'Gestion des Employés',
@@ -956,6 +970,11 @@ class S {
       'transfer_execute_confirm': 'Confirmer le transfert ?',
       'transfer_done': 'Transfert effectué avec succès',
       'transfer_no_transfers': 'Aucun transfert',
+
+      // ── Notifications ──
+      'notif_title': 'Notifications',
+      'notif_mark_all_read': 'Tout marquer lu',
+      'notif_no_notifications': 'Aucune notification',
     },
 
     // ────────────────────────────────────────────────────────────
@@ -1889,6 +1908,11 @@ class S {
       'transfer_execute_confirm': 'تأكيد التحويل؟',
       'transfer_done': 'تم التحويل بنجاح',
       'transfer_no_transfers': 'لا توجد تحويلات',
+
+      // ── Notifications ──
+      'notif_title': 'الإشعارات',
+      'notif_mark_all_read': 'تحديد الكل كمقروء',
+      'notif_no_notifications': 'لا توجد إشعارات',
     },
   };
 }

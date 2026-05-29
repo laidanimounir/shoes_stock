@@ -30,6 +30,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<Map<String, dynamic>> _slowMoving = [];
   int _slowDays = 60;
   List<Map<String, dynamic>> _sizeAnalytics = [];
+  int _seasonalityMonth = DateTime.now().month;
+  List<Map<String, dynamic>> _seasonalityData = [];
+  bool _loadingSeasonality = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -111,6 +114,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         'p_store_id': _selectedStoreId,
         'p_period': 'month',
       });
+      final seasonRes = await supabase.rpc('get_seasonality_report', params: {
+        'p_store_id': _selectedStoreId,
+        'p_month': _seasonalityMonth,
+      });
 
       if (mounted) {
         setState(() {
@@ -122,6 +129,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _lowStockItems = List<Map<String, dynamic>>.from(lowStockRes ?? []);
           _slowMoving = (slowMovingRes as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
           _sizeAnalytics = List<Map<String, dynamic>>.from(sizeRes ?? []);
+          _seasonalityData = List<Map<String, dynamic>>.from(seasonRes ?? []);
           _isLoading = false;
         });
         _animController.forward();
@@ -296,6 +304,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           _buildSlowMovingSection(),
           const SizedBox(height: 20),
           _buildSizeAnalyticsSection(),
+          const SizedBox(height: 20),
+          _buildSeasonalitySection(),
         ],
       ),
     );

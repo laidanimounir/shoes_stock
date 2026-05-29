@@ -12,6 +12,8 @@ import '../admin/sales_history_screen.dart';
 import '../admin/activity_logs_screen.dart';
 import '../admin/employee_dashboard_screen.dart';
 import '../../widgets/offline_banner.dart';
+import '../../services/notification_service.dart';
+import '../admin/notifications_screen.dart';
 
 class EmployeeMainLayout extends StatefulWidget {
   const EmployeeMainLayout({super.key});
@@ -187,6 +189,46 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                   ),
                   child: Column(
                     children: [
+                      ValueListenableBuilder<int>(
+                        valueListenable: NotificationService.instance.unreadCount,
+                        builder: (context, count, _) {
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_outlined,
+                                    color: Colors.white70),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NotificationsScreen()),
+                                  );
+                                },
+                              ),
+                              if (count > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '$count',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       const LanguageToggleButton(),
                       const SizedBox(height: 8),
                       SizedBox(
