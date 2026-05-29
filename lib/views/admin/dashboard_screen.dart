@@ -561,19 +561,20 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(S.t('dash_revenue_chart'),
-                      style: GoogleFonts.playfairDisplay(
-                          color: Colors.white, fontSize: 14,
-                          fontWeight: FontWeight.bold)),
-                  Text(S.t('dash_${_chartPeriod}'),
-                      style: GoogleFonts.raleway(
-                          color: AppColors.textSecondary, fontSize: 11)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(S.t('dash_revenue_chart'),
+                        style: GoogleFonts.playfairDisplay(
+                            color: Colors.white, fontSize: 14,
+                            fontWeight: FontWeight.bold)),
+                    Text(S.t('dash_${_chartPeriod}'),
+                        style: GoogleFonts.raleway(
+                            color: AppColors.textSecondary, fontSize: 11)),
+                  ],
+                ),
               ),
               Row(
                 children: [
