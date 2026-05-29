@@ -927,7 +927,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                               _buildVariantPriceHistory(v['id']),
                             ],
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),
@@ -1228,7 +1228,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
