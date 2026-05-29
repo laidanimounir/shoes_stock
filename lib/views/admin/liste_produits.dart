@@ -1181,9 +1181,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                Column(
+          : Column(
               children: [
                 // Search bar
                 Container(
@@ -1668,18 +1666,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           },
                         ),
                 ),
-              ],
-            ),
                 if (_selectionMode && _selectedVariantIds.isNotEmpty)
                   _buildBulkPrintBar(),
               ],
+            ),
     );
   }
 
   Widget _buildBulkPrintBar() {
-    return Positioned(
-      left: 0, right: 0, bottom: 0,
-      child: Container(
+    return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1711,7 +1706,6 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 

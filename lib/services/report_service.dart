@@ -428,7 +428,6 @@ class ReportService {
     }
     if (expanded.isEmpty) return pdf.save();
 
-    const double labelWidthMm = 80;
     const double labelHeightMm = 40;
     const int columns = 2;
     const int rowsPerPage = 7;
