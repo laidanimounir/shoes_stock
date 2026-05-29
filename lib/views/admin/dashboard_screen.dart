@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_session.dart';
 import '../../services/report_service.dart';
 
 class DashboardScreen extends StatefulWidget {
