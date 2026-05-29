@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_session.dart';
+import '../../services/report_service.dart';
 
 class EmployeeDashboardScreen extends StatefulWidget {
   const EmployeeDashboardScreen({super.key});
@@ -18,6 +20,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
   bool _isLoading = true;
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _mySales = [];
+  List<Map<String, dynamic>> _employees = [];
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -66,11 +69,24 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         }) as Map<String, dynamic>;
       } catch (_) {}
 
+      List<Map<String, dynamic>> employees = [];
+      try {
+        final empRes = await supabase
+            .from('user_profiles')
+            .select('id, full_name, first_name, last_name')
+            .eq('role', 'employee')
+            .eq('is_active', true)
+            .eq('is_permanently_deleted', false)
+            .order('full_name');
+        employees = (empRes as List<dynamic>).cast<Map<String, dynamic>>();
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _stats = statsRes as Map<String, dynamic>;
           _mySales = (mySalesRes as List<dynamic>).cast<Map<String, dynamic>>();
           _commissionSummary = commission;
+          _employees = employees;
           _isLoading = false;
         });
         _animController.forward();
@@ -82,6 +98,118 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         _animController.forward();
       }
     }
+  }
+
+  Future<void> _showCashierReportDialog(String userId, String userName) async {
+    final supabase = Supabase.instance.client;
+    Map<String, dynamic>? report;
+    try {
+      report = await supabase.rpc('get_cashier_session_report', params: {
+        'p_user_id': userId,
+        'p_store_id': AppSession.currentStoreId,
+        'p_date': DateTime.now().toIso8601String().split('T')[0],
+      }) as Map<String, dynamic>;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Erreur chargement rapport: $e'),
+          backgroundColor: Colors.red,
+        ));
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    final totalSales = (report['total_sales'] as num?)?.toInt() ?? 0;
+    final totalRevenue = (report['total_revenue'] as num?)?.toDouble() ?? 0;
+    final avgDiscount = (report['avg_discount'] as num?)?.toDouble() ?? 0;
+    final totalRefunds = (report['total_refunds'] as num?)?.toInt() ?? 0;
+    final refundAmount = (report['refund_amount'] as num?)?.toDouble() ?? 0;
+    final totalInvoices = (report['total_invoices'] as num?)?.toInt() ?? 0;
+    final cashCollected = (report['cash_collected'] as num?)?.toDouble() ?? 0;
+    final creditGiven = (report['credit_given'] as num?)?.toDouble() ?? 0;
+    final topProduct = report['top_product_name'] as String? ?? '';
+    final topProductQty = (report['top_product_qty'] as num?)?.toInt() ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.receipt_long_rounded, color: AppColors.gold, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('Rapport du Jour — $userName',
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.surface,
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _reportRow('Ventes', '$totalSales'),
+                _reportRow('Revenu total', '${totalRevenue.toStringAsFixed(0)} ${S.t('misc_currency')}'),
+                _reportRow('Remise moyenne', '${avgDiscount.toStringAsFixed(1)}%'),
+                const Divider(color: AppColors.border, height: 16),
+                _reportRow('Factures', '$totalInvoices'),
+                _reportRow('Remboursements', '$totalRefunds (${refundAmount.toStringAsFixed(0)} ${S.t('misc_currency')})'),
+                const Divider(color: AppColors.border, height: 16),
+                _reportRow('Espèces encaissées', '${cashCollected.toStringAsFixed(0)} ${S.t('misc_currency')}'),
+                _reportRow('Crédit accordé', '${creditGiven.toStringAsFixed(0)} ${S.t('misc_currency')}'),
+                if (topProduct.isNotEmpty) ...[
+                  const Divider(color: AppColors.border, height: 16),
+                  _reportRow('Top produit', '$topProduct ($topProductQty)'),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ReportService.instance.generateCashierSessionPdf(report!, userName: userName);
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.print_rounded, size: 16, color: AppColors.gold),
+                const SizedBox(width: 4),
+                Text('Imprimer', style: GoogleFonts.raleway(color: AppColors.gold, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.t('action_close'), style: GoogleFonts.raleway(color: AppColors.textSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reportRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: GoogleFonts.raleway(
+                  color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(value,
+              style: GoogleFonts.raleway(
+                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
   }
 
   @override
@@ -175,6 +303,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
           _buildMySalesCard(),
           const SizedBox(height: 20),
           _buildLowStockCard(),
+          const SizedBox(height: 20),
+          _buildEmployeesSection(),
         ],
       ),
     );
@@ -511,6 +641,91 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       debugPrint('Error fetching low stock: $e');
       return [];
     }
+  }
+
+  Widget _buildEmployeesSection() {
+    final employees = _employees;
+    if (employees.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.people_rounded, color: AppColors.gold, size: 18),
+              const SizedBox(width: 8),
+              Text('Employés',
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: employees.length,
+            separatorBuilder: (_, __) => Divider(
+                color: AppColors.border, height: 1, thickness: 0.5),
+            itemBuilder: (context, index) {
+              final e = employees[index];
+              final name = e['full_name'] as String? ?? '${e['first_name'] ?? ''} ${e['last_name'] ?? ''}'.trim();
+              final userId = e['id'] as String;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: GoogleFonts.raleway(
+                              color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(name,
+                          style: GoogleFonts.raleway(
+                              color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    Container(
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 0.8),
+                      ),
+                      child: TextButton(
+                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10)),
+                        onPressed: () => _showCashierReportDialog(userId, name),
+                        child: Text('Rapport du Jour',
+                            style: GoogleFonts.raleway(
+                                color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildShimmer() {

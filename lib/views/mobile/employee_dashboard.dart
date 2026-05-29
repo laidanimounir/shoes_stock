@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:intl/intl.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../shared/widgets/language_toggle_button.dart';
@@ -71,6 +72,13 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
     }
   }
 
+  void _showMyDailyReport(BuildContext ctx) {
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => _DailyReportDialog(userId: AppSession.currentUserId ?? ''),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screens = [
@@ -113,6 +121,14 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                   title: Text('Commission: ${total.toStringAsFixed(0)} DA'),
                   subtitle: Text('Taux: $rate%'),
                 );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.receipt_long, color: Colors.indigo[900]),
+              title: Text('Mon Rapport du Jour'),
+              onTap: () {
+                Navigator.pop(context);
+                _showMyDailyReport(context);
               },
             ),
             const Divider(),
@@ -776,6 +792,97 @@ class _SalesTabState extends State<_SalesTab> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DailyReportDialog extends StatefulWidget {
+  final String userId;
+  const _DailyReportDialog({required this.userId});
+
+  @override
+  State<_DailyReportDialog> createState() => _DailyReportDialogState();
+}
+
+class _DailyReportDialogState extends State<_DailyReportDialog> {
+  Map<String, dynamic>? _report;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final res = await Supabase.instance.client.rpc('get_cashier_session_report', params: {
+        'p_user_id': widget.userId,
+        'p_store_id': AppSession.currentStoreId,
+        'p_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      });
+      if (mounted) setState(() { _report = Map<String, dynamic>.from(res as Map); _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.receipt_long, color: Colors.indigo, size: 20),
+          const SizedBox(width: 8),
+          const Text('Mon Rapport du Jour', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        ],
+      ),
+      content: SizedBox(
+        width: 320,
+        child: _loading
+            ? const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()))
+            : _report == null
+                ? const Text('Erreur lors du chargement du rapport.')
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _mr('Ventes', '${(_report!['total_sales'] as num?)?.toInt() ?? 0}'),
+                        _mr('Revenu', '${(_report!['total_revenue'] as num?)?.toDouble() ?? 0} DA'),
+                        _mr('Remise moy.', '${(_report!['avg_discount'] as num?)?.toDouble() ?? 0}%'),
+                        const Divider(height: 12),
+                        _mr('Factures', '${(_report!['total_invoices'] as num?)?.toInt() ?? 0}'),
+                        _mr('Remboursements', '${(_report!['total_refunds'] as num?)?.toInt() ?? 0}'),
+                        const Divider(height: 12),
+                        _mr('Espèces', '${(_report!['cash_collected'] as num?)?.toDouble() ?? 0} DA'),
+                        _mr('Crédit', '${(_report!['credit_given'] as num?)?.toDouble() ?? 0} DA'),
+                        if (((_report!['top_product_name'] as String?) ?? '').isNotEmpty) ...[
+                          const Divider(height: 12),
+                          _mr('Top produit', '${_report!['top_product_name']} (${_report!['top_product_qty']})'),
+                        ],
+                      ],
+                    ),
+                  ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fermer'),
+        ),
+      ],
+    );
+  }
+
+  Widget _mr(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }

@@ -247,6 +247,21 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           const SizedBox(width: 4),
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.35), width: 0.8),
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.summarize_rounded, color: AppColors.success, size: 18),
+              onPressed: () => ReportService.instance.showEndOfDayReportDialog(context, _selectedStoreId),
+              tooltip: 'Rapport de Clôture',
+            ),
+          ),
+          const SizedBox(width: 4),
           PopupMenuButton<String>(
             icon: const Icon(Icons.download_rounded, color: AppColors.gold, size: 18),
             tooltip: 'Exporter',

@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../services/report_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
@@ -50,6 +51,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
   String? _filterCategory;
   String? _filterStockStatus;
   String? _filterSupplier;
+
+  bool _selectionMode = false;
+  final Set<String> _selectedVariantIds = {};
 
   @override
   void initState() {
@@ -241,6 +245,125 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       _searchQuery = '';
       _searchController.clear();
     });
+  }
+
+  List<Map<String, dynamic>> get _allVisibleVariants {
+    final result = <Map<String, dynamic>>[];
+    for (final product in _filteredProducts) {
+      final variants = (product['product_variants'] as List<dynamic>?)
+          ?.where((v) => v['is_active'] == true)
+          .toList() ?? [];
+      for (final v in variants) {
+        result.add({...v, '_productName': product['name']});
+      }
+    }
+    return result;
+  }
+
+  void _toggleSelectAllVariants() {
+    final allIds = _allVisibleVariants.map((v) => v['id'] as String).toSet();
+    if (_selectedVariantIds.length == allIds.length) {
+      _selectedVariantIds.clear();
+    } else {
+      _selectedVariantIds.addAll(allIds);
+    }
+    setState(() {});
+  }
+
+  Future<void> _showBulkPrintDialog() async {
+    final allVariants = _allVisibleVariants;
+    final selectedVariants = allVariants
+        .where((v) => _selectedVariantIds.contains(v['id']))
+        .toList();
+    if (selectedVariants.isEmpty) return;
+
+    final controllers = selectedVariants
+        .map((_) => TextEditingController(text: '1'))
+        .toList();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Imprimer ${selectedVariants.length} étiquettes'),
+        content: SizedBox(
+          width: 400,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: selectedVariants.length,
+            itemBuilder: (_, i) {
+              final v = selectedVariants[i];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${v['_productName']} / ${v['size']} / ${v['color']}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 70,
+                      child: TextField(
+                        controller: controllers[i],
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Qté',
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Imprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final items = <BarcodeItem>[];
+    for (int i = 0; i < selectedVariants.length; i++) {
+      final v = selectedVariants[i];
+      final qty = int.tryParse(controllers[i].text) ?? 1;
+      final barcode = (v['barcode'] as String?)?.trim();
+      if (qty > 0 && barcode != null && barcode.isNotEmpty) {
+        items.add(BarcodeItem(
+          variantId: v['id'],
+          barcode: barcode,
+          productName: v['_productName'] ?? '',
+          size: v['size'] ?? '',
+          color: v['color'] ?? '',
+          price: (v['sell_price'] as num?)?.toDouble() ?? 0,
+          quantity: qty,
+        ));
+      }
+    }
+
+    if (items.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun code-barres valide sélectionné'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
+    final pdfBytes = await ReportService.instance.generateBulkBarcodePdf(items);
+    await Printing.layoutPdf(onLayout: (_) => pdfBytes);
   }
 
   Widget _buildCategoryBadge(String? category) {
@@ -1058,7 +1181,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : Stack(
+              children: [
+                Column(
               children: [
                 // Search bar
                 Container(
@@ -1208,6 +1333,34 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             ],
                           ),
                         ),
+                        if (_selectionMode)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _allVisibleVariants.isNotEmpty &&
+                                      _selectedVariantIds.length == _allVisibleVariants.length,
+                                  onChanged: (_) => _toggleSelectAllVariants(),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                const SizedBox(width: 4),
+                                Text('Tout sélectionner (${_allVisibleVariants.length})',
+                                  style: GoogleFonts.raleway(fontSize: 12, fontWeight: FontWeight.w600),
+                                ),
+                                const Spacer(),
+                                TextButton.icon(
+                                  icon: const Icon(Icons.close, size: 16),
+                                  label: const Text('Annuler'),
+                                  onPressed: () => setState(() {
+                                    _selectionMode = false;
+                                    _selectedVariantIds.clear();
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ),
                         const SizedBox(height: 4),
                         Text(
                           '${_filteredProducts.length} produit(s) trouvé(s)',
@@ -1381,7 +1534,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                               final margin = sellPrice - buyPrice;
                                               final varStatus = _getStockStatus(variantStock);
 
-                                              return Container(
+                                              final isSelected = _selectedVariantIds.contains(v['id']);
+
+                                              return GestureDetector(
+                                                onLongPress: () {
+                                                  if (!_selectionMode) {
+                                                    setState(() {
+                                                      _selectionMode = true;
+                                                      _selectedVariantIds.add(v['id']);
+                                                    });
+                                                  }
+                                                },
+                                                child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                                                 decoration: BoxDecoration(
                                                   border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
@@ -1389,6 +1553,21 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                 ),
                                                 child: Row(
                                                   children: [
+                                                    if (_selectionMode)
+                                                      Checkbox(
+                                                        value: isSelected,
+                                                        onChanged: (_) {
+                                                          setState(() {
+                                                            if (isSelected) {
+                                                              _selectedVariantIds.remove(v['id']);
+                                                            } else {
+                                                              _selectedVariantIds.add(v['id']);
+                                                            }
+                                                          });
+                                                        },
+                                                        visualDensity: VisualDensity.compact,
+                                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                      ),
                                                     Expanded(flex: 2, child: Text('${v['size']} - ${v['color']}',
                                                       style: TextStyle(
                                                         fontWeight: FontWeight.bold,
@@ -1451,7 +1630,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                     ),
                                                   ],
                                                 ),
-                                              );
+                                              ),
+                                            );
                                             }),
                                           ],
                                         ),
@@ -1490,6 +1670,48 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 ),
               ],
             ),
+                if (_selectionMode && _selectedVariantIds.isNotEmpty)
+                  _buildBulkPrintBar(),
+              ],
+    );
+  }
+
+  Widget _buildBulkPrintBar() {
+    return Positioned(
+      left: 0, right: 0, bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, -2)),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              Icon(Icons.check_circle, color: kAccentGreen, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                '${_selectedVariantIds.length} sélectionné(s)',
+                style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.print, size: 18),
+                label: Text('Imprimer Barcodes (${_selectedVariantIds.length})'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                onPressed: _showBulkPrintDialog,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

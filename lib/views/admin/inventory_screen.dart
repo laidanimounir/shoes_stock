@@ -1,10 +1,14 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:printing/printing.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
+import '../../services/report_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../local_db/collections/inventory_local.dart';
@@ -357,6 +361,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               ),
             ),
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: S.t('action_export'),
+            onPressed: _showExportOptions,
+          ),
+          IconButton(
+            icon: const Icon(Icons.print),
+            tooltip: 'Imprimer Barcodes',
+            onPressed: _filteredInventory.isNotEmpty ? () => _showBulkBarcodeDialog() : null,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: S.t('action_refresh'),
@@ -755,6 +769,103 @@ class _InventoryScreenState extends State<InventoryScreen> {
     ));
   }
 
+  Future<void> _showBulkBarcodeDialog() async {
+    final items = _filteredInventory;
+    if (items.isEmpty) return;
+
+    final controllers = items
+        .map((_) => TextEditingController(text: '1'))
+        .toList();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Imprimer ${items.length} étiquettes'),
+        content: SizedBox(
+          width: 400,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: items.length,
+            itemBuilder: (_, i) {
+              final item = items[i];
+              final variant = item['product_variants'] ?? {};
+              final product = variant['products'] ?? {};
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${product['name']} / ${variant['size']} / ${variant['color']}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 70,
+                      child: TextField(
+                        controller: controllers[i],
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Qté',
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Imprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final barcodeItems = <BarcodeItem>[];
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final variant = item['product_variants'] ?? {};
+      final product = variant['products'] ?? {};
+      final barcode = (variant['barcode'] as String?)?.trim();
+      final qty = int.tryParse(controllers[i].text) ?? 1;
+      if (qty > 0 && barcode != null && barcode.isNotEmpty) {
+        barcodeItems.add(BarcodeItem(
+          variantId: item['variant_id'] ?? '',
+          barcode: barcode,
+          productName: product['name'] ?? '',
+          size: variant['size'] ?? '',
+          color: variant['color'] ?? '',
+          price: (variant['sell_price'] as num?)?.toDouble() ?? 0,
+          quantity: qty,
+        ));
+      }
+    }
+
+    if (barcodeItems.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun code-barres valide'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
+    final pdfBytes = await ReportService.instance.generateBulkBarcodePdf(barcodeItems);
+    await Printing.layoutPdf(onLayout: (_) => pdfBytes);
+  }
+
   Future<void> _showVariantHistory(Map<String, dynamic> item) async {
     if (AppSession.isOfflineMode) {
       if (!mounted) return;
@@ -1017,6 +1128,98 @@ class _InventoryScreenState extends State<InventoryScreen> {
         );
       },
     );
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                S.t('action_export'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              title: const Text('PDF'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _exportAsPdf();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.table_chart, color: Colors.green),
+              title: const Text('Excel'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _exportAsExcel();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportAsPdf() async {
+    try {
+      final items = _filteredInventory.cast<Map<String, dynamic>>();
+      if (items.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.t('inv_no_products')), backgroundColor: Colors.orange),
+          );
+        }
+        return;
+      }
+      final store = _stores.firstWhere((s) => s['id'] == _selectedStoreId);
+      final storeName = store['name'] ?? '';
+      final bytes = await ReportService.instance.generateInventoryPdf(items, storeName);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(file.path)], text: 'Inventory Report');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportAsExcel() async {
+    try {
+      final items = _filteredInventory.cast<Map<String, dynamic>>();
+      if (items.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.t('inv_no_products')), backgroundColor: Colors.orange),
+          );
+        }
+        return;
+      }
+      final bytes = await ReportService.instance.generateInventoryExcel(items);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/inventory_${DateTime.now().millisecondsSinceEpoch}.csv');
+      await file.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(file.path)], text: 'Inventory Report');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildInventoryList() {

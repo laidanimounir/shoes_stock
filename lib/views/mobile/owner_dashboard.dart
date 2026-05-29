@@ -510,6 +510,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchDashboardData(isRefresh: true),
           ),
+          IconButton(
+            icon: const Icon(Icons.summarize, color: Colors.greenAccent),
+            tooltip: 'Rapport de Clôture',
+            onPressed: () => ReportService.instance.showEndOfDayReportDialog(context, _selectedStoreId),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.download),
             tooltip: 'Exporter',
