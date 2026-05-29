@@ -3,8 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
-import '../../local_db/isar_service.dart';
-import '../../local_db/collections/settings_local.dart';
 import '../../shared/utils/contact_utils.dart';
 
 class DebtRecoveryScreen extends StatefulWidget {
@@ -15,9 +13,13 @@ class DebtRecoveryScreen extends StatefulWidget {
 
 class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
   List<Map<String, dynamic>> _debts = [];
+  List<Map<String, dynamic>> _allDebts = [];
   List<Map<String, dynamic>> _overdueCustomers = [];
   bool _isLoading = true;
-  int _overdueDaysThreshold = 30;
+  String? _bucketFilter;
+  final Map<String, double> _bucketTotals = {};
+  final Map<String, String> _customerBuckets = {};
+  final Map<String, int> _customerDaysOverdue = {};
   final _searchCtrl = TextEditingController();
 
   @override
@@ -28,27 +30,62 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
   Future<void> _fetch() async {
     setState(() => _isLoading = true);
     try {
-      _overdueDaysThreshold = await _loadOverdueThreshold();
       final data = await DebtRecoveryService.instance.fetchCustomersWithDebt(AppSession.currentStoreId!);
       List<Map<String, dynamic>> overdue = [];
       try {
         final res = await Supabase.instance.client.rpc('get_overdue_customers', params: {
           'p_store_id': AppSession.currentStoreId,
-          'p_days_threshold': _overdueDaysThreshold,
         });
         overdue = List<Map<String, dynamic>>.from(res ?? []);
       } catch (_) {}
-      if (mounted) setState(() { _debts = data; _overdueCustomers = overdue; _isLoading = false; });
+
+      final bucketTotals = <String, double>{'0-30': 0, '31-60': 0, '61-90': 0, '90+': 0};
+      final customerBuckets = <String, String>{};
+      final customerDaysOverdue = <String, int>{};
+      for (final o in overdue) {
+        final id = o['id'] as String;
+        final bucket = o['bucket'] as String? ?? '90+';
+        final days = (o['days_overdue'] as num?)?.toInt() ?? 0;
+        final balance = (o['balance'] as num?)?.toDouble() ?? 0;
+        bucketTotals[bucket] = (bucketTotals[bucket] ?? 0) + balance;
+        customerBuckets[id] = bucket;
+        customerDaysOverdue[id] = days;
+      }
+
+      if (mounted) setState(() {
+        _allDebts = data;
+        _debts = data;
+        _overdueCustomers = overdue;
+        _bucketTotals..clear()..addAll(bucketTotals);
+        _customerBuckets..clear()..addAll(customerBuckets);
+        _customerDaysOverdue..clear()..addAll(customerDaysOverdue);
+        _isLoading = false;
+      });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
   }
 
-  Future<int> _loadOverdueThreshold() async {
-    try {
-      final isar = await IsarService.getInstance();
-      final settings = await isar.settingsLocals.get(1);
-      if (settings != null) return settings.debtOverdueDays;
-    } catch (_) {}
-    return 30;
+  void _applyFilters() {
+    final q = _searchCtrl.text.toLowerCase();
+    final bucket = _bucketFilter;
+    setState(() {
+      _debts = _allDebts.where((d) {
+        if (q.isNotEmpty) {
+          final name = (d['full_name'] ?? '').toString().toLowerCase();
+          final phone = (d['phone'] ?? '').toString();
+          if (!name.contains(q) && !phone.contains(q)) return false;
+        }
+        if (bucket != null) {
+          final cid = d['id'] as String;
+          if (_customerBuckets[cid] != bucket) return false;
+        }
+        return true;
+      }).toList();
+    });
+  }
+
+  void _setBucketFilter(String? bucket) {
+    _bucketFilter = bucket;
+    _applyFilters();
   }
 
   void _recordPayment(Map<String, dynamic> debtor) async {
@@ -78,49 +115,109 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
     ));
   }
 
+  Widget _buildBucketCards() {
+    if (_overdueCustomers.isEmpty) return const SizedBox.shrink();
+    final buckets = [
+      ('0-30', Colors.amber.shade600, _bucketTotals['0-30'] ?? 0),
+      ('31-60', Colors.orange.shade600, _bucketTotals['31-60'] ?? 0),
+      ('61-90', Colors.red.shade600, _bucketTotals['61-90'] ?? 0),
+      ('90+', Colors.red.shade900, _bucketTotals['90+'] ?? 0),
+    ];
+    return Column(
+      children: [
+        SizedBox(
+          height: 60,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            children: buckets.map((b) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Container(
+                  width: 120,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: b.$2.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: b.$2.withOpacity(0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(b.$1, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: b.$2)),
+                      Text('${b.$3.toStringAsFixed(0)} DA',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Tous', style: TextStyle(fontSize: 11)),
+                selected: _bucketFilter == null,
+                onSelected: (_) => _setBucketFilter(null),
+              ),
+              const SizedBox(width: 4),
+              ChoiceChip(
+                label: const Text('0-30', style: TextStyle(fontSize: 11)),
+                selected: _bucketFilter == '0-30',
+                onSelected: (_) => _setBucketFilter('0-30'),
+              ),
+              const SizedBox(width: 4),
+              ChoiceChip(
+                label: const Text('31-60', style: TextStyle(fontSize: 11)),
+                selected: _bucketFilter == '31-60',
+                onSelected: (_) => _setBucketFilter('31-60'),
+              ),
+              const SizedBox(width: 4),
+              ChoiceChip(
+                label: const Text('61-90', style: TextStyle(fontSize: 11)),
+                selected: _bucketFilter == '61-90',
+                onSelected: (_) => _setBucketFilter('61-90'),
+              ),
+              const SizedBox(width: 4),
+              ChoiceChip(
+                label: const Text('90+', style: TextStyle(fontSize: 11)),
+                selected: _bucketFilter == '90+',
+                onSelected: (_) => _setBucketFilter('90+'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filtered = _searchCtrl.text.isEmpty ? _debts : _debts.where((d) => (d['full_name'] ?? '').toString().toLowerCase().contains(_searchCtrl.text.toLowerCase())).toList();
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_debt_recovery')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
       body: Column(children: [
-        if (_overdueCustomers.isNotEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            color: Colors.red[50],
-            child: Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 16),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${_overdueCustomers.length} ${S.t('debt_overdue_clients')} (${_overdueDaysThreshold}j)',
-                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        _buildBucketCards(),
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: TextField(
             controller: _searchCtrl,
             decoration: InputDecoration(hintText: S.t('cust_search_hint'), prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => _applyFilters(),
           ),
         ),
-        Expanded(child: _isLoading ? const Center(child: CircularProgressIndicator()) : filtered.isEmpty
+        Expanded(child: _isLoading ? const Center(child: CircularProgressIndicator()) : _debts.isEmpty
             ? Center(child: Text(S.t('label_no_data')))
-            : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: filtered.length, itemBuilder: (_, i) {
-                final d = filtered[i];
+            : RefreshIndicator(onRefresh: _fetch, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: _debts.length, itemBuilder: (_, i) {
+                final d = _debts[i];
                 final bal = (d['balance'] as num?)?.toDouble() ?? 0;
-                final overdueCustomer = _overdueCustomers.cast<Map<String, dynamic>?>().firstWhere(
-                  (o) => o?['id'] == d['id'],
-                  orElse: () => null,
-                );
-                final isOverdue = overdueCustomer != null;
-                final daysOverdue = isOverdue ? (overdueCustomer['days_overdue'] as int?) ?? 0 : 0;
+                final cid = d['id'] as String;
+                final daysOverdue = _customerDaysOverdue[cid];
+                final isOverdue = daysOverdue != null && daysOverdue > 0;
                 final tileColor = isOverdue ? Colors.red.withOpacity(0.05) : null;
                 return Card(margin: const EdgeInsets.only(bottom: 8), color: tileColor, child: ListTile(
                   leading: CircleAvatar(
@@ -133,8 +230,14 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                     children: [
                       Text('${S.t('pos_credit')}: ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(color: isOverdue ? Colors.red : Colors.red, fontWeight: FontWeight.bold)),
                       if (isOverdue)
-                        Text('${S.t('debt_days_overdue')}: $daysOverdue ${S.t('debt_days')}',
-                            style: TextStyle(color: Colors.red[700], fontSize: 11, fontWeight: FontWeight.w600)),
+                        Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red[600]),
+                            const SizedBox(width: 4),
+                            Text('$daysOverdue ${S.t('debt_days')}',
+                                style: TextStyle(color: Colors.red[700], fontSize: 11, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
                     ],
                   ),
                   trailing: Row(
@@ -143,7 +246,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                       IconButton(
                         icon: const Icon(Icons.chat, color: Colors.green, size: 20),
                         tooltip: 'WhatsApp',
-                        onPressed: () => ContactUtils.sendWhatsApp(context, d['phone'] ?? '', d['full_name'], bal),
+                        onPressed: () => ContactUtils.sendWhatsApp(context, d['phone'] ?? '', d['full_name'], bal, days: daysOverdue),
                       ),
                       IconButton(
                         icon: const Icon(Icons.sms, color: Colors.blue, size: 20),

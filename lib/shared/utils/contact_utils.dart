@@ -19,8 +19,9 @@ class ContactUtils {
     BuildContext context,
     String phone,
     String name,
-    double balance,
-  ) async {
+    double balance, {
+    int? days,
+  }) async {
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.t('contact_no_phone')), backgroundColor: Colors.orange),
@@ -30,7 +31,8 @@ class ContactUtils {
     final cleanedPhone = cleanPhone(phone).replaceAll('+', '');
     final message = S.t('contact_whatsapp_msg')
         .replaceAll('{name}', name)
-        .replaceAll('{amount}', '${balance.toStringAsFixed(0)} ${S.t('misc_currency')}');
+        .replaceAll('{amount}', balance.toStringAsFixed(0))
+        .replaceAll('{days}', days?.toString() ?? '');
     final url = Uri.parse('https://wa.me/$cleanedPhone?text=${Uri.encodeComponent(message)}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);

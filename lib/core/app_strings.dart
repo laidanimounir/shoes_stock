@@ -801,7 +801,7 @@ class S {
       'owner_role_label': 'Propriétaire',
 
       // ── Contact / WhatsApp / SMS ──
-      'contact_whatsapp_msg': 'Bonjour {name}, ceci est un rappel que votre solde dû est de {amount}. Merci pour votre confiance.',
+      'contact_whatsapp_msg': 'Bonjour {name}, votre solde de {amount} DA est en retard de {days} jours.',
       'contact_sms_msg': 'Bonjour {name}, votre solde dû: {amount}. Merci de régulariser. Cordialement.',
       'contact_no_phone': 'Aucun numéro de téléphone pour ce client',
       'contact_debt_list_title': 'Clients débiteurs',
@@ -1734,7 +1734,7 @@ class S {
       'owner_role_label': 'المالك',
 
       // ── Contact / WhatsApp / SMS ──
-      'contact_whatsapp_msg': 'مرحباً {name}، هذا تذكير بأن رصيدكم المستحق هو {amount}. شكراً لتعاملكم معنا.',
+      'contact_whatsapp_msg': 'مرحباً {name}، رصيدكم المستحق {amount} DA متأخر لمدة {days} يوماً.',
       'contact_sms_msg': 'مرحباً {name}، رصيدكم المستحق: {amount}. نرجو التسوية في أقرب وقت. شكراً.',
       'contact_no_phone': 'لا يوجد رقم هاتف لهذا العميل',
       'contact_debt_list_title': 'العملاء المدينون',

@@ -4,8 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
-import '../../local_db/isar_service.dart';
-import '../../local_db/collections/settings_local.dart';
+import '../../shared/utils/contact_utils.dart';
 
 class DebtRecoveryScreen extends StatefulWidget {
   const DebtRecoveryScreen({super.key});
@@ -22,7 +21,10 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
   List<Map<String, dynamic>> _allCustomers = [];
   List<Map<String, dynamic>> _overdueCustomers = [];
   bool _isLoading = true;
-  int _overdueDaysThreshold = 30;
+  String? _bucketFilter;
+  final Map<String, double> _bucketTotals = {};
+  final Map<String, String> _customerBuckets = {};
+  final Map<String, int> _customerDaysOverdue = {};
 
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _payments = [];
@@ -42,51 +44,64 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
     final storeId = AppSession.currentStoreId;
     if (storeId == null) return;
 
-    _overdueDaysThreshold = await _loadOverdueThreshold();
-
     final customers = await DebtRecoveryService.instance.fetchCustomersWithDebt(storeId);
 
     List<Map<String, dynamic>> overdue = [];
     try {
       final res = await Supabase.instance.client.rpc('get_overdue_customers', params: {
         'p_store_id': storeId,
-        'p_days_threshold': _overdueDaysThreshold,
       });
       overdue = List<Map<String, dynamic>>.from(res ?? []);
     } catch (_) {}
+
+    final bucketTotals = <String, double>{'0-30': 0, '31-60': 0, '61-90': 0, '90+': 0};
+    final customerBuckets = <String, String>{};
+    final customerDaysOverdue = <String, int>{};
+    for (final o in overdue) {
+      final id = o['id'] as String;
+      final bucket = o['bucket'] as String? ?? '90+';
+      final days = (o['days_overdue'] as num?)?.toInt() ?? 0;
+      final balance = (o['balance'] as num?)?.toDouble() ?? 0;
+      bucketTotals[bucket] = (bucketTotals[bucket] ?? 0) + balance;
+      customerBuckets[id] = bucket;
+      customerDaysOverdue[id] = days;
+    }
 
     if (mounted) {
       setState(() {
         _allCustomers = customers;
         _customers = customers;
         _overdueCustomers = overdue;
+        _bucketTotals..clear()..addAll(bucketTotals);
+        _customerBuckets..clear()..addAll(customerBuckets);
+        _customerDaysOverdue..clear()..addAll(customerDaysOverdue);
         _isLoading = false;
       });
     }
   }
 
-  Future<int> _loadOverdueThreshold() async {
-    try {
-      final isar = await IsarService.getInstance();
-      final settings = await isar.settingsLocals.get(1);
-      if (settings != null) return settings.debtOverdueDays;
-    } catch (_) {}
-    return 30;
+  void _applyFilters() {
+    final q = _searchController.text.toLowerCase();
+    final bucket = _bucketFilter;
+    setState(() {
+      _customers = _allCustomers.where((c) {
+        if (q.isNotEmpty) {
+          final name = (c['full_name'] as String? ?? '').toLowerCase();
+          final phone = (c['phone'] as String? ?? '');
+          if (!name.contains(q) && !phone.contains(q)) return false;
+        }
+        if (bucket != null) {
+          final cid = c['id'] as String;
+          if (_customerBuckets[cid] != bucket) return false;
+        }
+        return true;
+      }).toList();
+    });
   }
 
-  void _filterCustomers(String query) {
-    if (query.isEmpty) {
-      setState(() => _customers = _allCustomers);
-      return;
-    }
-    final q = query.toLowerCase();
-    setState(() {
-      _customers = _allCustomers
-          .where((c) =>
-              (c['full_name'] as String? ?? '').toLowerCase().contains(q) ||
-              (c['phone'] as String? ?? '').contains(q))
-          .toList();
-    });
+  void _setBucketFilter(String? bucket) {
+    _bucketFilter = bucket;
+    _applyFilters();
   }
 
   void _selectCustomer(Map<String, dynamic> customer) {
@@ -280,6 +295,92 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
     }
   }
 
+  Widget _buildBucketCards() {
+    if (_overdueCustomers.isEmpty) return const SizedBox.shrink();
+    final buckets = [
+      ('0-30', Colors.amber.shade600, _bucketTotals['0-30'] ?? 0),
+      ('31-60', Colors.orange.shade600, _bucketTotals['31-60'] ?? 0),
+      ('61-90', Colors.red.shade600, _bucketTotals['61-90'] ?? 0),
+      ('90+', Colors.red.shade900, _bucketTotals['90+'] ?? 0),
+    ];
+    return Column(
+      children: [
+        SizedBox(
+          height: 70,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: buckets.map((b) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildBucketCard(b.$1, b.$2, b.$3),
+              );
+            }).toList(),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Tous'),
+                selected: _bucketFilter == null,
+                onSelected: (_) => _setBucketFilter(null),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('0-30'),
+                selected: _bucketFilter == '0-30',
+                onSelected: (_) => _setBucketFilter('0-30'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('31-60'),
+                selected: _bucketFilter == '31-60',
+                onSelected: (_) => _setBucketFilter('31-60'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('61-90'),
+                selected: _bucketFilter == '61-90',
+                onSelected: (_) => _setBucketFilter('61-90'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('90+'),
+                selected: _bucketFilter == '90+',
+                onSelected: (_) => _setBucketFilter('90+'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBucketCard(String label, Color color, double amount) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label, style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 12, color: color)),
+          const SizedBox(height: 2),
+          Text('${amount.toStringAsFixed(0)} DA',
+              style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -323,24 +424,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
       ),
       body: Column(
         children: [
-          if (_overdueCustomers.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: Colors.red[50],
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${_overdueCustomers.length} ${S.t('debt_overdue_clients')} (${_overdueDaysThreshold}j)',
-                      style: GoogleFonts.raleway(color: Colors.red[800], fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _buildBucketCards(),
           Expanded(
             child: Row(
               children: [
@@ -366,7 +450,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                               border: const OutlineInputBorder(),
                               isDense: true,
                             ),
-                            onChanged: _filterCustomers,
+                            onChanged: (_) => _applyFilters(),
                           ),
                         ),
                         Padding(
@@ -403,6 +487,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                   final c = _customers[index];
                                   final balance = (c['balance'] as num?)?.toDouble() ?? 0;
                                   final isSelected = _selectedCustomer?['id'] == c['id'];
+                                  final cid = c['id'] as String;
+                                  final daysOverdue = _customerDaysOverdue[cid];
+                                  final isOverdue = daysOverdue != null && daysOverdue > 0;
 
                                   return ListTile(
                                     selected: isSelected,
@@ -413,23 +500,55 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                     ),
                                     title: Text(c['full_name'] ?? S.t('misc_unknown'),
                                         style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
-                                    subtitle: Text(c['phone'] ?? S.t('misc_no_phone'),
-                                        style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                    trailing: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red[50],
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.red.shade200),
-                                      ),
-                                      child: Text(
-                                        '${balance.toStringAsFixed(2)} DA',
-                                        style: GoogleFonts.raleway(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.red[700],
-                                          fontSize: 13,
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(c['phone'] ?? S.t('misc_no_phone'),
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                        if (isOverdue) ...[
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red[600]),
+                                              const SizedBox(width: 4),
+                                              Text('$daysOverdue ${S.t('debt_days')}',
+                                                  style: TextStyle(fontSize: 11, color: Colors.red[700], fontWeight: FontWeight.w600)),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red[50],
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: Colors.red.shade200),
+                                          ),
+                                          child: Text(
+                                            '${balance.toStringAsFixed(0)} DA',
+                                            style: GoogleFonts.raleway(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red[700],
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        IconButton(
+                                          icon: const Icon(Icons.chat, color: Colors.green, size: 18),
+                                          tooltip: 'WhatsApp',
+                                          onPressed: () => ContactUtils.sendWhatsApp(
+                                            context,
+                                            c['phone'] ?? '',
+                                            c['full_name'] ?? '',
+                                            balance,
+                                            days: daysOverdue,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     onTap: () => _selectCustomer(c),
                                   );
