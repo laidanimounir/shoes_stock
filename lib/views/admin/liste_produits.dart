@@ -261,6 +261,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return result;
   }
 
+  void _enterSelectionMode(String variantId) {
+    if (!_selectionMode) {
+      setState(() {
+        _selectionMode = true;
+        _selectedVariantIds.add(variantId);
+      });
+    }
+  }
+
   void _toggleSelectAllVariants() {
     final allIds = _allVisibleVariants.map((v) => v['id'] as String).toSet();
     if (_selectedVariantIds.length == allIds.length) {
@@ -1285,6 +1294,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               child: const Text('Réinitialiser', style: TextStyle(color: Colors.white70, fontSize: 13)),
             ),
           IconButton(
+            icon: const Icon(Icons.checklist),
+            tooltip: 'Sélectionner',
+            onPressed: () => setState(() => _selectionMode = true),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: S.t('action_refresh'),
             onPressed: _fetchProducts,
@@ -1653,16 +1667,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                               final varStatus = _getStockStatus(variantStock);
 
                                               final isSelected = _selectedVariantIds.contains(v['id']);
+                                              final vid = v['id'] as String;
 
                                               return GestureDetector(
-                                                onLongPress: () {
-                                                  if (!_selectionMode) {
-                                                    setState(() {
-                                                      _selectionMode = true;
-                                                      _selectedVariantIds.add(v['id']);
-                                                    });
-                                                  }
-                                                },
+                                                onLongPress: () => _enterSelectionMode(vid),
+                                                onSecondaryTap: () => _enterSelectionMode(vid),
                                                 child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                                                 decoration: BoxDecoration(
