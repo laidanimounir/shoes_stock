@@ -380,10 +380,14 @@ class S {
       'misc_select_store': 'Sélectionnez un magasin',
       'misc_not_available': 'N/A',
       'misc_unknown': 'Inconnu',
+      'misc_online_only': 'Disponible uniquement en ligne',
+      'misc_end_of_list': 'Fin de la liste',
       'misc_walk_in': 'Passager',
       'misc_no_phone': 'Sans téléphone',
       'misc_no_email': 'Sans email',
       'misc_no_store': 'Aucun magasin',
+      'inv_mov_return': 'Retour',
+      'action_load_more': 'Charger plus',
 
       // ── Purchases ──
       'buy_title': 'Achat / Approvisionnement',
@@ -1309,10 +1313,14 @@ class S {
       'misc_select_store': 'اختر متجراً',
       'misc_not_available': 'غ/م',
       'misc_unknown': 'غير معروف',
+      'misc_online_only': 'متاح فقط عبر الإنترنت',
+      'misc_end_of_list': 'نهاية القائمة',
       'misc_walk_in': 'زبون عابر',
       'misc_no_phone': 'بدون هاتف',
       'misc_no_email': 'بدون بريد',
       'misc_no_store': 'بدون متجر',
+      'inv_mov_return': 'مرتجع',
+      'action_load_more': 'تحميل المزيد',
 
       // ── Purchases ──
       'buy_title': 'شراء / تموين',

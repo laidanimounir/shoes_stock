@@ -661,6 +661,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         side: BorderSide(color: Colors.grey.shade200),
                       ),
                       child: ListTile(
+                        onTap: () => _showVariantHistory(item),
                         leading: CircleAvatar(
                           backgroundColor: isLow ? Colors.red[50] : Colors.teal[50],
                           child: Icon(
@@ -754,6 +755,270 @@ class _InventoryScreenState extends State<InventoryScreen> {
     ));
   }
 
+  Future<void> _showVariantHistory(Map<String, dynamic> item) async {
+    if (AppSession.isOfflineMode) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.t('misc_online_only')), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    final variant = item['product_variants'] ?? {};
+    final product = variant['products'] ?? {};
+    final variantId = item['variant_id'];
+    final currentQty = (item['quantity'] as int?) ?? 0;
+
+    final movements = <Map<String, dynamic>>[];
+    bool isLoading = false;
+    bool hasMore = true;
+    int offset = 0;
+    const limit = 50;
+
+    Future<void> loadMore() async {
+      if (isLoading || !hasMore) return;
+      isLoading = true;
+      try {
+        final res = await Supabase.instance.client
+            .rpc('get_variant_movement_history', params: {
+          'p_variant_id': variantId,
+          'p_store_id': _selectedStoreId,
+          'p_limit': limit,
+          'p_offset': offset,
+        });
+        final data = res as Map<String, dynamic>;
+        final newMovements = (data['movements'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>() ??
+            [];
+        final total = data['total'] as int? ?? 0;
+        movements.addAll(newMovements);
+        offset += limit;
+        hasMore = movements.length < total;
+      } catch (e) {
+        debugPrint('Error loading movement history: $e');
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    await loadMore();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (ctx, scrollController) {
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      decoration: BoxDecoration(
+                        color: Colors.teal[800],
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white54,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  product['name'] ?? S.t('misc_unknown'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$currentQty ${S.t('inv_units')}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${S.t('prod_barcode')}: ${variant['barcode'] ?? '-'} | ${S.t('prod_size')}: ${variant['size'] ?? '-'} | ${S.t('prod_color')}: ${variant['color'] ?? '-'}',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: movements.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.history,
+                                      size: 64, color: Colors.grey),
+                                  const SizedBox(height: 12),
+                                  Text(S.t('inv_no_movements'),
+                                      style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollController,
+                              itemCount: movements.length + 1,
+                              itemBuilder: (ctx, index) {
+                                if (index == movements.length) {
+                                  return hasMore
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Center(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () async {
+                                                await loadMore();
+                                                setSheetState(() {});
+                                              },
+                                              icon: const Icon(Icons.expand_more),
+                                              label: Text(S.t('action_load_more')),
+                                            ),
+                                          ),
+                                        )
+                                      : Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Center(
+                                            child: Text(
+                                              S.t('misc_end_of_list'),
+                                              style: const TextStyle(color: Colors.grey),
+                                            ),
+                                          ),
+                                        );
+                                }
+
+                                final mov = movements[index];
+                                final type = mov['type'] as String? ?? '';
+                                final qtyChange =
+                                    (mov['quantity_change'] as num?)?.toInt() ?? 0;
+                                final dateStr = mov['date'] as String? ?? '';
+                                final date = DateTime.tryParse(dateStr);
+                                final performedBy =
+                                    mov['performed_by'] as String? ??
+                                        S.t('misc_system');
+
+                                IconData icon;
+                                Color iconColor;
+                                String label;
+                                switch (type) {
+                                  case 'in':
+                                    icon = Icons.arrow_downward;
+                                    iconColor = Colors.blue;
+                                    label = S.t('inv_mov_in');
+                                  case 'out':
+                                    icon = Icons.arrow_upward;
+                                    iconColor = Colors.green;
+                                    label = S.t('inv_mov_out');
+                                  case 'return':
+                                    icon = Icons.replay;
+                                    iconColor = Colors.amber;
+                                    label = S.t('inv_mov_return');
+                                  default:
+                                    icon = Icons.swap_horiz;
+                                    iconColor = Colors.orange;
+                                    label = type;
+                                }
+
+                                final displayQty = type == 'out'
+                                    ? -qtyChange
+                                    : qtyChange;
+
+                                return ListTile(
+                                  dense: true,
+                                  leading: CircleAvatar(
+                                    backgroundColor: iconColor.withOpacity(0.1),
+                                    child: Icon(icon,
+                                        color: iconColor, size: 20),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: iconColor.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: iconColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${displayQty >= 0 ? '+' : ''}$displayQty',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: displayQty >= 0
+                                              ? Colors.green
+                                              : Colors.red,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  subtitle: Text(
+                                    '${date != null ? timeago.format(date, locale: AppSession.locale.value == 'ar' ? 'ar' : 'fr') : ''} • $performedBy',
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildInventoryList() {
     return ListView.separated(
       padding: const EdgeInsets.all(8),
@@ -767,6 +1032,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         final isLow = qty < 3;
 
         return ListTile(
+          onTap: () => _showVariantHistory(item),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Container(
             width: 48,
