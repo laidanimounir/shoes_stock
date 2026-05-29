@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
 import '../../core/app_colors.dart';
@@ -73,7 +74,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _fetchAll() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadingSeasonality = true;
+    });
     _animController.reset();
     try {
       final supabase = Supabase.instance.client;
@@ -130,6 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           _slowMoving = (slowMovingRes as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
           _sizeAnalytics = List<Map<String, dynamic>>.from(sizeRes ?? []);
           _seasonalityData = List<Map<String, dynamic>>.from(seasonRes ?? []);
+          _loadingSeasonality = false;
           _isLoading = false;
         });
         _animController.forward();
@@ -1187,6 +1192,219 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               );
             }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchSeasonality() async {
+    if (!mounted) return;
+    setState(() => _loadingSeasonality = true);
+    try {
+      final res = await Supabase.instance.client.rpc('get_seasonality_report', params: {
+        'p_store_id': _selectedStoreId,
+        'p_month': _seasonalityMonth,
+      });
+      if (mounted) {
+        setState(() {
+          _seasonalityData = List<Map<String, dynamic>>.from(res ?? []);
+          _loadingSeasonality = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching seasonality: $e');
+      if (mounted) setState(() => _loadingSeasonality = false);
+    }
+  }
+
+  Widget _buildSeasonalitySection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calendar_month, color: AppColors.teal, size: 18),
+              const SizedBox(width: 8),
+              Text('Analyse Saisonnière',
+                  style: GoogleFonts.playfairDisplay(
+                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(12, (i) {
+                final m = i + 1;
+                final selected = _seasonalityMonth == m;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(DateFormat('MMM', 'fr').format(DateTime(2020, m)),
+                        style: GoogleFonts.raleway(
+                            fontSize: 12,
+                            color: selected ? Colors.white : AppColors.teal)),
+                    selected: selected,
+                    selectedColor: AppColors.teal,
+                    backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                    onSelected: (_) {
+                      setState(() => _seasonalityMonth = m);
+                      _fetchSeasonality();
+                    },
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_loadingSeasonality)
+            const Center(child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.teal),
+            ))
+          else if (_seasonalityData.isEmpty)
+            Center(child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(S.t('dash_no_data'),
+                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+            ))
+          else
+            _buildSeasonalityChart(),
+          const SizedBox(height: 12),
+          if (_seasonalityData.isNotEmpty) _buildAdminSeasonalityTable(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeasonalityChart() {
+    final sorted = List<Map<String, dynamic>>.from(_seasonalityData)
+      ..sort((a, b) => (a['year'] as int).compareTo(b['year'] as int));
+    final years = sorted.map((e) => e['year'] as int).toList();
+    final maxRevenue = sorted.fold<double>(0, (p, v) => p > (v['total_revenue'] as num).toDouble() ? p : (v['total_revenue'] as num).toDouble());
+    final colors = [AppColors.teal, AppColors.gold, AppColors.purple];
+
+    return SizedBox(
+      height: 180,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxRevenue * 1.2,
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '${years[groupIndex]}\n${NumberFormat('#,##0', 'fr').format(rod.toY.toInt())} ${S.t('misc_currency')}',
+                  const TextStyle(color: Colors.white, fontSize: 11),
+                );
+              },
+            ),
+          ),
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final idx = value.toInt();
+                  if (idx < 0 || idx >= years.length) return const SizedBox();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text('${years[idx]}',
+                        style: GoogleFonts.raleway(
+                            color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) {
+                  return Text('${value.toInt()}',
+                      style: GoogleFonts.raleway(fontSize: 9, color: AppColors.textSecondary));
+                },
+              ),
+            ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxRevenue > 0 ? (maxRevenue / 4) : 1,
+          ),
+          borderData: FlBorderData(show: false),
+          barGroups: sorted.asMap().entries.map((entry) {
+            final i = entry.key;
+            final d = entry.value;
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: (d['total_revenue'] as num).toDouble(),
+                  color: colors[i % colors.length],
+                  width: 24,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminSeasonalityTable() {
+    final sorted = List<Map<String, dynamic>>.from(_seasonalityData)
+      ..sort((a, b) => (b['year'] as int).compareTo(a['year'] as int));
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text('Année',
+                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+              Expanded(child: Text('Revenu',
+                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+              Expanded(child: Text('Unités',
+                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+              Expanded(child: Text('Top Catégorie',
+                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+            ],
+          ),
+          const Divider(color: AppColors.border),
+          ...sorted.map((d) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Expanded(child: Text('${d['year']}',
+                    style: GoogleFonts.raleway(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12))),
+                Expanded(child: Text('${NumberFormat('#,##0', 'fr').format((d['total_revenue'] as num).toInt())} ${S.t('misc_currency')}',
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11))),
+                Expanded(child: Text('${d['total_units']}',
+                    style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11))),
+                Expanded(child: Text(d['top_category'] ?? '-',
+                    style: GoogleFonts.raleway(color: AppColors.gold, fontSize: 11),
+                    overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          )),
         ],
       ),
     );

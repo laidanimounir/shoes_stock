@@ -8,6 +8,7 @@ import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
 import '../../local_db/collections/user_profile_local.dart';
 import '../../core/app_strings.dart';
+import 'comparaison_fournisseur_sheet.dart';
 
 class GestionFournisseursScreen extends StatefulWidget {
   const GestionFournisseursScreen({super.key});
@@ -239,7 +240,11 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
         backgroundColor: Colors.teal[800],
         foregroundColor: Colors.white,
         actions: [
-        
+          IconButton(
+            icon: const Icon(Icons.compare_arrows),
+            tooltip: S.t('supp_compare'),
+            onPressed: () => SupplierComparisonSheet.show(context),
+          ),
           Row(
             children: [
               Text(S.t('supp_with_debt'), style: const TextStyle(color: Colors.white)),

@@ -246,8 +246,8 @@ class _SupplierComparisonSheetState extends State<SupplierComparisonSheet> {
       final isMostExp = hasMultiple && lastPrice == maxPrice;
 
       Color? rowColor;
-      if (isCheapest) rowColor = Colors.green.withOpacity(0.08);
-      if (isMostExp) rowColor = Colors.red.withOpacity(0.08);
+      if (isCheapest) rowColor = Colors.green.withValues(alpha: 0.08);
+      if (isMostExp) rowColor = Colors.red.withValues(alpha: 0.08);
 
       final style = TextStyle(
         color: isCheapest ? Colors.green : (isMostExp ? Colors.red : null),
@@ -255,7 +255,7 @@ class _SupplierComparisonSheetState extends State<SupplierComparisonSheet> {
       );
 
       return DataRow(
-        color: rowColor != null ? MaterialStateProperty.all(rowColor) : null,
+        color: rowColor != null ? WidgetStateProperty.all(rowColor) : null,
         cells: [
           DataCell(Text(r['supplier_name'] ?? '', style: style)),
           DataCell(Text(lastPrice.toStringAsFixed(2), style: style)),

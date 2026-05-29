@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
+import '../admin/comparaison_fournisseur_sheet.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/supplier_local.dart';
 
@@ -56,6 +57,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(S.t('nav_suppliers')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
         actions: [
+          IconButton(icon: const Icon(Icons.compare_arrows), tooltip: S.t('supp_compare'), onPressed: () => SupplierComparisonSheet.show(context)),
           IconButton(icon: Icon(_debtFilter ? Icons.filter_list_off : Icons.filter_list), onPressed: () => setState(() { _debtFilter = !_debtFilter; _fetch(); })),
           if (AppSession.isOwner) IconButton(icon: const Icon(Icons.add), onPressed: _add),
         ],

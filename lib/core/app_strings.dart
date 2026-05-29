@@ -1431,6 +1431,20 @@ class S {
       'supp_no_payments': 'لا توجد دفعات مسجلة.',
       'supp_payment_of': 'دفعة بقيمة ',
       'supp_reason': 'السبب: ',
+      'supp_compare': 'مقارنة',
+
+      // ── Supplier Comparison ──
+      'comparison_select_product': 'اختيار منتج',
+      'comparison_search_hint': 'البحث بالاسم أو الرمز الشريطي...',
+      'comparison_no_variants': 'لم يتم العثور على منتجات',
+      'comparison_title': 'مقارنة',
+      'comparison_no_data': 'لا توجد بيانات مقارنة لهذا المنتج',
+      'comparison_supplier': 'المورد',
+      'comparison_last_price': 'آخر سعر',
+      'comparison_avg_price': 'متوسط السعر',
+      'comparison_min_price': 'الأدنى',
+      'comparison_max_price': 'الأعلى',
+      'comparison_purchases': 'المشتريات',
 
       // ── Employees ──
       'emp_title': 'إدارة الموظفين',
