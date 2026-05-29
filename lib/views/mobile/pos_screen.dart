@@ -296,10 +296,14 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       final invoiceNum = 'INV-${DateTime.now().millisecondsSinceEpoch}';
       final discountAmount = _hasDiscount ? _subtotal * _discountPercent / 100 : 0.0;
       final finalTotal = _subtotal - discountAmount;
+      final DateTime? dueDate = method != 'cash'
+          ? DateTime.now().add(const Duration(days: 30))
+          : null;
       await InvoiceService.instance.processSale(
         storeId: _storeId!, invoiceNumber: invoiceNum, items: items,
         totalAmount: _subtotal, paidAmount: paidAmount, paymentMethod: method,
         customerId: _customerId, discountPercent: _discountPercent,
+        dueDate: dueDate,
       );
 
       // Award loyalty points

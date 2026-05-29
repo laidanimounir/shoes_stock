@@ -19,6 +19,7 @@ class InvoiceLocal {
   late String status;      // InvoiceStatus: 'paid' | 'partial' | 'unpaid' | ...
   DateTime? createdAt;
   DateTime? updatedAt;
+  DateTime? dueDate;
 
   /// false = created offline, not yet pushed to Supabase
   bool synced = false;

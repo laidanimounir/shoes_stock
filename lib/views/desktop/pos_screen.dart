@@ -799,6 +799,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
                               try {
                                 final invoiceNumber = _generateInvoiceNumber();
+                                final DateTime? dueDate = selectedMethod != 'cash'
+                                    ? DateTime.now().add(const Duration(days: 30))
+                                    : null;
                                 await InvoiceService.instance.processSale(
                                   storeId: _selectedStoreId!, invoiceNumber: invoiceNumber,
                                   items: items, totalAmount: totalAmount,
@@ -806,6 +809,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                   customerId: _selectedCustomerId,
                                   discountPercent: _discountMode == 0 ? _discountInput : 0,
                                   discountAmount: _discountMode == 1 ? _discountAmount : 0,
+                                  dueDate: dueDate,
                                 );
                                 if (_isDiscountApplied) _logDiscount(invoiceNumber, items, totalAmount);
                                 // Award loyalty points
@@ -2656,6 +2660,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                       _buildDetailInfoRow(S.t('pos_inv_mode'), _getPaymentMethod(invoice)),
                                       const SizedBox(height: 8),
                                       _buildDetailInfoRow(S.t('pos_inv_seller'), _getSellerName(invoice)),
+                                      if (invoice['due_date'] != null) ...[
+                                        const SizedBox(height: 8),
+                                        _buildDetailInfoRow('Échéance', invoice['due_date'].toString()),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -3077,12 +3085,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           'invoice_number': inv.invoiceNumber, 'total_amount': inv.totalAmount,
           'paid_amount': inv.paidAmount, 'status': inv.status,
           'createdAt': inv.createdAt, 'customer_name': customerMap[inv.customerId] ?? '', 'user_name': '',
+          'due_date': inv.dueDate?.toIso8601String().substring(0, 10),
         }).toList();
         _dailyInvoiceCounter = _allInvoices.length;
       } else {
         final response = await Supabase.instance.client
             .from('invoices').select('''
-              id, invoice_number, total_amount, paid_amount, status, created_at,
+              id, invoice_number, total_amount, paid_amount, status, created_at, due_date,
               customers!left (full_name),
               user_profiles!left (full_name)
             ''')

@@ -26,6 +26,7 @@ class InvoiceService {
     String notes = '',
     double discountPercent = 0,
     double discountAmount = 0,
+    DateTime? dueDate,
   }) async {
     // Check credit limit if this is a credit sale (partial or unpaid)
     if (customerId != null && paidAmount < totalAmount) {
@@ -48,8 +49,7 @@ class InvoiceService {
     // ONLINE PATH — call Supabase RPC
     // ════════════════════════════════════
     if (!AppSession.isOfflineMode) {
-      final result =
-          await Supabase.instance.client.rpc('process_sale', params: {
+      final params = <String, dynamic>{
         'p_store_id': storeId,
         'p_customer_id': customerId,
         'p_invoice_number': invoiceNumber,
@@ -60,7 +60,12 @@ class InvoiceService {
         'p_notes': notes,
         'p_discount_percent': discountPercent,
         'p_discount_amount': discountAmount,
-      });
+      };
+      if (dueDate != null) {
+        params['p_due_date'] = dueDate.toIso8601String().substring(0, 10);
+      }
+      final result =
+          await Supabase.instance.client.rpc('process_sale', params: params);
       if (result is Map) {
         return Map<String, dynamic>.from(result);
       }
@@ -99,6 +104,7 @@ class InvoiceService {
       ..status = status
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now()
+      ..dueDate = dueDate
       ..synced = false;
 
     late int localInvoiceId;
@@ -136,21 +142,25 @@ class InvoiceService {
         }
       }
 
+      final syncParams = <String, dynamic>{
+        'p_store_id': storeId,
+        'p_customer_id': customerId,
+        'p_invoice_number': invoiceNumber,
+        'p_items': items,
+        'p_total_amount': totalAmount,
+        'p_paid_amount': paidAmount,
+        'p_payment_method': paymentMethod,
+        'p_notes': notes,
+        'p_discount_percent': discountPercent,
+        'p_discount_amount': discountAmount,
+      };
+      if (dueDate != null) {
+        syncParams['p_due_date'] = dueDate.toIso8601String().substring(0, 10);
+      }
       await SyncEngine.instance.enqueueInTransaction(
         isar,
         SyncOperationType.createInvoice,
-        {
-          'p_store_id': storeId,
-          'p_customer_id': customerId,
-          'p_invoice_number': invoiceNumber,
-          'p_items': items,
-          'p_total_amount': totalAmount,
-          'p_paid_amount': paidAmount,
-          'p_payment_method': paymentMethod,
-          'p_notes': notes,
-          'p_discount_percent': discountPercent,
-          'p_discount_amount': discountAmount,
-        },
+        syncParams,
       );
     });
 
