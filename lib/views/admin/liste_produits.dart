@@ -838,7 +838,6 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         ),
                         // Rows as ExpansionTiles with price history
                         ...activeVariants.asMap().entries.map((entry) {
-                          final i = entry.key;
                           final v = entry.value;
                           final inv = v['inventory'] as List<dynamic>? ?? [];
                           int qty = 0;
@@ -883,9 +882,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   ],
                                 )),
                                 Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
-                                Expanded(flex: 1, child: Text('${buy.toStringAsFixed(0)}',
+                                Expanded(flex: 1, child: Text(buy.toStringAsFixed(0),
                                   style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
-                                Expanded(flex: 1, child: Text('${sell.toStringAsFixed(0)}',
+                                Expanded(flex: 1, child: Text(sell.toStringAsFixed(0),
                                   style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold))),
                                 Expanded(flex: 1, child: Text(
                                   margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
@@ -1204,26 +1203,28 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500))),
                           Expanded(flex: 1, child: Text('${price.toStringAsFixed(0)} DA',
                             style: TextStyle(fontSize: 10, color: Colors.orange[700], fontWeight: FontWeight.bold))),
-                          Expanded(flex: 1, child: hasChange
-                              ? Row(
-                                  children: [
-                                    Icon(
-                                      change >= 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                                      size: 16,
-                                      color: change >= 0 ? kDangerRed : kAccentGreen,
-                                    ),
-                                    Text(
-                                      '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                          Expanded(
+                            flex: 1,
+                            child: hasChange
+                                ? Row(
+                                    children: [
+                                      Icon(
+                                        change >= 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                        size: 16,
                                         color: change >= 0 ? kDangerRed : kAccentGreen,
                                       ),
-                                    ),
-                                  ],
-                                )
-                              : Text('-',
-                                  style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+                                      Text(
+                                        '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: change >= 0 ? kDangerRed : kAccentGreen,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Text('-', style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+                          ),
                         ],
                       ),
                     );

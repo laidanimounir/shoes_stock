@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
@@ -8,6 +10,7 @@ import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/invoice_local.dart';
 import '../../local_db/collections/payment_local.dart';
 import '../../services/debt_recovery_service.dart';
+import '../../shared/utils/contact_utils.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -193,6 +196,483 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     ));
   }
 
+  String _getInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+
+  Map<String, dynamic> _getTierInfo(int points) {
+    if (points >= 2000) {
+      return {'name': 'Gold', 'color': Colors.amber, 'progress': 1.0};
+    } else if (points >= 500) {
+      return {'name': 'Silver', 'color': Colors.grey, 'progress': (points - 500) / 1500.0};
+    } else {
+      return {'name': 'Bronze', 'color': const Color(0xFF8B4513), 'progress': points > 0 ? points / 500.0 : 0.0};
+    }
+  }
+
+  Future<void> _showCustomerProfile(Map<String, dynamic> customer) async {
+    Map<String, dynamic> profile;
+
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      final localInvoices = await isar.invoiceLocals
+          .filter()
+          .customerIdEqualTo(customer['id'])
+          .typeEqualTo('out')
+          .findAll();
+
+      final totalSpent = localInvoices.fold<double>(0.0, (s, i) => s + i.totalAmount);
+      profile = {
+        'id': customer['id'],
+        'full_name': customer['full_name'],
+        'phone': customer['phone'],
+        'customer_type': customer['customer_type'] ?? 'retail',
+        'loyalty_points': 0,
+        'credit_limit': customer['credit_limit'] ?? 0,
+        'balance': (customer['balance'] as num?)?.toDouble() ?? 0.0,
+        'total_purchases': localInvoices.length,
+        'total_spent': totalSpent,
+        'avg_order_value': localInvoices.isEmpty ? 0.0 : totalSpent / localInvoices.length,
+        'last_purchase_date': localInvoices.isNotEmpty ? localInvoices.first.createdAt?.toIso8601String() : null,
+        'created_at': customer['created_at'],
+        'overdue_amount': 0,
+        'top_category': null,
+      };
+    } else {
+      try {
+        final res = await Supabase.instance.client.rpc('get_customer_profile', params: {'p_customer_id': customer['id']});
+        profile = Map<String, dynamic>.from(res);
+      } catch (e) {
+        debugPrint("Error fetching customer profile: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur chargement profil: $e'), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    final initials = _getInitials(profile['full_name'] ?? '');
+    final memberSince = profile['created_at'] != null
+        ? DateFormat('dd/MM/yyyy').format(DateTime.parse(profile['created_at']))
+        : 'N/A';
+    final totalPurchases = (profile['total_purchases'] as num?)?.toInt() ?? 0;
+    final totalSpent = (profile['total_spent'] as num?)?.toDouble() ?? 0.0;
+    final avgOrderValue = (profile['avg_order_value'] as num?)?.toDouble() ?? 0.0;
+    final loyaltyPoints = (profile['loyalty_points'] as num?)?.toInt() ?? 0;
+    final creditLimit = (profile['credit_limit'] as num?)?.toDouble() ?? 0.0;
+    final balance = (profile['balance'] as num?)?.toDouble() ?? 0.0;
+    final overdueAmount = (profile['overdue_amount'] as num?)?.toDouble() ?? 0.0;
+    final lastPurchaseDate = profile['last_purchase_date'] != null
+        ? DateFormat('dd/MM/yyyy').format(DateTime.parse(profile['last_purchase_date']))
+        : 'Aucun';
+    final topCategory = profile['top_category'] as String? ?? 'N/A';
+    final customerType = profile['customer_type'] as String? ?? 'retail';
+    final phone = profile['phone'] as String? ?? '';
+    final fullName = profile['full_name'] as String? ?? '';
+
+    final currencyFormat = NumberFormat('#,##0.00', 'fr');
+    final noDecFormat = NumberFormat('#,##0', 'fr');
+    final tierInfo = _getTierInfo(loyaltyPoints);
+    final creditProgress = creditLimit > 0 ? (balance / creditLimit).clamp(0.0, 1.0) : 0.0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(20),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildProfileHeader(initials, fullName, customerType, memberSince),
+                const SizedBox(height: 24),
+                _buildStatsRow(totalPurchases, totalSpent, avgOrderValue, currencyFormat, noDecFormat),
+                const SizedBox(height: 24),
+                _buildLoyaltyCard(loyaltyPoints, tierInfo, noDecFormat),
+                const SizedBox(height: 24),
+                _buildFinancialSection(creditLimit, balance, overdueAmount, creditProgress, currencyFormat),
+                const SizedBox(height: 24),
+                _buildLastPurchaseInfo(lastPurchaseDate, topCategory),
+                const SizedBox(height: 24),
+                _buildActionButtons(sheetContext, customer, phone, balance, overdueAmount),
+                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(String initials, String name, String customerType, String memberSince) {
+    final isWholesale = customerType == 'wholesale';
+    final badgeColor = isWholesale ? Colors.purple : Colors.teal;
+    final badgeText = isWholesale ? 'GROS' : 'DÉTAIL';
+
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 40,
+          backgroundColor: Colors.indigo,
+          child: Text(initials, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+        ),
+        const SizedBox(height: 12),
+        Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: badgeColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: badgeColor),
+          ),
+          child: Text(badgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
+        ),
+        const SizedBox(height: 8),
+        Text('Membre depuis $memberSince', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow(int totalPurchases, double totalSpent, double avgOrderValue, NumberFormat currencyFormat, NumberFormat noDecFormat) {
+    return Row(
+      children: [
+        _buildStatCard('Achats', noDecFormat.format(totalPurchases), Icons.shopping_bag, Colors.indigo),
+        const SizedBox(width: 12),
+        _buildStatCard('Total', '${currencyFormat.format(totalSpent)} DA', Icons.attach_money, Colors.green),
+        const SizedBox(width: 12),
+        _buildStatCard('Moyen', '${currencyFormat.format(avgOrderValue)} DA', Icons.trending_up, Colors.orange),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoyaltyCard(int points, Map<String, dynamic> tierInfo, NumberFormat format) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.amber[50]!, Colors.orange[50]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber[700], size: 28),
+              const SizedBox(width: 8),
+              Text('Fidélité', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber[900])),
+              const Spacer(),
+              Text('${format.format(points)} pts', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amber[900])),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: (tierInfo['progress'] as double).clamp(0.0, 1.0),
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(tierInfo['color'] as Color),
+              minHeight: 10,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildTierBadge('Bronze', points < 500, const Color(0xFF8B4513)),
+              _buildTierBadge('Silver', points < 500 || points >= 2000, Colors.grey),
+              _buildTierBadge('Gold', points < 2000, Colors.amber),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: (tierInfo['color'] as Color).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Niveau ${tierInfo['name']}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: tierInfo['color'] as Color, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTierBadge(String name, bool inactive, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: inactive ? Colors.grey[200] : color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: inactive ? Colors.grey[300]! : color),
+      ),
+      child: Text(
+        name,
+        style: TextStyle(
+          color: inactive ? Colors.grey[500] : color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFinancialSection(double creditLimit, double balance, double overdueAmount, double creditProgress, NumberFormat format) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red[50]?.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red[100]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.credit_card, color: Colors.red[700], size: 24),
+              const SizedBox(width: 8),
+              Text('Crédit & Solde', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[900])),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (creditLimit > 0) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Limite: ${format.format(creditLimit)} DA', style: const TextStyle(fontSize: 13)),
+                Text('${(creditProgress * 100).toStringAsFixed(0)}% utilisé', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: creditProgress,
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(creditProgress > 0.8 ? Colors.red : Colors.orange),
+                minHeight: 8,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              Text('Solde actuel: ', style: TextStyle(color: Colors.grey[700])),
+              Text(
+                '${format.format(balance)} DA',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: balance > 0 ? Colors.red : Colors.green),
+              ),
+            ],
+          ),
+          if (overdueAmount > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[300]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 20),
+                  const SizedBox(width: 8),
+                  Text('Impayé: ${format.format(overdueAmount)} DA', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700])),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLastPurchaseInfo(String lastPurchaseDate, String topCategory) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50]?.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue[100]!),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Dernier achat', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: Colors.blue[700]),
+                    const SizedBox(width: 6),
+                    Text(lastPurchaseDate, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Catégorie favorite', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.category, size: 16, color: Colors.blue[700]),
+                    const SizedBox(width: 6),
+                    Text(topCategory, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext sheetContext, Map<String, dynamic> customer, String phone, double balance, double overdueAmount) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.chat,
+            label: 'WhatsApp',
+            color: Colors.green,
+            onPressed: phone.isNotEmpty
+                ? () => ContactUtils.sendWhatsApp(context, phone, customer['full_name'] ?? '', balance)
+                : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.phone,
+            label: 'Appeler',
+            color: Colors.blue,
+            onPressed: phone.isNotEmpty
+                ? () async {
+                    final url = Uri.parse('tel:${ContactUtils.cleanPhone(phone)}');
+                    if (await canLaunchUrl(url)) await launchUrl(url);
+                  }
+                : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.receipt_long,
+            label: 'Factures',
+            color: Colors.indigo,
+            onPressed: () => Navigator.pop(sheetContext),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.payments,
+            label: 'Paiement',
+            color: Colors.orange,
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              _recordPayment();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    VoidCallback? onPressed,
+  }) {
+    return Material(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            children: [
+              Icon(icon, color: onPressed != null ? color : Colors.grey, size: 24),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(color: onPressed != null ? color : Colors.grey, fontSize: 10, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -255,7 +735,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                                     trailing: bal > 0
                                         ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 10))
                                         : const Icon(Icons.check_circle, color: Colors.green, size: 14),
-                                    onTap: () { setState(() => _selected = c); _fetchHistory(c['id']); },
+                                    onTap: () { setState(() => _selected = c); _fetchHistory(c['id']); _showCustomerProfile(c); },
                                   );
                                   },
                                 ),

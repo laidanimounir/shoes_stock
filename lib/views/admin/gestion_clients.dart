@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
@@ -384,12 +383,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           .customerIdEqualTo(customer['id'])
           .typeEqualTo('out')
           .findAll();
-      final localPayments = await isar.paymentLocals
-          .filter()
-          .customerIdEqualTo(customer['id'])
-          .findAll();
 
-      final totalSpent = localInvoices.fold<double>(0, (s, i) => s + (i.totalAmount ?? 0));
+      final totalSpent = localInvoices.fold<double>(0.0, (s, i) => s + i.totalAmount);
       profile = {
         'id': customer['id'],
         'full_name': customer['full_name'],
@@ -397,10 +392,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         'customer_type': customer['customer_type'] ?? 'retail',
         'loyalty_points': 0,
         'credit_limit': customer['credit_limit'] ?? 0,
-        'balance': (customer['balance'] as num?)?.toDouble() ?? 0,
+        'balance': (customer['balance'] as num?)?.toDouble() ?? 0.0,
         'total_purchases': localInvoices.length,
         'total_spent': totalSpent,
-        'avg_order_value': localInvoices.isEmpty ? 0 : totalSpent / localInvoices.length,
+        'avg_order_value': localInvoices.isEmpty ? 0.0 : totalSpent / localInvoices.length,
         'last_purchase_date': localInvoices.isNotEmpty ? localInvoices.first.createdAt?.toIso8601String() : null,
         'created_at': customer['created_at'],
         'overdue_amount': 0,
@@ -428,12 +423,12 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         ? DateFormat('dd/MM/yyyy').format(DateTime.parse(profile['created_at']))
         : 'N/A';
     final totalPurchases = (profile['total_purchases'] as num?)?.toInt() ?? 0;
-    final totalSpent = (profile['total_spent'] as num?)?.toDouble() ?? 0;
-    final avgOrderValue = (profile['avg_order_value'] as num?)?.toDouble() ?? 0;
+    final totalSpent = (profile['total_spent'] as num?)?.toDouble() ?? 0.0;
+    final avgOrderValue = (profile['avg_order_value'] as num?)?.toDouble() ?? 0.0;
     final loyaltyPoints = (profile['loyalty_points'] as num?)?.toInt() ?? 0;
-    final creditLimit = (profile['credit_limit'] as num?)?.toDouble() ?? 0;
-    final balance = (profile['balance'] as num?)?.toDouble() ?? 0;
-    final overdueAmount = (profile['overdue_amount'] as num?)?.toDouble() ?? 0;
+    final creditLimit = (profile['credit_limit'] as num?)?.toDouble() ?? 0.0;
+    final balance = (profile['balance'] as num?)?.toDouble() ?? 0.0;
+    final overdueAmount = (profile['overdue_amount'] as num?)?.toDouble() ?? 0.0;
     final lastPurchaseDate = profile['last_purchase_date'] != null
         ? DateFormat('dd/MM/yyyy').format(DateTime.parse(profile['last_purchase_date']))
         : 'Aucun';
@@ -445,7 +440,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     final currencyFormat = NumberFormat('#,##0.00', 'fr');
     final noDecFormat = NumberFormat('#,##0', 'fr');
     final tierInfo = _getTierInfo(loyaltyPoints);
-    final creditProgress = creditLimit > 0 ? (balance / creditLimit).clamp(0, 1) : 0.0;
+    final creditProgress = creditLimit > 0 ? (balance / creditLimit).clamp(0.0, 1.0) : 0.0;
 
     showModalBottomSheet(
       context: context,
@@ -584,7 +579,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: (tierInfo['progress'] as double).clamp(0, 1),
+              value: (tierInfo['progress'] as double).clamp(0.0, 1.0),
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(tierInfo['color'] as Color),
               minHeight: 10,
