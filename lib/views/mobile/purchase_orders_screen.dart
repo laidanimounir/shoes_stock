@@ -198,7 +198,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                           children: [
                             // Supplier
                             FutureBuilder<List<dynamic>>(
-                              future: supabase.from('suppliers').select('id, full_name').eq('is_active', true).order('full_name'),
+                              future: supabase.from('suppliers').select('id, company_name').eq('is_active', true).order('company_name'),
                               builder: (ctx, snapshot) {
                                 final suppliers = snapshot.data ?? [];
                                 return DropdownButtonFormField<String>(
@@ -211,7 +211,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                   value: selectedSupplierId,
                                   items: suppliers.map((s) => DropdownMenuItem(
                                     value: s['id'] as String,
-                                    child: Text(s['full_name'] as String),
+                                    child: Text(s['company_name'] as String),
                                   )).toList(),
                                   onChanged: (v) => setSheetState(() => selectedSupplierId = v),
                                   validator: (v) => v == null ? 'Requis' : null,
