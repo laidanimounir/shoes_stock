@@ -83,9 +83,13 @@ class _DashboardScreenState extends State<DashboardScreen>
       });
       final topRes = await supabase.rpc('get_top_products',
           params: {'p_store_id': _selectedStoreId});
-      final activityRes = await supabase
+      var activityQuery = supabase
           .from('activity_logs')
-          .select('id, action_type, description, created_at, user_id')
+          .select('id, action_type, description, created_at, user_id');
+      if (!AppSession.isOwner && AppSession.currentStoreId != null) {
+        activityQuery = activityQuery.eq('store_id', AppSession.currentStoreId!);
+      }
+      final activityRes = await activityQuery
           .order('created_at', ascending: false)
           .limit(10);
       final debtRes = await supabase

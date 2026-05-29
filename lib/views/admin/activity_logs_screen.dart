@@ -183,6 +183,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           .from('activity_logs')
           .select('id');
 
+      if (!AppSession.isOwner && AppSession.currentStoreId != null) {
+        countQuery = countQuery.eq('store_id', AppSession.currentStoreId!);
+      }
       countQuery = _applyFilters(countQuery);
       final countRes = await countQuery;
       final total = (countRes as List).length;
@@ -192,6 +195,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           .from('activity_logs')
           .select('*, user_profiles(full_name, role)');
 
+      if (!AppSession.isOwner && AppSession.currentStoreId != null) {
+        dataQuery = dataQuery.eq('store_id', AppSession.currentStoreId!);
+      }
       dataQuery = _applyFilters(dataQuery);
 
       final from = _currentPage * _rowsPerPage;
