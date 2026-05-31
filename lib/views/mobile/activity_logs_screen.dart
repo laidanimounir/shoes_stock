@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -26,6 +28,31 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   void initState() { super.initState(); timeago.setLocaleMessages('fr', timeago.FrMessages()); _fetch(); _scrollCtrl.addListener(() { if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200 && _hasMore && !_isLoading) { _page++; _fetch(); } }); }
   @override
   void dispose() { _scrollCtrl.dispose(); super.dispose(); }
+
+  String _formatDescription(String raw) {
+    if (raw.isEmpty) return '';
+    try {
+      final d = jsonDecode(raw) as Map<String, dynamic>;
+      final buf = StringBuffer();
+      if (d['products'] != null) buf.write(d['products']);
+      if (d['total'] != null) {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write('${d['total']} DA');
+      }
+      if (d['payment_method'] != null && d['payment_method'] != '') {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write(d['payment_method']);
+      }
+      if (d['remaining_balance'] != null && (d['remaining_balance'] as num) > 0) {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write('${S.t('label_remaining')}: ${d['remaining_balance']} DA');
+      }
+      if (buf.isEmpty) return raw;
+      return buf.toString();
+    } catch (_) {
+      return raw.length > 60 ? '${raw.substring(0, 60)}…' : raw;
+    }
+  }
 
   Future<void> _fetch() async {
     if (_page == 0) setState(() => _isLoading = true);
@@ -71,7 +98,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                     child: ListTile(
                       dense: true,
                       leading: CircleAvatar(radius: 14, backgroundColor: Colors.indigo[50], child: const Icon(Icons.notifications_none, size: 16, color: Colors.indigo)),
-                      title: Text(log['description'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      title: Text(_formatDescription(log['description'] ?? ''), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       subtitle: Text('${log['user_profiles']?['full_name'] ?? ''} • ${date != null ? timeago.format(date, locale: 'fr') : ''}', style: const TextStyle(fontSize: 10)),
                     ),
                   );

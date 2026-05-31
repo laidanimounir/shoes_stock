@@ -728,6 +728,7 @@ class S {
       'label_delete_employee': 'Suppression employé',
       'label_add_expense': 'Dépense',
       'label_add_debt_recovery': 'Recouvrement',
+      'label_remaining': 'Restant',
       'label_refund': 'Remboursement',
 
       // ── Messages success ──
@@ -1698,6 +1699,7 @@ class S {
       'label_delete_employee': 'حذف موظف',
       'label_add_expense': 'مصروف',
       'label_add_debt_recovery': 'تحصيل دين',
+      'label_remaining': 'متبقي',
       'label_refund': 'استرداد',
 
       // ── Messages success ──

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -163,6 +165,38 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       case 'RETURN':
       case 'REFUND_PROCESSED':        return Colors.purple;
       default:                        return Colors.grey;
+    }
+  }
+
+  /// Formats activity log description JSON into a readable string.
+  String _formatDescription(String raw) {
+    if (raw.isEmpty) return '';
+    try {
+      final d = jsonDecode(raw) as Map<String, dynamic>;
+      final actionType = d['action_type'] as String?;
+      if (actionType == null) return raw;
+
+      final buf = StringBuffer();
+      if (d['products'] != null) buf.write(d['products']);
+      if (d['total'] != null) {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write('${d['total']} DA');
+      }
+      if (d['payment_method'] != null && d['payment_method'] != '') {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write(d['payment_method']);
+      }
+      if (d['remaining_balance'] != null && (d['remaining_balance'] as num) > 0) {
+        if (buf.isNotEmpty) buf.write(' | ');
+        buf.write('${S.t('label_remaining')}: ${d['remaining_balance']} DA');
+      }
+      if (d['invoice_number'] != null) {
+        buf.write(' (#${d['invoice_number']})');
+      }
+      if (buf.isEmpty) return raw;
+      return buf.toString();
+    } catch (_) {
+      return raw.length > 60 ? '${raw.substring(0, 60)}…' : raw;
     }
   }
 
@@ -592,9 +626,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     final icon     = _getIconForAction(action);
     final label    = _getActionLabel(action);
 
-    // Shorten description / JSON for table display
+    // Parse description JSON / format for display
     final raw = log['description'] as String? ?? '';
-    final shortDesc = raw.length > 60 ? '${raw.substring(0, 60)}…' : raw;
+    final shortDesc = _formatDescription(raw);
 
     return DataRow(
       cells: [
