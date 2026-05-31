@@ -982,6 +982,17 @@ class S {
       'notif_title': 'Notifications',
       'notif_mark_all_read': 'Tout marquer lu',
       'notif_no_notifications': 'Aucune notification',
+
+      // ── Missing keys (added) ──
+      'label_invoice': 'Facture',
+      'label_paid_badge': 'Payé',
+      'nav_my_sales': 'Mes Ventes',
+      'label_guest': 'Invité',
+      'label_role_employee': 'Employé',
+      'pos_today_total': "Total d'aujourd'hui",
+      'pos_inv_col_num': 'N° Facture',
+      'pos_inv_col_time': 'Heure',
+      'pos_inv_col_total': 'Total',
     },
 
     // ────────────────────────────────────────────────────────────
@@ -1941,6 +1952,17 @@ class S {
       'notif_title': 'الإشعارات',
       'notif_mark_all_read': 'تحديد الكل كمقروء',
       'notif_no_notifications': 'لا توجد إشعارات',
+
+      // ── Missing keys (added) ──
+      'label_invoice': 'الفاتورة',
+      'label_paid_badge': 'مدفوع',
+      'nav_my_sales': 'مبيعاتي',
+      'label_guest': 'ضيف',
+      'label_role_employee': 'موظف',
+      'pos_today_total': 'إجمالي اليوم',
+      'pos_inv_col_num': 'رقم الفاتورة',
+      'pos_inv_col_time': 'الوقت',
+      'pos_inv_col_total': 'الإجمالي',
     },
   };
 }

@@ -515,7 +515,86 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           final bool isInsufficient =
               selectedMethod != 'credit' && cashAmount > 0 && cashAmount < totalAmount;
 
-          return Dialog(
+          Future<void> handleConfirm() async {
+            if (isRegisteredClient && selectedMethod != 'cash' &&
+                _selectedCustomerCreditLimit != null && _selectedCustomerCreditLimit! > 0) {
+              final newDebt = _selectedCustomerBalance! + creditAmount;
+              if (newDebt > _selectedCustomerCreditLimit!) {
+                _snack(S.t('pos_credit_limit_exceeded')
+                    .replaceAll('{balance}', _selectedCustomerBalance!.toStringAsFixed(2))
+                    .replaceAll('{limit}', _selectedCustomerCreditLimit!.toStringAsFixed(2)), _C.danger);
+                return;
+              }
+            }
+            final conflicts = <int>{};
+            for (int i = 0; i < _cart.length; i++) {
+              final currentStock = await _getCurrentStock(_cart[i].variantId);
+              if (currentStock < _cart[i].quantity) conflicts.add(i);
+            }
+            if (conflicts.isNotEmpty) {
+              setState(() => _stockConflictItems = conflicts);
+              Navigator.pop(context);
+              _snack('${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}', _C.danger);
+              return;
+            }
+            setState(() => _isProcessingPayment = true);
+            final paidAmount = selectedMethod == 'cash'
+                ? (double.tryParse(numpadValue) ?? totalAmount)
+                : (selectedMethod == 'credit' ? 0.0 : (double.tryParse(numpadValue) ?? 0));
+            final items = _cart.map((item) => {
+              'variant_id': item.variantId, 'quantity': item.quantity,
+              'unit_price': item.unitPrice, 'total_price': item.totalPrice,
+            }).toList();
+            try {
+              final invoiceNumber = await _generateInvoiceNumber();
+              final DateTime? dueDate = selectedMethod != 'cash'
+                  ? DateTime.now().add(const Duration(days: 30))
+                  : null;
+              await InvoiceService.instance.processSale(
+                storeId: _selectedStoreId!, invoiceNumber: invoiceNumber,
+                items: items, totalAmount: totalAmount,
+                paidAmount: paidAmount, paymentMethod: selectedMethod,
+                customerId: _selectedCustomerId,
+                discountPercent: _discountMode == 0 ? _discountInput : 0,
+                discountAmount: _discountMode == 1 ? _discountAmount : 0,
+                dueDate: dueDate,
+              );
+              if (_isDiscountApplied) _logDiscount(invoiceNumber, items, totalAmount);
+              if (_selectedCustomerId != null && paidAmount > 0) {
+                try {
+                  await Supabase.instance.client.rpc('award_loyalty_points', params: {
+                    'p_customer_id': _selectedCustomerId,
+                    'p_amount_spent': paidAmount,
+                  });
+                } catch (_) {}
+              }
+              setState(() => _isProcessingPayment = false);
+              Navigator.pop(context);
+              if (mounted) _handlePostSaleAction(invoiceNumber, paidAmount);
+            } catch (e) {
+              setState(() => _isProcessingPayment = false);
+              final msg = e.toString();
+              if (msg.contains('CREDIT_LIMIT_EXCEEDED')) {
+                final parts = msg.split('|');
+                final bal = parts.length > 1 ? parts[1] : '0';
+                final lim = parts.length > 2 ? parts[2] : '0';
+                _snack(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim), _C.danger);
+              } else {
+                _snack('${S.t('pos_error')} $e', _C.danger);
+              }
+            }
+          }
+
+          return Focus(
+            autofocus: true,
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                handleConfirm();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             backgroundColor: _C.surface,
             insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -762,80 +841,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               elevation: 0,
                             ),
-                            onPressed: () async {
-                              // Pre-check credit limit
-                              if (isRegisteredClient && selectedMethod != 'cash' &&
-                                  _selectedCustomerCreditLimit != null && _selectedCustomerCreditLimit! > 0) {
-                                final newDebt = _selectedCustomerBalance! + creditAmount;
-                                if (newDebt > _selectedCustomerCreditLimit!) {
-                                  _snack(S.t('pos_credit_limit_exceeded')
-                                      .replaceAll('{balance}', _selectedCustomerBalance!.toStringAsFixed(2))
-                                      .replaceAll('{limit}', _selectedCustomerCreditLimit!.toStringAsFixed(2)), _C.danger);
-                                  return;
-                                }
-                              }
-
-                              final conflicts = <int>{};
-                              for (int i = 0; i < _cart.length; i++) {
-                                final currentStock = await _getCurrentStock(_cart[i].variantId);
-                                if (currentStock < _cart[i].quantity) conflicts.add(i);
-                              }
-                              if (conflicts.isNotEmpty) {
-                                setState(() => _stockConflictItems = conflicts);
-                                Navigator.pop(context);
-                                _snack('${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}', _C.danger);
-                                return;
-                              }
-
-                              setState(() => _isProcessingPayment = true);
-                              final paidAmount = selectedMethod == 'cash'
-                                  ? (double.tryParse(numpadValue) ?? totalAmount)
-                                  : (selectedMethod == 'credit' ? 0.0 : (double.tryParse(numpadValue) ?? 0));
-                              final items = _cart.map((item) => {
-                                'variant_id': item.variantId, 'quantity': item.quantity,
-                                'unit_price': item.unitPrice, 'total_price': item.totalPrice,
-                              }).toList();
-
-                              try {
-                                final invoiceNumber = await _generateInvoiceNumber();
-                                final DateTime? dueDate = selectedMethod != 'cash'
-                                    ? DateTime.now().add(const Duration(days: 30))
-                                    : null;
-                                await InvoiceService.instance.processSale(
-                                  storeId: _selectedStoreId!, invoiceNumber: invoiceNumber,
-                                  items: items, totalAmount: totalAmount,
-                                  paidAmount: paidAmount, paymentMethod: selectedMethod,
-                                  customerId: _selectedCustomerId,
-                                  discountPercent: _discountMode == 0 ? _discountInput : 0,
-                                  discountAmount: _discountMode == 1 ? _discountAmount : 0,
-                                  dueDate: dueDate,
-                                );
-                                if (_isDiscountApplied) _logDiscount(invoiceNumber, items, totalAmount);
-                                // Award loyalty points
-                                if (_selectedCustomerId != null && paidAmount > 0) {
-                                  try {
-                                    await Supabase.instance.client.rpc('award_loyalty_points', params: {
-                                      'p_customer_id': _selectedCustomerId,
-                                      'p_amount_spent': paidAmount,
-                                    });
-                                  } catch (_) {}
-                                }
-                                setState(() => _isProcessingPayment = false);
-                                Navigator.pop(context);
-                                if (mounted) _handlePostSaleAction(invoiceNumber, paidAmount);
-                              } catch (e) {
-                                setState(() => _isProcessingPayment = false);
-                                final msg = e.toString();
-                                if (msg.contains('CREDIT_LIMIT_EXCEEDED')) {
-                                  final parts = msg.split('|');
-                                  final bal = parts.length > 1 ? parts[1] : '0';
-                                  final lim = parts.length > 2 ? parts[2] : '0';
-                                  _snack(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim), _C.danger);
-                                } else {
-                                  _snack('${S.t('pos_error')} $e', _C.danger);
-                                }
-                              }
-                            },
+                            onPressed: handleConfirm,
                             child: _isProcessingPayment
                                 ? const SizedBox(width: 20, height: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -848,6 +854,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
+            ),
             ),
           );
         },
