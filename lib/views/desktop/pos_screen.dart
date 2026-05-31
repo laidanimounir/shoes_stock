@@ -569,7 +569,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     }
 
     final totalAmount = _cartTotal;
-    final isRegisteredClient = _selectedCustomerId != null;
+    final isRegisteredClient = _selectedCustomerId != null && _selectedCustomerId!.isNotEmpty;
     String selectedMethod = 'cash';
     String numpadValue    = totalAmount.toStringAsFixed(2);
 
@@ -946,25 +946,28 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     final isSelected = selected == method;
     final isDisabled = (method == 'credit' || method == 'mixed') && !canUse;
     return Expanded(
-      child: GestureDetector(
-        onTap: isDisabled ? null : () => setDialogState(onTap),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? _C.accent : (isDisabled ? _C.bg : _C.surface),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? _C.accent : _C.border),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid)),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid),
-              )),
-            ],
+      child: Tooltip(
+        message: isDisabled ? S.t('pos_credit_client_only') : '',
+        child: GestureDetector(
+          onTap: isDisabled ? null : () => setDialogState(onTap),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? _C.accent : (isDisabled ? _C.bg : _C.surface),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: isSelected ? _C.accent : _C.border),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, size: 18, color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid)),
+                const SizedBox(height: 4),
+                Text(label, style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid),
+                )),
+              ],
+            ),
           ),
         ),
       ),
