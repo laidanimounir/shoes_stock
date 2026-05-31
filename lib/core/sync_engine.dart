@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
+import '../local_db/collections/transaction_local.dart';
 import '../local_db/collections/expense_category_local.dart';
 import '../local_db/collections/sync_queue_item.dart';
 import '../local_db/collections/sync_metadata.dart';
@@ -169,40 +170,57 @@ class SyncEngine {
 
     try {
       Map<String, dynamic>? result;
+      String? remoteId;
 
       switch (opType) {
         case SyncOperationType.createInvoice:
           result = await _rpcProcessSale(payload);
+          if (result != null && result.containsKey('invoice_id')) {
+            remoteId = result['invoice_id'] as String;
+          }
           break;
         case SyncOperationType.createPayment:
           result = await _insertPayment(payload);
+          if (result != null && result.containsKey('id')) {
+            remoteId = result['id'] as String;
+          }
           break;
         case SyncOperationType.createTransaction:
           result = await _insertTransaction(payload);
+          if (result != null && result.containsKey('id')) {
+            remoteId = result['id'] as String;
+          }
           break;
         case SyncOperationType.processRefund:
           result = await _rpcProcessRefund(payload);
           break;
         case SyncOperationType.createExpense:
           result = await _rpcAddExpense(payload);
+          if (result != null && result.containsKey('id')) {
+            remoteId = result['id'] as String;
+          }
           break;
         case SyncOperationType.createDebtRecoveryPayment:
           result = await _rpcAddDebtRecoveryPayment(payload);
           break;
         case SyncOperationType.createLogDiscount:
           result = await _insertActivityLog(payload);
+          if (result != null && result.containsKey('id')) {
+            remoteId = result['id'] as String;
+          }
           break;
         case SyncOperationType.createPurchase:
           result = await _rpcProcessPurchase(payload);
+          if (result != null && result.containsKey('invoice_id')) {
+            remoteId = result['invoice_id'] as String;
+          }
           break;
       }
 
       // ── Success ──
       // Update supabaseId on matching local record before marking synced
-      if (result != null && result.containsKey('id')) {
-        await _updateLocalSupabaseId(
-          isar, opType, payload, result['id'] as String,
-        );
+      if (remoteId != null) {
+        await _updateLocalSupabaseId(isar, opType, payload, remoteId);
       }
 
       await isar.writeTxn(() async {
@@ -407,7 +425,6 @@ class SyncEngine {
     try {
       switch (opType) {
         case SyncOperationType.createInvoice:
-          // Find the local invoice by its temporary invoiceNumber
           final localInvoiceNumber = payload['p_invoice_number'] as String?;
           if (localInvoiceNumber == null) return;
           final invoice = await isar.invoiceLocals
@@ -419,12 +436,22 @@ class SyncEngine {
               invoice.supabaseId = supabaseId;
               invoice.synced = true;
               await isar.invoiceLocals.put(invoice);
+
+              // Backfill invoiceId on related TransactionLocal records
+              final txns = await isar.transactionLocals
+                  .filter()
+                  .invoiceNumberEqualTo(localInvoiceNumber)
+                  .findAll();
+              for (final tx in txns) {
+                tx.invoiceId = supabaseId;
+                tx.synced = true;
+                await isar.transactionLocals.put(tx);
+              }
             });
           }
           break;
 
         case SyncOperationType.processRefund:
-          // The returned ID is the transaction id, not invoice
           break;
 
         default:

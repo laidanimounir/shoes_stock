@@ -132,6 +132,7 @@ class InvoiceService {
         final qty = item['quantity'] as int;
         final tx = TransactionLocal()
           ..supabaseId = ''
+          ..invoiceNumber = invoiceNumber
           ..type = TransactionTypeExt.fromString('out').toSupabaseString()
           ..variantId = item['variant_id'] as String
           ..quantity = qty
