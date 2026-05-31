@@ -2467,9 +2467,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            // Status + print
+            // Status + print + refund
             Expanded(
-              flex: 12,
+              flex: 16,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -2498,6 +2498,21 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       child: const Icon(Icons.print_rounded, size: 13, color: _C.textMid),
                     ),
                   ),
+                  if (_canRefundInvoice(inv)) ...[
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => _showRefundDialog(context, inv),
+                      child: Container(
+                        width: 26, height: 26,
+                        decoration: BoxDecoration(
+                          color: _C.danger.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: _C.danger.withOpacity(0.3)),
+                        ),
+                        child: const Icon(Icons.replay, size: 13, color: _C.danger),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
