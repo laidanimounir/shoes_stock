@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:syncfusion_flutter_datagrid/localizations.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
