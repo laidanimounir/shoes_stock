@@ -19,6 +19,7 @@ import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../services/invoice_service.dart';
 import '../../services/refund_service.dart';
+import '../../services/receipt_service.dart';
 import '../../shared/models/cart_item.dart';
 
 // ─────────────────────────────────────────────
@@ -2399,6 +2400,47 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _printInvoice(BuildContext ctx, Map<String, dynamic> invoice) async {
+    final invoiceId = invoice['id'] as String;
+    final items = await _fetchInvoiceItems(invoiceId);
+    if (items.isEmpty) return;
+
+    final receiptItems = items.map((i) {
+      final pv = i['product_variants'] as Map<String, dynamic>?;
+      final prod = pv?['products'] as Map<String, dynamic>?;
+      return <String, dynamic>{
+        'product_name': prod?['name'] ?? '',
+        'size': pv?['size'] ?? '',
+        'color': pv?['color'] ?? '',
+        'quantity': i['quantity'],
+        'unit_price': i['unit_price'],
+        'total_price': i['total_price'],
+      };
+    }).toList();
+
+    final total = (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+    final paid = (invoice['paid_amount'] as num?)?.toDouble() ?? 0;
+    final discount = (invoice['discount'] as num?)?.toDouble() ?? 0;
+    final subtotal = total + discount;
+    final invNum = invoice['invoice_number'] as String? ?? '';
+    final createdAt = invoice['createdAt'] as DateTime? ?? DateTime.now();
+    final change = (paid > total ? paid - total : 0).toDouble();
+
+    if (!ctx.mounted) return;
+    await ReceiptService.instance.showReceiptBottomSheet(
+      ctx,
+      storeName: _storeName ?? '',
+      invoiceNumber: invNum,
+      date: createdAt,
+      items: receiptItems,
+      subtotal: subtotal,
+      discountAmount: discount,
+      total: total,
+      paid: paid,
+      change: change,
+    );
+  }
+
   // ── Odoo-style table row ──
   Widget _buildInvoiceTableRow(Map<String, dynamic> inv, int index) {
     final isCredit  = inv['status'] == 'partial' || inv['status'] == 'unpaid';
@@ -2488,7 +2530,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(width: 6),
                   GestureDetector(
-                    onTap: () => _snack(S.t('pos_inv_print_pending'), _C.accent),
+                    onTap: () => _printInvoice(context, inv),
                     child: Container(
                       width: 26, height: 26,
                       decoration: BoxDecoration(
@@ -2806,7 +2848,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(ctx);
-                            _snack(S.t('pos_inv_print_pending'), _C.accent);
+                            _printInvoice(context, invoice);
                           },
                           icon: const Icon(Icons.print_rounded, size: 15),
                           label: Text(S.t('pos_inv_reprint'), style: const TextStyle(fontSize: 12)),
