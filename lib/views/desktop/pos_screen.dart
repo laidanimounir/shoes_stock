@@ -2968,6 +2968,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   bool _canRefundInvoice(Map<String, dynamic> invoice) {
     final status = invoice['status'] as String? ?? '';
     if (status == 'refunded' || status == 'partial_refund') return false;
+    final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
+    if (!RefundService.isValidUuid(invoiceId)) return false;
     final createdAt = invoice['createdAt'] as DateTime?;
     if (createdAt == null) return false;
     final now = DateTime.now();
