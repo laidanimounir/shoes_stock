@@ -2412,7 +2412,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _printInvoice(BuildContext ctx, Map<String, dynamic> invoice) async {
-    final invoiceId = invoice['id'] as String;
+    final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     final items = await _fetchInvoiceItems(invoiceId);
     if (items.isEmpty) return;
 
@@ -2658,7 +2658,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   // ── INVOICE DETAIL MODAL ──────────────────────
   Future<void> _showInvoiceDetail(Map<String, dynamic> invoice) async {
     if (!mounted) return;
-    final invoiceId  = invoice['id'] as String;
+    final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     final total      = (invoice['total_amount'] as num?)?.toDouble() ?? 0;
     final paid       = (invoice['paid_amount'] as num?)?.toDouble() ?? 0;
     final remaining  = total - paid;
@@ -2978,7 +2978,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   Future<void> _showRefundDialog(
       BuildContext parentCtx, Map<String, dynamic> invoice) async {
-    final invoiceId = invoice['id'] as String;
+    final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     if (!RefundService.isValidUuid(invoiceId)) {
       _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
       return;
@@ -3174,7 +3174,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   Future<void> _returnAndResell(
       BuildContext ctx, Map<String, dynamic> invoice) async {
-    final invoiceId = invoice['id'] as String;
+    final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     if (!RefundService.isValidUuid(invoiceId)) {
       _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
       return;
