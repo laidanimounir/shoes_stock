@@ -4,6 +4,7 @@ import '../core/app_session.dart';
 import '../core/sync_engine.dart';
 import '../local_db/isar_service.dart';
 import '../local_db/enums/local_enums.dart';
+import '../local_db/collections/customer_local.dart';
 import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/transaction_local.dart';
 import '../local_db/collections/inventory_local.dart';
@@ -31,17 +32,30 @@ class InvoiceService {
     // Check credit limit if this is a credit sale (partial or unpaid)
     if (customerId != null && paidAmount < totalAmount) {
       final debtAmount = totalAmount - paidAmount;
+      late double balance;
+      late double creditLimit;
+
       if (!AppSession.isOfflineMode) {
         final custRes = await Supabase.instance.client
             .from('customers')
             .select('balance, credit_limit')
             .eq('id', customerId)
             .single();
-        final balance = (custRes['balance'] as num?)?.toDouble() ?? 0;
-        final creditLimit = (custRes['credit_limit'] as num?)?.toDouble() ?? 0;
-        if (creditLimit > 0 && (balance + debtAmount) > creditLimit) {
-          throw Exception('CREDIT_LIMIT_EXCEEDED|$balance|$creditLimit');
-        }
+        balance = (custRes['balance'] as num?)?.toDouble() ?? 0;
+        creditLimit = (custRes['credit_limit'] as num?)?.toDouble() ?? 0;
+      } else {
+        final isar = await IsarService.getInstance();
+        final allCust = await isar.customerLocals.where().findAll();
+        final cust = allCust.cast<CustomerLocal?>().firstWhere(
+              (c) => c!.supabaseId == customerId,
+              orElse: () => null,
+            );
+        balance = cust?.balance ?? 0;
+        creditLimit = cust?.creditLimit ?? 0;
+      }
+
+      if (creditLimit > 0 && (balance + debtAmount) > creditLimit) {
+        throw Exception('CREDIT_LIMIT_EXCEEDED|$balance|$creditLimit');
       }
     }
 

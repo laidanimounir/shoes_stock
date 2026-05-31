@@ -15,6 +15,7 @@ class CustomerLocal {
   bool isActive = true;
   double balance = 0.0;
   int loyaltyPoints = 0;
+  double? creditLimit;
   String? customerType; // 'retail' or 'wholesale'
   DateTime? createdAt;
   DateTime? updatedAt;

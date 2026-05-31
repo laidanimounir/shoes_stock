@@ -320,6 +320,7 @@ class SeedService {
     ..imageUrl = j['image_url'] as String?
     ..isActive = j['is_active'] as bool? ?? true
     ..balance = (j['balance'] as num?)?.toDouble() ?? 0.0
+    ..creditLimit = (j['credit_limit'] as num?)?.toDouble()
     ..createdAt = _parseDate(j['created_at'])
     ..updatedAt = _parseDate(j['updated_at']);
 

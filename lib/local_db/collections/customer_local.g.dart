@@ -32,48 +32,53 @@ const CustomerLocalSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'customerType': PropertySchema(
+    r'creditLimit': PropertySchema(
       id: 3,
+      name: r'creditLimit',
+      type: IsarType.double,
+    ),
+    r'customerType': PropertySchema(
+      id: 4,
       name: r'customerType',
       type: IsarType.string,
     ),
     r'email': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'email',
       type: IsarType.string,
     ),
     r'fullName': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'fullName',
       type: IsarType.string,
     ),
     r'imageUrl': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isActive': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isActive',
       type: IsarType.bool,
     ),
     r'loyaltyPoints': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'loyaltyPoints',
       type: IsarType.long,
     ),
     r'phone': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'phone',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -142,15 +147,16 @@ void _customerLocalSerialize(
   writer.writeString(offsets[0], object.address);
   writer.writeDouble(offsets[1], object.balance);
   writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeString(offsets[3], object.customerType);
-  writer.writeString(offsets[4], object.email);
-  writer.writeString(offsets[5], object.fullName);
-  writer.writeString(offsets[6], object.imageUrl);
-  writer.writeBool(offsets[7], object.isActive);
-  writer.writeLong(offsets[8], object.loyaltyPoints);
-  writer.writeString(offsets[9], object.phone);
-  writer.writeString(offsets[10], object.supabaseId);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeDouble(offsets[3], object.creditLimit);
+  writer.writeString(offsets[4], object.customerType);
+  writer.writeString(offsets[5], object.email);
+  writer.writeString(offsets[6], object.fullName);
+  writer.writeString(offsets[7], object.imageUrl);
+  writer.writeBool(offsets[8], object.isActive);
+  writer.writeLong(offsets[9], object.loyaltyPoints);
+  writer.writeString(offsets[10], object.phone);
+  writer.writeString(offsets[11], object.supabaseId);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 CustomerLocal _customerLocalDeserialize(
@@ -163,16 +169,17 @@ CustomerLocal _customerLocalDeserialize(
   object.address = reader.readStringOrNull(offsets[0]);
   object.balance = reader.readDouble(offsets[1]);
   object.createdAt = reader.readDateTimeOrNull(offsets[2]);
-  object.customerType = reader.readStringOrNull(offsets[3]);
-  object.email = reader.readStringOrNull(offsets[4]);
-  object.fullName = reader.readString(offsets[5]);
-  object.imageUrl = reader.readStringOrNull(offsets[6]);
-  object.isActive = reader.readBool(offsets[7]);
+  object.creditLimit = reader.readDoubleOrNull(offsets[3]);
+  object.customerType = reader.readStringOrNull(offsets[4]);
+  object.email = reader.readStringOrNull(offsets[5]);
+  object.fullName = reader.readString(offsets[6]);
+  object.imageUrl = reader.readStringOrNull(offsets[7]);
+  object.isActive = reader.readBool(offsets[8]);
   object.isarId = id;
-  object.loyaltyPoints = reader.readLong(offsets[8]);
-  object.phone = reader.readStringOrNull(offsets[9]);
-  object.supabaseId = reader.readString(offsets[10]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[11]);
+  object.loyaltyPoints = reader.readLong(offsets[9]);
+  object.phone = reader.readStringOrNull(offsets[10]);
+  object.supabaseId = reader.readString(offsets[11]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[12]);
   return object;
 }
 
@@ -190,22 +197,24 @@ P _customerLocalDeserializeProp<P>(
     case 2:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
-      return (reader.readBool(offset)) as P;
-    case 8:
-      return (reader.readLong(offset)) as P;
-    case 9:
-      return (reader.readStringOrNull(offset)) as P;
-    case 10:
       return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readBool(offset)) as P;
+    case 9:
+      return (reader.readLong(offset)) as P;
+    case 10:
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -597,6 +606,90 @@ extension CustomerLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'creditLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'creditLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'creditLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'creditLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'creditLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterFilterCondition>
+      creditLimitBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'creditLimit',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -1731,6 +1824,19 @@ extension CustomerLocalQuerySortBy
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> sortByCreditLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'creditLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      sortByCreditLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'creditLimit', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
       sortByCustomerType() {
     return QueryBuilder.apply(this, (query) {
@@ -1888,6 +1994,19 @@ extension CustomerLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy> thenByCreditLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'creditLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
+      thenByCreditLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'creditLimit', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QAfterSortBy>
       thenByCustomerType() {
     return QueryBuilder.apply(this, (query) {
@@ -2039,6 +2158,13 @@ extension CustomerLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CustomerLocal, CustomerLocal, QDistinct>
+      distinctByCreditLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'creditLimit');
+    });
+  }
+
   QueryBuilder<CustomerLocal, CustomerLocal, QDistinct> distinctByCustomerType(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2124,6 +2250,12 @@ extension CustomerLocalQueryProperty
   QueryBuilder<CustomerLocal, DateTime?, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<CustomerLocal, double?, QQueryOperations> creditLimitProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'creditLimit');
     });
   }
 
