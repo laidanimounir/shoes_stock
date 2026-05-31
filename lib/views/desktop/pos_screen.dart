@@ -82,8 +82,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
   List<Map<String, dynamic>> _allInvoices      = [];
   List<Map<String, dynamic>> _filteredInvoices = [];
-  int _dailyInvoiceCounter = 0;
-  String? _lastInvoiceDate;
+
   int _invoiceCurrentPage  = 0;
   String _invoiceFilter    = 'all';
   String _invoiceSearchQuery = '';
@@ -798,7 +797,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                               }).toList();
 
                               try {
-                                final invoiceNumber = _generateInvoiceNumber();
+                                final invoiceNumber = await _generateInvoiceNumber();
                                 final DateTime? dueDate = selectedMethod != 'cash'
                                     ? DateTime.now().add(const Duration(days: 30))
                                     : null;
@@ -3090,13 +3089,23 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   // ── DATA HELPERS ──────────────────────────────
   String _formatPrice(double price) => price.toStringAsFixed(2);
 
-  String _generateInvoiceNumber() {
+  Future<String> _generateInvoiceNumber() async {
     final now  = DateTime.now();
     final date = '${now.year}${now.month.toString().padLeft(2,'0')}${now.day.toString().padLeft(2,'0')}';
-    final todayKey = now.toIso8601String().substring(0, 10);
-    if (_lastInvoiceDate != todayKey) { _dailyInvoiceCounter = 0; _lastInvoiceDate = todayKey; }
-    _dailyInvoiceCounter++;
-    return 'FAC-$date-${_dailyInvoiceCounter.toString().padLeft(4,'0')}';
+    if (AppSession.isOfflineMode || _selectedStoreId == null) {
+      final isar = await IsarService.getInstance();
+      final count = await isar.invoiceLocals.where().count();
+      return 'FAC-$date-LOCAL-${(count + 1).toString().padLeft(4,'0')}';
+    }
+    try {
+      final result = await Supabase.instance.client
+          .rpc('get_next_invoice_number', params: {'p_store_id': _selectedStoreId});
+      return result as String;
+    } catch (_) {
+      final isar = await IsarService.getInstance();
+      final count = await isar.invoiceLocals.where().count();
+      return 'FAC-$date-LOCAL-${(count + 1).toString().padLeft(4,'0')}';
+    }
   }
 
   Future<void> _loadTodayInvoices() async {
@@ -3122,7 +3131,6 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           'createdAt': inv.createdAt, 'customer_name': customerMap[inv.customerId] ?? '', 'user_name': '',
           'due_date': inv.dueDate?.toIso8601String().substring(0, 10),
         }).toList();
-        _dailyInvoiceCounter = _allInvoices.length;
       } else {
         final response = await Supabase.instance.client
             .from('invoices').select('''
@@ -3141,7 +3149,6 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               ? DateTime.tryParse(inv['created_at'].toString()) : null;
           return map;
         }).toList();
-        _dailyInvoiceCounter = _allInvoices.length;
       }
       _applyInvoiceFilters();
     } catch (e) {
