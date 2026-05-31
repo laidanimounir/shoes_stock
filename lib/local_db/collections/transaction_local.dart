@@ -18,6 +18,7 @@ class TransactionLocal {
   String? customerId;
   String? supplierId;
   String? invoiceId;
+  double? profitMargin;
   DateTime? createdAt;
   DateTime? updatedAt;
 

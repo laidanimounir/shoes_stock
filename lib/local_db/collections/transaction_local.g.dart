@@ -37,58 +37,63 @@ const TransactionLocalSchema = CollectionSchema(
       name: r'invoiceNumber',
       type: IsarType.string,
     ),
-    r'quantity': PropertySchema(
+    r'profitMargin': PropertySchema(
       id: 4,
+      name: r'profitMargin',
+      type: IsarType.double,
+    ),
+    r'quantity': PropertySchema(
+      id: 5,
       name: r'quantity',
       type: IsarType.long,
     ),
     r'storeId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'supplierId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'supplierId',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'totalPrice': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'totalPrice',
       type: IsarType.double,
     ),
     r'type': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'type',
       type: IsarType.string,
     ),
     r'unitPrice': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'unitPrice',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'userId',
       type: IsarType.string,
     ),
     r'variantId': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'variantId',
       type: IsarType.string,
     )
@@ -155,17 +160,18 @@ void _transactionLocalSerialize(
   writer.writeString(offsets[1], object.customerId);
   writer.writeString(offsets[2], object.invoiceId);
   writer.writeString(offsets[3], object.invoiceNumber);
-  writer.writeLong(offsets[4], object.quantity);
-  writer.writeString(offsets[5], object.storeId);
-  writer.writeString(offsets[6], object.supabaseId);
-  writer.writeString(offsets[7], object.supplierId);
-  writer.writeBool(offsets[8], object.synced);
-  writer.writeDouble(offsets[9], object.totalPrice);
-  writer.writeString(offsets[10], object.type);
-  writer.writeDouble(offsets[11], object.unitPrice);
-  writer.writeDateTime(offsets[12], object.updatedAt);
-  writer.writeString(offsets[13], object.userId);
-  writer.writeString(offsets[14], object.variantId);
+  writer.writeDouble(offsets[4], object.profitMargin);
+  writer.writeLong(offsets[5], object.quantity);
+  writer.writeString(offsets[6], object.storeId);
+  writer.writeString(offsets[7], object.supabaseId);
+  writer.writeString(offsets[8], object.supplierId);
+  writer.writeBool(offsets[9], object.synced);
+  writer.writeDouble(offsets[10], object.totalPrice);
+  writer.writeString(offsets[11], object.type);
+  writer.writeDouble(offsets[12], object.unitPrice);
+  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeString(offsets[14], object.userId);
+  writer.writeString(offsets[15], object.variantId);
 }
 
 TransactionLocal _transactionLocalDeserialize(
@@ -180,17 +186,18 @@ TransactionLocal _transactionLocalDeserialize(
   object.invoiceId = reader.readStringOrNull(offsets[2]);
   object.invoiceNumber = reader.readStringOrNull(offsets[3]);
   object.isarId = id;
-  object.quantity = reader.readLong(offsets[4]);
-  object.storeId = reader.readString(offsets[5]);
-  object.supabaseId = reader.readString(offsets[6]);
-  object.supplierId = reader.readStringOrNull(offsets[7]);
-  object.synced = reader.readBool(offsets[8]);
-  object.totalPrice = reader.readDouble(offsets[9]);
-  object.type = reader.readString(offsets[10]);
-  object.unitPrice = reader.readDouble(offsets[11]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[12]);
-  object.userId = reader.readString(offsets[13]);
-  object.variantId = reader.readString(offsets[14]);
+  object.profitMargin = reader.readDoubleOrNull(offsets[4]);
+  object.quantity = reader.readLong(offsets[5]);
+  object.storeId = reader.readString(offsets[6]);
+  object.supabaseId = reader.readString(offsets[7]);
+  object.supplierId = reader.readStringOrNull(offsets[8]);
+  object.synced = reader.readBool(offsets[9]);
+  object.totalPrice = reader.readDouble(offsets[10]);
+  object.type = reader.readString(offsets[11]);
+  object.unitPrice = reader.readDouble(offsets[12]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[13]);
+  object.userId = reader.readString(offsets[14]);
+  object.variantId = reader.readString(offsets[15]);
   return object;
 }
 
@@ -210,26 +217,28 @@ P _transactionLocalDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
-    case 11:
       return (reader.readDouble(offset)) as P;
-    case 12:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 13:
+    case 11:
       return (reader.readString(offset)) as P;
+    case 12:
+      return (reader.readDouble(offset)) as P;
+    case 13:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -919,6 +928,90 @@ extension TransactionLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'profitMargin',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'profitMargin',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'profitMargin',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'profitMargin',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'profitMargin',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterFilterCondition>
+      profitMarginBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'profitMargin',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -2095,6 +2188,20 @@ extension TransactionLocalQuerySortBy
   }
 
   QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
+      sortByProfitMargin() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profitMargin', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
+      sortByProfitMarginDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profitMargin', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
       sortByQuantity() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'quantity', Sort.asc);
@@ -2321,6 +2428,20 @@ extension TransactionLocalQuerySortThenBy
   }
 
   QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
+      thenByProfitMargin() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profitMargin', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
+      thenByProfitMarginDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profitMargin', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QAfterSortBy>
       thenByQuantity() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'quantity', Sort.asc);
@@ -2506,6 +2627,13 @@ extension TransactionLocalQueryWhereDistinct
   }
 
   QueryBuilder<TransactionLocal, TransactionLocal, QDistinct>
+      distinctByProfitMargin() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'profitMargin');
+    });
+  }
+
+  QueryBuilder<TransactionLocal, TransactionLocal, QDistinct>
       distinctByQuantity() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'quantity');
@@ -2616,6 +2744,13 @@ extension TransactionLocalQueryProperty
       invoiceNumberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'invoiceNumber');
+    });
+  }
+
+  QueryBuilder<TransactionLocal, double?, QQueryOperations>
+      profitMarginProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'profitMargin');
     });
   }
 

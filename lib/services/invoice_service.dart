@@ -128,17 +128,20 @@ class InvoiceService {
       localInvoiceId = await isar.invoiceLocals.put(invoice);
 
       for (final item in items) {
+        final unitPrice = (item['unit_price'] as num).toDouble();
+        final qty = item['quantity'] as int;
         final tx = TransactionLocal()
           ..supabaseId = ''
           ..type = TransactionTypeExt.fromString('out').toSupabaseString()
           ..variantId = item['variant_id'] as String
-          ..quantity = item['quantity'] as int
-          ..unitPrice = (item['unit_price'] as num).toDouble()
+          ..quantity = qty
+          ..unitPrice = unitPrice
           ..totalPrice = (item['total_price'] as num).toDouble()
           ..storeId = storeId
           ..userId = AppSession.currentUserId ?? ''
           ..customerId = customerId
           ..invoiceId = ''
+          ..profitMargin = null
           ..createdAt = DateTime.now()
           ..updatedAt = DateTime.now()
           ..synced = false;

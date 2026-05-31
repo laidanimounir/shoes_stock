@@ -412,6 +412,7 @@ class SeedService {
         ..customerId = j['customer_id'] as String?
         ..supplierId = j['supplier_id'] as String?
         ..invoiceId = j['invoice_id'] as String?
+        ..profitMargin = (j['profit_margin'] as num?)?.toDouble()
         ..createdAt = _parseDate(j['created_at'])
         ..updatedAt = _parseDate(j['updated_at'])
         ..synced = true; // came from server
