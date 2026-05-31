@@ -243,7 +243,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               onPressed: () => Navigator.pop(ctx),
               child: Text(S.t('action_cancel')),
             ),
-            if (data['status'] != 'refunded' && data['status'] != 'partial_refund')
+            if (data['status'] != 'refunded' && data['status'] != 'partial_refund') ...[
               ElevatedButton.icon(
                 icon: const Icon(Icons.replay, size: 18),
                 label: Text(S.t('pos_refund_btn')),
@@ -252,6 +252,17 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   _showRefundDialog(context, data);
                 },
               ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.swap_horiz, size: 18),
+                label: Text(S.t('pos_return_resell_btn')),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _returnAndResell(context, data);
+                },
+              ),
+            ],
           ],
         ),
       );
@@ -3159,6 +3170,50 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         },
       ),
     );
+  }
+
+  Future<void> _returnAndResell(
+      BuildContext ctx, Map<String, dynamic> invoice) async {
+    final invoiceId = invoice['id'] as String;
+    if (!RefundService.isValidUuid(invoiceId)) {
+      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
+      return;
+    }
+    final items = await _fetchInvoiceItems(invoiceId);
+    if (items.isEmpty) return;
+
+    final refundItems = items.map((i) => <String, dynamic>{
+      'variant_id': i['product_variants']['id'],
+      'quantity': i['quantity'],
+      'unit_price': i['unit_price'],
+      'total_price': i['total_price'],
+    }).toList();
+
+    final refundTotal = refundItems.fold<double>(0, (s, i) => s + (i['total_price'] as num).toDouble());
+
+    try {
+      await RefundService.instance.processRefund(
+        invoiceId: invoiceId,
+        items: refundItems,
+        refundAmount: refundTotal.abs(),
+        reason: 'Retour + Revente',
+        storeId: _selectedStoreId!,
+      );
+      for (final item in items) {
+        final variant = item['product_variants'] as Map<String, dynamic>?;
+        if (variant == null) continue;
+        final qty = (item['quantity'] as int?) ?? 0;
+        for (var i = 0; i < qty; i++) {
+          _addToCart(variant);
+        }
+      }
+      if (mounted) {
+        _loadTodayInvoices();
+        _snack('Retour + Revente effectué', _C.success);
+      }
+    } catch (e) {
+      if (mounted) _snack('${S.t('pos_error')} $e', _C.danger);
+    }
   }
 
   // ── PRINT PREFERENCE ─────────────────────────
