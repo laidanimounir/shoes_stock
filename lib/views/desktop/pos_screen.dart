@@ -291,9 +291,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         if (query.isEmpty) return true;
         final q = query.toLowerCase();
         return (v.barcode?.toLowerCase().contains(q) ?? false) || p.name.toLowerCase().contains(q);
+      }).where((v) {
+        if (_selectedStoreId == null) return true;
+        return inventory.any((inv) => inv.variantId == v.supabaseId && inv.storeId == _selectedStoreId);
       }).map((v) {
         final p = productMap[v.productId]!;
-        final invs = inventory.where((inv) => inv.variantId == v.supabaseId)
+        final invs = inventory.where((inv) => inv.variantId == v.supabaseId
+            && (_selectedStoreId == null || inv.storeId == _selectedStoreId))
             .map((inv) => {'quantity': inv.quantity, 'store_id': inv.storeId}).toList();
         return {
           'id': v.supabaseId, 'size': v.size, 'color': v.color,
@@ -313,6 +317,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             products!inner(name, image_url, category),
             inventory(quantity, store_id)
           ''').eq('is_active', true);
+
+      if (_selectedStoreId != null) {
+        qb = qb.eq('inventory.store_id', _selectedStoreId);
+      }
 
       if (query.isNotEmpty) {
         qb = qb.or('barcode.ilike.%$query%,products.name.ilike.%$query%');
