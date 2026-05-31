@@ -86,8 +86,9 @@ class _RefundModalState extends State<RefundModal> {
     try {
       // Construct JSON payload
       final itemsPayload = selectedItems.map((i) => {
-        'variant_id': i['variant_id'] ?? widget.invoice['variant_id'], 
+        'variant_id': i['variant_id'] ?? widget.invoice['variant_id'],
         'quantity': i['refund_qty'],
+        'unit_price': i['unit_price'] ?? ((widget.invoice['total_price'] as num?)?.toDouble() ?? 0) / ((widget.invoice['quantity'] as num?)?.toDouble() ?? 1),
       }).toList();
 
       // Find original invoice ID. From sales_history it might be in 'invoice_id' if transaction.
