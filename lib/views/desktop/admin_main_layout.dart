@@ -20,6 +20,7 @@ import '../admin/sales_history_screen.dart';
 import '../admin/expenses_screen.dart';
 import '../admin/debt_recovery_screen.dart';
 import '../admin/health_screen.dart';
+import '../admin/size_run_screen.dart';
 import '../../widgets/offline_banner.dart';
 import '../../services/notification_service.dart';
 import '../admin/notifications_screen.dart';
@@ -44,8 +45,9 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
       const PosScreen(),
       const GestionStoresScreen(),
       const InventoryScreen(),
+      const SizeRunScreen(),
       ListeProduitsScreen(
-        onAddProduct: () => setState(() => _selectedIndex = 5),
+        onAddProduct: () => setState(() => _selectedIndex = 6),
       ),
       const AjouterProduitScreen(),
       const GestionClientsScreen(),
@@ -66,6 +68,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     (Icons.point_of_sale_outlined, Icons.point_of_sale_rounded, S.t('nav_pos')),
     (Icons.warehouse_outlined, Icons.warehouse_rounded, S.t('nav_stores')),
     (Icons.inventory_outlined, Icons.inventory_rounded, S.t('nav_inventory')),
+    (Icons.straighten_outlined, Icons.straighten_rounded, S.t('nav_size_runs')),
     (Icons.inventory_2_outlined, Icons.inventory_2_rounded, S.t('nav_products')),
     (Icons.add_box_outlined, Icons.add_box_rounded, S.t('nav_add_product')),
     (Icons.people_outline, Icons.people_rounded, S.t('nav_clients')),

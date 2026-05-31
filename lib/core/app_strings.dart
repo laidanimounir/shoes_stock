@@ -31,6 +31,7 @@ class S {
       'nav_products': 'Produits',
       'nav_add_product': 'Ajouter Produit',
       'nav_inventory': 'Inventaire',
+      'nav_size_runs': 'Tailles',
       'nav_sales': 'Historique Ventes',
       'nav_clients': 'Clients',
       'nav_suppliers': 'Fournisseurs',
@@ -944,6 +945,10 @@ class S {
       'size_sold': 'Vendus',
       'size_revenue': 'Revenu',
       'size_pct': '%',
+      'size_run_title': 'Gestion des tailles',
+      'size_run_select_product': 'Sélectionnez un produit',
+      'size_run_default_color': 'Par défaut',
+      'product_color': 'Couleur',
 
       // ── Inventory Turnover ──
       'turnover_title': 'Rotation Stock',
@@ -988,6 +993,7 @@ class S {
       'nav_products': 'المنتجات',
       'nav_add_product': 'إضافة منتج',
       'nav_inventory': 'المخزون',
+      'nav_size_runs': 'المقاسات',
       'nav_sales': 'سجل المبيعات',
       'nav_clients': 'العملاء',
       'nav_suppliers': 'الموردون',
@@ -1898,6 +1904,10 @@ class S {
       'size_sold': 'مباع',
       'size_revenue': 'الإيراد',
       'size_pct': '%',
+      'size_run_title': 'إدارة المقاسات',
+      'size_run_select_product': 'اختر منتجاً',
+      'size_run_default_color': 'افتراضي',
+      'product_color': 'اللون',
 
       // ── Inventory Turnover ──
       'turnover_title': 'دوران المخزون',
