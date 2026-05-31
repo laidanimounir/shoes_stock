@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
 class ActivityLogsScreen extends StatefulWidget {
@@ -33,7 +32,6 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     try {
       var qb = Supabase.instance.client.from('activity_logs').select('*, user_profiles(full_name)');
       if (_actionFilter != null) qb = qb.eq('action_type', _actionFilter!);
-      if (!AppSession.isOwner && AppSession.currentStoreId != null) qb = qb.eq('store_id', AppSession.currentStoreId!);
       final res = await qb.order('created_at', ascending: false).range(_page * 30, (_page + 1) * 30 - 1);
       if (mounted) setState(() { if (_page == 0) { _logs = res; } else { _logs.addAll(res); } _hasMore = res.length >= 30; _isLoading = false; });
     } catch (_) { if (mounted) setState(() => _isLoading = false); }
