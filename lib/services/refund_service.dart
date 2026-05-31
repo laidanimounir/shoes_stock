@@ -11,6 +11,13 @@ class RefundService {
   RefundService._();
   static final instance = RefundService._();
 
+  static bool isValidUuid(String value) {
+    if (value.isEmpty) return false;
+    if (value.startsWith('local_')) return false;
+    final uuidRegex = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false);
+    return uuidRegex.hasMatch(value);
+  }
+
   Future<Map<String, dynamic>> processRefund({
     required String invoiceId,
     required List<Map<String, dynamic>> items,
@@ -26,6 +33,9 @@ class RefundService {
         reason: reason,
         storeId: storeId,
       );
+    }
+    if (!isValidUuid(invoiceId)) {
+      throw Exception('Cette facture n\'est pas encore synchronisée. Veuillez patienter.');
     }
     return _processRefundOnline(
       invoiceId: invoiceId,

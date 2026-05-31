@@ -2926,6 +2926,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   Future<void> _showRefundDialog(
       BuildContext parentCtx, Map<String, dynamic> invoice) async {
     final invoiceId = invoice['id'] as String;
+    if (!RefundService.isValidUuid(invoiceId)) {
+      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
+      return;
+    }
     final reasonController = TextEditingController();
     bool isProcessing = false;
 
