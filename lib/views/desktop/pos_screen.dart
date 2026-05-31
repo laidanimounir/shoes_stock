@@ -2043,8 +2043,43 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         const SizedBox(width: 8),
         GestureDetector(
           onTap: _discountInput <= 0 ? null : () {
-            if (_discountMode == 0 && _discountInput > AppSession.maxDiscountPercent) {
-              _snack(S.t('pos_discount_exceeds').replaceAll('{max}', AppSession.maxDiscountPercent.toStringAsFixed(0)), _C.danger);
+            final double effectivePercent;
+            if (_discountMode == 0) {
+              effectivePercent = _discountInput;
+            } else {
+              effectivePercent = _cartTotal > 0 ? (_discountInput / _cartTotal) * 100 : 0;
+            }
+            if (!AppSession.isOwner && effectivePercent > AppSession.maxDiscountPercent) {
+              final maxValue = _discountMode == 0
+                  ? AppSession.maxDiscountPercent
+                  : _cartTotal * (AppSession.maxDiscountPercent / 100);
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(S.t('pos_discount_limit')),
+                  content: Text(S.t('pos_discount_exceeds')
+                      .replaceAll('{max}', AppSession.maxDiscountPercent.toStringAsFixed(0))),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(S.t('action_cancel')),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _discountInput = _discountMode == 0
+                              ? AppSession.maxDiscountPercent
+                              : maxValue;
+                          _discountAmount = maxValue;
+                          _isDiscountApplied = true;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(S.t('pos_discount_apply_max')),
+                    ),
+                  ],
+                ),
+              );
               return;
             }
             setState(() {
