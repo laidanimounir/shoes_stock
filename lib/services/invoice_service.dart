@@ -115,6 +115,7 @@ class InvoiceService {
       ..totalAmount = finalAmount
       ..paidAmount = paidAmount
       ..discount = calculatedDiscount.toDouble()
+      ..notes = notes
       ..status = status
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now()

@@ -42,53 +42,58 @@ const InvoiceLocalSchema = CollectionSchema(
       name: r'invoiceNumber',
       type: IsarType.string,
     ),
-    r'paidAmount': PropertySchema(
+    r'notes': PropertySchema(
       id: 5,
+      name: r'notes',
+      type: IsarType.string,
+    ),
+    r'paidAmount': PropertySchema(
+      id: 6,
       name: r'paidAmount',
       type: IsarType.double,
     ),
     r'status': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'status',
       type: IsarType.string,
     ),
     r'storeId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'storeId',
       type: IsarType.string,
     ),
     r'supabaseId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'supabaseId',
       type: IsarType.string,
     ),
     r'supplierId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'supplierId',
       type: IsarType.string,
     ),
     r'synced': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'synced',
       type: IsarType.bool,
     ),
     r'totalAmount': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'type': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'userId',
       type: IsarType.string,
     )
@@ -120,6 +125,12 @@ int _invoiceLocalEstimateSize(
     }
   }
   bytesCount += 3 + object.invoiceNumber.length * 3;
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.status.length * 3;
   {
     final value = object.storeId;
@@ -155,16 +166,17 @@ void _invoiceLocalSerialize(
   writer.writeDouble(offsets[2], object.discount);
   writer.writeDateTime(offsets[3], object.dueDate);
   writer.writeString(offsets[4], object.invoiceNumber);
-  writer.writeDouble(offsets[5], object.paidAmount);
-  writer.writeString(offsets[6], object.status);
-  writer.writeString(offsets[7], object.storeId);
-  writer.writeString(offsets[8], object.supabaseId);
-  writer.writeString(offsets[9], object.supplierId);
-  writer.writeBool(offsets[10], object.synced);
-  writer.writeDouble(offsets[11], object.totalAmount);
-  writer.writeString(offsets[12], object.type);
-  writer.writeDateTime(offsets[13], object.updatedAt);
-  writer.writeString(offsets[14], object.userId);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeDouble(offsets[6], object.paidAmount);
+  writer.writeString(offsets[7], object.status);
+  writer.writeString(offsets[8], object.storeId);
+  writer.writeString(offsets[9], object.supabaseId);
+  writer.writeString(offsets[10], object.supplierId);
+  writer.writeBool(offsets[11], object.synced);
+  writer.writeDouble(offsets[12], object.totalAmount);
+  writer.writeString(offsets[13], object.type);
+  writer.writeDateTime(offsets[14], object.updatedAt);
+  writer.writeString(offsets[15], object.userId);
 }
 
 InvoiceLocal _invoiceLocalDeserialize(
@@ -180,16 +192,17 @@ InvoiceLocal _invoiceLocalDeserialize(
   object.dueDate = reader.readDateTimeOrNull(offsets[3]);
   object.invoiceNumber = reader.readString(offsets[4]);
   object.isarId = id;
-  object.paidAmount = reader.readDouble(offsets[5]);
-  object.status = reader.readString(offsets[6]);
-  object.storeId = reader.readStringOrNull(offsets[7]);
-  object.supabaseId = reader.readString(offsets[8]);
-  object.supplierId = reader.readStringOrNull(offsets[9]);
-  object.synced = reader.readBool(offsets[10]);
-  object.totalAmount = reader.readDouble(offsets[11]);
-  object.type = reader.readString(offsets[12]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[13]);
-  object.userId = reader.readStringOrNull(offsets[14]);
+  object.notes = reader.readStringOrNull(offsets[5]);
+  object.paidAmount = reader.readDouble(offsets[6]);
+  object.status = reader.readString(offsets[7]);
+  object.storeId = reader.readStringOrNull(offsets[8]);
+  object.supabaseId = reader.readString(offsets[9]);
+  object.supplierId = reader.readStringOrNull(offsets[10]);
+  object.synced = reader.readBool(offsets[11]);
+  object.totalAmount = reader.readDouble(offsets[12]);
+  object.type = reader.readString(offsets[13]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[14]);
+  object.userId = reader.readStringOrNull(offsets[15]);
   return object;
 }
 
@@ -211,24 +224,26 @@ P _invoiceLocalDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
-    case 7:
-      return (reader.readStringOrNull(offset)) as P;
-    case 8:
-      return (reader.readString(offset)) as P;
-    case 9:
-      return (reader.readStringOrNull(offset)) as P;
-    case 10:
-      return (reader.readBool(offset)) as P;
-    case 11:
       return (reader.readDouble(offset)) as P;
-    case 12:
+    case 7:
       return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
+    case 12:
+      return (reader.readDouble(offset)) as P;
     case 13:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 14:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 15:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -886,6 +901,158 @@ extension InvoiceLocalQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition> notesMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterFilterCondition>
+      notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
       ));
     });
   }
@@ -2043,6 +2210,18 @@ extension InvoiceLocalQuerySortBy
     });
   }
 
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> sortByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paidAmount', Sort.asc);
@@ -2244,6 +2423,18 @@ extension InvoiceLocalQuerySortThenBy
     });
   }
 
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<InvoiceLocal, InvoiceLocal, QAfterSortBy> thenByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paidAmount', Sort.asc);
@@ -2404,6 +2595,13 @@ extension InvoiceLocalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<InvoiceLocal, InvoiceLocal, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<InvoiceLocal, InvoiceLocal, QDistinct> distinctByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'paidAmount');
@@ -2506,6 +2704,12 @@ extension InvoiceLocalQueryProperty
   QueryBuilder<InvoiceLocal, String, QQueryOperations> invoiceNumberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'invoiceNumber');
+    });
+  }
+
+  QueryBuilder<InvoiceLocal, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
     });
   }
 
