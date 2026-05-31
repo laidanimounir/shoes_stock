@@ -173,7 +173,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                                 color: status == 'refunded' ? Colors.red.shade400 : Colors.black87,
                               ),
                             ),
-                            if (status == 'paid') ...[
+                            if (status == 'paid' || status == 'partial' || status == 'unpaid') ...[
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.assignment_return, color: Colors.red),
