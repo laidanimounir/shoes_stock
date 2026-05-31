@@ -153,6 +153,19 @@ class ReceiptService {
               pw.SizedBox(height: 8),
               pw.Divider(),
               pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.BarcodeWidget(
+                  barcode: pw.Barcode.code128(),
+                  data: invoiceNumber,
+                  width: 200,
+                  height: 50,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(invoiceNumber,
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(font: font, fontSize: 7)),
+              pw.SizedBox(height: 4),
               pw.Text(S.t('auth_welcome'),
                   style: pw.TextStyle(font: font, fontSize: 8)),
             ],
@@ -205,65 +218,35 @@ class ReceiptService {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
+      builder: (ctx) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
+              margin: const EdgeInsets.only(top: 12),
               width: 40, height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-            Icon(Icons.receipt_long, size: 48, color: Colors.indigo[900]),
             const SizedBox(height: 12),
             Text(S.t('pos_print_title'),
                 style: const TextStyle(
                     fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.print),
-                label: Text(S.t('action_print')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo[900],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+            const SizedBox(height: 8),
+            Expanded(
+              child: PdfPreview(
+                build: (format) async => pdfBytes,
+                loadingWidget: const Center(
+                  child: CircularProgressIndicator(),
                 ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  printReceipt(pdfBytes);
-                },
+                pdfPreviewPageDecoration: const BoxDecoration(),
               ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.share),
-                label: Text(S.t('action_export')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  shareReceipt(pdfBytes, 'receipt_$invoiceNumber');
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(S.t('action_close')),
             ),
           ],
         ),

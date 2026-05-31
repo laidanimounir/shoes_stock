@@ -187,7 +187,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         if (_barcodeBuffer.isNotEmpty) {
           _searchController.text = _barcodeBuffer;
           _searchProduct(_barcodeBuffer);
+
+          final buffer = _barcodeBuffer;
           _barcodeBuffer = '';
+          _onBarcodeScanned(buffer);
         }
       } else if (event.character != null) {
         final now = DateTime.now();
@@ -199,6 +202,59 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       }
     }
     return false;
+  }
+
+  void _onBarcodeScanned(String barcode) {
+    if (!barcode.startsWith('FAC-')) return;
+    _lookupInvoiceByNumber(barcode);
+  }
+
+  Future<void> _lookupInvoiceByNumber(String invoiceNumber) async {
+    try {
+      final data = await Supabase.instance.client
+          .from('invoices')
+          .select('''
+            id, invoice_number, total_amount, paid_amount, status, created_at,
+            customers!inner(full_name),
+            stores!inner(name)
+          ''')
+          .eq('invoice_number', invoiceNumber)
+          .maybeSingle();
+
+      if (data == null || !mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('${S.t('pos_invoice')} $invoiceNumber'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${S.t('label_client')}: ${data['customers']['full_name']}'),
+              Text('${S.t('label_store')}: ${data['stores']['name']}'),
+              Text('${S.t('label_total')}: ${data['total_amount']} ${S.t('misc_currency')}'),
+              Text('${S.t('label_status')}: ${data['status']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(S.t('action_cancel')),
+            ),
+            if (data['status'] != 'refunded' && data['status'] != 'partial_refund')
+              ElevatedButton.icon(
+                icon: const Icon(Icons.replay, size: 18),
+                label: Text(S.t('pos_refund_btn')),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showRefundDialog(context, data);
+                },
+              ),
+          ],
+        ),
+      );
+    } catch (_) {}
   }
 
   // ── DATA FETCHING ─────────────────────────────
@@ -319,7 +375,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           ''').eq('is_active', true);
 
       if (_selectedStoreId != null) {
-        qb = qb.eq('inventory.store_id', _selectedStoreId);
+        qb = qb.eq('inventory.store_id', _selectedStoreId!);
       }
 
       if (query.isNotEmpty) {
