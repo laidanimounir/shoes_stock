@@ -1549,7 +1549,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             final stockStatus = _getStockStatus(totalStock);
                             final imageUrl = product['image_url'];
 
-                            return Container(
+                            return GestureDetector(
+                              onSecondaryTap: () => _enterSelectionMode(''),
+                              child: Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 border: Border(left: BorderSide(
@@ -1791,7 +1793,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   ],
                                 ),
                               ),
-                            );
+                            ),
+                          );
                           },
                         ),
                 ),
