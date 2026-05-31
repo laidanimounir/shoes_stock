@@ -121,7 +121,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   subtitle: Text('${s['invoice_number'] ?? ''} • ${s['created_at']?.toString().substring(0, 10) ?? ''}', style: const TextStyle(fontSize: 11)),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('${s['total_price']} ${S.t('misc_currency')}', style: TextStyle(decoration: isRefunded ? TextDecoration.lineThrough : null, color: isRefunded ? Colors.red : Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
-                    if (!isRefunded && status != 'refunded')
+                    if (status == 'paid')
                       IconButton(icon: const Icon(Icons.assignment_return, color: Colors.red, size: 18), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: () => _refund(s)),
                   ]),
                 ),
