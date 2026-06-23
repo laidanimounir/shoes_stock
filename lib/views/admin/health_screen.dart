@@ -4,6 +4,7 @@ import 'package:isar/isar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_colors.dart';
 import '../../core/app_session.dart';
+import '../../core/app_strings.dart';
 import '../../core/connectivity_service.dart';
 import '../../core/sync_engine.dart';
 import '../../local_db/isar_service.dart';
@@ -21,6 +22,7 @@ import '../../local_db/collections/payment_local.dart';
 import '../../local_db/collections/transaction_local.dart';
 import '../../local_db/collections/expense_local.dart';
 import '../../services/backup_service.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -191,6 +193,44 @@ class _HealthScreenState extends State<HealthScreen> {
               }
             },
             tooltip: 'Exporter la base locale',
+          ),
+          IconButton(
+            icon: const Icon(Icons.restore_rounded, color: Colors.greenAccent, size: 18),
+            onPressed: () async {
+              final result = await BackupService.instance.restoreFromJson();
+              if (!mounted) return;
+              if (result['success'] != true) {
+                final error = result['error'] as String? ?? '';
+                final msg = error == 'no_file_selected'
+                    ? S.t('no_file_selected')
+                    : error == 'invalid_backup_format'
+                        ? S.t('invalid_backup_format')
+                        : 'Erreur: $error';
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(msg), backgroundColor: Colors.orange),
+                );
+                return;
+              }
+              final preview = result['preview'] as Map<String, dynamic>;
+              final count = preview['record_count'] as int? ?? 0;
+              final confirm = await ConfirmDialog.show(
+                context: context,
+                title: S.t('restore_backup'),
+                message: '${S.t('restore_confirm')}\n\n${preview['exported_at']}\n$count enregistrements',
+                confirmColor: Colors.orange,
+              );
+              if (confirm != true || !mounted) return;
+              final applyResult = await BackupService.instance.applyRestore(result['data'] as Map<String, dynamic>);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(applyResult['success'] == true ? S.t('restore_success') : 'Erreur: ${applyResult['error']}'),
+                    backgroundColor: applyResult['success'] == true ? Colors.green : Colors.red,
+                  ),
+                );
+              }
+            },
+            tooltip: S.t('restore_backup'),
           ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),

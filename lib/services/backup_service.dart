@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -55,6 +57,103 @@ class BackupService {
   Future<void> shareBackup() async {
     final path = await exportToJson();
     await Share.shareXFiles([XFile(path)], text: 'ShoeStock ERP Backup');
+  }
+
+  Future<Map<String, dynamic>> restoreFromJson() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return {'success': false, 'error': 'no_file_selected'};
+      }
+
+      final file = File(result.files.single.path!);
+      final jsonString = await file.readAsString();
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+
+      if (!data.containsKey('exported_at')) {
+        return {'success': false, 'error': 'invalid_backup_format'};
+      }
+
+      return {
+        'success': true,
+        'preview': {
+          'exported_at': data['exported_at'],
+          'record_count': _countRecords(data),
+        },
+        'data': data,
+      };
+    } catch (e) {
+      debugPrint('[BackupService] Restore error: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> applyRestore(Map<String, dynamic> backupData) async {
+    try {
+      final isar = await IsarService.getInstance();
+
+      await isar.writeTxn(() async {
+        await isar.storeLocals.where().deleteAll();
+        await isar.userProfileLocals.where().deleteAll();
+        await isar.customerLocals.where().deleteAll();
+        await isar.supplierLocals.where().deleteAll();
+        await isar.productLocals.where().deleteAll();
+        await isar.productVariantLocals.where().deleteAll();
+        await isar.inventoryLocals.where().deleteAll();
+        await isar.invoiceLocals.where().deleteAll();
+        await isar.paymentLocals.where().deleteAll();
+        await isar.transactionLocals.where().deleteAll();
+        await isar.expenseLocals.where().deleteAll();
+        await isar.expenseCategoryLocals.where().deleteAll();
+        await isar.syncQueueItems.where().deleteAll();
+        await isar.syncMetadatas.where().deleteAll();
+
+        _restoreList<StoreLocal>(isar.storeLocals, backupData['stores'], _storeFromMap);
+        _restoreList<UserProfileLocal>(isar.userProfileLocals, backupData['user_profiles'], _profileFromMap);
+        _restoreList<CustomerLocal>(isar.customerLocals, backupData['customers'], _customerFromMap);
+        _restoreList<SupplierLocal>(isar.supplierLocals, backupData['suppliers'], _supplierFromMap);
+        _restoreList<ProductLocal>(isar.productLocals, backupData['products'], _productFromMap);
+        _restoreList<ProductVariantLocal>(isar.productVariantLocals, backupData['product_variants'], _variantFromMap);
+        _restoreList<InventoryLocal>(isar.inventoryLocals, backupData['inventory'], _inventoryFromMap);
+        _restoreList<InvoiceLocal>(isar.invoiceLocals, backupData['invoices'], _invoiceFromMap);
+        _restoreList<PaymentLocal>(isar.paymentLocals, backupData['payments'], _paymentFromMap);
+        _restoreList<TransactionLocal>(isar.transactionLocals, backupData['transactions'], _transactionFromMap);
+        _restoreList<ExpenseLocal>(isar.expenseLocals, backupData['expenses'], _expenseFromMap);
+        _restoreList<ExpenseCategoryLocal>(isar.expenseCategoryLocals, backupData['expense_categories'], _expenseCategoryFromMap);
+        _restoreList<SyncQueueItem>(isar.syncQueueItems, backupData['sync_queue'], _syncQueueFromMap);
+        _restoreList<SyncMetadata>(isar.syncMetadatas, backupData['sync_metadata'], _syncMetaFromMap);
+      });
+
+      return {'success': true, 'message': 'Restauration terminée'};
+    } catch (e) {
+      debugPrint('[BackupService] ApplyRestore error: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  int _countRecords(Map<String, dynamic> data) {
+    int count = 0;
+    final listKeys = ['stores', 'user_profiles', 'customers', 'suppliers', 'products',
+      'product_variants', 'inventory', 'invoices', 'payments', 'transactions',
+      'expenses', 'expense_categories', 'sync_queue', 'sync_metadata'];
+    for (final key in listKeys) {
+      final list = data[key];
+      if (list is List) count += list.length;
+    }
+    return count;
+  }
+
+  Future<void> _restoreList<T>(dynamic collection, dynamic jsonList, T Function(Map<String, dynamic>) fromMap) async {
+    if (jsonList is! List) return;
+    for (final item in jsonList) {
+      if (item is Map<String, dynamic>) {
+        await collection.put(fromMap(item));
+      }
+    }
   }
 
   Future<List<Map<String, dynamic>>> _exportAll<T>(Future<List<T>> future, Map<String, dynamic> Function(T) mapper) async {
@@ -165,4 +264,182 @@ class BackupService {
     'isar_id': s.isarId, 'last_sync_at': s.lastSyncAt?.toIso8601String(),
     'mode': s.mode, 'pending_count': s.pendingCount,
   };
+
+  // ── FromMap helpers for restore ──
+
+  StoreLocal _storeFromMap(Map<String, dynamic> m) => StoreLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..name = m['name'] as String? ?? ''
+    ..location = m['location'] as String?
+    ..isActive = m['is_active'] as bool? ?? true
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  UserProfileLocal _profileFromMap(Map<String, dynamic> m) => UserProfileLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..fullName = m['full_name'] as String? ?? ''
+    ..role = m['role'] as String? ?? ''
+    ..storeId = m['store_id'] as String?
+    ..isActive = m['is_active'] as bool? ?? true
+    ..firstName = m['first_name'] as String?
+    ..lastName = m['last_name'] as String?
+    ..phone = m['phone'] as String?
+    ..address = m['address'] as String?
+    ..jobTitle = m['job_title'] as String?
+    ..hiredAt = m['hired_at'] != null ? DateTime.tryParse(m['hired_at'] as String) : null
+    ..isPermanentlyDeleted = m['is_permanently_deleted'] as bool? ?? false
+    ..commissionRate = (m['commission_rate'] as num?)?.toDouble() ?? 0
+    ..loginAt = m['login_at'] != null ? DateTime.tryParse(m['login_at'] as String) : null
+    ..preferredLanguage = m['preferred_language'] as String? ?? 'ar'
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  CustomerLocal _customerFromMap(Map<String, dynamic> m) => CustomerLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..fullName = m['full_name'] as String? ?? ''
+    ..phone = m['phone'] as String?
+    ..email = m['email'] as String?
+    ..address = m['address'] as String?
+    ..imageUrl = m['image_url'] as String?
+    ..isActive = m['is_active'] as bool? ?? true
+    ..balance = (m['balance'] as num?)?.toDouble() ?? 0
+    ..loyaltyPoints = (m['loyalty_points'] as num?)?.toInt() ?? 0
+    ..creditLimit = (m['credit_limit'] as num?)?.toDouble()
+    ..customerType = m['customer_type'] as String?
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  SupplierLocal _supplierFromMap(Map<String, dynamic> m) => SupplierLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..companyName = m['company_name'] as String? ?? ''
+    ..contactName = m['contact_name'] as String?
+    ..phone = m['phone'] as String?
+    ..imageUrl = m['image_url'] as String?
+    ..isActive = m['is_active'] as bool? ?? true
+    ..balance = (m['balance'] as num?)?.toDouble() ?? 0
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  ProductLocal _productFromMap(Map<String, dynamic> m) => ProductLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..name = m['name'] as String? ?? ''
+    ..description = m['description'] as String?
+    ..imageUrl = m['image_url'] as String?
+    ..supplierId = m['supplier_id'] as String?
+    ..category = m['category'] as String?
+    ..isActive = m['is_active'] as bool? ?? true
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  ProductVariantLocal _variantFromMap(Map<String, dynamic> m) => ProductVariantLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..productId = m['product_id'] as String? ?? ''
+    ..size = m['size'] as String? ?? ''
+    ..color = m['color'] as String? ?? ''
+    ..barcode = m['barcode'] as String?
+    ..sellPrice = (m['sell_price'] as num?)?.toDouble() ?? 0
+    ..buyPrice = (m['buy_price'] as num?)?.toDouble() ?? 0
+    ..isActive = m['is_active'] as bool? ?? true
+    ..unitType = m['unit_type'] as String?
+    ..unitsPerCarton = (m['units_per_carton'] as num?)?.toInt()
+    ..wholesalePrice = (m['wholesale_price'] as num?)?.toDouble()
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  InventoryLocal _inventoryFromMap(Map<String, dynamic> m) => InventoryLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..variantId = m['variant_id'] as String? ?? ''
+    ..storeId = m['store_id'] as String? ?? ''
+    ..quantity = (m['quantity'] as num?)?.toInt() ?? 0
+    ..arrivageId = m['arrivage_id'] as String?
+    ..arrivageDate = m['arrivage_date'] != null ? DateTime.tryParse(m['arrivage_date'] as String) : null
+    ..purchasePrice = (m['purchase_price'] as num?)?.toDouble()
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  InvoiceLocal _invoiceFromMap(Map<String, dynamic> m) => InvoiceLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..invoiceNumber = m['invoice_number'] as String? ?? ''
+    ..storeId = m['store_id'] as String?
+    ..userId = m['user_id'] as String?
+    ..customerId = m['customer_id'] as String?
+    ..supplierId = m['supplier_id'] as String?
+    ..type = m['type'] as String? ?? ''
+    ..totalAmount = (m['total_amount'] as num?)?.toDouble() ?? 0
+    ..paidAmount = (m['paid_amount'] as num?)?.toDouble() ?? 0
+    ..discount = (m['discount'] as num?)?.toDouble() ?? 0
+    ..notes = m['notes'] as String?
+    ..status = m['status'] as String? ?? ''
+    ..synced = m['synced'] as bool? ?? false
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null
+    ..dueDate = m['due_date'] != null ? DateTime.tryParse(m['due_date'] as String) : null;
+
+  PaymentLocal _paymentFromMap(Map<String, dynamic> m) => PaymentLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..invoiceId = m['invoice_id'] as String?
+    ..customerId = m['customer_id'] as String?
+    ..supplierId = m['supplier_id'] as String?
+    ..storeId = m['store_id'] as String?
+    ..userId = m['user_id'] as String?
+    ..amount = (m['amount'] as num?)?.toDouble() ?? 0
+    ..paymentMethod = m['payment_method'] as String? ?? 'cash'
+    ..paymentDate = m['payment_date'] != null ? DateTime.tryParse(m['payment_date'] as String) : null
+    ..notes = m['notes'] as String?
+    ..paymentType = m['payment_type'] as String? ?? 'invoice'
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  TransactionLocal _transactionFromMap(Map<String, dynamic> m) => TransactionLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..invoiceNumber = m['invoice_number'] as String?
+    ..type = m['type'] as String? ?? ''
+    ..variantId = m['variant_id'] as String? ?? ''
+    ..quantity = (m['quantity'] as num?)?.toInt() ?? 0
+    ..unitPrice = (m['unit_price'] as num?)?.toDouble() ?? 0
+    ..totalPrice = (m['total_price'] as num?)?.toDouble() ?? 0
+    ..storeId = m['store_id'] as String? ?? ''
+    ..userId = m['user_id'] as String? ?? ''
+    ..customerId = m['customer_id'] as String?
+    ..supplierId = m['supplier_id'] as String?
+    ..invoiceId = m['invoice_id'] as String?
+    ..profitMargin = (m['profit_margin'] as num?)?.toDouble()
+    ..synced = m['synced'] as bool? ?? false
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  ExpenseLocal _expenseFromMap(Map<String, dynamic> m) => ExpenseLocal()
+    ..supabaseId = m['supabase_id'] as String?
+    ..categoryId = m['category_id'] as String?
+    ..amount = (m['amount'] as num?)?.toDouble() ?? 0
+    ..description = m['description'] as String?
+    ..paymentMethod = m['payment_method'] as String? ?? ''
+    ..storeId = m['store_id'] as String? ?? ''
+    ..userId = m['user_id'] as String?
+    ..expenseDate = m['expense_date'] != null ? DateTime.tryParse(m['expense_date'] as String) ?? DateTime.now() : DateTime.now()
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  ExpenseCategoryLocal _expenseCategoryFromMap(Map<String, dynamic> m) => ExpenseCategoryLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..name = m['name'] as String? ?? ''
+    ..storeId = m['store_id'] as String? ?? ''
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) : null
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
+
+  SyncQueueItem _syncQueueFromMap(Map<String, dynamic> m) => SyncQueueItem()
+    ..operationType = m['operation_type'] as String? ?? ''
+    ..payloadJson = m['payload_json'] as String? ?? ''
+    ..status = m['status'] as String? ?? ''
+    ..idempotencyKey = m['idempotency_key'] as String? ?? ''
+    ..priority = (m['priority'] as num?)?.toInt() ?? 3
+    ..retryCount = (m['retry_count'] as num?)?.toInt() ?? 0
+    ..errorMessage = m['error_message'] as String?
+    ..createdAt = m['created_at'] != null ? DateTime.tryParse(m['created_at'] as String) ?? DateTime.now() : DateTime.now()
+    ..lastAttemptAt = m['last_attempt_at'] != null ? DateTime.tryParse(m['last_attempt_at'] as String) : null;
+
+  SyncMetadata _syncMetaFromMap(Map<String, dynamic> m) => SyncMetadata()
+    ..lastSyncAt = m['last_sync_at'] != null ? DateTime.tryParse(m['last_sync_at'] as String) : null
+    ..mode = m['mode'] as String? ?? 'online'
+    ..pendingCount = (m['pending_count'] as num?)?.toInt() ?? 0;
 }
