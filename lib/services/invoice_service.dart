@@ -40,9 +40,9 @@ class InvoiceService {
             .from('customers')
             .select('balance, credit_limit')
             .eq('id', customerId)
-            .single();
-        balance = (custRes['balance'] as num?)?.toDouble() ?? 0;
-        creditLimit = (custRes['credit_limit'] as num?)?.toDouble() ?? 0;
+            .maybeSingle();
+        balance = (custRes?['balance'] as num?)?.toDouble() ?? 0;
+        creditLimit = (custRes?['credit_limit'] as num?)?.toDouble() ?? 0;
       } else {
         final isar = await IsarService.getInstance();
         final allCust = await isar.customerLocals.where().findAll();
