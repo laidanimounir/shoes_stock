@@ -80,10 +80,25 @@ class InvoiceService {
       }
       final result =
           await Supabase.instance.client.rpc('process_sale', params: params);
-      if (result is Map) {
-        return Map<String, dynamic>.from(result);
+
+      if (result == null) {
+        return {'success': false, 'error': 'process_sale returned null'};
       }
-      return {'success': true};
+
+      if (result is! Map) {
+        return {
+          'success': false,
+          'error': 'Unexpected response type: ${result.runtimeType}'
+        };
+      }
+
+      final response = Map<String, dynamic>.from(result);
+
+      if (response['success'] == false || response.containsKey('error')) {
+        return response;
+      }
+
+      return response;
     }
 
     // ════════════════════════════════════
