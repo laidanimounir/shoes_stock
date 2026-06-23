@@ -28,10 +28,12 @@ void _exitApp(int code) {
 }
 
 Future<void> main() async {
-  if (!kIsWeb) {
+  final sentryDsn = const String.fromEnvironment('SENTRY_DSN');
+
+  if (!kIsWeb && sentryDsn.isNotEmpty) {
     await SentryFlutter.init(
       (options) {
-        options.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0';
+        options.dsn = sentryDsn;
         options.tracesSampleRate = 1.0;
         options.enableAppLifecycleBreadcrumbs = true;
         options.beforeSend = (event, hint) {
