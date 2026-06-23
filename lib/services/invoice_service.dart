@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import '../core/app_session.dart';
@@ -63,42 +64,51 @@ class InvoiceService {
     // ONLINE PATH — call Supabase RPC
     // ════════════════════════════════════
     if (!AppSession.isOfflineMode) {
-      final params = <String, dynamic>{
-        'p_store_id': storeId,
-        'p_customer_id': customerId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': items,
-        'p_total_amount': totalAmount,
-        'p_paid_amount': paidAmount,
-        'p_payment_method': paymentMethod,
-        'p_notes': notes,
-        'p_discount_percent': discountPercent,
-        'p_discount_amount': discountAmount,
-      };
-      if (dueDate != null) {
-        params['p_due_date'] = dueDate.toIso8601String().substring(0, 10);
-      }
-      final result =
-          await Supabase.instance.client.rpc('process_sale', params: params);
-
-      if (result == null) {
-        return {'success': false, 'error': 'process_sale returned null'};
-      }
-
-      if (result is! Map) {
-        return {
-          'success': false,
-          'error': 'Unexpected response type: ${result.runtimeType}'
+      try {
+        final params = <String, dynamic>{
+          'p_store_id': storeId,
+          'p_customer_id': customerId,
+          'p_invoice_number': invoiceNumber,
+          'p_items': items,
+          'p_total_amount': totalAmount,
+          'p_paid_amount': paidAmount,
+          'p_payment_method': paymentMethod,
+          'p_notes': notes,
+          'p_discount_percent': discountPercent,
+          'p_discount_amount': discountAmount,
         };
-      }
+        if (dueDate != null) {
+          params['p_due_date'] = dueDate.toIso8601String().substring(0, 10);
+        }
+        final result =
+            await Supabase.instance.client.rpc('process_sale', params: params);
 
-      final response = Map<String, dynamic>.from(result);
+        if (result == null) {
+          return {'success': false, 'error': 'process_sale returned null'};
+        }
 
-      if (response['success'] == false || response.containsKey('error')) {
+        if (result is! Map) {
+          return {
+            'success': false,
+            'error': 'Unexpected response type: ${result.runtimeType}'
+          };
+        }
+
+        final response = Map<String, dynamic>.from(result);
+
+        if (response['success'] == false || response.containsKey('error')) {
+          return response;
+        }
+
         return response;
+      } on PostgrestException catch (e) {
+        debugPrint('[InvoiceService] PostgrestException: ${e.message}');
+        return {'success': false, 'error': e.message};
+      } catch (e, stackTrace) {
+        debugPrint('[InvoiceService] Unexpected error: $e');
+        debugPrint('[InvoiceService] StackTrace: $stackTrace');
+        return {'success': false, 'error': e.toString()};
       }
-
-      return response;
     }
 
     // ════════════════════════════════════

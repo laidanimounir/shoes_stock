@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/app_session.dart';
@@ -51,14 +52,23 @@ class RefundService {
     required double refundAmount,
     required String reason,
   }) async {
-    final result = await Supabase.instance.client.rpc('process_refund', params: {
-      'p_invoice_id': invoiceId,
-      'p_items': items,
-      'p_refund_amount': refundAmount,
-      'p_reason': reason,
-      'p_user_id': AppSession.currentUserId,
-    });
-    return Map<String, dynamic>.from(result as Map);
+    try {
+      final result = await Supabase.instance.client.rpc('process_refund', params: {
+        'p_invoice_id': invoiceId,
+        'p_items': items,
+        'p_refund_amount': refundAmount,
+        'p_reason': reason,
+        'p_user_id': AppSession.currentUserId,
+      });
+      return Map<String, dynamic>.from(result as Map);
+    } on PostgrestException catch (e) {
+      debugPrint('[RefundService] PostgrestException: ${e.message}');
+      return {'success': false, 'error': e.message};
+    } catch (e, stackTrace) {
+      debugPrint('[RefundService] Unexpected error: $e');
+      debugPrint('[RefundService] StackTrace: $stackTrace');
+      return {'success': false, 'error': e.toString()};
+    }
   }
 
   Future<Map<String, dynamic>> _processRefundOffline({

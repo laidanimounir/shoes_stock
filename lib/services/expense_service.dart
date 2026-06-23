@@ -31,15 +31,24 @@ class ExpenseService {
   }) async {
     // ── ONLINE PATH ──
     if (!AppSession.isOfflineMode) {
-      final result = await _client.rpc('add_expense', params: {
-        'p_category_id': categoryId,
-        'p_amount': amount,
-        'p_description': description ?? '',
-        'p_payment_method': paymentMethod,
-        'p_store_id': storeId,
-        'p_expense_date': expenseDate.toIso8601String().split('T').first,
-      });
-      return {'success': true, 'expense_id': result};
+      try {
+        final result = await _client.rpc('add_expense', params: {
+          'p_category_id': categoryId,
+          'p_amount': amount,
+          'p_description': description ?? '',
+          'p_payment_method': paymentMethod,
+          'p_store_id': storeId,
+          'p_expense_date': expenseDate.toIso8601String().split('T').first,
+        });
+        return {'success': true, 'expense_id': result};
+      } on PostgrestException catch (e) {
+        debugPrint('[ExpenseService] PostgrestException: ${e.message}');
+        return {'success': false, 'error': e.message};
+      } catch (e, stackTrace) {
+        debugPrint('[ExpenseService] Unexpected error: $e');
+        debugPrint('[ExpenseService] StackTrace: $stackTrace');
+        return {'success': false, 'error': e.toString()};
+      }
     }
 
     // ── OFFLINE PATH ──

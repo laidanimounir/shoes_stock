@@ -30,13 +30,20 @@ class DebtRecoveryService {
   }) async {
     // ── ONLINE PATH ──
     if (!AppSession.isOfflineMode) {
-      await _client.rpc('add_debt_recovery_payment', params: {
-        'p_customer_id': customerId,
-        'p_amount': amount,
-        'p_payment_method': paymentMethod,
-        'p_store_id': storeId,
-        'p_notes': notes,
-      });
+      try {
+        await _client.rpc('add_debt_recovery_payment', params: {
+          'p_customer_id': customerId,
+          'p_amount': amount,
+          'p_payment_method': paymentMethod,
+          'p_store_id': storeId,
+          'p_notes': notes,
+        });
+      } on PostgrestException catch (e) {
+        debugPrint('[DebtRecoveryService] PostgrestException: ${e.message}');
+      } catch (e, stackTrace) {
+        debugPrint('[DebtRecoveryService] Unexpected error: $e');
+        debugPrint('[DebtRecoveryService] StackTrace: $stackTrace');
+      }
       return;
     }
 

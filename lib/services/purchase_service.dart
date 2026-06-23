@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 import '../core/app_session.dart';
@@ -24,20 +25,29 @@ class PurchaseService {
     final invoiceNumber = 'ACH-${DateTime.now().millisecondsSinceEpoch}';
 
     if (!AppSession.isOfflineMode) {
-      final result = await Supabase.instance.client.rpc('process_purchase', params: {
-        'p_store_id': storeId,
-        'p_supplier_id': supplierId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': items,
-        'p_total_amount': totalAmount,
-        'p_paid_amount': paidAmount,
-        'p_payment_method': paymentMethod,
-        'p_notes': notes,
-      });
-      if (result is Map) {
-        return Map<String, dynamic>.from(result);
+      try {
+        final result = await Supabase.instance.client.rpc('process_purchase', params: {
+          'p_store_id': storeId,
+          'p_supplier_id': supplierId,
+          'p_invoice_number': invoiceNumber,
+          'p_items': items,
+          'p_total_amount': totalAmount,
+          'p_paid_amount': paidAmount,
+          'p_payment_method': paymentMethod,
+          'p_notes': notes,
+        });
+        if (result is Map) {
+          return Map<String, dynamic>.from(result);
+        }
+        return {'success': true};
+      } on PostgrestException catch (e) {
+        debugPrint('[PurchaseService] PostgrestException: ${e.message}');
+        return {'success': false, 'error': e.message};
+      } catch (e, stackTrace) {
+        debugPrint('[PurchaseService] Unexpected error: $e');
+        debugPrint('[PurchaseService] StackTrace: $stackTrace');
+        return {'success': false, 'error': e.toString()};
       }
-      return {'success': true};
     }
 
     final isar = await IsarService.getInstance();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/app_session.dart';
@@ -19,10 +20,17 @@ class SizeRunService {
 
   Future<void> updateSizeRun(String sizeRunId, Map<String, int> sizes) async {
     if (!AppSession.isOfflineMode) {
-      await Supabase.instance.client
-          .from('size_runs')
-          .update({'sizes': sizes})
-          .eq('id', sizeRunId);
+      try {
+        await Supabase.instance.client
+            .from('size_runs')
+            .update({'sizes': sizes})
+            .eq('id', sizeRunId);
+      } on PostgrestException catch (e) {
+        debugPrint('[SizeRunService] Update error: ${e.message}');
+      } catch (e, stackTrace) {
+        debugPrint('[SizeRunService] Update error: $e');
+        debugPrint('[SizeRunService] StackTrace: $stackTrace');
+      }
     }
 
     final isar = await IsarService.getInstance();
@@ -45,13 +53,25 @@ class SizeRunService {
     final storeId = AppSession.currentStoreId;
     if (storeId == null) return;
 
-    final rows = await Supabase.instance.client
-        .from('size_runs')
-        .select()
-        .eq('store_id', storeId);
+    try {
+      final rows = await Supabase.instance.client
+          .from('size_runs')
+          .select()
+          .eq('store_id', storeId);
+      await _syncSizeRunsFromRows(rows);
+    } on PostgrestException catch (e) {
+      debugPrint('[SizeRunService] Sync error: ${e.message}');
+    } catch (e, stackTrace) {
+      debugPrint('[SizeRunService] Sync error: $e');
+      debugPrint('[SizeRunService] StackTrace: $stackTrace');
+    }
+  }
 
+  Future<void> _syncSizeRunsFromRows(List<dynamic> rows) async {
     final isar = await IsarService.getInstance();
     await isar.writeTxn(() async {
+      final storeId = AppSession.currentStoreId;
+      if (storeId == null) return;
       await isar.sizeRunLocals
           .filter()
           .storeIdEqualTo(storeId)
