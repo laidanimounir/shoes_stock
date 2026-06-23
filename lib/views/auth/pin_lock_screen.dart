@@ -79,14 +79,17 @@ class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserv
               options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[PinLockScreen] Biometric auth error: $e');
+        }
       }
       if (!authenticated) {
         setState(() => _setupMode = false);
       } else {
         _unlock();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[PinLockScreen] Init error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -137,7 +140,8 @@ class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserv
         setState(() { _error = true; _errorMsg = S.t('pin_incorrect'); _pin = ''; });
         HapticFeedback.vibrate();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[PinLockScreen] PIN verify error: $e');
       setState(() { _error = true; _errorMsg = S.t('msg_error'); _pin = ''; });
     }
   }
@@ -147,14 +151,14 @@ class _PinLockScreenState extends State<PinLockScreen> with WidgetsBindingObserv
     final settings = (await isar.settingsLocals.get(1)) ?? SettingsLocal();
     settings.pinHash = _hashPin(pin);
     bool bioAvailable = false;
-    try { bioAvailable = await _localAuth.canCheckBiometrics; } catch (_) {}
+    try { bioAvailable = await _localAuth.canCheckBiometrics; } catch (e) { debugPrint('[PinLockScreen] Biometric check error: $e'); }
     if (bioAvailable) {
       try {
         bioAvailable = await _localAuth.authenticate(
           localizedReason: S.t('pin_setup_biometric'),
           options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
         );
-      } catch (_) { bioAvailable = false; }
+      } catch (e) { debugPrint('[PinLockScreen] Biometric setup error: $e'); bioAvailable = false; }
     }
     settings.biometricEnabled = bioAvailable;
     await isar.writeTxn(() async => await isar.settingsLocals.put(settings));
