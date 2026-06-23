@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/app_strings.dart';
 
 class FilterField {
   final String id;
@@ -88,12 +89,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         children: [
           Row(
             children: [
-              Text('Filtres', style: Theme.of(context).textTheme.titleLarge),
+              Text(S.t('action_filter'), style: Theme.of(context).textTheme.titleLarge),
               const Spacer(),
               if (widget.onReset != null)
                 TextButton(
                   onPressed: () { widget.onReset!(); Navigator.pop(context); },
-                  child: const Text('Réinitialiser'),
+                  child: Text(S.t('log_reset_filters')),
                 ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
@@ -126,7 +127,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text('Appliquer'),
+              child: Text(S.t('action_apply')),
             ),
           ),
           const SizedBox(height: 24),
@@ -160,7 +161,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               isDense: true,
             ),
             items: [
-              const DropdownMenuItem<String>(value: null, child: Text('Tous')),
+              DropdownMenuItem<String>(value: null, child: Text(S.t('filter_all_select'))),
               if (field.options != null)
                 ...field.options!.map(
                   (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
@@ -214,7 +215,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               child: Text(
                 _dateRange != null
                     ? '${_dateRange!.start.toLocal().toString().substring(0, 10)} → ${_dateRange!.end.toLocal().toString().substring(0, 10)}'
-                    : 'Sélectionner une période',
+                    : S.t('filter_select_period'),
               ),
             ),
           ),

@@ -74,13 +74,13 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     (Icons.people_outline, Icons.people_rounded, S.t('nav_clients')),
     (Icons.local_shipping_outlined, Icons.local_shipping_rounded, S.t('nav_suppliers')),
     (Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, S.t('nav_purchases')),
-    (Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Bons de commande'),
+    (Icons.receipt_long_outlined, Icons.receipt_long_rounded, S.t('nav_purchase_orders')),
     (Icons.badge_outlined, Icons.badge_rounded, S.t('nav_employees')),
     (Icons.history_outlined, Icons.history_rounded, S.t('nav_activity')),
     (Icons.history_edu_outlined, Icons.history_edu_rounded, S.t('nav_sales')),
     (Icons.receipt_long_outlined, Icons.receipt_long, S.t('nav_expenses')),
     (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, S.t('nav_recovery')),
-    (Icons.monitor_heart_outlined, Icons.monitor_heart_rounded, 'Santé'),
+    (Icons.monitor_heart_outlined, Icons.monitor_heart_rounded, S.t('nav_health')),
   ];
 
   @override

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../core/app_strings.dart';
 
 class ConfirmDialog {
   static Future<bool?> show({
     required BuildContext context,
     required String title,
     required String message,
-    String confirmText = 'Confirmer',
-    String cancelText = 'Annuler',
+    String confirmText = '',
+    String cancelText = '',
     Color confirmColor = Colors.red,
     IconData? icon,
   }) {
+    final cText = confirmText.isNotEmpty ? confirmText : S.t('action_confirm');
+    final aText = cancelText.isNotEmpty ? cancelText : S.t('action_cancel');
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -26,7 +29,7 @@ class ConfirmDialog {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(cancelText),
+            child: Text(aText),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -34,7 +37,7 @@ class ConfirmDialog {
               backgroundColor: confirmColor,
               foregroundColor: Colors.white,
             ),
-            child: Text(confirmText),
+            child: Text(cText),
           ),
         ],
       ),
