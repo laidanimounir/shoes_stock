@@ -69,10 +69,10 @@ class ApiVersionService {
   bool isVersionDeprecated(ApiVersionInfo info) => info.deprecated;
 
   bool isMinFlutterVersionExceeded(ApiVersionInfo info, String currentVersion) {
-    return _compareVersions(currentVersion, info.minFlutterVersion) < 0;
+    return compareVersions(currentVersion, info.minFlutterVersion) < 0;
   }
 
-  int _compareVersions(String a, String b) {
+  int compareVersions(String a, String b) {
     final partsA = a.split('.').map(int.parse).toList();
     final partsB = b.split('.').map(int.parse).toList();
     for (int i = 0; i < 3; i++) {

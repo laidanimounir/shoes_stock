@@ -73,17 +73,6 @@ Future<void> _checkVersion() async {
   }
 }
 
-int _compareVersions(String a, String b) {
-  final partsA = a.split('.').map(int.parse).toList();
-  final partsB = b.split('.').map(int.parse).toList();
-  for (int i = 0; i < 3; i++) {
-    final va = i < partsA.length ? partsA[i] : 0;
-    final vb = i < partsB.length ? partsB[i] : 0;
-    if (va != vb) return va.compareTo(vb);
-  }
-  return 0;
-}
-
 Future<void> _runApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -457,7 +446,7 @@ class _StartupScreenState extends State<_StartupScreen> {
 
     if (mounted) widget.onNavigate();
 
-    if (current != null && latestVer != null && _compareVersions(current, latestVer) < 0) {
+    if (current != null && latestVer != null && ApiVersionService.instance.compareVersions(current, latestVer) < 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
