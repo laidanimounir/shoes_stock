@@ -626,3 +626,81 @@ Shoes_Stock/
 - جميع الحسابات المالية في Supabase RPCs حصراً — Flutter للعرض فقط.
 - تم تفعيل JWT على Edge Functions والمتبقي read-only functions.
 - النظام جاهز للتسليم مع توثيق كامل.
+
+---
+
+## 🛠️ Audit & Fixes — 23 Juin 2026
+
+### Overview
+Full zero-to-one audit performed on 95 Dart files and 24 Supabase tables.
+All 28 identified issues resolved. flutter analyze: 0 errors.
+
+### 🔴 Security Fixes (Group A)
+| Commit | Fix |
+|--------|-----|
+| 938f006 | Moved Supabase URL + anon key to --dart-define env vars |
+| 549e142 | Replaced placeholder Sentry DSN with --dart-define |
+| 6fcc0f9 | Enabled RLS on notifications and purchase_price_history tables |
+| (migration) | Restricted promotions write access to owner role only |
+| (migration) | Added SET search_path to 53 SECURITY DEFINER functions |
+
+### 🔴 Critical Bug Fixes (Group B)
+| Commit | Fix |
+|--------|-----|
+| f73cf24 | Fixed 5 silent catch blocks in pin_lock_screen |
+| 83192c6 | Fixed 3 silent catch blocks in main.dart initialization |
+| b7996fe | Replaced .single() with .maybeSingle() in invoice_service |
+| ab4013b | Added RPC response type validation in process_sale |
+| 55eeebb | Wrapped all Supabase RPC calls in try/catch across 6 services |
+| d9db335 | Removed duplicate _compareVersions logic from main.dart |
+| (migration) | Cleaned 23 orphaned transactions and payments records |
+
+### 🟡 Database Fixes (Group C)
+| Commit | Fix |
+|--------|-----|
+| (migration) | Added 13 missing foreign key indexes |
+| f3e782c | Dropped duplicate get_admin_dashboard_stats and get_overdue_customers functions |
+| a5d1885 | Dropped duplicate idx_po_status index on purchase_orders |
+| d65bff2 | Verified and confirmed all FK constraints exist |
+
+### 🟡 Code Quality Fixes (Group D)
+| Commit | Fix |
+|--------|-----|
+| dcfa486 | Replaced hardcoded French strings with S.t() in shared widgets |
+| 2dbc028 | Localized all PDF report headers in report_service |
+| dce607f | Added initialization guard to PreferencesService |
+| dce607f | Fixed @Collection annotation in settings_local |
+| 4e0298b | Added toMap / fromMap / copyWith to CartItem model |
+| 48c69ac | Replaced unsafe late fields with safe defaults in 16 Isar collections |
+
+### 🟡 Missing Features Implemented (Group E)
+| Commit | Feature |
+|--------|---------|
+| dce607f | Removed stale shift_* translation keys from app_strings |
+| 43cfc1a | Implemented backup restore from JSON (restoreFromJson + UI button) |
+| 819d1dd | Implemented activity log CSV export |
+| 775033f | Implemented forgot password flow in login screen |
+
+### 🟢 Improvements (Group F)
+| Commit | Fix |
+|--------|-----|
+| 4da89c4 | Enabled JWT verification on get_minimum_version and api_version edge functions |
+| e5f2fbc | Added employee read access policy to suppliers table |
+
+### ✅ Final Verification
+| Check | Result |
+|-------|--------|
+| flutter analyze | 0 errors |
+| build_runner | Clean |
+| RLS on all 24 tables | 0 disabled |
+| Orphaned records | 0 |
+| Duplicate functions | 0 |
+| Tasks completed | 28/28 |
+
+### 🔑 Running the App After This Audit
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://jluuobtzylejiahbelgp.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your_anon_key \
+  --dart-define=SENTRY_DSN=your_sentry_dsn
+```
