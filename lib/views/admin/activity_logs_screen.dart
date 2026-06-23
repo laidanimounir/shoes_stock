@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_session.dart';
@@ -71,6 +74,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   // ── data ──────────────────────────────────
   List<dynamic> _logs = [];
   bool _isLoading = false;
+  bool _isExporting = false;
   int _totalCount = 0;
 
   // ── pagination ────────────────────────────
@@ -305,11 +309,39 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     }
   }
 
-  void _onExport() {
-    // TODO: implement export logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Export — à implémenter')),
-    );
+  void _onExport() async {
+    if (_isExporting) return;
+    setState(() => _isExporting = true);
+    try {
+      final buffer = StringBuffer();
+      buffer.writeln('Date,Utilisateur,Action,Description');
+      for (final log in _logs) {
+        final date = log['created_at']?.toString() ?? '';
+        final user = log['user_profiles']?['full_name']?.toString() ?? '';
+        final action = log['action_type']?.toString() ?? '';
+        final desc = (log['description']?.toString() ?? '').replaceAll('"', '""');
+        buffer.writeln('"$date","$user","$action","$desc"');
+      }
+
+      final dir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${dir.path}/activity_logs_$timestamp.csv');
+      await file.writeAsString(buffer.toString(), encoding: utf8);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: S.t('activity_log_export'),
+      );
+    } catch (e) {
+      debugPrint('[ActivityLogs] Export error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.t('error_export_failed'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   // ─────────────────────────────────────────
@@ -402,9 +434,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           ),
           const SizedBox(width: 12),
           FilledButton.icon(
-            onPressed: _onExport,
+            onPressed: _isExporting ? null : _onExport,
             icon: const Icon(Icons.file_download_outlined, size: 16),
-            label: const Text('Exporter'),
+            label: Text(_isExporting ? '...' : 'Exporter'),
             style: FilledButton.styleFrom(
               backgroundColor: _primary,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
