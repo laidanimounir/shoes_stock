@@ -53,7 +53,7 @@ class ReportService {
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (ctx) => [
-        pw.Header(text: 'Rapport de Caisse - $dateStr'),
+        pw.Header(text: '${S.t('report_cashier')} - $dateStr'),
         if (userName != null) pw.Paragraph(text: 'Caissier: $userName'),
         pw.SizedBox(height: 8),
         pw.Paragraph(text: 'Ventes: $totalSales'),
@@ -104,7 +104,7 @@ class ReportService {
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (ctx) => [
-        pw.Header(text: 'Rapport de Ventes - $dateStr'),
+        pw.Header(text: '${S.t('report_sales')} - $dateStr'),
         pw.Paragraph(text: 'Total des ventes: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}'),
         pw.Paragraph(text: 'Nombre de transactions: $count'),
         pw.SizedBox(height: 16),
@@ -147,7 +147,7 @@ class ReportService {
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (ctx) => [
-        pw.Header(text: "Rapport d'Inventaire"),
+        pw.Header(text: S.t('report_inventory')),
         pw.Paragraph(text: 'Stock total: $totalQty unités'),
         pw.Paragraph(text: 'Valeur totale (achat): ${totalValue.toStringAsFixed(2)} ${S.t('misc_currency')}'),
         pw.SizedBox(height: 16),
@@ -188,7 +188,7 @@ class ReportService {
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (ctx) => [
-        pw.Header(text: 'Rapport des Dettes Clients'),
+        pw.Header(text: S.t('report_debts')),
         pw.Paragraph(text: 'Total des dettes: ${totalDebt.toStringAsFixed(2)} ${S.t('misc_currency')}'),
         pw.Paragraph(text: 'Nombre de clients: ${res.length}'),
         pw.SizedBox(height: 16),
@@ -217,7 +217,7 @@ class ReportService {
       pageFormat: PdfPageFormat.a4,
       build: (ctx) => pw.Column(
         children: [
-          pw.Header(text: 'Rapport de Clôture'),
+          pw.Header(text: S.t('report_closing')),
           pw.Paragraph(text: 'Magasin: $storeName'),
           pw.Paragraph(text: 'Date: $dateStr'),
           pw.SizedBox(height: 16),
