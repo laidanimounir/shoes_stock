@@ -49,7 +49,7 @@ class ApiVersionService {
 
       final res = await Supabase.instance.client.functions.invoke('api_version');
       final data = res.data as Map<String, dynamic>?;
-      if (data == null) return null;
+      if (data == null) return _cachedInfo;
 
       _cachedInfo = ApiVersionInfo.fromJson(data);
 
