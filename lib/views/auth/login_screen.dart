@@ -72,6 +72,81 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController();
+    bool isSending = false;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(S.t('forgot_password_dialog_title')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(S.t('forgot_password_instructions')),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: S.t('email'),
+                  prefixIcon: const Icon(Icons.email_outlined),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(S.t('cancel_btn')),
+            ),
+            ElevatedButton(
+              onPressed: isSending
+                  ? null
+                  : () async {
+                      final email = emailController.text.trim();
+                      if (email.isEmpty) return;
+                      setDialogState(() => isSending = true);
+                      try {
+                        await Supabase.instance.client.auth
+                            .resetPasswordForEmail(email);
+                        if (context.mounted) Navigator.pop(context);
+                        if (mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(S.t('password_reset_sent')),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } on AuthException catch (e) {
+                        setDialogState(() => isSending = false);
+                        if (mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(content: Text(e.message)),
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint('[Login] Password reset error: $e');
+                        setDialogState(() => isSending = false);
+                      }
+                    },
+              child: isSending
+                  ? const SizedBox(
+                      width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(S.t('send_btn')),
+            ),
+          ],
+        ),
+      ),
+    );
+    emailController.dispose();
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -435,7 +510,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         Center(
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: _showForgotPasswordDialog,
                             child: Text(
                               S.t('auth_forgot_password'),
                               style: GoogleFonts.raleway(
