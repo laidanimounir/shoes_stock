@@ -447,13 +447,25 @@ dart pub global activate fvm
 fvm install 3.41.7
 fvm use 3.41.7
 
+# Create .env file from template (copy .env.example → .env and fill in real values)
+copy .env.example .env
+
 fvm flutter clean
 fvm flutter pub get
 fvm dart run build_runner build --delete-conflicting-outputs
-fvm flutter run -d windows
+fvm flutter run -d windows \
+  --dart-define=SUPABASE_URL=https://jluuobtzylejiahbelgp.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-real-anon-key \
+  --dart-define=SENTRY_DSN=your-sentry-dsn
 
-fvm flutter build windows
+fvm flutter build windows \
+  --dart-define=SUPABASE_URL=https://jluuobtzylejiahbelgp.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-real-anon-key \
+  --dart-define=SENTRY_DSN=your-sentry-dsn
 ```
+
+> **Note:** Supabase URL, anon key, and Sentry DSN are passed via `--dart-define` at build time.
+> See `.env.example` for the required environment variables. Never commit `.env` to git.
 
 ---
 
