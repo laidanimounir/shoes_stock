@@ -6,10 +6,10 @@ part 'product_variant_local.g.dart';
 class ProductVariantLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String productId;
-  late String size;
-  late String color;
+  String supabaseId = '';
+  String productId = '';
+  String size = '';
+  String color = '';
 
   @Index()
   String? barcode;

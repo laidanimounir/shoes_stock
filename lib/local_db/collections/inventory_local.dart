@@ -6,13 +6,13 @@ part 'inventory_local.g.dart';
 class InventoryLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
+  String supabaseId = '';
 
   @Index()
-  late String variantId;
+  String variantId = '';
 
   @Index()
-  late String storeId;
+  String storeId = '';
   int quantity = 0;
   String? arrivageId;
   DateTime? arrivageDate;

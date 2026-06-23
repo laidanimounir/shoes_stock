@@ -7,10 +7,10 @@ class ExpenseCategoryLocal {
   Id isarId = Isar.autoIncrement;
 
   @Index(unique: true)
-  late String supabaseId;
+  String supabaseId = '';
   
-  late String name;
-  late String storeId;
+  String name = '';
+  String storeId = '';
   DateTime? createdAt;
   DateTime? updatedAt;
 }

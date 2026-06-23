@@ -7,11 +7,11 @@ part 'size_run_local.g.dart';
 class SizeRunLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String productId;
+  String supabaseId = '';
+  String productId = '';
   String? color;
   String sizesJson = '{}';
-  late String storeId;
+  String storeId = '';
   DateTime? updatedAt;
 
   @ignore

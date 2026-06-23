@@ -9,22 +9,22 @@ class SyncQueueItem {
   Id isarId = Isar.autoIncrement;
 
   /// SyncOperationType.toSupabaseString()
-  late String operationType;
+  String operationType = '';
 
   /// jsonEncode of the RPC params map
-  late String payloadJson;
+  String payloadJson = '';
 
   /// SyncStatus: 'pending' | 'synced' | 'failed' | 'conflict'
-  late String status;
+  String status = '';
 
   /// Unique UUID per operation for idempotent replay
-  late String idempotencyKey;
+  String idempotencyKey = '';
 
   /// Sync order priority (1=highest, default by operationType)
   int priority = 3;
 
   int retryCount = 0;
   String? errorMessage;
-  late DateTime createdAt;
+  DateTime createdAt = DateTime.now();
   DateTime? lastAttemptAt;
 }

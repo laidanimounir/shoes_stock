@@ -6,15 +6,15 @@ part 'transaction_local.g.dart';
 class TransactionLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
+  String supabaseId = '';
   String? invoiceNumber;
-  late String type;        // TransactionType: 'in' | 'out' | 'return'
-  late String variantId;
+  String type = '';         // TransactionType: 'in' | 'out' | 'return'
+  String variantId = '';
   int quantity = 0;
   double unitPrice = 0.0;
   double totalPrice = 0.0;
-  late String storeId;
-  late String userId;
+  String storeId = '';
+  String userId = '';
   String? customerId;
   String? supplierId;
   String? invoiceId;

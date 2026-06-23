@@ -6,8 +6,8 @@ part 'store_local.g.dart';
 class StoreLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String name;
+  String supabaseId = '';
+  String name = '';
   String? location;
   bool isActive = true;
   DateTime? createdAt;

@@ -6,13 +6,13 @@ part 'payment_local.g.dart';
 class PaymentLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
+  String supabaseId = '';
   String? invoiceId;
   String? customerId;
   String? supplierId;
   String? storeId;
   String? userId;
-  late double amount;
+  double amount = 0.0;
   String paymentMethod = 'cash';
   DateTime? paymentDate;
   String? notes;

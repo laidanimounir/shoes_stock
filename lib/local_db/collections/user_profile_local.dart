@@ -6,9 +6,9 @@ part 'user_profile_local.g.dart';
 class UserProfileLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String fullName;
-  late String role;
+  String supabaseId = '';
+  String fullName = '';
+  String role = '';
   String? storeId;
   bool isActive = true;
   DateTime? createdAt;

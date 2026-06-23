@@ -6,8 +6,8 @@ part 'customer_local.g.dart';
 class CustomerLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String fullName;
+  String supabaseId = '';
+  String fullName = '';
   String? phone;
   String? email;
   String? address;

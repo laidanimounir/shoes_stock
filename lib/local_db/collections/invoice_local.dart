@@ -6,18 +6,18 @@ part 'invoice_local.g.dart';
 class InvoiceLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String invoiceNumber;
+  String supabaseId = '';
+  String invoiceNumber = '';
   String? storeId;
   String? userId;
   String? customerId;
   String? supplierId;
-  late String type;        // InvoiceType: 'in' | 'out' | 'return'
+  String type = '';         // InvoiceType: 'in' | 'out' | 'return'
   double totalAmount = 0.0;
   double paidAmount = 0.0;
   double discount = 0.0;
   String? notes;
-  late String status;      // InvoiceStatus: 'paid' | 'partial' | 'unpaid' | ...
+  String status = '';       // InvoiceStatus: 'paid' | 'partial' | 'unpaid' | ...
   DateTime? createdAt;
   DateTime? updatedAt;
   DateTime? dueDate;

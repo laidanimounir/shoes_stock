@@ -10,12 +10,12 @@ class ExpenseLocal {
   String? supabaseId;
 
   String? categoryId;
-  late double amount;
+  double amount = 0.0;
   String? description;
-  late String paymentMethod;
-  late String storeId;
+  String paymentMethod = '';
+  String storeId = '';
   String? userId;
-  late DateTime expenseDate;
+  DateTime expenseDate = DateTime.now();
   DateTime? createdAt;
   DateTime? updatedAt;
 

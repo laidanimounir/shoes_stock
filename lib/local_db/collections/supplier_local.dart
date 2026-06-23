@@ -6,8 +6,8 @@ part 'supplier_local.g.dart';
 class SupplierLocal {
   Id isarId = Isar.autoIncrement;
 
-  late String supabaseId;
-  late String companyName;
+  String supabaseId = '';
+  String companyName = '';
   String? contactName;
   String? phone;
   String? imageUrl;
