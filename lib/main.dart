@@ -67,7 +67,10 @@ Future<void> _checkVersion() async {
     _appCurrentVersion = pkg.version;
     _apiVersionInfo = await ApiVersionService.instance.checkVersion();
     _appLatestVersion = _apiVersionInfo?.latestVersion ?? _apiVersionInfo?.version;
-  } catch (_) {}
+  } catch (e, stackTrace) {
+    debugPrint('[Main] Version check error: $e');
+    debugPrint('[Main] StackTrace: $stackTrace');
+  }
 }
 
 int _compareVersions(String a, String b) {
@@ -168,7 +171,10 @@ class _AuthGateState extends State<AuthGate> {
       final isar = await IsarService.getInstance();
       final settings = await isar.settingsLocals.get(1);
       if (mounted) setState(() => _pinEnabled = settings?.pinEnabled ?? false);
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      debugPrint('[Main] PIN setting load error: $e');
+      debugPrint('[Main] StackTrace: $stackTrace');
+    }
   }
 
   void _loadingTimeout() {
@@ -266,7 +272,10 @@ class _AuthGateState extends State<AuthGate> {
           if (storeRes != null && storeRes['max_discount_percent'] != null) {
             AppSession.maxDiscountPercent = (storeRes['max_discount_percent'] as num).toDouble();
           }
-        } catch (_) {}
+        } catch (e, stackTrace) {
+          debugPrint('[Main] Max discount fetch error: $e');
+          debugPrint('[Main] StackTrace: $stackTrace');
+        }
       }
 
       final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
