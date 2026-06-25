@@ -20,6 +20,8 @@ import '../local_db/collections/expense_local.dart';
 import '../local_db/collections/expense_category_local.dart';
 import '../local_db/collections/sync_queue_item.dart';
 import '../local_db/collections/sync_metadata.dart';
+import '../local_db/collections/settings_local.dart';
+import '../local_db/collections/size_run_local.dart';
 
 class BackupService {
   static final instance = BackupService._();
@@ -42,6 +44,8 @@ class BackupService {
       'transactions': await _exportAll(isar.transactionLocals.where().findAll(), _transactionToMap),
       'expenses': await _exportAll(isar.expenseLocals.where().findAll(), _expenseToMap),
       'expense_categories': await _exportAll(isar.expenseCategoryLocals.where().findAll(), _expenseCategoryToMap),
+      'settings': [await _settingsToMap(isar)],
+      'size_runs': await _exportAll(isar.sizeRunLocals.where().findAll(), _sizeRunToMap),
       'sync_queue': await _exportAll(isar.syncQueueItems.where().findAll(), _syncQueueToMap),
       'sync_metadata': await _exportAll(isar.syncMetadatas.where().findAll(), _syncMetaToMap),
     };
@@ -109,6 +113,8 @@ class BackupService {
         await isar.transactionLocals.where().deleteAll();
         await isar.expenseLocals.where().deleteAll();
         await isar.expenseCategoryLocals.where().deleteAll();
+        await isar.settingsLocals.where().deleteAll();
+        await isar.sizeRunLocals.where().deleteAll();
         await isar.syncQueueItems.where().deleteAll();
         await isar.syncMetadatas.where().deleteAll();
 
@@ -124,6 +130,10 @@ class BackupService {
         _restoreList<TransactionLocal>(isar.transactionLocals, backupData['transactions'], _transactionFromMap);
         _restoreList<ExpenseLocal>(isar.expenseLocals, backupData['expenses'], _expenseFromMap);
         _restoreList<ExpenseCategoryLocal>(isar.expenseCategoryLocals, backupData['expense_categories'], _expenseCategoryFromMap);
+        if (backupData['settings'] is List && (backupData['settings'] as List).isNotEmpty) {
+          await isar.settingsLocals.put(_settingsFromMap((backupData['settings'] as List).first as Map<String, dynamic>));
+        }
+        _restoreList<SizeRunLocal>(isar.sizeRunLocals, backupData['size_runs'], _sizeRunFromMap);
         _restoreList<SyncQueueItem>(isar.syncQueueItems, backupData['sync_queue'], _syncQueueFromMap);
         _restoreList<SyncMetadata>(isar.syncMetadatas, backupData['sync_metadata'], _syncMetaFromMap);
       });
@@ -139,7 +149,7 @@ class BackupService {
     int count = 0;
     final listKeys = ['stores', 'user_profiles', 'customers', 'suppliers', 'products',
       'product_variants', 'inventory', 'invoices', 'payments', 'transactions',
-      'expenses', 'expense_categories', 'sync_queue', 'sync_metadata'];
+      'expenses', 'expense_categories', 'settings', 'size_runs', 'sync_queue', 'sync_metadata'];
     for (final key in listKeys) {
       final list = data[key];
       if (list is List) count += list.length;
@@ -442,4 +452,50 @@ class BackupService {
     ..lastSyncAt = m['last_sync_at'] != null ? DateTime.tryParse(m['last_sync_at'] as String) : null
     ..mode = m['mode'] as String? ?? 'online'
     ..pendingCount = (m['pending_count'] as num?)?.toInt() ?? 0;
+
+  // ── Settings serializers ──
+
+  Future<Map<String, dynamic>> _settingsToMap(Isar isar) async {
+    final s = await isar.settingsLocals.get(1);
+    if (s == null) return {};
+    return {
+      'locale': s.locale,
+      'debt_overdue_days': s.debtOverdueDays,
+      'inactivity_timeout_minutes': s.inactivityTimeoutMinutes,
+      'low_stock_threshold': s.lowStockThreshold,
+      'pin_enabled': s.pinEnabled,
+      'pin_hash': s.pinHash,
+      'biometric_enabled': s.biometricEnabled,
+      'last_api_version_check': s.lastApiVersionCheck,
+    };
+  }
+
+  SettingsLocal _settingsFromMap(Map<String, dynamic> m) => SettingsLocal()
+    ..locale = m['locale'] as String? ?? 'ar'
+    ..debtOverdueDays = (m['debt_overdue_days'] as num?)?.toInt() ?? 30
+    ..inactivityTimeoutMinutes = (m['inactivity_timeout_minutes'] as num?)?.toInt() ?? 15
+    ..lowStockThreshold = (m['low_stock_threshold'] as num?)?.toInt() ?? 3
+    ..pinEnabled = m['pin_enabled'] as bool? ?? false
+    ..pinHash = m['pin_hash'] as String?
+    ..biometricEnabled = m['biometric_enabled'] as bool? ?? false
+    ..lastApiVersionCheck = m['last_api_version_check'] as int?;
+
+  // ── SizeRun serializers ──
+
+  Map<String, dynamic> _sizeRunToMap(SizeRunLocal s) => {
+    'supabase_id': s.supabaseId,
+    'product_id': s.productId,
+    'color': s.color,
+    'sizes_json': s.sizesJson,
+    'store_id': s.storeId,
+    'updated_at': s.updatedAt?.toIso8601String(),
+  };
+
+  SizeRunLocal _sizeRunFromMap(Map<String, dynamic> m) => SizeRunLocal()
+    ..supabaseId = m['supabase_id'] as String? ?? ''
+    ..productId = m['product_id'] as String? ?? ''
+    ..color = m['color'] as String?
+    ..sizesJson = m['sizes_json'] as String? ?? '{}'
+    ..storeId = m['store_id'] as String? ?? ''
+    ..updatedAt = m['updated_at'] != null ? DateTime.tryParse(m['updated_at'] as String) : null;
 }
