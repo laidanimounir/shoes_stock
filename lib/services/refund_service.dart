@@ -43,6 +43,7 @@ class RefundService {
       items: items,
       refundAmount: refundAmount,
       reason: reason,
+      storeId: storeId,
     );
   }
 
@@ -51,6 +52,7 @@ class RefundService {
     required List<Map<String, dynamic>> items,
     required double refundAmount,
     required String reason,
+    required String storeId,
   }) async {
     try {
       final result = await Supabase.instance.client.rpc('process_refund', params: {
@@ -59,6 +61,7 @@ class RefundService {
         'p_refund_amount': refundAmount,
         'p_reason': reason,
         'p_user_id': AppSession.currentUserId,
+        'p_store_id': storeId,
       });
       return Map<String, dynamic>.from(result as Map);
     } on PostgrestException catch (e) {
