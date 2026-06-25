@@ -34,7 +34,7 @@ class ConnectivityService {
 
       if (_isOnline && !wasOnline) {
         debugPrint('🌐 ConnectivityService: Back ONLINE → triggering sync');
-        await SyncEngine.instance.syncPending();
+        unawaited(SyncEngine.instance.syncPending());
       } else if (!_isOnline && wasOnline) {
         debugPrint('📴 ConnectivityService: Went OFFLINE');
       }
