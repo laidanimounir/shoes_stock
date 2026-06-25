@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +7,8 @@ import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/invoice_service.dart';
 import '../../services/receipt_service.dart';
+import '../../services/loyalty_service.dart';
+import '../../shared/utils/pos_utils.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
@@ -306,14 +309,24 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         dueDate: dueDate,
       );
 
-      // Award loyalty points
+      // Award loyalty points (fire-and-forget)
       if (_customerId != null && paidAmount > 0) {
-        try {
-          await Supabase.instance.client.rpc('award_loyalty_points', params: {
-            'p_customer_id': _customerId,
-            'p_amount_spent': paidAmount,
-          });
-        } catch (e, s) { debugPrint('[MobilePOS] error: $e\n$s'); }
+        unawaited(LoyaltyService.instance.award(
+          customerId: _customerId!,
+          amountSpent: paidAmount,
+        ));
+      }
+
+      // Log discount activity (fire-and-forget)
+      if (_discountPercent > 0) {
+        PosUtils.logDiscountActivity(
+          storeId: _storeId!,
+          userId: AppSession.currentUserId ?? '',
+          invoiceNumber: invoiceNum,
+          discountAmount: 0,
+          discountPercent: _discountPercent,
+          totalAmount: _subtotal,
+        );
       }
 
       if (mounted) {
