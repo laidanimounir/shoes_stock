@@ -62,6 +62,7 @@ class RefundService {
         'p_reason': reason,
         'p_user_id': AppSession.currentUserId,
         'p_store_id': storeId,
+        'p_idempotency_key': 'refund-${DateTime.now().microsecondsSinceEpoch}',
       });
       return Map<String, dynamic>.from(result as Map);
     } on PostgrestException catch (e) {

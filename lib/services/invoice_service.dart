@@ -76,6 +76,7 @@ class InvoiceService {
           'p_notes': notes,
           'p_discount_percent': discountPercent,
           'p_discount_amount': discountAmount,
+          'p_idempotency_key': 'sale-${DateTime.now().microsecondsSinceEpoch}',
         };
         if (dueDate != null) {
           params['p_due_date'] = dueDate.toIso8601String().substring(0, 10);

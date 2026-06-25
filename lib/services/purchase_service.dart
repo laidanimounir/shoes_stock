@@ -35,6 +35,7 @@ class PurchaseService {
           'p_paid_amount': paidAmount,
           'p_payment_method': paymentMethod,
           'p_notes': notes,
+          'p_idempotency_key': 'purchase-${DateTime.now().microsecondsSinceEpoch}',
         });
         if (result is Map) {
           return Map<String, dynamic>.from(result);
