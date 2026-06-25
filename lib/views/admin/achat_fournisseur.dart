@@ -541,8 +541,6 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final invoiceNumber = 'ACH-${DateTime.now().millisecondsSinceEpoch}';
-
       // STEP 1: Create product
       final productResponse = await Supabase.instance.client
         .from('products')
@@ -570,22 +568,21 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
         .single();
       final variantId = variantResponse['id'];
 
-      // STEP 3: Call process_purchase RPC (same params as existing)
-      await Supabase.instance.client.rpc('process_purchase', params: {
-        'p_store_id': _selectedStoreId,
-        'p_supplier_id': _selectedSupplierId,
-        'p_invoice_number': invoiceNumber,
-        'p_items': [{
+      // STEP 3: Process purchase via PurchaseService (handles offline queueing)
+      await PurchaseService.instance.processPurchase(
+        storeId: _selectedStoreId!,
+        supplierId: _selectedSupplierId!,
+        items: [{
           'variant_id': variantId,
           'quantity': quantity,
           'unit_price': buyPrice,
           'total_price': buyPrice * quantity,
         }],
-        'p_total_amount': buyPrice * quantity,
-        'p_paid_amount': buyPrice * quantity,
-        'p_payment_method': 'cash',
-        'p_notes': 'Achat direct depuis Définir + Acheter',
-      });
+        totalAmount: buyPrice * quantity,
+        paidAmount: buyPrice * quantity,
+        paymentMethod: 'cash',
+        notes: 'Achat direct depuis Définir + Acheter',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
