@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../core/app_constants.dart';
 import '../../services/report_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -55,6 +56,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
   bool _selectionMode = false;
   final Set<String> _selectedVariantIds = {};
+  int _offset = 0;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
 
   @override
   void initState() {
@@ -62,8 +66,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     _fetchProducts();
   }
 
-  Future<void> _fetchProducts() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchProducts({bool reset = true}) async {
+    if (reset) {
+      _offset = 0;
+      _hasMore = true;
+      setState(() => _isLoading = true);
+    } else {
+      setState(() => _isLoadingMore = true);
+    }
 
     if (AppSession.isOfflineMode) {
       final isar = await IsarService.getInstance();
@@ -135,7 +145,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     }
 
     try {
-      final res = await Supabase.instance.client
+      var query = Supabase.instance.client
           .from('products')
           .select('''
             id, name, description, image_url, created_at, category,
@@ -144,19 +154,48 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               inventory(quantity, store_id, stores(name))
             )
           ''')
-          .eq('is_active', true) 
-          .order('created_at', ascending: false);
+          .eq('is_active', true);
+
+      if (_searchQuery.isNotEmpty) {
+        query = query.ilike('name', '%$_searchQuery%');
+      }
+      if (_filterCategory != null) {
+        query = query.eq('category', _filterCategory!);
+      }
+      if (_filterSupplier != null) {
+        query = query.eq('supplier_id', _filterSupplier!);
+      }
+
+      final res = await query
+          .order('created_at', ascending: false)
+          .range(_offset, _offset + AppConstants.paginationPageSize - 1);
+
+      final newItems = res as List<dynamic>;
+      if (newItems.length < AppConstants.paginationPageSize) {
+        _hasMore = false;
+      }
 
       if (mounted) {
         setState(() {
-          _products = res;
+          if (_offset == 0) {
+            _products = newItems;
+          } else {
+            _products.addAll(newItems);
+          }
           _isLoading = false;
+          _isLoadingMore = false;
         });
       }
     } catch (e) {
       debugPrint("Error fetching products: $e");
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoading = false; _isLoadingMore = false; });
     }
+  }
+
+  Future<void> _loadMoreProducts() async {
+    if (_isLoadingMore || !_hasMore) return;
+    _offset += AppConstants.paginationPageSize;
+    await _fetchProducts(reset: false);
   }
 
   List<dynamic> get _filteredProducts {
