@@ -160,6 +160,9 @@ extension SyncStatusExt on SyncStatus {
 }
 
 // ── sync_operation_type (local only — maps to RPCs) ────────
+// NOTE: createPayment and createTransaction are handled server-side
+// by process_sale RPC. Do NOT enqueue them directly from service code.
+// They exist for backward compatibility of existing queue items.
 enum SyncOperationType {
   createInvoice,
   createPayment,
