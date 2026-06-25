@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../core/app_constants.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../../widgets/offline_banner.dart';
 import '../../local_db/isar_service.dart';
@@ -69,6 +70,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   List<Map<String, dynamic>> _salesForecast = [];
 
   bool _isLoading = true;
+  DateTime? _lastFetchTime;
   late final RealtimeChannel _dashboardSubscription;
 
   @override
@@ -132,6 +134,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   Future<void> _fetchDashboardData({bool isRefresh = false}) async {
     if (!mounted) return;
+    if (!isRefresh && _lastFetchTime != null &&
+        DateTime.now().difference(_lastFetchTime!) < Duration(minutes: AppConstants.dashboardCacheDurationMinutes)) {
+      return;
+    }
     if (!isRefresh) setState(() => _isLoading = true);
     try {
       await Future.wait([
@@ -147,6 +153,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         _fetchInventoryTurnover(),
         _fetchSalesForecast(),
       ]);
+      _lastFetchTime = DateTime.now();
     } catch (e) {
       debugPrint("Dashboard update error: $e");
     } finally {
