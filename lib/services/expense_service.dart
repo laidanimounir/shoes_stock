@@ -40,7 +40,8 @@ class ExpenseService {
           'p_store_id': storeId,
           'p_expense_date': expenseDate.toIso8601String().split('T').first,
         });
-        return {'success': true, 'expense_id': result};
+        final expenseId = result is String ? result : (result is Map ? result['id']?.toString() : null);
+        return {'success': true, 'expense_id': expenseId};
       } on PostgrestException catch (e) {
         debugPrint('[ExpenseService] PostgrestException: ${e.message}');
         return {'success': false, 'error': e.message};
