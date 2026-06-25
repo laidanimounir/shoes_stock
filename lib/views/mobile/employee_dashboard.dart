@@ -18,6 +18,7 @@ import 'expenses_screen.dart';
 import 'activity_logs_screen.dart';
 import '../admin/notifications_screen.dart';
 import '../../services/notification_service.dart';
+import '../../services/refund_service.dart';
 
 class EmployeeDashboard extends StatefulWidget {
   const EmployeeDashboard({super.key});
@@ -790,9 +791,13 @@ class _SalesTabState extends State<_SalesTab> {
     try {
       final invoiceId = sale['invoice_id'] ?? sale['id'];
       final items = [{'variant_id': sale['product_variants']?['id'] ?? sale['variant_id'], 'quantity': sale['quantity']}];
-      final response = await Supabase.instance.client.rpc('process_refund', params: {
-        'p_invoice_id': invoiceId, 'p_items': items, 'p_refund_amount': sale['total_price'],
-      });
+      final response = await RefundService.instance.processRefund(
+        invoiceId: invoiceId,
+        items: items,
+        refundAmount: (sale['total_price'] as num?)?.toDouble() ?? 0,
+        reason: 'Mobile employee refund',
+        storeId: AppSession.currentStoreId ?? '',
+      );
       try {
         await Supabase.instance.client.from('activity_logs').insert({
           'user_id': AppSession.currentUserId, 'action_type': 'refund',
