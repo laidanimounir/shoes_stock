@@ -21,7 +21,7 @@ class DebtRecoveryService {
   // Record Debt Payment
   // ══════════════════════════════════════════
 
-  Future<void> recordDebtPayment({
+  Future<Map<String, dynamic>> recordDebtPayment({
     required String customerId,
     required double amount,
     required String paymentMethod,
@@ -38,13 +38,15 @@ class DebtRecoveryService {
           'p_store_id': storeId,
           'p_notes': notes,
         });
+        return {'success': true};
       } on PostgrestException catch (e) {
         debugPrint('[DebtRecoveryService] PostgrestException: ${e.message}');
+        return {'success': false, 'error': e.message};
       } catch (e, stackTrace) {
         debugPrint('[DebtRecoveryService] Unexpected error: $e');
         debugPrint('[DebtRecoveryService] StackTrace: $stackTrace');
+        return {'success': false, 'error': e.toString()};
       }
-      return;
     }
 
     // ── OFFLINE PATH ──
@@ -91,6 +93,7 @@ class DebtRecoveryService {
     });
 
     await SyncEngine.instance.updatePendingCount();
+    return {'success': true};
   }
 
   // ══════════════════════════════════════════
