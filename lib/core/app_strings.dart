@@ -1019,6 +1019,7 @@ class S {
       'supplier_no_results': 'Aucun fournisseur',
       'suppliers_title': 'Fournisseurs',
       'auth_error_network': 'Erreur réseau. Vérifiez votre connexion internet.',
+      'error_loading_data': 'Erreur lors du chargement des données.',
     },
 
     // ────────────────────────────────────────────────────────────
@@ -2021,6 +2022,7 @@ class S {
       'supplier_no_results': 'لا يوجد مزودون',
       'suppliers_title': 'المزودون',
       'auth_error_network': 'خطأ في الشبكة. تحقق من اتصالك بالإنترنت.',
+      'error_loading_data': 'خطأ في تحميل البيانات.',
     },
   };
 }

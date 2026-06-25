@@ -83,46 +83,44 @@ class _DashboardScreenState extends State<DashboardScreen>
     try {
       final supabase = Supabase.instance.client;
 
-      final statsRes = await supabase.rpc('get_admin_dashboard_stats',
-          params: {'p_store_id': _selectedStoreId});
-      final chartRes = await supabase.rpc('get_revenue_chart_data', params: {
-        'p_store_id': _selectedStoreId,
-        'p_period': _chartPeriod,
-      });
-      final topRes = await supabase.rpc('get_top_products',
-          params: {'p_store_id': _selectedStoreId});
-      var activityQuery = supabase
-          .from('activity_logs')
-          .select('id, action_type, description, created_at, user_id');
-      if (!AppSession.isOwner && AppSession.currentStoreId != null) {
-        activityQuery = activityQuery.eq('store_id', AppSession.currentStoreId!);
-      }
-      final activityRes = await activityQuery
-          .order('created_at', ascending: false)
-          .limit(10);
-      final debtRes = await supabase
-          .from('customers')
-          .select('id, full_name, phone, balance')
-          .gt('balance', 0)
-          .eq('is_active', true)
-          .order('balance', ascending: false)
-          .limit(5);
-      final lowStockRes = await supabase.rpc('get_low_stock_items', params: {
-        'p_store_id': _selectedStoreId,
-        'p_threshold': 3,
-      });
-      final slowMovingRes = await supabase.rpc('get_slow_moving_products', params: {
-        'p_store_id': _selectedStoreId,
-        'p_days': _slowDays,
-      });
-      final sizeRes = await supabase.rpc('get_size_analytics', params: {
-        'p_store_id': _selectedStoreId,
-        'p_period': 'month',
-      });
-      final seasonRes = await supabase.rpc('get_seasonality_report', params: {
-        'p_store_id': _selectedStoreId,
-        'p_month': _seasonalityMonth,
-      });
+      final results = await Future.wait<dynamic>([
+        supabase.rpc('get_admin_dashboard_stats',
+            params: {'p_store_id': _selectedStoreId}),
+        supabase.rpc('get_revenue_chart_data', params: {
+          'p_store_id': _selectedStoreId,
+          'p_period': _chartPeriod,
+        }),
+        supabase.rpc('get_top_products',
+            params: {'p_store_id': _selectedStoreId}),
+        _fetchActivityLogs(supabase),
+        _fetchDebtCustomers(supabase),
+        supabase.rpc('get_low_stock_items', params: {
+          'p_store_id': _selectedStoreId,
+          'p_threshold': 3,
+        }),
+        supabase.rpc('get_slow_moving_products', params: {
+          'p_store_id': _selectedStoreId,
+          'p_days': _slowDays,
+        }),
+        supabase.rpc('get_size_analytics', params: {
+          'p_store_id': _selectedStoreId,
+          'p_period': 'month',
+        }),
+        supabase.rpc('get_seasonality_report', params: {
+          'p_store_id': _selectedStoreId,
+          'p_month': _seasonalityMonth,
+        }),
+      ]);
+
+      final statsRes = results[0];
+      final chartRes = results[1];
+      final topRes = results[2];
+      final activityRes = results[3];
+      final debtRes = results[4];
+      final lowStockRes = results[5];
+      final slowMovingRes = results[6];
+      final sizeRes = results[7];
+      final seasonRes = results[8];
 
       if (mounted) {
         setState(() {
@@ -145,8 +143,31 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (mounted) {
         setState(() => _isLoading = false);
         _animController.forward();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.t('error_loading_data')), backgroundColor: Colors.red),
+        );
       }
     }
+  }
+
+  Future<List<dynamic>> _fetchActivityLogs(SupabaseClient supabase) async {
+    var query = supabase
+        .from('activity_logs')
+        .select('id, action_type, description, created_at, user_id');
+    if (!AppSession.isOwner && AppSession.currentStoreId != null) {
+      query = query.eq('store_id', AppSession.currentStoreId!);
+    }
+    return query.order('created_at', ascending: false).limit(10);
+  }
+
+  Future<List<dynamic>> _fetchDebtCustomers(SupabaseClient supabase) async {
+    return supabase
+        .from('customers')
+        .select('id, full_name, phone, balance')
+        .gt('balance', 0)
+        .eq('is_active', true)
+        .order('balance', ascending: false)
+        .limit(5);
   }
 
   @override
