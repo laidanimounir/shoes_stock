@@ -214,7 +214,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             'color': '',
           }).toList());
         }
-      } catch (_) {}
+      } catch (e, s) { debugPrint('[OwnerDashboard] error: $e\n$s'); }
     }
   }
 
@@ -226,7 +226,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           .order('created_at', ascending: false)
           .limit(15);
       if (mounted) setState(() => _recentActivities = res);
-    } catch (e) {}
+    } catch (e, s) { debugPrint('[OwnerDashboard] activity error: $e\n$s'); }
   }
 
   Future<void> _fetchStores() async {
@@ -1350,7 +1350,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
       final isar = await IsarService.getInstance();
       final settings = await isar.settingsLocals.get(1);
       if (mounted) setState(() => _pinEnabled = settings?.pinEnabled ?? false);
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[OwnerDashboard] error: $e\n$s'); }
   }
 
   Future<void> _fetchProfile() async {

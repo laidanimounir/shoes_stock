@@ -30,7 +30,7 @@ class _InactivityTimerState extends State<InactivityTimer> {
       if (settings != null) {
         _timeoutMinutes = settings.inactivityTimeoutMinutes;
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[InactivityTimer] loadSettings error: $e\n$s'); }
     _resetTimer();
   }
 

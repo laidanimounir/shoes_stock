@@ -134,7 +134,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       if (mounted) {
         setState(() => _activePromotions = List<dynamic>.from(res ?? []));
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[MobilePOS] error: $e\n$s'); }
   }
 
   Future<void> _fetchBundles() async {
@@ -146,7 +146,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       if (mounted) {
         setState(() => _bundles = List<dynamic>.from(res ?? []));
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[MobilePOS] error: $e\n$s'); }
   }
 
   void _addBundleToCart(dynamic bundle) {
@@ -313,7 +313,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
             'p_customer_id': _customerId,
             'p_amount_spent': paidAmount,
           });
-        } catch (_) {}
+        } catch (e, s) { debugPrint('[MobilePOS] error: $e\n$s'); }
       }
 
       if (mounted) {

@@ -266,7 +266,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           ],
         ),
       );
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[DesktopPOS] error: $e\n$s'); }
   }
 
   // ── DATA FETCHING ─────────────────────────────
@@ -412,7 +412,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         'p_store_id': _selectedStoreId,
       });
       if (mounted) setState(() => _bundles = List<dynamic>.from(res ?? []));
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[DesktopPOS] error: $e\n$s'); }
   }
 
   void _addBundleToCart(dynamic bundle) {
@@ -642,7 +642,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     'p_customer_id': _selectedCustomerId,
                     'p_amount_spent': paidAmount,
                   });
-                } catch (_) {}
+                } catch (e, s) { debugPrint('[DesktopPOS] error: $e\n$s'); }
               }
               setState(() => _isProcessingPayment = false);
               Navigator.pop(context);

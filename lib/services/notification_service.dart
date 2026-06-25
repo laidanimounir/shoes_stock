@@ -31,7 +31,7 @@ class NotificationService {
       );
       unreadCount.value = (res['unread_count'] as num?)?.toInt() ?? 0;
       _notifications = List<Map<String, dynamic>>.from(res['notifications'] ?? []);
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[NotificationService] fetchUnread error: $e\n$s'); }
   }
 
   List<Map<String, dynamic>> get notifications => _notifications;

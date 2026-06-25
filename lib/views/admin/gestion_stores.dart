@@ -32,7 +32,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
             .single();
         _userRole = profile['role'];
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[GestionStores] initRole error: $e\n$s'); }
     if (mounted) setState(() {});
     await _fetchStores();
   }

@@ -41,8 +41,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final email = _emailController.text.trim();
+      debugPrint('Attempting login with email: $email');
+      debugPrint('Supabase URL: ${const String.fromEnvironment('SUPABASE_URL', defaultValue: 'STILL_EMPTY')}');
+
       final authResponse = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
 

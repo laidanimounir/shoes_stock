@@ -332,7 +332,7 @@ class _PosTabState extends State<_PosTab> {
           orElse: () => null,
         );
         _showProductDetail(prod?.name ?? '', variant.size, variant.color, variant.sellPrice, qty, prod?.imageUrl);
-      } catch (_) {}
+      } catch (e, s) { debugPrint('[EmployeeDashboard] error: $e\n$s'); }
     }
   }
 
@@ -624,7 +624,7 @@ class _CustomersTabState extends State<_CustomersTab> {
                   'action_type': 'add_customer',
                   'description': 'Nouveau client: ${nameCtrl.text.trim()}',
                 });
-              } catch (_) {}
+              } catch (e, s) { debugPrint('[EmployeeDashboard] error: $e\n$s'); }
               _fetch();
             } catch (e) {
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
@@ -804,7 +804,7 @@ class _SalesTabState extends State<_SalesTab> {
           'description': 'Refund from mobile — invoice ${sale['invoice_number']} (employee)',
           'invoice_id': invoiceId, 'amount': sale['total_price'],
         });
-      } catch (_) {}
+      } catch (e, s) { debugPrint('[EmployeeDashboard] error: $e\n$s'); }
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('refund_success')} $response'), backgroundColor: Colors.green));
       _fetch();
     } catch (e) {

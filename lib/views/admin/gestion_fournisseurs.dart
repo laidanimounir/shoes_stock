@@ -57,7 +57,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
             .single();
         _userRole = profile['role'];
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[GestionFournisseurs] initRole error: $e\n$s'); }
     if (mounted) setState(() {});
     await _fetchSuppliers();
   }

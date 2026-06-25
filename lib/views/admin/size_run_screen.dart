@@ -47,7 +47,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
         setState(() => _isLoading = false);
         return;
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[SizeRunScreen] loadLocal error: $e\n$s'); }
 
     try {
       final rows = await Supabase.instance.client
@@ -55,7 +55,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
           .select('id, name, category')
           .eq('is_active', true);
       _products = rows.map((r) => Map<String, dynamic>.from(r as Map)).toList();
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[SizeRunScreen] loadOnline error: $e\n$s'); }
     setState(() => _isLoading = false);
   }
 

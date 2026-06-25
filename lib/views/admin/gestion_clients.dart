@@ -292,7 +292,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                       'description': 'Nouveau client ajouté: ${data['full_name']}',
                       'store_id': AppSession.currentStoreId,
                     });
-                  } catch (_) {}
+                  } catch (e, s) { debugPrint('[GestionClients] activityLog error: $e\n$s'); }
                 }
                 
                 _fetchCustomers(_searchController.text);
@@ -884,7 +884,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                     'description': 'Paiement reçu de ${_selectedCustomer!['full_name']} — ${amount.toStringAsFixed(2)} DA',
                     'store_id': AppSession.currentStoreId,
                   });
-                } catch (_) {}
+                } catch (e, s) { debugPrint('[GestionClients] error: $e\n$s'); }
                 
                 _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
                 _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية

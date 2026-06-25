@@ -70,7 +70,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (_stores.isNotEmpty) _storeId = _stores.first['id'];
         if (_suppliers.isNotEmpty) _supplierId = _suppliers.first['id'];
       });
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[AddProductScreen] error: $e\n$s'); }
   }
 
   Future<void> _pickImage() async {
@@ -88,7 +88,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         }
         setState(() {});
       }
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[AddProductScreen] error: $e\n$s'); }
   }
 
   Future<String?> _uploadImage() async {

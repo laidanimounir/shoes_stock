@@ -67,7 +67,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
           'p_user_id': user.id,
           'p_period': 'month',
         }) as Map<String, dynamic>;
-      } catch (_) {}
+      } catch (e, s) { debugPrint('[EmployeeDashboard] commission error: $e\n$s'); }
 
       List<Map<String, dynamic>> employees = [];
       try {
@@ -77,9 +77,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             .eq('role', 'employee')
             .eq('is_active', true)
             .eq('is_permanently_deleted', false)
-            .order('full_name');
-        employees = (empRes as List<dynamic>).cast<Map<String, dynamic>>();
-      } catch (_) {}
+            ;
+        employees = List<Map<String, dynamic>>.from(empRes);
+      } catch (e, s) { debugPrint('[EmployeeDashboard] employees fetch error: $e\n$s'); }
 
       if (mounted) {
         setState(() {

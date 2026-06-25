@@ -52,7 +52,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
         'p_store_id': storeId,
       });
       overdue = List<Map<String, dynamic>>.from(res ?? []);
-    } catch (_) {}
+    } catch (e, s) { debugPrint('[AdminDebtRecovery] fetchOverdue error: $e\n$s'); }
 
     final bucketTotals = <String, double>{'0-30': 0, '31-60': 0, '61-90': 0, '90+': 0};
     final customerBuckets = <String, String>{};
