@@ -9,6 +9,8 @@ import '../local_db/isar_service.dart';
 import '../local_db/enums/local_enums.dart';
 import '../local_db/collections/invoice_local.dart';
 import '../local_db/collections/transaction_local.dart';
+import '../local_db/collections/expense_local.dart';
+import '../local_db/collections/payment_local.dart';
 import '../local_db/collections/expense_category_local.dart';
 import '../local_db/collections/sync_queue_item.dart';
 import '../local_db/collections/sync_metadata.dart';
@@ -462,7 +464,104 @@ class SyncEngine {
         case SyncOperationType.processRefund:
           break;
 
-        default:
+        case SyncOperationType.createExpense:
+          final categoryId = payload['p_category_id'] as String?;
+          final amount = (payload['p_amount'] as num?)?.toDouble();
+          final expenseDate = payload['p_expense_date'] as String?;
+          final storeId = payload['p_store_id'] as String?;
+          if (amount == null || expenseDate == null || storeId == null) break;
+          final expense = await isar.expenseLocals
+              .filter()
+              .amountEqualTo(amount)
+              .and()
+              .categoryIdEqualTo(categoryId)
+              .and()
+              .storeIdEqualTo(storeId)
+              .findFirst();
+          if (expense != null) {
+            await isar.writeTxn(() async {
+              expense.supabaseId = supabaseId;
+              expense.synced = true;
+              await isar.expenseLocals.put(expense);
+            });
+          }
+          break;
+
+        case SyncOperationType.createPurchase:
+          final invoiceNumber = payload['p_invoice_number'] as String?;
+          if (invoiceNumber == null) break;
+          final purchase = await isar.invoiceLocals
+              .filter()
+              .invoiceNumberEqualTo(invoiceNumber)
+              .findFirst();
+          if (purchase != null) {
+            await isar.writeTxn(() async {
+              purchase.supabaseId = supabaseId;
+              purchase.synced = true;
+              await isar.invoiceLocals.put(purchase);
+            });
+          }
+          break;
+
+        case SyncOperationType.createPayment:
+          final amount = (payload['p_amount'] as num?)?.toDouble();
+          final customerId = payload['p_customer_id'] as String?;
+          if (amount == null || customerId == null) break;
+          final payment = await isar.paymentLocals
+              .filter()
+              .customerIdEqualTo(customerId)
+              .and()
+              .amountEqualTo(amount)
+              .and()
+              .paymentTypeEqualTo('invoice')
+              .findFirst();
+          if (payment != null) {
+            await isar.writeTxn(() async {
+              payment.supabaseId = supabaseId;
+              payment.synced = true;
+              await isar.paymentLocals.put(payment);
+            });
+          }
+          break;
+
+        case SyncOperationType.createTransaction:
+          final invoiceNumber = payload['p_invoice_number'] as String?;
+          if (invoiceNumber == null) break;
+          final txns = await isar.transactionLocals
+              .filter()
+              .invoiceNumberEqualTo(invoiceNumber)
+              .findAll();
+          await isar.writeTxn(() async {
+            for (final tx in txns) {
+              tx.supabaseId = supabaseId;
+              tx.synced = true;
+              await isar.transactionLocals.put(tx);
+            }
+          });
+          break;
+
+        case SyncOperationType.createDebtRecoveryPayment:
+          final customerId = payload['p_customer_id'] as String?;
+          final amount = (payload['p_amount'] as num?)?.toDouble();
+          if (customerId == null || amount == null) break;
+          final drPayment = await isar.paymentLocals
+              .filter()
+              .customerIdEqualTo(customerId)
+              .and()
+              .amountEqualTo(amount)
+              .and()
+              .paymentTypeEqualTo('debt_recovery')
+              .findFirst();
+          if (drPayment != null) {
+            await isar.writeTxn(() async {
+              drPayment.supabaseId = supabaseId;
+              drPayment.synced = true;
+              await isar.paymentLocals.put(drPayment);
+            });
+          }
+          break;
+
+        case SyncOperationType.createLogDiscount:
           break;
       }
     } catch (e) {
