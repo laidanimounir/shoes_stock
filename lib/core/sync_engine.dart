@@ -195,12 +195,14 @@ class SyncEngine {
           }
           break;
         case SyncOperationType.createPayment:
+          // Handled server-side by process_sale RPC — retained for backward compat
           result = await _insertPayment(payload);
           if (result != null && result.containsKey('id')) {
             remoteId = result['id'] as String;
           }
           break;
         case SyncOperationType.createTransaction:
+          // Handled server-side by process_sale RPC — retained for backward compat
           result = await _insertTransaction(payload);
           if (result != null && result.containsKey('id')) {
             remoteId = result['id'] as String;
@@ -480,8 +482,10 @@ class SyncEngine {
 
   Future<Map<String, dynamic>?> _rpcAddDebtRecoveryPayment(
       Map<String, dynamic> p) async {
-    await _client.rpc('add_debt_recovery_payment', params: p)
+    final res = await _client.rpc('add_debt_recovery_payment', params: p)
         .timeout(_timeout);
+    if (res is String) return {'id': res};
+    if (res is Map) return Map<String, dynamic>.from(res);
     return null;
   }
 
