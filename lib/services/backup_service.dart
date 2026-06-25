@@ -31,6 +31,7 @@ class BackupService {
     final isar = await IsarService.getInstance();
 
     final data = {
+      'schema_version': 2,
       'exported_at': DateTime.now().toIso8601String(),
       'stores': await _exportAll(isar.storeLocals.where().findAll(), _storeToMap),
       'user_profiles': await _exportAll(isar.userProfileLocals.where().findAll(), _profileToMap),
@@ -80,6 +81,12 @@ class BackupService {
 
       if (!data.containsKey('exported_at')) {
         return {'success': false, 'error': 'invalid_backup_format'};
+      }
+
+      final backupVersion = (data['schema_version'] as num?)?.toInt() ?? 1;
+      const currentVersion = 2;
+      if (backupVersion > currentVersion) {
+        return {'success': false, 'error': 'schema_version_too_new'};
       }
 
       return {
