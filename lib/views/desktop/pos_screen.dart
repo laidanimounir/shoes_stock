@@ -987,7 +987,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     if (AppSession.isOfflineMode) {
       await SyncEngine.instance.enqueue(SyncOperationType.createLogDiscount, logPayload);
     } else {
-      try { await Supabase.instance.client.from('activity_logs').insert(logPayload); } catch (_) {}
+      unawaited(Supabase.instance.client.from('activity_logs').insert(logPayload).then((_) {}, onError: (e) => debugPrint('[POS] Discount log insert failed: $e')));
     }
   }
 
