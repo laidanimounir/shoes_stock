@@ -36,6 +36,7 @@ class _HealthScreenState extends State<HealthScreen> {
   DateTime? _lastSyncAt;
   int _pendingCount = 0;
   int _failedCount = 0;
+  List<SyncQueueItem> _queueItems = [];
   Map<String, int> _collectionCounts = {};
   bool _isLoading = true;
   bool _isSyncing = false;
@@ -66,6 +67,12 @@ class _HealthScreenState extends State<HealthScreen> {
           .filter()
           .statusEqualTo('failed')
           .count();
+
+      _queueItems = await isar.syncQueueItems
+          .where()
+          .sortByCreatedAtDesc()
+          .limit(20)
+          .findAll();
 
       _collectionCounts = {
         'Stores': await isar.storeLocals.where().count(),
