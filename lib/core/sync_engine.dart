@@ -87,6 +87,7 @@ class SyncEngine {
   // PUBLIC — Enqueue a new offline operation
   // ══════════════════════════════════════════
 
+  @visibleForTesting
   SyncQueueItem _buildItem(SyncOperationType op, Map<String, dynamic> payload) {
     return SyncQueueItem()
       ..operationType = op.toSupabaseString()
@@ -120,6 +121,11 @@ class SyncEngine {
     Map<String, dynamic> payload,
   ) async {
     final isar = await IsarService.getInstance();
+    final currentCount = await getPendingCount();
+    if (currentCount >= _maxQueueSize) {
+      debugPrint('⚠ SyncEngine: Queue full ($currentCount/$_maxQueueSize), rejecting ${op.toSupabaseString()}');
+      return;
+    }
     await isar.writeTxn(() async {
       await enqueueInTransaction(isar, op, payload);
     });
@@ -691,6 +697,7 @@ class SyncEngine {
   // ══════════════════════════════════════════
 
   static const _maxRetries = 5;
+  static const _maxQueueSize = 500;
 
   void _startRetryTimer() {
     _retryTimer?.cancel();
