@@ -133,6 +133,14 @@ class SyncEngine {
         .count();
   }
 
+  /// Refreshes the pending count in SyncMetadata and AppSession.
+  /// Call this after any writeTxn that enqueues a SyncQueueItem via
+  /// [enqueueInTransaction] to keep counters in sync.
+  Future<void> updatePendingCount() async {
+    final isar = await IsarService.getInstance();
+    await _refreshPendingCount(isar);
+  }
+
   /// Watches the SyncMetadata.pendingCount field for live UI updates.
   Stream<int> get pendingCountStream {
     return Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {

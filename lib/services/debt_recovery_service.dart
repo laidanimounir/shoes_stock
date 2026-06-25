@@ -89,6 +89,8 @@ class DebtRecoveryService {
         },
       );
     });
+
+    await SyncEngine.instance.updatePendingCount();
   }
 
   // ══════════════════════════════════════════

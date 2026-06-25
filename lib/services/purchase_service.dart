@@ -127,6 +127,8 @@ class PurchaseService {
       );
     });
 
+    await SyncEngine.instance.updatePendingCount();
+
     return {'success': true, 'invoice_id': 'local_$localInvoiceId'};
   }
 }
