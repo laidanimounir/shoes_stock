@@ -16,6 +16,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   List<dynamic> _sales = [];
   List<dynamic> _stores = [];
   bool _isLoading = true;
+  int _offset = 0;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
   
   String? _userStoreId;
   String? _filterStoreId; 
@@ -57,14 +60,32 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         query = query.eq('store_id', _filterStoreId!);
       }
 
-      final res = await query.order('created_at', ascending: false);
+      final res = await query
+          .order('created_at', ascending: false)
+          .range(_offset, _offset + 49);
+
+      final newItems = res as List<dynamic>;
+      if (newItems.length < 50) _hasMore = false;
+
       setState(() {
-        _sales = res;
+        if (_offset == 0) {
+          _sales = newItems;
+        } else {
+          _sales.addAll(newItems);
+        }
         _isLoading = false;
+        _isLoadingMore = false;
       });
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoading = false; _isLoadingMore = false; });
     }
+  }
+
+  Future<void> _loadMoreSales() async {
+    if (_isLoadingMore || !_hasMore) return;
+    _offset += 50;
+    setState(() => _isLoadingMore = true);
+    await _fetchSales();
   }
   Widget _buildStatusBadge(String? status) {
     if (status == 'refunded') {
