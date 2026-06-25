@@ -26,6 +26,7 @@ class SyncEngine {
 
   final _client = Supabase.instance.client;
   bool _isSyncing = false;
+  Completer<void>? _syncCompleter;
 
   // ── FIX 2: Periodic retry timer ──
   Timer? _retryTimer;
@@ -43,10 +44,12 @@ class SyncEngine {
   /// Skips if already syncing. Safe to call multiple times.
   Future<void> syncPending() async {
     if (_isSyncing) {
-      debugPrint('⏳ SyncEngine: Already syncing, skipping');
+      debugPrint('⏳ SyncEngine: Already syncing, awaiting completion');
+      await _syncCompleter?.future;
       return;
     }
     _isSyncing = true;
+    _syncCompleter = Completer<void>();
     debugPrint('🔄 SyncEngine: Starting sync...');
 
     try {
@@ -75,6 +78,8 @@ class SyncEngine {
       debugPrint('❌ SyncEngine: Sync error: $e');
     } finally {
       _isSyncing = false;
+      _syncCompleter?.complete();
+      _syncCompleter = null;
     }
   }
 
@@ -637,6 +642,7 @@ class SyncEngine {
   /// Call when the engine is no longer needed (app shutdown).
   void dispose() {
     _retryTimer?.cancel();
+    _syncCompleter?.complete();
     _syncCompleteController.close();
   }
 }
