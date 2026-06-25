@@ -746,25 +746,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
-          ElevatedButton(onPressed: () async {
-            final delta = int.tryParse(qtyCtrl.text);
-            if (delta == null || delta == 0) return;
-            try {
-              await Supabase.instance.client.rpc('adjust_inventory', params: {
-                'p_variant_id': item['variant_id'],
-                'p_store_id': _selectedStoreId,
-                'p_quantity_delta': delta,
-                'p_reason': reason,
-              });
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('inv_adjusted')), backgroundColor: Colors.green));
+          if (AppSession.isOwner)
+            ElevatedButton(onPressed: () async {
+              final delta = int.tryParse(qtyCtrl.text);
+              if (delta == null || delta == 0) return;
+              try {
+                await Supabase.instance.client.rpc('adjust_inventory', params: {
+                  'p_variant_id': item['variant_id'],
+                  'p_store_id': _selectedStoreId,
+                  'p_quantity_delta': delta,
+                  'p_reason': reason,
+                });
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('inv_adjusted')), backgroundColor: Colors.green));
+                }
+                _fetchInventoryData();
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
               }
-              _fetchInventoryData();
-            } catch (e) {
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
-            }
-          }, child: Text(S.t('inv_adjust_confirm'))),
+            }, child: Text(S.t('inv_adjust_confirm'))),
         ],
       ),
     ));
