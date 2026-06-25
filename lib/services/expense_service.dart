@@ -196,13 +196,25 @@ class ExpenseService {
   }
 
   // ══════════════════════════════════════════
-  // Add Category (online only)
+  // Add Category
   // ══════════════════════════════════════════
 
   Future<void> addCategory({
     required String name,
     required String storeId,
   }) async {
+    if (AppSession.isOfflineMode) {
+      final isar = await IsarService.getInstance();
+      await isar.writeTxn(() async {
+        await isar.expenseCategoryLocals.put(ExpenseCategoryLocal()
+          ..supabaseId = ''
+          ..name = name
+          ..storeId = storeId
+          ..createdAt = DateTime.now()
+          ..updatedAt = DateTime.now());
+      });
+      return;
+    }
     await _client.from('expense_categories').insert({
       'name': name,
       'store_id': storeId,
