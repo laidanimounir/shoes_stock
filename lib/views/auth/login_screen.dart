@@ -55,11 +55,16 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) {
+        String message;
+        if (e.message.contains('Invalid login credentials')) {
+          message = S.t('auth_error_invalid');
+        } else if (e.message.contains('network') || e.message.contains('timeout')) {
+          message = S.t('auth_error_network');
+        } else {
+          message = "${S.t('auth_error_generic')} (${e.message})";
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${S.t('auth_error_invalid')} (${e.message})"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
