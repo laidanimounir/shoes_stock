@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 void main() async {
-  final supabaseUrl = 'https://jluuobtzylejiahbelgp.supabase.co';
-  final anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdXVvYnR6eWxlamlhaGJlbGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Mjg0NTksImV4cCI6MjA4ODMwNDQ1OX0.ziUtvEdXw3w0yqPpRwk6-rWrIi1qVTKpkZFcxyl7gRE';
+  final supabaseUrl = const String.fromEnvironment('SUPABASE_URL',
+      defaultValue: 'https://jluuobtzylejiahbelgp.supabase.co');
+  final anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY',
+      defaultValue: '');
 
   final client = HttpClient();
 
