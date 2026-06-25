@@ -704,3 +704,94 @@ flutter run \
   --dart-define=SUPABASE_ANON_KEY=your_anon_key \
   --dart-define=SENTRY_DSN=your_sentry_dsn
 ```
+
+---
+
+## 🚀 Sprint 1 & 2 — الإصلاحات والتحسينات — 25 جوان 2026
+
+### 📊 ملخص
+- **66 commit** جديد عبر Sprint 1 (31) + Sprint 2 (35)
+- **0 أخطاء** في flutter analyze
+- **build_runner** ناجح
+- **6 ملفات** جديدة تم إنشاؤها
+
+---
+
+### 🔴 Sprint 1 — الإصلاحات الأساسية (31 مهمة)
+
+| الإنجاز | الوصف |
+|---------|--------|
+| تقييد adjust_inventory | المالك فقط يمكنه تعديل المخزون (UI + RPC) |
+| توجيه المشتريات | achat_fournisseur ← PurchaseService مع دعم دون اتصال |
+| توجيه المرتجعات | employee_dashboard ← RefundService مع إضافة user_id |
+| store_id للمرتجعات | تمرير store_id إلى process_refund RPC |
+| تحديث عداد المزامنة | بعد كل writeTxn في 3 خدمات |
+| DebtRecoveryService | إرجاع Map بدل void لمعالجة الأخطاء |
+| ExpenseService | استخراج expense_id بشكل آمن |
+| addCategory دون اتصال | كتابة إلى Isar عند انقطاع الإنترنت |
+| تسجيل الخصم | fire-and-forget مع تسجيل الأخطاء |
+| SyncEngine | backfill supabaseId لجميع أنواع العمليات |
+| قفل Completer | منع سباق المزامنة (race condition) |
+| كشف التعارض | تغطية جميع أنواع العمليات الثمانية |
+| إعادة المحاولة | إعادة تعيين العداد فقط عند نجاح الكل |
+| connectivity | unawaited لتفادي حظر المستمع |
+| النسخ الاحتياطي | إضافة SettingsLocal + SizeRunLocal |
+| النسخ الاحتياطي | التحقق من schema_version قبل الاستعادة |
+| 26 catch فارغ | استبدالها بـ debugPrint مع stacktrace |
+| RLS | adjust_inventory يتحقق من دور المالك |
+| RLS | mark_notifications_read يصفي بـ auth.uid() |
+| RLS | expense_categories INSERT للمالك فقط |
+| فهارس | 8 فهارس updated_at للجداول الرئيسية |
+| Edge Functions | تأكيد JWT مفعّل على كل الوظائف |
+| ترجمات | 35 مفتاحًا جديدًا بالفرنسية والعربية |
+| SyncQueue | حد أقصى 500 عنصر لمنع النمو غير المحدود |
+| StoreGuard | أداة للتحقق من store_id قبل استدعاء RPC |
+| شاشة الصحة | عرض تفاصيل SyncQueue للتشخيص |
+| تسجيل الدخول | معالجة أخطاء المصادقة برسائل محددة |
+
+---
+
+### 🟡 Sprint 2 — تحسينات الأداء والجودة (35 مهمة)
+
+| الإنجاز | الوصف |
+|---------|--------|
+| لوحة الإدارة | 9 استدعاءات RPC متوازية بـ Future.wait (من 6s إلى 1.5s) |
+| لوحة المالك | مخزنة مؤقتًا لمدة 5 دقائق (تجنب إعادة التحميل) |
+| قائمة المنتجات | ترقيم الصفحات + بحث على الخادم |
+| سجل المبيعات | ترقيم الصفحات مع تحميل المزيد |
+| LoyaltyService | خدمة مخصصة لنقاط الولاء (جائزة + استرداد) |
+| BundleService | خدمة مخصصة للحزم مع تخزين مؤقت |
+| PosPaymentController | استخراج منطق الدفع من شاشة POS |
+| PosUtils | تسجيل الخصم موحد بين POS mobile و desktop |
+| mobile POS | إضافة نقاط الولاء وتسجيل الخصم (مطابقة desktop) |
+| مفتاح idempotency | إضافته إلى كل استدعاءات RPC القابلة لإعادة المحاولة |
+| سلاسل مترجمة | استبدال النصوص الفرنسية الصلبة بـ S.t() في 10 ملفات |
+| توثيق | إضافة تعليقات dartdoc للخدمات العامة |
+| اختبارات | إنشاء هياكل اختبارات الوحدة والتكامل |
+
+---
+
+### 📁 ملفات جديدة
+
+| الملف | الوصف |
+|-------|--------|
+| `lib/core/app_constants.dart` | ثوابت التطبيق (pagination، cache، إلخ) |
+| `lib/core/store_guard.dart` | التحقق من store_id قبل استدعاء RPC |
+| `lib/services/loyalty_service.dart` | خدمة نقاط الولاء |
+| `lib/services/bundle_service.dart` | خدمة الحزم مع تخزين مؤقت |
+| `lib/controllers/pos_payment_controller.dart` | منطق الدفع المستخرج من POS |
+| `lib/shared/utils/pos_utils.dart` | أدوات POS مشتركة (تسجيل الخصم) |
+
+---
+
+### ✅ التحقق النهائي
+
+| الفحص | النتيجة |
+|-------|--------|
+| flutter analyze | 0 أخطاء |
+| build_runner | ناجح |
+| RLS على 24 جدول | 0 معطل |
+| سجلات يتيمة | 0 |
+| وظائف مكررة | 0 |
+| JWT على Edge Functions | مفعّل على الكل |
+| إجمالي المهام المنجزة | 66/66 |
