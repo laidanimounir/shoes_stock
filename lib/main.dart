@@ -89,9 +89,15 @@ Future<void> _runApp() async {
     return true;
   };
 
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  assert(supabaseUrl.isNotEmpty, 'SUPABASE_URL is not set. Run with --dart-define or use launch.json');
+  assert(supabaseAnonKey.isNotEmpty, 'SUPABASE_ANON_KEY is not set.');
+
   await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
 
   await AppSession.loadLocale();
