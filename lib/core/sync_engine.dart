@@ -336,6 +336,79 @@ class SyncEngine {
         return null;
       }
 
+      case SyncOperationType.createInvoice: {
+        final customerId = payload['p_customer_id'] as String?;
+        if (customerId != null && customerId.isNotEmpty) {
+          final serverCustomer = await _client
+              .from('customers')
+              .select('id, is_active')
+              .eq('id', customerId)
+              .maybeSingle();
+          if (serverCustomer == null) {
+            return {'reason': 'Referenced customer ($customerId) no longer exists on server'};
+          }
+          if (serverCustomer['is_active'] != true) {
+            return {'reason': 'Referenced customer ($customerId) is deactivated'};
+          }
+        }
+        return null;
+      }
+
+      case SyncOperationType.processRefund: {
+        final invoiceId = payload['p_invoice_id'] as String?;
+        if (invoiceId != null && invoiceId.isNotEmpty) {
+          final serverInvoice = await _client
+              .from('invoices')
+              .select('id, status')
+              .eq('id', invoiceId)
+              .maybeSingle();
+          if (serverInvoice == null) {
+            return {'reason': 'Referenced invoice ($invoiceId) no longer exists on server'};
+          }
+          final status = serverInvoice['status'] as String?;
+          if (status == 'refunded') {
+            return {'reason': 'Invoice $invoiceId is already refunded'};
+          }
+        }
+        return null;
+      }
+
+      case SyncOperationType.createPurchase: {
+        final supplierId = payload['p_supplier_id'] as String?;
+        if (supplierId != null && supplierId.isNotEmpty) {
+          final serverSupplier = await _client
+              .from('suppliers')
+              .select('id, is_active')
+              .eq('id', supplierId)
+              .maybeSingle();
+          if (serverSupplier == null) {
+            return {'reason': 'Referenced supplier ($supplierId) no longer exists on server'};
+          }
+          if (serverSupplier['is_active'] != true) {
+            return {'reason': 'Referenced supplier ($supplierId) is deactivated'};
+          }
+        }
+        return null;
+      }
+
+      case SyncOperationType.createDebtRecoveryPayment: {
+        final customerId = payload['p_customer_id'] as String?;
+        if (customerId != null && customerId.isNotEmpty) {
+          final serverCustomer = await _client
+              .from('customers')
+              .select('id, is_active')
+              .eq('id', customerId)
+              .maybeSingle();
+          if (serverCustomer == null) {
+            return {'reason': 'Referenced customer ($customerId) no longer exists on server'};
+          }
+          if (serverCustomer['is_active'] != true) {
+            return {'reason': 'Referenced customer ($customerId) is deactivated'};
+          }
+        }
+        return null;
+      }
+
       default:
         return null;
     }
@@ -632,7 +705,12 @@ class SyncEngine {
       if (count > 0) {
         debugPrint('⏰ SyncEngine: Retry timer fired — $count pending items');
         await syncPending();
-        _scheduleRetry(attempt + 1);
+        final remaining = await getPendingCount();
+        if (remaining > 0) {
+          _scheduleRetry(attempt + 1);
+        } else {
+          _scheduleRetry(0);
+        }
       } else {
         _scheduleRetry(0);
       }
