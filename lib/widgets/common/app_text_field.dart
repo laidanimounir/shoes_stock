@@ -63,9 +63,9 @@ class AppTextField extends StatelessWidget {
             ? Icon(prefixIcon, size: 20)
             : null,
         suffixIcon: suffixIcon,
-        contentPadding: contentPadding ?? const EdgeInsets.symmetric(
+        contentPadding: contentPadding ?? EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: isDesktop ? 12 : 14,
+          vertical: isDesktop ? 12.0 : 14.0,
         ),
         filled: true,
         fillColor: isDesktop
