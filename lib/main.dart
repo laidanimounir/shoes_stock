@@ -2,7 +2,6 @@ import 'dart:io' show exit;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -20,6 +19,9 @@ import 'services/notification_service.dart';
 import 'views/auth/pin_lock_screen.dart';
 import 'local_db/isar_service.dart';
 import 'local_db/collections/settings_local.dart';
+import 'theme/app_theme.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_text_styles.dart';
 
 /// Used for exit() call — on web this is a no-op
 void _exitApp(int code) {
@@ -134,10 +136,7 @@ class GestionStockApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.desktop,
           home: const AuthGate(),
         );
       },
@@ -157,11 +156,15 @@ class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   bool _loadingTimedOut = false;
   bool _pinEnabled = false;
+  bool _isDesktop = false;
   Widget _currentScreen = const Center(child: CircularProgressIndicator());
 
   @override
   void initState() {
     super.initState();
+    _isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
+                 defaultTargetPlatform == TargetPlatform.macOS ||
+                 defaultTargetPlatform == TargetPlatform.linux;
     _setupAuthListener();
     _loadingTimeout();
     _loadPinSetting();
@@ -241,7 +244,7 @@ class _AuthGateState extends State<AuthGate> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Profil utilisateur introuvable. Contactez l'administrateur."),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.danger,
               duration: Duration(seconds: 5),
             ),
           );
@@ -279,17 +282,8 @@ class _AuthGateState extends State<AuthGate> {
         }
       }
 
-      final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
-                        defaultTargetPlatform == TargetPlatform.macOS ||
-                        defaultTargetPlatform == TargetPlatform.linux;
-
-      final isMobile = defaultTargetPlatform == TargetPlatform.android ||
-                       defaultTargetPlatform == TargetPlatform.iOS;
-
-      if (!mounted) return;
-
       if (role == 'owner') {
-        if (isDesktop) {
+        if (_isDesktop) {
           if (mounted) {
             setState(() {
               _currentScreen = _StartupScreen(
@@ -315,7 +309,7 @@ class _AuthGateState extends State<AuthGate> {
           }
         }
       } else if (role == 'employee') {
-        if (isMobile) {
+        if (!_isDesktop) {
           if (mounted) {
             setState(() {
               _currentScreen = _StartupScreen(
@@ -360,7 +354,7 @@ class _AuthGateState extends State<AuthGate> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erreur de connexion : Impossible de vérifier le profil. Veuillez vérifier votre internet."),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
             duration: const Duration(seconds: 5),
           ),
         );
@@ -371,13 +365,17 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     Widget body = _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) 
+        ? const Center(child: CircularProgressIndicator()) 
         : _currentScreen;
     if (!_isLoading && _currentScreen is! LoginScreen && _pinEnabled) {
       body = PinLockScreen(child: body);
     }
+    final themedBody = Theme(
+      data: _isDesktop ? AppTheme.desktop : AppTheme.mobile,
+      child: body,
+    );
     return Scaffold(
-      body: InactivityTimer(child: body),
+      body: InactivityTimer(child: themedBody),
     );
   }
 }
@@ -428,7 +426,7 @@ class _StartupScreenState extends State<_StartupScreen> {
               actions: [
                 ElevatedButton(
                   onPressed: () => _exitApp(0),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
                   child: const Text('Fermer l\'application'),
                 ),
               ],
@@ -444,7 +442,7 @@ class _StartupScreenState extends State<_StartupScreen> {
             SnackBar(
               content: const Text('Cette version est dépréciée. Veuillez mettre à jour dès que possible.'),
               behavior: SnackBarBehavior.floating,
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.warning,
               action: SnackBarAction(
                 label: 'OK',
                 textColor: Colors.white,
@@ -464,7 +462,7 @@ class _StartupScreenState extends State<_StartupScreen> {
           SnackBar(
             content: Text('Une nouvelle version ($latestVer) est disponible sur le Play Store.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.blue,
+            backgroundColor: AppColors.info,
             action: SnackBarAction(
               label: 'OK',
               textColor: Colors.white,
@@ -479,33 +477,26 @@ class _StartupScreenState extends State<_StartupScreen> {
   @override
   Widget build(BuildContext context) {
     final isOnline = ConnectivityService.instance.isOnline;
-    const gold = Color(0xFFD4A843);
-    const dark = Color(0xFF1A1A2E);
 
     return Scaffold(
-      backgroundColor: dark,
+      backgroundColor: AppColors.mobileBackground,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.storefront_rounded, color: gold, size: 64),
+            const Icon(Icons.storefront_rounded, color: AppColors.mobilePrimary, size: 64),
             const SizedBox(height: 16),
             Text(
               'STEPZONE',
-              style: GoogleFonts.playfairDisplay(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
+              style: AppTextStyles.displayMedium(
+                color: AppColors.mobileTextPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'LUXURY SHOES',
-              style: GoogleFonts.raleway(
-                color: gold,
-                fontSize: 10,
-                letterSpacing: 4,
+              style: AppTextStyles.caption(
+                color: AppColors.mobilePrimary,
               ),
             ),
             const SizedBox(height: 48),
@@ -513,11 +504,11 @@ class _StartupScreenState extends State<_StartupScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? Colors.green.withValues(alpha: 0.15)
-                    : Colors.orange.withValues(alpha: 0.15),
+                    ? AppColors.success.withValues(alpha: 0.15)
+                    : AppColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                  color: isOnline ? AppColors.success : AppColors.warning,
                   width: 0.5,
                 ),
               ),
@@ -529,15 +520,14 @@ class _StartupScreenState extends State<_StartupScreen> {
                     height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                      color: isOnline ? AppColors.success : AppColors.warning,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     _status,
-                    style: GoogleFonts.raleway(
-                      color: Colors.white70,
-                      fontSize: 14,
+                    style: AppTextStyles.bodyMedium(
+                      color: AppColors.mobileTextSecondary,
                     ),
                   ),
                 ],
@@ -549,7 +539,7 @@ class _StartupScreenState extends State<_StartupScreen> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: gold,
+                color: AppColors.mobilePrimary,
               ),
             ),
           ],
