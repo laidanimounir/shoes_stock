@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../admin/dashboard_screen.dart';
 import 'pos_screen.dart';
@@ -93,36 +93,24 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
         : 'A';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       body: Row(
         children: [
           Container(
             width: 260,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.sidebarTop, AppColors.sidebarBottom],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              border: BorderDirectional(
-                end: BorderSide(
-                  color: AppColors.goldLight,
-                  width: 0.16,
-                ),
-              ),
-            ),
+            color: AppColors.desktopSurface,
             child: Column(
               children: [
                 Container(
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.gold.withValues(alpha: 0.25),
-                        width: 0.8,
-                      ),
-                    ),
-                  ),
+                   decoration: BoxDecoration(
+                     border: Border(
+                       bottom: BorderSide(
+                         color: AppColors.desktopBorder,
+                         width: 0.8,
+                       ),
+                     ),
+                   ),
                   child: Column(
                     children: [
                       Container(
@@ -130,32 +118,26 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                         height: 56,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.gold.withValues(alpha: 0.12),
-                          border: Border.all(color: AppColors.gold, width: 1.5),
+                          color: AppColors.desktopPrimaryLight,
                         ),
                         child: const Icon(
                           Icons.storefront_rounded,
-                          color: AppColors.gold,
+                          color: AppColors.desktopPrimary,
                           size: 26,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'STEPZONE',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 3,
+                        style: AppTextStyles.brand(
+                          color: AppColors.desktopPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'ERP · Gestion',
-                        style: GoogleFonts.raleway(
-                          color: AppColors.gold.withValues(alpha: 0.7),
-                          fontSize: 10,
-                          letterSpacing: 2,
+                        style: AppTextStyles.caption(
+                          color: AppColors.desktopTextMuted,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -164,7 +146,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                           Expanded(
                             child: Container(
                               height: 0.5,
-                              color: AppColors.gold.withValues(alpha: 0.2),
+                              color: AppColors.desktopBorder,
                             ),
                           ),
                           Padding(
@@ -172,14 +154,14 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                 const EdgeInsets.symmetric(horizontal: 8),
                             child: Icon(
                               Icons.auto_awesome,
-                              color: AppColors.gold.withValues(alpha: 0.5),
+                              color: AppColors.desktopTextMuted,
                               size: 12,
                             ),
                           ),
                           Expanded(
                             child: Container(
                               height: 0.5,
-                              color: AppColors.gold.withValues(alpha: 0.2),
+                              color: AppColors.desktopBorder,
                             ),
                           ),
                         ],
@@ -189,12 +171,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.08),
+                          color: AppColors.desktopPrimaryLight,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.gold.withValues(alpha: 0.25),
-                            width: 0.8,
-                          ),
                         ),
                         child: Row(
                           children: [
@@ -203,19 +181,13 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                               height: 36,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [AppColors.gold, AppColors.goldLight],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
+                                color: AppColors.desktopPrimary,
                               ),
                               child: Center(
                                 child: Text(
                                   initials,
-                                  style: GoogleFonts.playfairDisplay(
-                                    color: AppColors.background,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  style: AppTextStyles.headingSmall(
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
@@ -227,10 +199,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                 children: [
                                   Text(
                                     adminEmail,
-                                    style: GoogleFonts.raleway(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                    style: AppTextStyles.bodySmall(
+                                      color: AppColors.desktopTextPrimary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -241,17 +211,15 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                         width: 6,
                                         height: 6,
                                         decoration: const BoxDecoration(
-                                          color: AppColors.gold,
+                                          color: AppColors.success,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
                                         S.t('label_role_admin'),
-                                        style: GoogleFonts.raleway(
-                                          color: AppColors.gold,
-                                          fontSize: 10,
-                                          letterSpacing: 0.5,
+                                        style: AppTextStyles.caption(
+                                          color: AppColors.desktopPrimary,
                                         ),
                                       ),
                                     ],
@@ -284,14 +252,14 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.gold.withValues(alpha: 0.2),
-                        width: 0.8,
-                      ),
-                    ),
-                  ),
+                   decoration: BoxDecoration(
+                     border: Border(
+                       top: BorderSide(
+                         color: AppColors.desktopBorder,
+                         width: 0.8,
+                       ),
+                     ),
+                   ),
                   child: Column(
                     children: [
                       ValueListenableBuilder<int>(
@@ -301,7 +269,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.notifications_outlined,
-                                    color: Colors.white70),
+                                    color: AppColors.desktopTextSecondary),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
@@ -311,14 +279,14 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                                   );
                                 },
                               ),
-                              if (count > 0)
+                               if (count > 0)
                                 Positioned(
                                   right: 6,
                                   top: 6,
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
-                                      color: Colors.red,
+                                      color: AppColors.danger,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text(
@@ -336,25 +304,23 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                       ),
                       const LanguageToggleButton(),
                       const SizedBox(height: 8),
-                      SizedBox(
+                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () =>
                               Supabase.instance.client.auth.signOut(),
                           icon: const Icon(Icons.logout_rounded,
-                              size: 16, color: Colors.redAccent),
+                              size: 16, color: AppColors.danger),
                           label: Text(
                             S.t('auth_logout'),
-                            style: GoogleFonts.raleway(
-                              color: Colors.redAccent,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.label(
+                              color: AppColors.danger,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             side: BorderSide(
-                              color: Colors.redAccent.withValues(alpha: 0.4),
+                              color: AppColors.danger.withValues(alpha: 0.4),
                               width: 0.8,
                             ),
                             shape: RoundedRectangleBorder(
@@ -399,15 +365,9 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.gold.withValues(alpha: 0.12)
+              ? AppColors.desktopPrimary
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.gold.withValues(alpha: 0.35)
-                : Colors.transparent,
-            width: 0.8,
-          ),
         ),
         child: Row(
           children: [
@@ -417,13 +377,13 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               height: 32,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.gold.withValues(alpha: 0.15)
-                    : Colors.transparent,
+                    ? AppColors.desktopPrimaryDark
+                    : AppColors.desktopBackground,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 isSelected ? selectedIcon : icon,
-                color: isSelected ? AppColors.gold : Colors.white38,
+                color: isSelected ? Colors.white : AppColors.desktopTextSecondary,
                 size: 18,
               ),
             ),
@@ -431,12 +391,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.raleway(
-                  color: isSelected ? Colors.white : Colors.white38,
-                  fontSize: 13,
-                  fontWeight: isSelected
-                      ? FontWeight.w700
-                      : FontWeight.w400,
+                style: AppTextStyles.label(
+                  color: isSelected ? Colors.white : AppColors.desktopTextSecondary,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -446,7 +402,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 width: 3,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: AppColors.gold,
+                  color: Colors.white.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
