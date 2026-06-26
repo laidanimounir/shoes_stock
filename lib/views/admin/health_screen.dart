@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:isar/isar.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../core/connectivity_service.dart';
@@ -119,7 +119,7 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       body: Column(
         children: [
           _buildHeader(),
@@ -150,9 +150,9 @@ class _HealthScreenState extends State<HealthScreen> {
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         border: Border(
-          bottom: BorderSide(color: AppColors.border, width: 0.8),
+          bottom: BorderSide(color: AppColors.desktopBorder, width: 0.8),
         ),
       ),
       child: Row(
@@ -161,10 +161,10 @@ class _HealthScreenState extends State<HealthScreen> {
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.gold.withValues(alpha: 0.12),
-              border: Border.all(color: AppColors.gold, width: 1.2),
+              color: AppColors.desktopPrimary.withValues(alpha: 0.12),
+              border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
             ),
-            child: const Icon(Icons.monitor_heart_rounded, color: AppColors.gold, size: 18),
+            child: const Icon(Icons.monitor_heart_rounded, color: AppColors.desktopPrimary, size: 18),
           ),
           const SizedBox(width: 12),
           Column(
@@ -172,16 +172,16 @@ class _HealthScreenState extends State<HealthScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Santé du système',
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
               Text('Diagnostic & synchronisation',
-                  style: GoogleFonts.raleway(
-                      color: AppColors.gold, fontSize: 11, letterSpacing: 0.8)),
+                  style: AppTextStyles.bodyMedium(
+                      color: AppColors.desktopPrimary)),
             ],
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.backup_rounded, color: AppColors.gold, size: 18),
+            icon: const Icon(Icons.backup_rounded, color: AppColors.desktopPrimary, size: 18),
             onPressed: () async {
               try {
                 final path = await BackupService.instance.exportToJson();
@@ -240,7 +240,7 @@ class _HealthScreenState extends State<HealthScreen> {
             tooltip: S.t('restore_backup'),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.desktopPrimary, size: 18),
             onPressed: _refresh,
             tooltip: 'Actualiser',
           ),
@@ -254,16 +254,16 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('STATUT SYSTÈME',
-              style: GoogleFonts.raleway(
-                  color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.desktopTextSecondary)),
           const SizedBox(height: 16),
           _statusRow(
             Icons.wifi,
@@ -302,9 +302,9 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,8 +313,8 @@ class _HealthScreenState extends State<HealthScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('SYNCHRONISATION',
-                  style: GoogleFonts.raleway(
-                      color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+                  style: AppTextStyles.bodyMedium(
+                      color: AppColors.desktopTextSecondary)),
               SizedBox(
                 height: 32,
                 child: ElevatedButton.icon(
@@ -324,7 +324,7 @@ class _HealthScreenState extends State<HealthScreen> {
                       : const Icon(Icons.sync_rounded, size: 14),
                   label: Text(_isSyncing ? 'En cours...' : 'Sync', style: const TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.desktopPrimary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -339,7 +339,7 @@ class _HealthScreenState extends State<HealthScreen> {
             Icons.access_time,
             'Dernière sync',
             _lastSyncAt != null ? timeago.format(_lastSyncAt!, locale: 'fr') : 'Jamais',
-            _lastSyncAt != null ? AppColors.info : AppColors.textSecondary,
+            _lastSyncAt != null ? AppColors.info : AppColors.desktopTextSecondary,
           ),
           const SizedBox(height: 12),
           _statusRow(
@@ -365,16 +365,16 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('BASE LOCALE (ISAR)',
-              style: GoogleFonts.raleway(
-                  color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.desktopTextSecondary)),
           const SizedBox(height: 16),
           ..._collectionCounts.entries.map((e) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -404,12 +404,12 @@ class _HealthScreenState extends State<HealthScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: Text(label,
-              style: GoogleFonts.raleway(
-                  color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.desktopTextSecondary)),
         ),
         Text(value,
-            style: GoogleFonts.raleway(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            style: AppTextStyles.bodyMedium(
+                color: Colors.white),
             maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
     );

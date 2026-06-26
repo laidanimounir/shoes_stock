@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../core/app_strings.dart';
 
 class StockTransferScreen extends StatefulWidget {
@@ -131,7 +131,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.desktopPrimary),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(S.t('action_confirm')),
           ),
@@ -162,10 +162,10 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       appBar: AppBar(
         title: Text(S.t('transfer_title')),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.desktopSurface,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -185,13 +185,13 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     final availableToStores = _stores.where((s) => s['id'] != _selectedFromStoreId).toList();
     return Container(
       padding: const EdgeInsets.all(16),
-      color: AppColors.surface,
+      color: AppColors.desktopSurface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('transfer_new'),
-              style: GoogleFonts.playfairDisplay(
-                  color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              style: AppTextStyles.headingLarge(
+                  color: Colors.white)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -199,8 +199,8 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedFromStoreId,
                   decoration: _inputDecoration(S.t('transfer_from')),
-                  dropdownColor: AppColors.surface,
-                  style: GoogleFonts.raleway(color: Colors.white, fontSize: 13),
+                  dropdownColor: AppColors.desktopSurface,
+                  style: AppTextStyles.bodyMedium(color: Colors.white),
                   items: _stores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(
                     value: s['id'] as String?,
                     child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white)),
@@ -213,8 +213,8 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedToStoreId,
                   decoration: _inputDecoration(S.t('transfer_to')),
-                  dropdownColor: AppColors.surface,
-                  style: GoogleFonts.raleway(color: Colors.white, fontSize: 13),
+                  dropdownColor: AppColors.desktopSurface,
+                  style: AppTextStyles.bodyMedium(color: Colors.white),
                   items: availableToStores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(
                     value: s['id'] as String?,
                     child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white)),
@@ -244,7 +244,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 controller: controller,
                 focusNode: focusNode,
                 decoration: _inputDecoration(S.t('transfer_variant')),
-                style: GoogleFonts.raleway(color: Colors.white, fontSize: 13),
+                style: AppTextStyles.bodyMedium(color: Colors.white),
               );
             },
           ),
@@ -256,7 +256,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   initialValue: _quantity.toString(),
                   keyboardType: TextInputType.number,
                   decoration: _inputDecoration(S.t('transfer_qty')),
-                  style: GoogleFonts.raleway(color: Colors.white, fontSize: 13),
+                  style: AppTextStyles.bodyMedium(color: Colors.white),
                   onChanged: (v) => _quantity = int.tryParse(v) ?? 1,
                 ),
               ),
@@ -266,7 +266,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 icon: const Icon(Icons.send, size: 16),
                 label: Text(S.t('action_add')),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.desktopPrimary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -282,16 +282,16 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12),
+      labelStyle: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary),
       filled: true,
-      fillColor: AppColors.background,
+      fillColor: AppColors.desktopBackground,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.desktopBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.desktopBorder),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     );
@@ -301,7 +301,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     if (_transfers.isEmpty) {
       return Center(
         child: Text(S.t('transfer_no_transfers'),
-            style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 14)),
+            style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
       );
     }
     return ListView.builder(
@@ -336,9 +336,9 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.desktopSurface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border, width: 0.8),
+            border: Border.all(color: AppColors.desktopBorder, width: 0.8),
           ),
           child: Row(
             children: [
@@ -347,15 +347,15 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(variantName,
-                        style: GoogleFonts.raleway(
-                            color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.bodyMedium(
+                            color: Colors.white),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text('$fromName → $toName',
-                        style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11)),
+                        style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
                     const SizedBox(height: 2),
                     Text('${S.t('label_quantity')}: $qty',
-                        style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11)),
+                        style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
                   ],
                 ),
               ),
@@ -367,8 +367,8 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(statusLabel,
-                    style: GoogleFonts.raleway(
-                        color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: AppTextStyles.bodyMedium(
+                        color: statusColor)),
               ),
               if (status == 'pending') ...[
                 const SizedBox(width: 8),
@@ -383,7 +383,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text(S.t('transfer_execute'),
-                        style: GoogleFonts.raleway(fontSize: 11, fontWeight: FontWeight.bold)),
+                        style: AppTextStyles.bodyMedium(fontSize: 11)),
                   ),
                 ),
               ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
@@ -143,7 +142,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           final newBalance = currentBalance - amount;
 
           return AlertDialog(
-            title: Text(S.t('debt_receive_payment'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+            title: Text(S.t('debt_receive_payment'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
             content: Form(
               key: formKey,
               child: Column(
@@ -163,9 +162,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(S.t('debt_current_balance'), style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 12)),
+                            Text(S.t('debt_current_balance'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                             Text('${currentBalance.toStringAsFixed(2)} DA',
-                                style: GoogleFonts.raleway(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 18)),
+                                style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.red)),
                           ],
                         ),
                         if (amount > 0) ...[
@@ -173,9 +172,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(S.t('debt_new_balance'), style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 12)),
+                              Text(S.t('debt_new_balance'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                               Text('${newBalance.toStringAsFixed(2)} DA',
-                                  style: GoogleFonts.raleway(
+                                  style: AppTextStyles.bodyMedium(
                                     fontWeight: FontWeight.bold,
                                     color: newBalance <= 0 ? Colors.green : Colors.orange,
                                     fontSize: 18,
@@ -372,10 +371,10 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 12, color: color)),
+          Text(label, style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 2),
           Text('${amount.toStringAsFixed(0)} DA',
-              style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+              style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.black87)),
         ],
       ),
     );
@@ -400,7 +399,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(S.t('debt_title'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+        title: Text(S.t('debt_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
@@ -415,7 +414,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                 ),
                 child: Text(
                   '${S.t('debt_total_debt')}: ${totalDebt.toStringAsFixed(2)} DA',
-                  style: GoogleFonts.raleway(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ),
@@ -460,7 +459,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                               Icon(Icons.people, size: 16, color: Colors.grey[600]),
                               const SizedBox(width: 8),
                               Text('${_customers.length} ${S.t('debt_clients_count')}',
-                                  style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 13)),
+                                  style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                             ],
                           ),
                         ),
@@ -476,7 +475,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                     Icon(Icons.check_circle_outline, size: 48, color: Colors.green[300]),
                                     const SizedBox(height: 8),
                                     Text(S.t('debt_no_debt'),
-                                        style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
+                                        style: AppTextStyles.bodyMedium(color: Colors.grey)),
                                   ],
                                 ),
                               )
@@ -499,7 +498,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                       child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
                                     ),
                                     title: Text(c['full_name'] ?? S.t('misc_unknown'),
-                                        style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+                                        style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -512,7 +511,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                               Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red[600]),
                                               const SizedBox(width: 4),
                                               Text('$daysOverdue ${S.t('debt_days')}',
-                                                  style: TextStyle(fontSize: 11, color: Colors.red[700], fontWeight: FontWeight.w600)),
+                                                  style: TextStyle(fontSize: 11, color: Colors.red[700])),
                                             ],
                                           ),
                                         ],
@@ -530,7 +529,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                           ),
                                           child: Text(
                                             '${balance.toStringAsFixed(0)} DA',
-                                            style: GoogleFonts.raleway(
+                                            style: AppTextStyles.bodyMedium(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.red[700],
                                               fontSize: 12,
@@ -578,7 +577,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                 Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey[300]),
                                 const SizedBox(height: 12),
                                 Text(S.t('debt_select_client'),
-                                    style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
+                                    style: AppTextStyles.bodyMedium(color: Colors.grey)),
                               ],
                             ),
                           )
@@ -601,7 +600,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                         children: [
                                           Text(
                                             _selectedCustomer!['full_name'] ?? '',
-                                            style: GoogleFonts.playfairDisplay(
+                                            style: AppTextStyles.headingLarge(
                                               fontSize: 26,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.indigo[800],
@@ -613,12 +612,12 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                               const Icon(Icons.phone, size: 16, color: Colors.grey),
                                               const SizedBox(width: 8),
                                               Text(_selectedCustomer!['phone'] ?? S.t('misc_not_specified'),
-                                                  style: GoogleFonts.raleway()),
+                                                  style: AppTextStyles.bodyMedium()),
                                               const SizedBox(width: 24),
                                               const Icon(Icons.email, size: 16, color: Colors.grey),
                                               const SizedBox(width: 8),
                                               Text(_selectedCustomer!['email'] ?? S.t('misc_not_specified'),
-                                                  style: GoogleFonts.raleway()),
+                                                  style: AppTextStyles.bodyMedium()),
                                             ],
                                           ),
                                         ],
@@ -627,10 +626,10 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
-                                        Text(S.t('cust_debt'), style: GoogleFonts.raleway(color: Colors.grey[600])),
+                                        Text(S.t('cust_debt'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                                         Text(
                                           '${((_selectedCustomer!['balance'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)} DA',
-                                          style: GoogleFonts.raleway(
+                                          style: AppTextStyles.bodyMedium(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.red,
@@ -670,7 +669,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                   onPressed: _showDebtPaymentDialog,
                                   icon: const Icon(Icons.payments),
                                   label: Text(S.t('debt_receive_payment'),
-                                      style: GoogleFonts.raleway(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      style: AppTextStyles.bodyMedium(fontSize: 16)),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     foregroundColor: Colors.white,
@@ -698,7 +697,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           children: [
             Icon(Icons.receipt_long, size: 48, color: Colors.grey[300]),
             const SizedBox(height: 8),
-            Text(S.t('debt_no_payments'), style: GoogleFonts.raleway(color: Colors.grey)),
+            Text(S.t('debt_no_payments'), style: AppTextStyles.bodyMedium(color: Colors.grey)),
           ],
         ),
       );
@@ -728,15 +727,15 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
             ),
             title: Text(
               '${amount.toStringAsFixed(2)} DA',
-              style: GoogleFonts.raleway(fontWeight: FontWeight.bold, color: Colors.green[700]),
+              style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.green[700]),
             ),
             subtitle: Text(
               '${_methodLabel(method)} ${notes.isNotEmpty ? '· $notes' : ''}',
-              style: GoogleFonts.raleway(fontSize: 12, color: Colors.grey[600]),
+              style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.grey[600]),
             ),
             trailing: date != null
                 ? Text('${date.day}/${date.month}/${date.year}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12))
+                    style: TextStyle(color: Colors.grey[500]))
                 : null,
           ),
         );
@@ -771,9 +770,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
         children: [
           Icon(icon, color: Colors.indigo, size: 20),
           const SizedBox(width: 12),
-          Text('$label:', style: GoogleFonts.raleway(color: Colors.grey[600], fontWeight: FontWeight.w600)),
+          Text('$label:', style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
           const SizedBox(width: 8),
-          Expanded(child: Text(value, style: GoogleFonts.raleway(fontSize: 15))),
+          Expanded(child: Text(value, style: AppTextStyles.bodyMedium(fontSize: 15))),
         ],
       ),
     );

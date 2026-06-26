@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../core/app_session.dart';
 import '../../services/report_service.dart';
 
@@ -137,16 +137,16 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.receipt_long_rounded, color: AppColors.gold, size: 20),
+            const Icon(Icons.receipt_long_rounded, color: AppColors.desktopPrimary, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text('Rapport du Jour — $userName',
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ),
           ],
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.desktopSurface,
         content: SizedBox(
           width: 400,
           child: SingleChildScrollView(
@@ -157,14 +157,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 _reportRow('Ventes', '$totalSales'),
                 _reportRow('Revenu total', '${totalRevenue.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 _reportRow('Remise moyenne', '${avgDiscount.toStringAsFixed(1)}%'),
-                const Divider(color: AppColors.border, height: 16),
+                const Divider(color: AppColors.desktopBorder, height: 16),
                 _reportRow('Factures', '$totalInvoices'),
                 _reportRow('Remboursements', '$totalRefunds (${refundAmount.toStringAsFixed(0)} ${S.t('misc_currency')})'),
-                const Divider(color: AppColors.border, height: 16),
+                const Divider(color: AppColors.desktopBorder, height: 16),
                 _reportRow('Espèces encaissées', '${cashCollected.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 _reportRow('Crédit accordé', '${creditGiven.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 if (topProduct.isNotEmpty) ...[
-                  const Divider(color: AppColors.border, height: 16),
+                  const Divider(color: AppColors.desktopBorder, height: 16),
                   _reportRow('Top produit', '$topProduct ($topProductQty)'),
                 ],
               ],
@@ -180,15 +180,15 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.print_rounded, size: 16, color: AppColors.gold),
+                const Icon(Icons.print_rounded, size: 16, color: AppColors.desktopPrimary),
                 const SizedBox(width: 4),
-                Text('Imprimer', style: GoogleFonts.raleway(color: AppColors.gold, fontWeight: FontWeight.w600)),
+                Text('Imprimer', style: AppTextStyles.bodyMedium(color: AppColors.desktopPrimary)),
               ],
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(S.t('action_close'), style: GoogleFonts.raleway(color: AppColors.textSecondary)),
+            child: Text(S.t('action_close'), style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
           ),
         ],
       ),
@@ -202,11 +202,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: GoogleFonts.raleway(
-                  color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.desktopTextSecondary)),
           Text(value,
-              style: GoogleFonts.raleway(
-                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+              style: AppTextStyles.bodyMedium(
+                  color: Colors.white)),
         ],
       ),
     );
@@ -221,16 +221,16 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
     final dateStr = '${S.t(dayKey)} ${now.day} ${S.t(monthKey)} ${now.year}';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       body: Column(
         children: [
           Container(
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.desktopSurface,
               border: Border(
-                bottom: BorderSide(color: AppColors.border, width: 0.8),
+                bottom: BorderSide(color: AppColors.desktopBorder, width: 0.8),
               ),
             ),
             child: Row(
@@ -239,10 +239,10 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   width: 36, height: 36,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.gold.withValues(alpha: 0.12),
-                    border: Border.all(color: AppColors.gold, width: 1.2),
+                    color: AppColors.desktopPrimary.withValues(alpha: 0.12),
+                    border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
                   ),
-                  child: const Icon(Icons.dashboard_rounded, color: AppColors.gold, size: 18),
+                  child: const Icon(Icons.dashboard_rounded, color: AppColors.desktopPrimary, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -250,26 +250,25 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(S.t('dash_employee_dashboard'),
-                        style: GoogleFonts.playfairDisplay(
-                            color: Colors.white, fontSize: 15,
-                            fontWeight: FontWeight.bold)),
+                        style: AppTextStyles.headingLarge(
+                            color: Colors.white)),
                     Text(dateStr,
-                        style: GoogleFonts.raleway(
-                            color: AppColors.gold, fontSize: 11, letterSpacing: 0.8)),
+                        style: AppTextStyles.bodyMedium(
+                            color: AppColors.desktopPrimary)),
                   ],
                 ),
                 const Spacer(),
                 Container(
                   width: 36, height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
+                    color: AppColors.desktopPrimary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.35), width: 0.8),
+                        color: AppColors.desktopPrimary.withValues(alpha: 0.35), width: 0.8),
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
+                    icon: const Icon(Icons.refresh_rounded, color: AppColors.desktopPrimary, size: 18),
                     onPressed: _fetchData,
                     tooltip: S.t('action_refresh'),
                   ),
@@ -320,7 +319,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             title: S.t('dash_my_sales_today'),
             value: '${(stats['my_sales_today'] as num?)?.toInt() ?? 0}',
             icon: Icons.person_rounded,
-            color: AppColors.gold,
+            color: AppColors.desktopPrimary,
           ),
           const SizedBox(width: 12),
           _miniCard(
@@ -358,7 +357,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.desktopSurface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
@@ -379,14 +378,12 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(value,
-                      style: GoogleFonts.raleway(
-                          color: Colors.white, fontSize: 17,
-                          fontWeight: FontWeight.bold),
+                      style: AppTextStyles.bodyMedium(
+                          color: Colors.white),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text(title,
-                      style: GoogleFonts.raleway(
-                          color: AppColors.textSecondary, fontSize: 9,
-                          fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium(
+                          color: AppColors.desktopTextSecondary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
@@ -406,30 +403,30 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3), width: 0.8),
+        border: Border.all(color: AppColors.desktopPrimary.withValues(alpha: 0.3), width: 0.8),
       ),
       child: Row(
         children: [
           Container(
             width: 38, height: 38,
             decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.15),
+              color: AppColors.desktopPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.monetization_on_rounded, color: AppColors.gold, size: 18),
+            child: const Icon(Icons.monetization_on_rounded, color: AppColors.desktopPrimary, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('COMMISSION DU MOIS', style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+              Text('COMMISSION DU MOIS', style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
               const SizedBox(height: 4),
               Text('${totalComm.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  style: GoogleFonts.raleway(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.bodyMedium(color: Colors.white)),
               Text('Taux: $rate% | $salesCount vente(s)',
-                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 10)),
+                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
             ],
           )),
         ],
@@ -442,9 +439,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,9 +450,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(S.t('dash_my_sales'),
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 14,
-                      fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 12),
@@ -463,13 +459,13 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
               ? SizedBox(
                   height: 80,
                   child: Center(child: Text(S.t('dash_no_sales'),
-                      style: GoogleFonts.raleway(color: AppColors.textSecondary))))
+                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))))
               : ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: sales.length,
                   separatorBuilder: (_, __) => Divider(
-                      color: AppColors.border, height: 1, thickness: 0.5),
+                      color: AppColors.desktopBorder, height: 1, thickness: 0.5),
                   itemBuilder: (context, index) {
                     final s = sales[index];
                     final createdAt = s['created_at'] as String?;
@@ -499,19 +495,18 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('${((s['total_amount'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
-                                    style: GoogleFonts.raleway(
-                                        color: Colors.white, fontSize: 13,
-                                        fontWeight: FontWeight.w600)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: Colors.white)),
                                 Text(customerName,
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.textSecondary, fontSize: 10)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.desktopTextSecondary)),
                               ],
                             ),
                           ),
                           if (timeAgo.isNotEmpty)
                             Text(timeAgo,
-                                style: GoogleFonts.raleway(
-                                    color: AppColors.textSecondary, fontSize: 10)),
+                                style: AppTextStyles.bodyMedium(
+                                    color: AppColors.desktopTextSecondary)),
                         ],
                       ),
                     );
@@ -530,9 +525,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.desktopSurface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border, width: 0.8),
+            border: Border.all(color: AppColors.desktopBorder, width: 0.8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,9 +537,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   const Icon(Icons.warning_rounded, color: AppColors.danger, size: 16),
                   const SizedBox(width: 8),
                   Text(S.t('dash_low_stock'),
-                      style: GoogleFonts.playfairDisplay(
-                          color: Colors.white, fontSize: 14,
-                          fontWeight: FontWeight.bold)),
+                      style: AppTextStyles.headingLarge(
+                          color: Colors.white)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -559,7 +553,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 SizedBox(
                   height: 40,
                   child: Center(child: Text(S.t('dash_no_data'),
-                      style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 )
               else
                 ListView.separated(
@@ -567,7 +561,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: items.length,
                   separatorBuilder: (_, __) => Divider(
-                      color: AppColors.border, height: 1, thickness: 0.5),
+                      color: AppColors.desktopBorder, height: 1, thickness: 0.5),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return Padding(
@@ -577,8 +571,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                           Expanded(
                             child: Text(
                               '${item['product_name'] ?? ''} (${item['size'] ?? ''} - ${item['color'] ?? ''})',
-                              style: GoogleFonts.raleway(
-                                  color: Colors.white, fontSize: 12),
+                              style: AppTextStyles.bodyMedium(
+                                  color: Colors.white),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -590,9 +584,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text('${item['quantity'] ?? 0}',
-                                style: GoogleFonts.raleway(
-                                    color: AppColors.danger, fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                                style: AppTextStyles.bodyMedium(
+                                    color: AppColors.danger)),
                           ),
                         ],
                       ),
@@ -651,20 +644,20 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.people_rounded, color: AppColors.gold, size: 18),
+              const Icon(Icons.people_rounded, color: AppColors.desktopPrimary, size: 18),
               const SizedBox(width: 8),
               Text('Employés',
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 12),
@@ -673,7 +666,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             physics: const NeverScrollableScrollPhysics(),
             itemCount: employees.length,
             separatorBuilder: (_, __) => Divider(
-                color: AppColors.border, height: 1, thickness: 0.5),
+                color: AppColors.desktopBorder, height: 1, thickness: 0.5),
             itemBuilder: (context, index) {
               final e = employees[index];
               final name = e['full_name'] as String? ?? '${e['first_name'] ?? ''} ${e['last_name'] ?? ''}'.trim();
@@ -685,37 +678,37 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                     Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.15),
+                        color: AppColors.desktopPrimary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
                         child: Text(
                           name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: GoogleFonts.raleway(
-                              color: AppColors.gold, fontSize: 14, fontWeight: FontWeight.bold),
+                          style: AppTextStyles.bodyMedium(
+                              color: AppColors.desktopPrimary),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(name,
-                          style: GoogleFonts.raleway(
-                              color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: AppTextStyles.bodyMedium(
+                              color: Colors.white),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     Container(
                       height: 30,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
+                        color: AppColors.desktopPrimary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 0.8),
+                        border: Border.all(color: AppColors.desktopPrimary.withValues(alpha: 0.35), width: 0.8),
                       ),
                       child: TextButton(
                         style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10)),
                         onPressed: () => _showCashierReportDialog(userId, name),
                         child: Text('Rapport du Jour',
-                            style: GoogleFonts.raleway(
-                                color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                            style: AppTextStyles.bodyMedium(
+                                color: AppColors.desktopPrimary)),
                       ),
                     ),
                   ],
@@ -782,8 +775,8 @@ class _EmpShimmerBoxState extends State<_EmpShimmerBox>
       builder: (_, __) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Color.lerp(AppColors.surface, AppColors.surfaceLight, _anim.value),
-          border: Border.all(color: AppColors.border, width: 0.8),
+          color: Color.lerp(AppColors.desktopSurface, AppColors.desktopBackground, _anim.value),
+          border: Border.all(color: AppColors.desktopBorder, width: 0.8),
         ),
       ),
     );

@@ -5,9 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../shared/constants/shoe_constants.dart';
 
 const Color kPrimaryColor = Color(0xFF1B4F72);
@@ -447,7 +448,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     _variants.isNotEmpty;
 
   TextStyle get _sectionStyle =>
-    GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w600, color: kPrimaryColor);
+    GoogleFonts.cairo(fontSize: 16, color: kPrimaryColor);
 
   // ─── Step Indicator ────────────────────────────────────────
 
@@ -575,7 +576,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                       const SizedBox(height: 8),
                                       Text('Ajouter\nune photo',
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                        style: TextStyle(color: Colors.grey[500]),
                                       ),
                                     ],
                                   ),
@@ -596,7 +597,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 Icon(Icons.check, color: Colors.white, size: 12),
                                 SizedBox(width: 2),
                                 Text('Compressée ✓',
-                                  style: TextStyle(color: Colors.white, fontSize: 9),
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ],
                             ),
@@ -674,7 +675,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 onPressed: _copyFromExistingProduct,
                 icon: const Icon(Icons.content_copy, size: 18),
                 label: Text('📋 Copier depuis un produit existant',
-                  style: GoogleFonts.raleway(fontSize: 13),
+                  style: AppTextStyles.bodyMedium(fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: kPrimaryColor,
@@ -699,7 +700,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   elevation: 2,
                 ),
                 child: Text('Suivant  →',
-                  style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(fontSize: 16),
                 ),
               ),
             ),
@@ -996,7 +997,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   '${_selectedColors.length} couleur${_selectedColors.length > 1 ? 's' : ''} = '
                   '${_selectedSizes.length * _selectedColors.length} variantes',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.cairo(fontSize: 15, fontWeight: FontWeight.w600, color: kPrimaryColor),
+                  style: GoogleFonts.cairo(fontSize: 15, color: kPrimaryColor),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1011,7 +1012,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       : _generateVariants,
                   icon: const Icon(Icons.auto_fix_high),
                   label: Text('✨ Générer les variantes',
-                    style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.cairo(fontSize: 16),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
@@ -1039,7 +1040,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                         ),
                         child: const Text('← Retour',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
@@ -1061,7 +1062,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           disabledBackgroundColor: Colors.grey[300],
                         ),
                         child: Text('Suivant  →',
-                          style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.cairo(fontSize: 16),
                         ),
                       ),
                     ),
@@ -1217,7 +1218,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey[300]),
                       const SizedBox(height: 12),
                       Text('Générez d\'abord les variantes (étape 2)',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 15),
+                        style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -1237,15 +1238,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           child: Row(
                             children: [
                               const Expanded(flex: 2, child: Text('Code-barres',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+                                style: TextStyle(color: Colors.white))),
                               const Expanded(flex: 1, child: Text('Pointure',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+                                style: TextStyle(color: Colors.white))),
                               const Expanded(flex: 1, child: Text('Couleur',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+                                style: TextStyle(color: Colors.white))),
                               const Expanded(flex: 1, child: Text('Achat',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+                                style: TextStyle(color: Colors.white))),
                               const Expanded(flex: 1, child: Text('Vente',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+                                style: TextStyle(color: Colors.white))),
                               const SizedBox(width: 40),
                             ],
                           ),
@@ -1279,7 +1280,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(8),
                                     child: Text(v['size'] as String,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ),
@@ -1426,7 +1427,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       : const Icon(Icons.save),
                   label: Text(
                     _isLoading ? 'Enregistrement...' : '💾 Enregistrer le produit',
-                    style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.cairo(fontSize: 18),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kAccentGreen,
@@ -1451,7 +1452,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   ),
                   child: const Text('← Retour',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 14),
                   ),
                 ),
               ),
@@ -1469,7 +1470,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         Text(emoji, style: const TextStyle(fontSize: 20)),
         const SizedBox(height: 4),
         Text(text,
-          style: GoogleFonts.raleway(
+          style: AppTextStyles.bodyMedium(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: kPrimaryColor,
@@ -1497,11 +1498,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(S.t('prod_add_title'),
-              style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.cairo(fontSize: 18),
             ),
             Text(
               'Étape ${_currentStep + 1} / 3',
-              style: GoogleFonts.raleway(fontSize: 12, color: Colors.white70),
+              style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),

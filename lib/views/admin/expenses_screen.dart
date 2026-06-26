@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/expense_service.dart';
@@ -93,7 +92,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(S.t('exp_add'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -162,7 +161,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     leading: const Icon(Icons.calendar_today, color: Colors.indigo),
                     title: Text(
                       '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                      style: GoogleFonts.raleway(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(S.t('exp_date')),
                     trailing: TextButton(
@@ -237,7 +236,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(S.t('exp_category_title'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_category_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
           content: SizedBox(
             width: 400,
             child: Column(
@@ -368,7 +367,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(S.t('exp_title'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+        title: Text(S.t('exp_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
@@ -385,7 +384,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text(S.t('exp_add'), style: GoogleFonts.raleway(fontWeight: FontWeight.bold)),
+        label: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -420,7 +419,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           _dateFrom != null
                               ? '${_dateFrom!.day}/${_dateFrom!.month} → ${_dateTo!.day}/${_dateTo!.month}'
                               : S.t('exp_period'),
-                          style: GoogleFonts.raleway(fontSize: 13),
+                          style: AppTextStyles.bodyMedium(fontSize: 13),
                         ),
                       ),
                       if (_dateFrom != null) ...[
@@ -479,7 +478,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
                               const SizedBox(height: 12),
                               Text(S.t('exp_no_results'),
-                                  style: GoogleFonts.raleway(color: Colors.grey, fontSize: 16)),
+                                  style: AppTextStyles.bodyMedium(color: Colors.grey)),
                             ],
                           ),
                         )
@@ -508,11 +507,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                 ),
                                 title: Text(
                                   desc.isNotEmpty ? desc : catName,
-                                  style: GoogleFonts.raleway(fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.bodyMedium(fontWeight: FontWeight.w600),
                                 ),
                                 subtitle: Text(
                                   '$catName · ${_methodLabel(method)}',
-                                  style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 12),
+                                  style: AppTextStyles.bodyMedium(color: Colors.grey[600]),
                                 ),
                                 trailing: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -520,13 +519,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   children: [
                                     Text(
                                       '${amount.toStringAsFixed(2)} DA',
-                                      style: GoogleFonts.raleway(
+                                      style: AppTextStyles.bodyMedium(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.red[700],
                                         fontSize: 15,
                                       ),
                                     ),
-                                    Text(dateStr, style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                                    Text(dateStr, style: TextStyle(color: Colors.grey[500])),
                                   ],
                                 ),
                               ),
@@ -559,10 +558,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: GoogleFonts.raleway(color: Colors.grey[600], fontSize: 12)),
+                  Text(label, style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                   const SizedBox(height: 4),
                   Text(value,
-                      style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 16, color: color),
+                      style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: color),
                       overflow: TextOverflow.ellipsis),
                 ],
               ),

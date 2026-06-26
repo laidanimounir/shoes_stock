@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:barcode/barcode.dart' as bc;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -10,6 +9,8 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../core/app_constants.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../services/report_service.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -429,7 +430,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       ),
       child: Text(
         '${config['icon']} ${config['label']}',
-        style: GoogleFonts.raleway(
+        style: AppTextStyles.bodyMedium(
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: color,
@@ -722,7 +723,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
               pw.Text('STEPZONE ERP',
-                style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
+                style: pw.TextStyle(fontSize: 6.bold),
                 textAlign: pw.TextAlign.center,
               ),
               pw.SizedBox(height: 2),
@@ -746,7 +747,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     style: const pw.TextStyle(fontSize: 4),
                   ),
                   pw.Text('${price.toStringAsFixed(0)} DA',
-                    style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(fontSize: 5.bold),
                   ),
                 ],
               ),
@@ -806,14 +807,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(product['name'] ?? '',
-                          style: GoogleFonts.cairo(fontSize: 22, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                          style: GoogleFonts.cairo(fontSize: 22, color: kPrimaryColor),
                         ),
                         const SizedBox(height: 4),
                         Row(children: [
                           _buildCategoryBadge(product['category']),
                           const SizedBox(width: 8),
                           Text(product['suppliers']?['company_name'] ?? '',
-                            style: GoogleFonts.raleway(fontSize: 13, color: Colors.grey[600]),
+                            style: AppTextStyles.bodyMedium(fontSize: 13, color: Colors.grey[600]),
                           ),
                         ]),
                         const SizedBox(height: 8),
@@ -843,7 +844,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
               // Variants table
               Text('Détail des variantes',
-                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                style: GoogleFonts.cairo(fontSize: 16, color: kPrimaryColor),
               ),
               const SizedBox(height: 12),
 
@@ -866,21 +867,21 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           child: Row(
                             children: const [
                               Expanded(flex: 2, child: Text('Code-barres',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Pointure',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Couleur',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Stock',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Achat',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Vente',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               Expanded(flex: 1, child: Text('Marge',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                               SizedBox(width: 64, child: Text('Actions',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                                style: TextStyle(color: Colors.white))),
                             ],
                           ),
                         ),
@@ -914,7 +915,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   ),
                                 )),
                                 Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+                                  style: const TextStyle(fontWeight: FontWeight.w600))),
                                 Expanded(flex: 1, child: Row(
                                   children: [
                                     Container(
@@ -933,7 +934,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 Expanded(flex: 1, child: Text(buy.toStringAsFixed(0),
                                   style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
                                 Expanded(flex: 1, child: Text(sell.toStringAsFixed(0),
-                                  style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold))),
+                                  style: TextStyle(fontSize: 11, color: Colors.green[700]))),
                                 Expanded(flex: 1, child: Text(
                                   margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
                                   style: TextStyle(
@@ -969,7 +970,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             ),
                             children: [
                               Text('Historique des prix',
-                                style: GoogleFonts.cairo(fontSize: 13, fontWeight: FontWeight.bold, color: kPrimaryColor),
+                                style: GoogleFonts.cairo(fontSize: 13, color: kPrimaryColor),
                               ),
                               const SizedBox(height: 8),
                               _buildVariantPriceHistory(v['id']),
@@ -1051,9 +1052,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         ),
         child: Column(
           children: [
-            Text(label, style: GoogleFonts.raleway(fontSize: 11, color: Colors.grey[600])),
+            Text(label, style: AppTextStyles.bodyMedium(fontSize: 11, color: Colors.grey[600])),
             const SizedBox(height: 4),
-            Text(value, style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            Text(value, style: GoogleFonts.cairo(fontSize: 18, color: color)),
           ],
         ),
       ),
@@ -1092,7 +1093,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         if (history.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Aucun historique', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            child: Text('Aucun historique', style: TextStyle(color: Colors.grey)),
           );
         }
 
@@ -1192,7 +1193,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             : '';
                         return LineTooltipItem(
                           '$date\n${spot.y.toStringAsFixed(0)} DA',
-                          const TextStyle(color: Colors.white, fontSize: 10),
+                          const TextStyle(color: Colors.white),
                         );
                       }).toList(),
                     ),
@@ -1217,13 +1218,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     child: const Row(
                       children: [
                         Expanded(flex: 2, child: Text('Date',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                          style: TextStyle(color: Colors.white))),
                         Expanded(flex: 2, child: Text('Fournisseur',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                          style: TextStyle(color: Colors.white))),
                         Expanded(flex: 1, child: Text('Prix',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                          style: TextStyle(color: Colors.white))),
                         Expanded(flex: 1, child: Text('Variation',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10))),
+                          style: TextStyle(color: Colors.white))),
                       ],
                     ),
                   ),
@@ -1248,9 +1249,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           Expanded(flex: 2, child: Text(date,
                             style: const TextStyle(fontSize: 10, color: Colors.grey))),
                           Expanded(flex: 2, child: Text(supplier,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500))),
+                            style: const TextStyle(fontSize: 10))),
                           Expanded(flex: 1, child: Text('${price.toStringAsFixed(0)} DA',
-                            style: TextStyle(fontSize: 10, color: Colors.orange[700], fontWeight: FontWeight.bold))),
+                            style: TextStyle(fontSize: 10, color: Colors.orange[700]))),
                           Expanded(
                             flex: 1,
                             child: hasChange
@@ -1300,7 +1301,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
           Text(text,
-            style: GoogleFonts.raleway(fontSize: 11, fontWeight: FontWeight.w600, color: kPrimaryColor),
+            style: AppTextStyles.bodyMedium(fontSize: 11, color: kPrimaryColor),
           ),
         ],
       ),
@@ -1321,7 +1322,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
         title: Text(S.t('prod_catalog_title'),
-          style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+          style: GoogleFonts.cairo(fontSize: 18),
         ),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
@@ -1330,7 +1331,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           if (hasActiveFilters)
             TextButton(
               onPressed: _resetFilters,
-              child: const Text('Réinitialiser', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              child: const Text('Réinitialiser', style: TextStyle(color: Colors.white70)),
             ),
           IconButton(
             icon: const Icon(Icons.checklist),
@@ -1391,7 +1392,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             border: Border.all(color: kWarningOrange.withOpacity(0.3)),
                           ),
                           child: Text('$_activeFilterCount filtre(s)',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kWarningOrange),
+                            style: TextStyle(fontSize: 11, color: kWarningOrange),
                           ),
                         ),
                       const SizedBox(width: 12),
@@ -1417,7 +1418,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         Expanded(
                           child: Text(
                             '$_negativeCount produit(s) avec stock négatif détecté — vérification requise',
-                            style: GoogleFonts.raleway(
+                            style: AppTextStyles.bodyMedium(
                               color: kNegativeRed,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -1518,7 +1519,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text('Tout sélectionner (${_allVisibleVariants.length})',
-                                  style: GoogleFonts.raleway(fontSize: 12, fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.bodyMedium(fontSize: 12),
                                 ),
                                 const Spacer(),
                                 TextButton.icon(
@@ -1535,7 +1536,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${_filteredProducts.length} produit(s) trouvé(s)',
-                          style: GoogleFonts.raleway(fontSize: 12, color: Colors.grey[500]),
+                          style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.grey[500]),
                         ),
                       ],
                     ),
@@ -1558,7 +1559,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 hasActiveFilters
                                   ? 'Aucun produit ne correspond aux filtres sélectionnés'
                                   : S.t('prod_no_results'),
-                                style: GoogleFonts.raleway(fontSize: 18, color: Colors.grey[500]),
+                                style: AppTextStyles.bodyMedium(fontSize: 18, color: Colors.grey[500]),
                               ),
                               if (hasActiveFilters) ...[
                                 const SizedBox(height: 16),
@@ -1627,7 +1628,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         child: Text(
                                           product['name'] ?? 'Inconnu',
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 17),
+                                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                       _buildCategoryBadge(product['category']),
@@ -1638,12 +1639,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                       Icon(Icons.local_shipping, size: 14, color: Colors.grey[600]),
                                       const SizedBox(width: 4),
                                       Flexible(child: Text(supplierName, overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: Colors.grey[600], fontSize: 12))),
+                                        style: TextStyle(color: Colors.grey[600]))),
                                       const SizedBox(width: 12),
                                       Icon(Icons.style, size: 14, color: Colors.grey[600]),
                                       const SizedBox(width: 4),
                                       Text('${activeVariants.length} var.',
-                                        style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                        style: TextStyle(color: Colors.grey[600])),
                                       const SizedBox(width: 12),
                                       _buildStockBadge(stockStatus, totalStock),
                                     ],
@@ -1681,11 +1682,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                               decoration: BoxDecoration(color: kPrimaryColor.withOpacity(0.05)),
                                               child: Row(
                                                 children: [
-                                                  Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                  Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                  Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue))),
-                                                  SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                                  Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold))),
+                                                  Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold))),
+                                                  Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold))),
+                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))),
+                                                  SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold))),
                                                 ],
                                               ),
                                             ),
@@ -1754,12 +1755,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                           Text('${S.t('prod_buy_short')}$buyPrice ${S.t('misc_currency')}',
                                                             style: const TextStyle(fontSize: 12, color: Colors.orange)),
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                            style: const TextStyle(fontSize: 12, color: Colors.green)),
                                                           Text('${S.t('prod_margin_short')}$margin ${S.t('misc_currency')}',
                                                             style: const TextStyle(fontSize: 11, color: Colors.teal)),
                                                         ] else
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                                                            style: const TextStyle(fontSize: 12, color: Colors.green)),
                                                       ],
                                                       ),
                                                     ),
@@ -1861,7 +1862,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               const SizedBox(width: 8),
               Text(
                 '${_selectedVariantIds.length} sélectionné(s)',
-                style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 14),
+                style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               ElevatedButton.icon(
@@ -1906,7 +1907,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             ],
             Text(
               label,
-              style: GoogleFonts.raleway(
+              style: AppTextStyles.bodyMedium(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: selected ? Colors.white : chipColor,
@@ -1967,7 +1968,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: TextStyle(fontSize: 11, color: color)),
-              Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+              Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
             ],
           ),
         ],

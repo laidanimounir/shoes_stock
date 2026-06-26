@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../services/purchase_service.dart';
 
 class AchatFournisseurScreen extends StatefulWidget {
@@ -131,7 +132,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
           const Icon(Icons.compare_arrows_outlined, color: Color(0xFFE67E22), size: 24),
           const SizedBox(width: 8),
           Text('Prix différent détecté',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 17)),
+            style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
         ]),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -149,17 +150,17 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                 children: [
                   Column(children: [
                     Text('Ancien prix',
-                      style: GoogleFonts.raleway(fontSize: 12, color: Color(0xFF6B7C93))),
+                      style: AppTextStyles.bodyMedium(fontSize: 12, color: Color(0xFF6B7C93))),
                     Text('${_lastPurchasePrice!.toStringAsFixed(0)} DA',
-                      style: GoogleFonts.raleway(fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: AppTextStyles.bodyMedium(fontSize: 16)),
                   ]),
                   Icon(Icons.arrow_forward,
                     color: isHigher ? const Color(0xFFE67E22) : const Color(0xFF2ECC71)),
                   Column(children: [
                     Text('Nouveau prix',
-                      style: GoogleFonts.raleway(fontSize: 12, color: Color(0xFF6B7C93))),
+                      style: AppTextStyles.bodyMedium(fontSize: 12, color: Color(0xFF6B7C93))),
                     Text('${newPrice.toStringAsFixed(0)} DA',
-                      style: GoogleFonts.raleway(fontSize: 16, fontWeight: FontWeight.bold,
+                      style: AppTextStyles.bodyMedium(fontSize: 16,
                         color: isHigher ? const Color(0xFFE67E22) : const Color(0xFF2ECC71))),
                   ]),
                   Container(
@@ -169,7 +170,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text('${isHigher ? "+" : ""}$pct%',
-                      style: GoogleFonts.raleway(fontWeight: FontWeight.bold,
+                      style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold,
                         color: isHigher ? const Color(0xFFE67E22) : const Color(0xFF2ECC71))),
                   ),
                 ],
@@ -177,7 +178,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
             ),
             const SizedBox(height: 16),
             Text('Comment traiter cet achat?',
-              style: GoogleFonts.cairo(fontWeight: FontWeight.w600, fontSize: 14)),
+              style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             _arrivageOption(
               icon: Icons.add_circle_outline,
@@ -248,9 +249,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14, color: color)),
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: color)),
               Text(subtitle,
-                style: GoogleFonts.raleway(fontSize: 12, color: Color(0xFF6B7C93))),
+                style: AppTextStyles.bodyMedium(fontSize: 12, color: Color(0xFF6B7C93))),
             ],
           )),
           Icon(Icons.arrow_forward_ios, size: 14, color: color),
@@ -360,13 +361,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               children: [
                 Text(
                   'Ce produit sera créé et ajouté au stock en une seule opération.',
-                  style: GoogleFonts.raleway(fontSize: 13, color: Color(0xFF6B7C93))),
+                  style: AppTextStyles.bodyMedium(fontSize: 13, color: Color(0xFF6B7C93))),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
                   decoration: InputDecoration(
                     labelText: 'Nom du produit',
-                    labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                    labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -398,7 +399,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                   Expanded(child: TextField(
                     decoration: InputDecoration(
                       labelText: 'Pointure',
-                      labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                      labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -416,7 +417,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                     controller: colorCtrl,
                     decoration: InputDecoration(
                       labelText: 'Couleur',
-                      labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                      labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -432,7 +433,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                 TextField(
                   decoration: InputDecoration(
                     labelText: 'Quantité achetée',
-                    labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                    labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -452,7 +453,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                     controller: buyPriceCtrl,
                     decoration: InputDecoration(
                       labelText: 'Prix achat (DA)',
-                      labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                      labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -470,7 +471,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                     controller: sellPriceCtrl,
                     decoration: InputDecoration(
                       labelText: 'Prix vente (DA)',
-                      labelStyle: GoogleFonts.raleway(color: Color(0xFF6B7C93)),
+                      labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF6B7C93)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
                       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
@@ -646,7 +647,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(S.t('buy_total_invoice'), style: const TextStyle(fontSize: 16)),
-                    Text('${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                    Text('${totalAmount.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 18, color: Colors.deepPurple)),
                   ],
                 ),
               ),
@@ -663,7 +664,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               const SizedBox(height: 12),
               Text(
                 S.t('buy_payment_note'),
-                style: const TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
+                style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -857,7 +858,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                   const Icon(Icons.inventory_2_outlined, size: 16, color: Color(0xFF1B4F72)),
                   const SizedBox(width: 6),
                   Text('Stock actuel: ',
-                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13)),
+                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
@@ -868,8 +869,8 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text('${_currentStock < 0 ? "⚠️ " : ""}$_currentStock pcs',
-                      style: GoogleFonts.raleway(
-                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: AppTextStyles.bodyMedium(
+                        color: Colors.white)),
                   ),
                 ]),
                 if (_lastPurchasePrice != null)
@@ -881,13 +882,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       Text('Dernier achat: ',
                         style: GoogleFonts.cairo(fontSize: 13, color: Color(0xFF6B7C93))),
                       Text('${_lastPurchasePrice!.toStringAsFixed(2)} DA',
-                        style: GoogleFonts.raleway(
-                          fontWeight: FontWeight.bold, fontSize: 13,
+                        style: AppTextStyles.bodyMedium(
+                          fontWeight: FontWeight.bold,
                           color: const Color(0xFF1B4F72))),
                       if (_lastPurchaseDate != null) ...[
                         const SizedBox(width: 8),
                         Text('le ${_formatDate(_lastPurchaseDate!)}',
-                          style: GoogleFonts.raleway(fontSize: 11, color: Color(0xFF6B7C93))),
+                          style: AppTextStyles.bodyMedium(fontSize: 11, color: Color(0xFF6B7C93))),
                       ],
                     ]),
                   ),
@@ -940,7 +941,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
       children: [
         Text('📊 Historique des achats',
           style: GoogleFonts.cairo(
-            fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF6B7C93))),
+            fontSize: 12, color: Color(0xFF6B7C93))),
         const SizedBox(height: 6),
         ..._purchaseHistory.map((h) {
           final date = DateTime.tryParse(h['created_at'] ?? '');
@@ -952,12 +953,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
               const Icon(Icons.circle, size: 6, color: Color(0xFF1B4F72)),
               const SizedBox(width: 8),
               Text(date != null ? _formatDate(date) : '—',
-                style: GoogleFonts.raleway(fontSize: 12, color: Color(0xFF6B7C93))),
+                style: AppTextStyles.bodyMedium(fontSize: 12, color: Color(0xFF6B7C93))),
               const Spacer(),
-              Text('$qty pcs', style: GoogleFonts.raleway(fontSize: 12)),
+              Text('$qty pcs', style: AppTextStyles.bodyMedium(fontSize: 12)),
               const SizedBox(width: 16),
               Text('$price DA',
-                style: GoogleFonts.raleway(fontSize: 12,
+                style: AppTextStyles.bodyMedium(fontSize: 12,
                   fontWeight: FontWeight.bold, color: Color(0xFF1B4F72))),
             ]),
           );
@@ -1033,7 +1034,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
     InputDecoration formStyle(String label, IconData icon) {
       return InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.raleway(color: kTextSec),
+        labelStyle: AppTextStyles.bodyMedium(color: kTextSec),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: kBorder),
@@ -1087,14 +1088,14 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                         Text(
                           'Erreur de chargement',
                           style: GoogleFonts.cairo(
-                            fontSize: 18, fontWeight: FontWeight.bold,
+                            fontSize: 18,
                             color: const Color(0xFF1A2533)),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _errorMessage,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.raleway(fontSize: 14, color: Color(0xFF6B7C93)),
+                          style: AppTextStyles.bodyMedium(fontSize: 14, color: Color(0xFF6B7C93)),
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
@@ -1136,7 +1137,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                       children: [
                         const Icon(Icons.visibility, size: 16, color: kPrimary),
                         const SizedBox(width: 8),
-                        Text(S.t('buy_read_only'), style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text(S.t('buy_read_only'), style: const TextStyle(color: kPrimary)),
                       ],
                     ),
                   ),
@@ -1345,7 +1346,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                     builder: (_) {
                                       final qty = int.tryParse(_qtyController.text) ?? 0;
                                       return Text('= ${qty * _unitsPerCarton} pièces au total',
-                                        style: GoogleFonts.raleway(fontSize: 13, color: kTextSec));
+                                        style: AppTextStyles.bodyMedium(fontSize: 13, color: kTextSec));
                                     },
                                   ),
                                 ],
@@ -1362,7 +1363,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                   icon: const Icon(Icons.add_shopping_cart_outlined),
                                   label: Text(
                                     '+ Ajouter à la commande',
-                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16),
+                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
                                   ),
                                   onPressed: _addItemToList,
                                 ),
@@ -1378,9 +1379,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                       icon: const Icon(Icons.add_business_outlined, color: Color(0xFF1B4F72), size: 18),
                                       label: Text('Définir + Acheter',
                                         style: GoogleFonts.cairo(
-                                          color: Color(0xFF1B4F72),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
+                                          color: Color(0xFF1B4F72))),
                                       onPressed: _showDefinePlusAchetDialog,
                                       style: TextButton.styleFrom(
                                         backgroundColor: const Color(0xFF1B4F72).withOpacity(0.08),
@@ -1430,7 +1429,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text('${_purchaseItems.length} articles',
-                                        style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
+                                        style: AppTextStyles.bodyMedium(color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -1447,10 +1446,10 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                             const SizedBox(height: 12),
                                             Text('Aucun article ajouté',
                                               style: GoogleFonts.cairo(
-                                                color: kTextSec, fontSize: 15)),
+                                                color: kTextSec)),
                                             Text('Sélectionnez un produit et ajoutez-le',
-                                              style: GoogleFonts.raleway(
-                                                color: Color(0xFFB0BEC5), fontSize: 13)),
+                                              style: AppTextStyles.bodyMedium(
+                                                color: Color(0xFFB0BEC5))),
                                           ],
                                         ),
                                       )
@@ -1471,7 +1470,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                               leading: CircleAvatar(
                                                 backgroundColor: kPrimary.withOpacity(0.1),
                                                 child: Text('${i + 1}',
-                                                  style: const TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+                                                  style: const TextStyle(color: kPrimary)),
                                               ),
                                               title: Row(
                                                 children: [
@@ -1493,12 +1492,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                                 ],
                                               ),
                                               subtitle: Text('${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} DA',
-                                                style: GoogleFonts.raleway()),
+                                                style: AppTextStyles.bodyMedium()),
                                               trailing: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   Text('${(item.quantity * item.unitPrice).toStringAsFixed(2)} DA',
-                                                    style: GoogleFonts.raleway(
+                                                    style: AppTextStyles.bodyMedium(
                                                       fontWeight: FontWeight.bold,
                                                       color: kPrimary)),
                                                   IconButton(
@@ -1528,7 +1527,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                             style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
                                           Text(
                                             '${_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice).toStringAsFixed(2)} DA',
-                                            style: GoogleFonts.raleway(
+                                            style: AppTextStyles.bodyMedium(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
                                               color: kPrimary)),
@@ -1539,9 +1538,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text('Articles:',
-                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                            style: AppTextStyles.bodyMedium(color: kTextSec)),
                                           Text('${_purchaseItems.fold<int>(0, (s, i) => s + i.quantity)} pcs',
-                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                            style: AppTextStyles.bodyMedium(color: kTextSec)),
                                         ],
                                       ),
                                       const SizedBox(height: 4),
@@ -1549,7 +1548,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text('Moy/pièce:',
-                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                            style: AppTextStyles.bodyMedium(color: kTextSec)),
                                           Text(
                                             (() {
                                               final tp = _purchaseItems.fold<int>(0, (s, i) => s + i.quantity);
@@ -1557,7 +1556,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                                 ? '${(_purchaseItems.fold<double>(0, (s, i) => s + i.quantity * i.unitPrice) / tp).toStringAsFixed(2)} DA'
                                                 : '0 DA';
                                             })(),
-                                            style: GoogleFonts.raleway(color: kTextSec)),
+                                            style: AppTextStyles.bodyMedium(color: kTextSec)),
                                         ],
                                       ),
                                     ],
@@ -1581,7 +1580,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
                                           : const Icon(Icons.check_circle_outline),
                                       label: Text('✅ Confirmer la commande',
                                         style: GoogleFonts.cairo(
-                                          fontWeight: FontWeight.bold, fontSize: 16)),
+                                          fontWeight: FontWeight.bold)),
                                       onPressed: _isSubmitting ? null : _showPaymentDialog,
                                     ),
                                   ),

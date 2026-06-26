@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../core/app_strings.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/size_run_local.dart';
@@ -185,10 +186,10 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       appBar: AppBar(
         title: Text(S.t('size_run_title')),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.desktopSurface,
         actions: [
           if (_selectedProduct != null)
             TextButton.icon(
@@ -206,8 +207,8 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
           Container(
             width: 280,
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border(right: BorderSide(color: AppColors.border)),
+              color: AppColors.desktopSurface,
+              border: Border(right: BorderSide(color: AppColors.desktopBorder)),
             ),
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -218,7 +219,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
                       final isSelected = _selectedProduct?['id'] == p['id'];
                       return ListTile(
                         selected: isSelected,
-                        selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
+                        selectedTileColor: AppColors.desktopPrimary.withValues(alpha: 0.1),
                         title: Text(p['name'] ?? '', style: const TextStyle(fontSize: 13)),
                         subtitle: Text(p['category'] ?? '', style: const TextStyle(fontSize: 11)),
                         onTap: () {
@@ -248,7 +249,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
         children: [
           Text(
             '${_selectedProduct!['name']}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 16),
           // Color selector
@@ -294,15 +295,15 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
   Widget _buildSizeCard(String size, int qty) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.desktopBorder),
       ),
       padding: const EdgeInsets.all(8),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(size, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(size, style: const TextStyle(fontSize: 14)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -322,7 +323,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
                 child: Text(
                   '$qty',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
               IconButton(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../services/notification_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'sale':
         return Colors.green;
       default:
-        return AppColors.gold;
+        return AppColors.desktopPrimary;
     }
   }
 
@@ -59,7 +60,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.t('notif_title')),
-        backgroundColor: AppColors.sidebarTop,
+        backgroundColor: AppColors.desktopSurface,
         foregroundColor: Colors.white,
         actions: [
           TextButton.icon(
@@ -70,7 +71,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             icon: const Icon(Icons.done_all, color: Colors.white70),
             label: Text(
               S.t('notif_mark_all_read'),
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70),
             ),
           ),
         ],
@@ -127,7 +128,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         Text(
                           n['body'],
                           style: TextStyle(
-                              color: Colors.grey[600], fontSize: 12),
+                              color: Colors.grey[600]),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -135,7 +136,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         _ago(n['created_at']),
                         style: TextStyle(
-                            color: Colors.grey[400], fontSize: 11),
+                            color: Colors.grey[400]),
                       ),
                     ],
                   ),
