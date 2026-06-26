@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../core/app_session.dart';
 import '../../services/report_service.dart';
 
@@ -173,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       body: Column(
         children: [
           _buildHeader(),
@@ -201,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         border: Border(
           bottom: BorderSide(color: AppColors.border, width: 0.8),
         ),
@@ -212,10 +212,10 @@ class _DashboardScreenState extends State<DashboardScreen>
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.gold.withValues(alpha: 0.12),
-              border: Border.all(color: AppColors.gold, width: 1.2),
+              color: AppColors.desktopPrimary.withValues(alpha: 0.12),
+              border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
             ),
-            child: const Icon(Icons.dashboard_rounded, color: AppColors.gold, size: 18),
+            child: const Icon(Icons.dashboard_rounded, color: AppColors.desktopPrimary, size: 18),
           ),
           const SizedBox(width: 12),
           Column(
@@ -223,12 +223,11 @@ class _DashboardScreenState extends State<DashboardScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(S.t('dash_title'),
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 16,
-                      fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
               Text(dateStr,
-                  style: GoogleFonts.raleway(
-                      color: AppColors.gold, fontSize: 11, letterSpacing: 0.8)),
+                  style: AppTextStyles.bodyMedium(
+                      color: AppColors.desktopPrimary)),
             ],
           ),
           const Spacer(),
@@ -236,27 +235,26 @@ class _DashboardScreenState extends State<DashboardScreen>
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
+              color: AppColors.desktopBackground,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.border, width: 0.8),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String?>(
                 value: _selectedStoreId,
-                dropdownColor: AppColors.surface,
-                icon: const Icon(Icons.store_outlined, color: AppColors.gold, size: 16),
-                style: GoogleFonts.raleway(color: Colors.white, fontSize: 13,
-                    fontWeight: FontWeight.w600),
+                dropdownColor: AppColors.desktopSurface,
+                icon: const Icon(Icons.store_outlined, color: AppColors.desktopPrimary, size: 16),
+                style: AppTextStyles.bodyMedium(color: Colors.white),
                 items: [
                   DropdownMenuItem(
                     value: null,
                     child: Text(S.t('inv_all_stores'),
-                        style: GoogleFonts.raleway(color: Colors.white70, fontSize: 13)),
+                        style: AppTextStyles.bodyMedium(color: Colors.white70)),
                   ),
                   ..._stores.map((s) => DropdownMenuItem(
                         value: s['id'] as String?,
                         child: Text(s['name'],
-                            style: GoogleFonts.raleway(color: Colors.white, fontSize: 13)),
+                            style: AppTextStyles.bodyMedium(color: Colors.white)),
                       )),
                 ],
                 onChanged: (val) {
@@ -298,7 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(width: 4),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.download_rounded, color: AppColors.gold, size: 18),
+            icon: const Icon(Icons.download_rounded, color: AppColors.desktopPrimary, size: 18),
             tooltip: 'Exporter',
             onSelected: (v) async {
               if (v == 'sales') await ReportService.instance.generateDailySalesReport(DateTime.now(), _selectedStoreId);
@@ -381,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_item_count'),
             value: '${(stats['month_sales_count'] as num?)?.toInt() ?? 0}',
             icon: Icons.shopping_cart_rounded,
-            color: AppColors.gold,
+            color: AppColors.desktopPrimary,
           ),
         ],
       ),
@@ -492,7 +490,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.desktopSurface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
@@ -513,21 +511,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(title,
-                      style: GoogleFonts.raleway(
-                          color: AppColors.textSecondary, fontSize: 11,
-                          fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium(
+                          color: AppColors.desktopTextSecondary),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
             Text(value,
-                style: GoogleFonts.raleway(
-                    color: Colors.white, fontSize: 18,
-                    fontWeight: FontWeight.bold),
+                style: AppTextStyles.bodyMedium(
+                    color: Colors.white),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(subtitle,
-                style: GoogleFonts.raleway(
-                    color: AppColors.textSecondary, fontSize: 10)),
+                style: AppTextStyles.bodyMedium(
+                    color: AppColors.desktopTextSecondary)),
           ],
         ),
       ),
@@ -543,7 +539,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.desktopSurface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: color.withValues(alpha: 0.15), width: 0.8),
         ),
@@ -552,14 +548,12 @@ class _DashboardScreenState extends State<DashboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(title,
-                style: GoogleFonts.raleway(
-                    color: AppColors.textSecondary, fontSize: 10,
-                    fontWeight: FontWeight.w600)),
+                style: AppTextStyles.bodyMedium(
+                    color: AppColors.desktopTextSecondary)),
             const SizedBox(height: 4),
             Text(value,
-                style: GoogleFonts.raleway(
-                    color: Colors.white, fontSize: 15,
-                    fontWeight: FontWeight.bold),
+                style: AppTextStyles.bodyMedium(
+                    color: Colors.white),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
@@ -574,7 +568,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -588,12 +582,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(S.t('dash_revenue_chart'),
-                        style: GoogleFonts.playfairDisplay(
-                            color: Colors.white, fontSize: 14,
-                            fontWeight: FontWeight.bold)),
+                        style: AppTextStyles.headingLarge(
+                            color: Colors.white)),
                     Text(S.t('dash_${_chartPeriod}'),
-                        style: GoogleFonts.raleway(
-                            color: AppColors.textSecondary, fontSize: 11)),
+                        style: AppTextStyles.bodyMedium(
+                            color: AppColors.desktopTextSecondary)),
                   ],
                 ),
               ),
@@ -612,7 +605,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Expanded(
             child: data.isEmpty
                 ? Center(child: Text(S.t('dash_no_data'),
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 : LineChart(
                     LineChartData(
                       gridData: FlGridData(
@@ -633,8 +626,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                               final v = value.toInt();
                               if (v % 2 == 0 || v == 0) {
                                 return Text('$v',
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.textSecondary, fontSize: 9));
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.desktopTextSecondary));
                               }
                               return const SizedBox.shrink();
                             },
@@ -653,8 +646,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                               return Padding(
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(label,
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.textSecondary, fontSize: 9)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.desktopTextSecondary)),
                               );
                             },
                           ),
@@ -742,10 +735,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
         child: Text(label,
-            style: GoogleFonts.raleway(
-                color: isSelected ? AppColors.info : AppColors.textSecondary,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400)),
+            style: AppTextStyles.bodyMedium(
+                color: isSelected ? AppColors.info : AppColors.desktopTextSecondary)),
       ),
     );
   }
@@ -755,7 +746,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -763,18 +754,17 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('dash_top_products_title'),
-              style: GoogleFonts.playfairDisplay(
-                  color: Colors.white, fontSize: 14,
-                  fontWeight: FontWeight.bold)),
+              style: AppTextStyles.headingLarge(
+                  color: Colors.white)),
           const SizedBox(height: 4),
           Text(S.t('dash_month'),
-              style: GoogleFonts.raleway(
-                  color: AppColors.textSecondary, fontSize: 11)),
+              style: AppTextStyles.bodyMedium(
+                  color: AppColors.desktopTextSecondary)),
           const SizedBox(height: 12),
           Expanded(
             child: products.isEmpty
                 ? Center(child: Text(S.t('dash_no_products_sold'),
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 : ListView.separated(
                     itemCount: products.length,
                     separatorBuilder: (_, __) => Divider(
@@ -788,14 +778,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Container(
                               width: 24, height: 24,
                               decoration: BoxDecoration(
-                                color: AppColors.gold.withValues(alpha: 0.15),
+                                color: AppColors.desktopPrimary.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Center(
                                 child: Text('${index + 1}',
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.gold, fontSize: 11,
-                                        fontWeight: FontWeight.bold)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.desktopPrimary)),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -804,13 +793,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(p['product_name'] ?? '',
-                                      style: GoogleFonts.raleway(
-                                          color: Colors.white, fontSize: 12,
-                                          fontWeight: FontWeight.w600),
+                                      style: AppTextStyles.bodyMedium(
+                                          color: Colors.white),
                                       maxLines: 1, overflow: TextOverflow.ellipsis),
                                   Text(p['variant_info'] ?? '',
-                                      style: GoogleFonts.raleway(
-                                          color: AppColors.textSecondary, fontSize: 10)),
+                                      style: AppTextStyles.bodyMedium(
+                                          color: AppColors.desktopTextSecondary)),
                                 ],
                               ),
                             ),
@@ -818,12 +806,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text('${p['total_sold'] ?? 0}',
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.info, fontSize: 13,
-                                        fontWeight: FontWeight.bold)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.info)),
                                 Text(S.t('dash_item_count'),
-                                    style: GoogleFonts.raleway(
-                                        color: AppColors.textSecondary, fontSize: 9)),
+                                    style: AppTextStyles.bodyMedium(
+                                        color: AppColors.desktopTextSecondary)),
                               ],
                             ),
                           ],
@@ -842,7 +829,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -853,16 +840,15 @@ class _DashboardScreenState extends State<DashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(S.t('dash_recent_activity'),
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 13,
-                      fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: activity.isEmpty
                 ? Center(child: Text(S.t('dash_no_activity'),
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 : ListView.builder(
                     itemCount: activity.length,
                     itemBuilder: (context, index) {
@@ -878,7 +864,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Container(
                               width: 6, height: 6,
                               decoration: BoxDecoration(
-                                color: AppColors.gold.withValues(alpha: 0.5),
+                                color: AppColors.desktopPrimary.withValues(alpha: 0.5),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -888,15 +874,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 (a['description']?.toString() ?? '').length > 50
                                     ? '${(a['description']?.toString() ?? '').substring(0, 47)}...'
                                     : (a['description']?.toString() ?? ''),
-                                style: GoogleFonts.raleway(
-                                    color: AppColors.textPrimary, fontSize: 10),
+                                style: AppTextStyles.bodyMedium(
+                                    color: AppColors.desktopTextPrimary),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (timeAgo.isNotEmpty)
                               Text(timeAgo,
-                                  style: GoogleFonts.raleway(
-                                      color: AppColors.textSecondary, fontSize: 9)),
+                                  style: AppTextStyles.bodyMedium(
+                                      color: AppColors.desktopTextSecondary)),
                           ],
                         ),
                       );
@@ -913,7 +899,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -921,14 +907,13 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('dash_debt_clients'),
-              style: GoogleFonts.playfairDisplay(
-                  color: Colors.white, fontSize: 13,
-                  fontWeight: FontWeight.bold)),
+              style: AppTextStyles.headingLarge(
+                  color: Colors.white)),
           const SizedBox(height: 8),
           Expanded(
             child: clients.isEmpty
                 ? Center(child: Text(S.t('dash_no_debt_clients'),
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 : ListView.builder(
                     itemCount: clients.length,
                     itemBuilder: (context, index) {
@@ -942,17 +927,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 (c['full_name']?.toString() ?? '').length > 20
                                     ? '${(c['full_name']?.toString() ?? '').substring(0, 18)}...'
                                     : (c['full_name'] ?? ''),
-                                style: GoogleFonts.raleway(
-                                    color: AppColors.textPrimary, fontSize: 11),
+                                style: AppTextStyles.bodyMedium(
+                                    color: AppColors.desktopTextPrimary),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '${((c['balance'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
-                              style: GoogleFonts.raleway(
-                                  color: AppColors.warning, fontSize: 11,
-                                  fontWeight: FontWeight.bold),
+                              style: AppTextStyles.bodyMedium(
+                                  color: AppColors.warning),
                             ),
                           ],
                         ),
@@ -970,7 +954,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -981,16 +965,15 @@ class _DashboardScreenState extends State<DashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Stock Faible',
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 13,
-                      fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: items.isEmpty
                 ? Center(child: Text('Aucun stock faible',
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary)))
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
                 : ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
@@ -1010,16 +993,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Expanded(
                               child: Text(
                                 '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
-                                style: GoogleFonts.raleway(
-                                    color: AppColors.textPrimary, fontSize: 10),
+                                style: AppTextStyles.bodyMedium(
+                                    color: AppColors.desktopTextPrimary),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             Text(
                               '${item['quantity'] ?? 0}',
-                              style: GoogleFonts.raleway(
-                                  color: AppColors.danger, fontSize: 10,
-                                  fontWeight: FontWeight.bold),
+                              style: AppTextStyles.bodyMedium(
+                                  color: AppColors.danger),
                             ),
                           ],
                         ),
@@ -1038,7 +1020,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -1053,8 +1035,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   const Icon(Icons.slow_motion_video, color: Colors.orange, size: 18),
                   const SizedBox(width: 8),
                   Text('Produits à rotation lente',
-                      style: GoogleFonts.playfairDisplay(
-                          color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                      style: AppTextStyles.headingLarge(
+                          color: Colors.white)),
                 ],
               ),
               Container(
@@ -1066,9 +1048,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _slowDays,
-                    dropdownColor: AppColors.surface,
-                    style: GoogleFonts.raleway(
-                        fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold),
+                    dropdownColor: AppColors.desktopSurface,
+                    style: AppTextStyles.bodyMedium(
+                        color: Colors.orange),
                     items: const [
                       DropdownMenuItem(value: 30, child: Text('30j')),
                       DropdownMenuItem(value: 60, child: Text('60j')),
@@ -1087,7 +1069,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text('Aucun produit lent',
-                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
             ))
           else
             SizedBox(
@@ -1112,15 +1094,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Expanded(
                           child: Text(
                             '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
-                            style: GoogleFonts.raleway(color: AppColors.textPrimary, fontSize: 11),
+                            style: AppTextStyles.bodyMedium(color: AppColors.desktopTextPrimary),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           '$days j',
-                          style: GoogleFonts.raleway(
-                              color: days > 90 ? AppColors.danger : Colors.orange,
-                              fontSize: 10, fontWeight: FontWeight.bold),
+                          style: AppTextStyles.bodyMedium(
+                              color: days > 90 ? AppColors.danger : Colors.orange),
                         ),
                       ],
                     ),
@@ -1140,7 +1121,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -1152,8 +1133,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               const Icon(Icons.straighten, color: AppColors.teal, size: 18),
               const SizedBox(width: 8),
               Text(S.t('size_analytics_title'),
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 12),
@@ -1161,7 +1142,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(S.t('dash_no_data'),
-                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
             ))
           else
             ...data.map((item) {
@@ -1177,8 +1158,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                     SizedBox(
                       width: 36,
                       child: Text(size,
-                          style: GoogleFonts.raleway(
-                              color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          style: AppTextStyles.bodyMedium(
+                              color: Colors.white,)),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1196,20 +1177,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                     SizedBox(
                       width: 70,
                       child: Text('$sold ${S.t('dash_item_count')}',
-                          style: GoogleFonts.raleway(
-                              color: AppColors.textSecondary, fontSize: 11)),
+                          style: AppTextStyles.bodyMedium(
+                              color: AppColors.desktopTextSecondary)),
                     ),
                     SizedBox(
                       width: 60,
                       child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                          style: GoogleFonts.raleway(
-                              color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold)),
+                          style: AppTextStyles.bodyMedium(
+                              color: AppColors.teal)),
                     ),
                     SizedBox(
                       width: 40,
                       child: Text('${pct.toStringAsFixed(1)}%',
-                          style: GoogleFonts.raleway(
-                              color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.w600)),
+                          style: AppTextStyles.bodyMedium(
+                              color: AppColors.desktopPrimary)),
                     ),
                   ],
                 ),
@@ -1245,7 +1226,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.desktopSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border, width: 0.8),
       ),
@@ -1257,8 +1238,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               const Icon(Icons.calendar_month, color: AppColors.teal, size: 18),
               const SizedBox(width: 8),
               Text('Analyse Saisonnière',
-                  style: GoogleFonts.playfairDisplay(
-                      color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: AppTextStyles.headingLarge(
+                      color: Colors.white)),
             ],
           ),
           const SizedBox(height: 12),
@@ -1273,8 +1254,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
                     label: Text(DateFormat('MMM', 'fr').format(DateTime(2020, m)),
-                        style: GoogleFonts.raleway(
-                            fontSize: 12,
+                        style: AppTextStyles.bodyMedium(
                             color: selected ? Colors.white : AppColors.teal)),
                     selected: selected,
                     selectedColor: AppColors.teal,
@@ -1298,7 +1278,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(S.t('dash_no_data'),
-                  style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 12)),
+                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
             ))
           else
             _buildSeasonalityChart(),
@@ -1314,7 +1294,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       ..sort((a, b) => (a['year'] as int).compareTo(b['year'] as int));
     final years = sorted.map((e) => e['year'] as int).toList();
     final maxRevenue = sorted.fold<double>(0, (p, v) => p > (v['total_revenue'] as num).toDouble() ? p : (v['total_revenue'] as num).toDouble());
-    final colors = [AppColors.teal, AppColors.gold, AppColors.purple];
+    final colors = [AppColors.teal, AppColors.desktopPrimary, AppColors.purple];
 
     return SizedBox(
       height: 180,
@@ -1327,7 +1307,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '${years[groupIndex]}\n${NumberFormat('#,##0', 'fr').format(rod.toY.toInt())} ${S.t('misc_currency')}',
-                  const TextStyle(color: Colors.white, fontSize: 11),
+                  const TextStyle(color: Colors.white),
                 );
               },
             ),
@@ -1343,8 +1323,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text('${years[idx]}',
-                        style: GoogleFonts.raleway(
-                            color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        style: AppTextStyles.bodyMedium(
+                            color: Colors.white)),
                   );
                 },
               ),
@@ -1355,7 +1335,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 reservedSize: 40,
                 getTitlesWidget: (value, meta) {
                   return Text('${value.toInt()}',
-                      style: GoogleFonts.raleway(fontSize: 9, color: AppColors.textSecondary));
+                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary));
                 },
               ),
             ),
@@ -1394,7 +1374,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: AppColors.desktopBackground,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -1402,13 +1382,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           Row(
             children: [
               Expanded(child: Text('Année',
-                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
               Expanded(child: Text('Revenu',
-                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
               Expanded(child: Text('Unités',
-                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
               Expanded(child: Text('Top Catégorie',
-                  style: GoogleFonts.raleway(color: AppColors.teal, fontWeight: FontWeight.bold, fontSize: 11))),
+                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
             ],
           ),
           const Divider(color: AppColors.border),
@@ -1417,13 +1397,13 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Row(
               children: [
                 Expanded(child: Text('${d['year']}',
-                    style: GoogleFonts.raleway(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12))),
+                    style: AppTextStyles.bodyMedium(color: Colors.white))),
                 Expanded(child: Text('${NumberFormat('#,##0', 'fr').format((d['total_revenue'] as num).toInt())} ${S.t('misc_currency')}',
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11))),
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))),
                 Expanded(child: Text('${d['total_units']}',
-                    style: GoogleFonts.raleway(color: AppColors.textSecondary, fontSize: 11))),
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))),
                 Expanded(child: Text(d['top_category'] ?? '-',
-                    style: GoogleFonts.raleway(color: AppColors.gold, fontSize: 11),
+                    style: AppTextStyles.bodyMedium(color: AppColors.desktopPrimary),
                     overflow: TextOverflow.ellipsis)),
               ],
             ),
@@ -1507,7 +1487,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       builder: (_, __) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Color.lerp(AppColors.surface, AppColors.surfaceLight, _anim.value),
+          color: Color.lerp(AppColors.desktopSurface, AppColors.desktopBackground, _anim.value),
           border: Border.all(
               color: AppColors.border, width: 0.8),
         ),
