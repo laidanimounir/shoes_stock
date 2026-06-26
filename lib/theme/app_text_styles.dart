@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  static const _fontFamily = 'Inter';
-
   // ────────────────────────────────────────────
   // TYPOGRAPHY SCALE
   // ────────────────────────────────────────────
