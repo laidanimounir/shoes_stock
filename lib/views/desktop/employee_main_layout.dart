@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../desktop/pos_screen.dart';
 import '../admin/liste_produits.dart';
@@ -51,34 +51,22 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
         : S.t('label_role_employee')[0].toUpperCase();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.desktopBackground,
       body: Row(
         children: [
           Container(
             width: 240,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.sidebarTop, AppColors.sidebarBottom],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              border: BorderDirectional(
-                end: BorderSide(
-                  color: AppColors.goldLight,
-                  width: 0.2,
-                ),
-              ),
-            ),
+            color: AppColors.desktopSurface,
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 28, 20, 24),
                   decoration: BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.gold.withValues(alpha: 0.2),
-                        width: 0.8,
-                      ),
+                       bottom: BorderSide(
+                         color: AppColors.desktopBorder,
+                         width: 0.8,
+                       ),
                     ),
                   ),
                   child: Column(
@@ -90,26 +78,13 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             height: 60,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: const LinearGradient(
-                                colors: [AppColors.gold, AppColors.goldLight],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.gold.withValues(alpha: 0.3),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
+                              color: AppColors.desktopPrimary,
                             ),
                             child: Center(
                               child: Text(
                                 initials,
-                                style: GoogleFonts.playfairDisplay(
-                                  color: AppColors.background,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                                style: AppTextStyles.displayMedium(
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -124,10 +99,8 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                       const SizedBox(height: 12),
                       Text(
                         employeeName,
-                        style: GoogleFonts.raleway(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                        style: AppTextStyles.bodyMedium(
+                          color: AppColors.desktopTextPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -136,17 +109,13 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.15),
+                          color: AppColors.desktopPrimaryLight,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.4), width: 0.8),
                         ),
                         child: Text(
                           S.t('label_role_employee'),
-                          style: GoogleFonts.raleway(
-                            color: AppColors.gold,
-                            fontSize: 11,
-                            letterSpacing: 1,
+                          style: AppTextStyles.caption(
+                            color: AppColors.desktopPrimary,
                           ),
                         ),
                       ),
@@ -182,7 +151,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: AppColors.gold.withValues(alpha: 0.2),
+                         color: AppColors.desktopBorder,
                         width: 0.8,
                       ),
                     ),
@@ -196,7 +165,7 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.notifications_outlined,
-                                    color: Colors.white70),
+                                    color: AppColors.desktopTextSecondary),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
@@ -206,14 +175,14 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                                   );
                                 },
                               ),
-                              if (count > 0)
+                               if (count > 0)
                                 Positioned(
                                   right: 6,
                                   top: 6,
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
-                                      color: Colors.red,
+                                      color: AppColors.danger,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text(
@@ -237,19 +206,17 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
                           onPressed: () =>
                               Supabase.instance.client.auth.signOut(),
                           icon: const Icon(Icons.logout_rounded,
-                              size: 16, color: Colors.redAccent),
+                              size: 16, color: AppColors.danger),
                           label: Text(
                             S.t('auth_logout'),
-                            style: GoogleFonts.raleway(
-                              color: Colors.redAccent,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.label(
+                              color: AppColors.danger,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             side: BorderSide(
-                                color: Colors.redAccent.withValues(alpha: 0.4),
+                                color: AppColors.danger.withValues(alpha: 0.4),
                                 width: 0.8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -292,31 +259,22 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.gold.withValues(alpha: 0.15)
+              ? AppColors.desktopPrimary
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.gold.withValues(alpha: 0.4)
-                : Colors.transparent,
-            width: 0.8,
-          ),
         ),
         child: Row(
           children: [
             Icon(
               isSelected ? selectedIcon : icon,
-              color: isSelected ? AppColors.gold : Colors.white54,
+              color: isSelected ? Colors.white : AppColors.desktopTextSecondary,
               size: 20,
             ),
             const SizedBox(width: 12),
             Text(
               label,
-              style: GoogleFonts.raleway(
-                color: isSelected ? AppColors.gold : Colors.white60,
-                fontSize: 13,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w400,
+              style: AppTextStyles.label(
+                color: isSelected ? Colors.white : AppColors.desktopTextSecondary,
               ),
             ),
             if (isSelected) ...[
@@ -324,8 +282,8 @@ class _EmployeeMainLayoutState extends State<EmployeeMainLayout> {
               Container(
                 width: 4,
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.gold,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -377,7 +335,7 @@ class _PulseDotState extends State<_PulseDot>
             const Color(0xFF81C784),
             _anim.value,
           ),
-          border: Border.all(color: const Color(0xFF1A1A2E), width: 2),
+          border: Border.all(color: AppColors.desktopSurface, width: 2),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF4CAF50).withValues(alpha: 0.5 * _anim.value),
