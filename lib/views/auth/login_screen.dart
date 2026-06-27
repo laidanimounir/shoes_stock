@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -64,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           message = "${S.t('auth_error_generic')} (${e.message})";
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: AppColors.danger),
         );
       }
     } catch (e) {
@@ -72,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.t('auth_error_generic')),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -126,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ScaffoldMessenger.of(this.context).showSnackBar(
                             SnackBar(
                               content: Text(S.t('password_reset_sent')),
-                              backgroundColor: Colors.green,
+                              backgroundColor: AppColors.success,
                             ),
                           );
                         }
@@ -180,21 +181,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: () => AppSession.setLocale('ar'),
                   child: Text('AR',
-                      style: GoogleFonts.raleway(
+                      style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'ar'
-                            ? const Color(0xFF00BCD4)
-                            : Colors.white70,
-                        fontWeight: FontWeight.bold,
+                            ? AppColors.mobilePrimary
+                            : AppColors.mobileTextSecondary,
                       )),
                 ),
                 TextButton(
                   onPressed: () => AppSession.setLocale('fr'),
                   child: Text('FR',
-                      style: GoogleFonts.raleway(
+                      style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'fr'
-                            ? const Color(0xFF00BCD4)
-                            : Colors.white70,
-                        fontWeight: FontWeight.bold,
+                            ? AppColors.mobilePrimary
+                            : AppColors.mobileTextSecondary,
                       )),
                 ),
               ],
@@ -212,8 +211,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.3),
-                  Colors.black.withValues(alpha: 0.75),
+                  AppColors.mobileBackground.withValues(alpha: 0.3),
+                  AppColors.mobileBackground.withValues(alpha: 0.75),
                 ],
               ),
             ),
@@ -232,20 +231,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           "STEPZONE",
-                          style: GoogleFonts.playfairDisplay(
+                          style: AppTextStyles.headingLarge(
                             color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 6,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "LUXURY SHOES",
-                          style: GoogleFonts.raleway(
+                          style: AppTextStyles.bodyMedium(
                             color: const Color(0xFFD4A843),
-                            fontSize: 12,
-                            letterSpacing: 5,
                           ),
                         ),
                       ],
@@ -255,11 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
               
                   Text(
                     S.t('auth_title'),
-                    style: GoogleFonts.raleway(
+                    style: AppTextStyles.bodyMedium(
                       color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 8,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -298,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 64,
                         height: 64,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00BCD4),
+                          color: AppColors.mobilePrimary,
                           shape: BoxShape.circle,
                         ),
                         child: _isLoading
@@ -324,19 +315,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         S.t('auth_no_account').toUpperCase(),
-                        style: GoogleFonts.raleway(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          letterSpacing: 2,
+                        style: AppTextStyles.bodyMedium(
+                          color: AppColors.mobileTextSecondary,
                         ),
                       ),
                       const SizedBox(width: 32),
                       Text(
                         S.t('auth_forgot_password').toUpperCase(),
-                        style: GoogleFonts.raleway(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          letterSpacing: 2,
+                        style: AppTextStyles.bodyMedium(
+                          color: AppColors.mobileTextSecondary,
                         ),
                       ),
                     ],
@@ -363,13 +350,11 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: GoogleFonts.raleway(color: Colors.white, fontSize: 14),
+      style: AppTextStyles.bodyMedium(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.raleway(
+        hintStyle: AppTextStyles.bodyMedium(
           color: Colors.white38,
-          letterSpacing: 2,
-          fontSize: 13,
         ),
         prefixIcon: Icon(icon, color: Colors.white54, size: 18),
         suffixIcon: suffix,
@@ -377,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: BorderSide(color: Colors.white38),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF00BCD4), width: 1.5),
+          borderSide: BorderSide(color: AppColors.mobilePrimary, width: 1.5),
         ),
         filled: false,
       ),
@@ -426,11 +411,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 10),
                             Text(
                               "STEPZONE",
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF1A1A2E),
-                                letterSpacing: 3,
+                              style: AppTextStyles.headingLarge(color: const Color(0xFF1A1A2E),
                               ),
                             ),
                           ],
@@ -439,18 +420,13 @@ class _LoginScreenState extends State<LoginScreen> {
                    
                         Text(
                           S.t('auth_login'),
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1A1A2E),
+                          style: AppTextStyles.headingLarge(color: const Color(0xFF1A1A2E),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           S.t('auth_welcome_msg'),
-                          style: GoogleFonts.raleway(
-                            fontSize: 13,
-                            color: Colors.grey[500],
+                          style: AppTextStyles.bodyMedium(color: Colors.grey[500],
                           ),
                         ),
                         const SizedBox(height: 36),
@@ -508,11 +484,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   )
                                 : Text(
                                     S.t('auth_login'),
-                                    style: GoogleFonts.raleway(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
+                                    style: AppTextStyles.bodyMedium(),
                                   ),
                           ),
                         ),
@@ -522,9 +494,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: _showForgotPasswordDialog,
                             child: Text(
                               S.t('auth_forgot_password'),
-                              style: GoogleFonts.raleway(
+                              style: AppTextStyles.bodyMedium(
                                 color: const Color(0xFFD4A843),
-                                fontSize: 13,
                               ),
                             ),
                           ),
@@ -534,17 +505,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text.rich(
                             TextSpan(
                               text: S.t('auth_no_account'),
-                              style: GoogleFonts.raleway(
+                              style: AppTextStyles.bodyMedium(
                                 color: Colors.grey[500],
-                                fontSize: 13,
                               ),
                               children: [
                                 TextSpan(
                                   text: S.t('auth_register_here'),
-                                  style: GoogleFonts.raleway(
+                                  style: AppTextStyles.bodyMedium(
                                     color: const Color(0xFF1A1A2E),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
                                   ),
                                 ),
                               ],
@@ -594,21 +562,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: () => AppSession.setLocale('ar'),
                   child: Text('AR',
-                      style: GoogleFonts.raleway(
+                      style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'ar'
                             ? const Color(0xFFD4A843)
                             : Colors.grey,
-                        fontWeight: FontWeight.bold,
                       )),
                 ),
                 TextButton(
                   onPressed: () => AppSession.setLocale('fr'),
                   child: Text('FR',
-                      style: GoogleFonts.raleway(
+                      style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'fr'
                             ? const Color(0xFFD4A843)
                             : Colors.grey,
-                        fontWeight: FontWeight.bold,
                       )),
                 ),
               ],
@@ -622,11 +588,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildDesktopLabel(String text) {
     return Text(
       text,
-      style: GoogleFonts.raleway(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: Colors.grey[600],
-        letterSpacing: 0.5,
+      style: AppTextStyles.bodyMedium(color: Colors.grey[600],
       ),
     );
   }
@@ -642,12 +604,11 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: GoogleFonts.raleway(fontSize: 14, color: const Color(0xFF1A1A2E)),
+      style: AppTextStyles.bodyMedium(color: const Color(0xFF1A1A2E)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.raleway(
+        hintStyle: AppTextStyles.bodyMedium(
           color: Colors.grey[400],
-          fontSize: 13,
         ),
         suffixIcon: suffix,
         filled: true,
