@@ -7,10 +7,11 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../core/app_session.dart';
-import '../../theme/app_colors.dart';
+import '../../core/app_constants.dart';
 import '../../core/app_constants.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../../widgets/offline_banner.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/settings_local.dart';
@@ -585,7 +586,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           const OfflineBanner(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: AppShimmerStatCard(count: 6),
+                  )
                 : RefreshIndicator(
                     onRefresh: () => _fetchDashboardData(isRefresh: true),
                     child: ListView(

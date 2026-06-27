@@ -4,11 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_strings.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../core/app_session.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../../widgets/offline_banner.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
 import '../../local_db/collections/product_variant_local.dart';
@@ -439,7 +442,7 @@ class _ProductsTabState extends State<_ProductsTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile());
     if (_products.isEmpty) return Center(child: Text(S.t('prod_no_results')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -532,7 +535,7 @@ class _InventoryTabState extends State<_InventoryTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile());
     if (_items.isEmpty) return Center(child: Text(S.t('inv_no_products')));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -668,7 +671,7 @@ class _CustomersTabState extends State<_CustomersTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile());
     return Column(
       children: [
         Padding(
@@ -816,7 +819,7 @@ class _SalesTabState extends State<_SalesTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile());
     if (_sales.isEmpty) return Center(child: Text(S.t('label_no_data')));
     return RefreshIndicator(
       onRefresh: _fetch,
@@ -888,7 +891,7 @@ class _DailyReportDialogState extends State<_DailyReportDialog> {
       content: SizedBox(
         width: 320,
         child: _loading
-            ? const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()))
+            ? const SizedBox(height: 80, child: const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile()))
             : _report == null
                 ? const Text('Erreur lors du chargement du rapport.')
                 : SingleChildScrollView(

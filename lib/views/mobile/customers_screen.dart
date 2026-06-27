@@ -4,9 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_session.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/app_strings.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/invoice_local.dart';
@@ -692,7 +696,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
           : Row(
               children: [
                 // Customer list
@@ -752,7 +756,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                   child: _selected == null
                       ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
                       : _loadingHistory
-                          ? const Center(child: CircularProgressIndicator())
+                          ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
                           : Column(
                               children: [
                                 // Header

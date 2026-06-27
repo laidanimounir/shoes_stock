@@ -8,8 +8,10 @@ import 'package:barcode/barcode.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/app_strings.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../core/app_session.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/product_local.dart';
@@ -264,7 +266,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             )
           : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
           : Column(
               children: [
                 // Search

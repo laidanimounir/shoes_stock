@@ -4,8 +4,10 @@ import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/app_session.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../widgets/common/app_shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../../services/invoice_service.dart';
 import '../../services/receipt_service.dart';
@@ -385,7 +387,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
           : Column(
               children: [
                 // Store + Customer bar
@@ -436,7 +438,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                       Expanded(
                         flex: 3,
                         child: _isSearching
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
                             : _searchCtrl.text.isNotEmpty && _searchResults.isEmpty
                                 ? Center(child: Text(S.t('prod_no_results'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
                                 : _bundles.isNotEmpty && _searchCtrl.text.isEmpty
