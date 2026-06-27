@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../services/refund_service.dart';
 
 class RefundModal extends StatefulWidget {
@@ -77,7 +78,7 @@ class _RefundModalState extends State<RefundModal> {
     final selectedItems = _refundableItems.where((i) => i['selected']).toList();
     if (selectedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('refund_min_one_item')), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('refund_min_one_item')), backgroundColor: AppColors.danger),
       );
       return;
     }
@@ -106,13 +107,13 @@ class _RefundModalState extends State<RefundModal> {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('refund_success')), backgroundColor: Colors.green),
+        SnackBar(content: Text(S.t('refund_success')), backgroundColor: AppColors.success),
       );
       Navigator.of(context).pop(true); // Return true to indicate refresh
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -129,7 +130,7 @@ class _RefundModalState extends State<RefundModal> {
     final hoursSince = DateTime.now().difference(createdAt).inHours;
     final ageText = S.t('refund_invoice_age').replaceAll('{hours}', hoursSince.toString());
 
-    final ageColor = hoursSince > 48 ? Colors.red : Colors.green;
+    final ageColor = hoursSince > 48 ? AppColors.danger : AppColors.success;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -203,12 +204,12 @@ class _RefundModalState extends State<RefundModal> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              color: Colors.red[50],
+              color: AppColors.dangerLight,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(S.t('refund_total_amount'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('${_totalRefundAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text(S.t('refund_total_amount'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.danger)),
+                  Text('${_totalRefundAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.danger)),
                 ],
               ),
             ),
@@ -226,11 +227,11 @@ class _RefundModalState extends State<RefundModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(S.t('action_cancel'), style: const TextStyle(color: Colors.grey)),
+          child: Text(S.t('action_cancel'), style: const TextStyle(color: AppColors.desktopTextSecondary)),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _processRefund,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
           child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text(S.t('refund_confirm')),
         ),
       ],

@@ -21,26 +21,25 @@ import '../../services/invoice_service.dart';
 import '../../services/refund_service.dart';
 import '../../services/receipt_service.dart';
 import '../../shared/models/cart_item.dart';
+import '../../theme/app_colors.dart';
 
 // ─────────────────────────────────────────────
-//  DESIGN TOKENS — Odoo-inspired clean palette
+//  DESIGN TOKENS — unified via AppColors
 // ─────────────────────────────────────────────
-class _C {
-  static const bg        = Color(0xFFF7F8FC);
-  static const surface   = Color(0xFFFFFFFF);
-  static const primary   = Color(0xFF1F3A6E);       // deep navy
-  static const accent    = Color(0xFF3D5AFE);       // vivid blue
-  static const success   = Color(0xFF00B96B);
-  static const warning   = Color(0xFFF59E0B);
-  static const danger    = Color(0xFFEF4444);
-  static const textDark  = Color(0xFF111827);
-  static const textMid   = Color(0xFF6B7280);
-  static const textLight = Color(0xFFB0B8C8);
-  static const border    = Color(0xFFE5E7EB);
-  static const rowEven   = Color(0xFFFAFAFC);
-  static const rowHover  = Color(0xFFF0F4FF);
-  static const chip      = Color(0xFFEEF2FF);
-}
+// Migrated: AppColors.desktopBackground → AppColors.desktopBackground
+// Migrated: AppColors.desktopSurface → AppColors.desktopSurface
+// Migrated: AppColors.desktopPrimary → AppColors.desktopPrimary
+// Migrated: AppColors.desktopPrimaryDark → AppColors.desktopPrimaryDark
+// Migrated: AppColors.success → AppColors.success
+// Migrated: AppColors.warning → AppColors.warning
+// Migrated: AppColors.danger → AppColors.danger
+// Migrated: AppColors.desktopTextPrimary → AppColors.desktopTextPrimary
+// Migrated: AppColors.desktopTextSecondary → AppColors.desktopTextSecondary
+// Migrated: AppColors.desktopTextMuted → AppColors.desktopTextMuted
+// Migrated: AppColors.desktopBorder → AppColors.desktopBorder
+// Migrated: AppColors.desktopBackground → AppColors.desktopBackground
+// Migrated: AppColors.desktopPrimaryLight → AppColors.desktopPrimaryLight
+// Migrated: AppColors.desktopPrimaryLight → AppColors.desktopPrimaryLight
 
 // ─────────────────────────────────────────────
 //  POS SCREEN
@@ -437,13 +436,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         });
       }
     }
-    _snack('Pack ${bundle['name']} ajouté au panier', _C.success);
+    _snack('Pack ${bundle['name']} ajouté au panier', AppColors.success);
   }
 
   // ── CART LOGIC ────────────────────────────────
   void _addToCart(dynamic variantData) async {
     if (_selectedStoreId == null) {
-      _snack(S.t('pos_select_store_first'), _C.danger);
+      _snack(S.t('pos_select_store_first'), AppColors.danger);
       return;
     }
 
@@ -451,14 +450,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     final availability = await _getCurrentStock(variantId);
 
     if (availability <= 0) {
-      _snack(S.t('pos_stock_empty_warning'), _C.warning);
+      _snack(S.t('pos_stock_empty_warning'), AppColors.warning);
       return;
     }
 
     final alreadyInCart = _cart.where((i) => i.variantId == variantId)
         .fold(0, (int sum, CartItem i) => sum + i.quantity);
     if (alreadyInCart >= availability) {
-      _snack('${S.t('pos_stock_insufficient')} $availability ${S.t('pos_stock_available')}', _C.danger);
+      _snack('${S.t('pos_stock_insufficient')} $availability ${S.t('pos_stock_available')}', AppColors.danger);
       return;
     }
 
@@ -563,7 +562,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     if (_cart.isEmpty) return;
     for (var item in _cart) {
       if (item.unitPrice <= 0) {
-        _snack(S.t('pos_invalid_price'), _C.danger);
+        _snack(S.t('pos_invalid_price'), AppColors.danger);
         return;
       }
     }
@@ -598,7 +597,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               if (newDebt > _selectedCustomerCreditLimit!) {
                 _snack(S.t('pos_credit_limit_exceeded')
                     .replaceAll('{balance}', _selectedCustomerBalance!.toStringAsFixed(2))
-                    .replaceAll('{limit}', _selectedCustomerCreditLimit!.toStringAsFixed(2)), _C.danger);
+                    .replaceAll('{limit}', _selectedCustomerCreditLimit!.toStringAsFixed(2)), AppColors.danger);
                 return;
               }
             }
@@ -610,7 +609,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             if (conflicts.isNotEmpty) {
               setState(() => _stockConflictItems = conflicts);
               Navigator.pop(context);
-              _snack('${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}', _C.danger);
+              _snack('${S.t('pos_stock_changed_title')}: ${S.t('pos_stock_changed_msg')}', AppColors.danger);
               return;
             }
             setState(() => _isProcessingPayment = true);
@@ -654,9 +653,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 final parts = msg.split('|');
                 final bal = parts.length > 1 ? parts[1] : '0';
                 final lim = parts.length > 2 ? parts[2] : '0';
-                _snack(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim), _C.danger);
+                _snack(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim), AppColors.danger);
               } else {
-                _snack('${S.t('pos_error')} $e', _C.danger);
+                _snack('${S.t('pos_error')} $e', AppColors.danger);
               }
             }
           }
@@ -672,7 +671,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             },
             child: Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: _C.surface,
+            backgroundColor: AppColors.desktopSurface,
             insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -686,7 +685,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
                     decoration: const BoxDecoration(
-                      color: _C.primary,
+                      color: AppColors.desktopPrimary,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                     ),
                     child: Row(
@@ -727,7 +726,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         children: [
                           Text(S.t('pos_payment_method'),
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                                  color: _C.textMid, letterSpacing: 0.6)),
+                                  color: AppColors.desktopTextSecondary, letterSpacing: 0.6)),
                           const SizedBox(height: 10),
                           Row(
                             children: [
@@ -742,7 +741,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(S.t('pos_credit_client_only'),
-                                  style: const TextStyle(color: _C.warning, fontSize: 11)),
+                                  style: const TextStyle(color: AppColors.warning, fontSize: 11)),
                             ),
                           const SizedBox(height: 20),
 
@@ -751,30 +750,30 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               decoration: BoxDecoration(
-                                color: _C.accent.withOpacity(0.05),
+                                color: AppColors.desktopPrimaryDark.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _C.accent.withOpacity(0.2)),
+                                border: Border.all(color: AppColors.desktopPrimaryDark.withOpacity(0.2)),
                               ),
                               child: Column(
                                 children: [
                                   Text(S.t('pos_amount_received'),
-                                      style: const TextStyle(fontSize: 11, color: _C.textMid)),
+                                      style: const TextStyle(fontSize: 11, color: AppColors.desktopTextSecondary)),
                                   const SizedBox(height: 4),
                                   Text(
                                     '$numpadValue ${S.t('misc_currency')}',
-                                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _C.primary),
+                                    style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.desktopPrimary),
                                   ),
                                   if (change > 0) ...[
                                     const SizedBox(height: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: _C.success.withOpacity(0.1),
+                                        color: AppColors.success.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
                                         '${S.t('pos_change_label')} ${change.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.success),
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.success),
                                       ),
                                     ),
                                   ],
@@ -783,12 +782,12 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: _C.danger.withOpacity(0.1),
+                                        color: AppColors.danger.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
                                         '${S.t('pos_insufficient')} (${(totalAmount - cashAmount).toStringAsFixed(2)} ${S.t('misc_currency')})',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.danger),
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.danger),
                                       ),
                                     ),
                                   ],
@@ -803,16 +802,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: _C.warning.withOpacity(0.08),
+                                color: AppColors.warning.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: _C.warning.withOpacity(0.3)),
+                                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.info_outline, size: 16, color: _C.warning),
+                                  const Icon(Icons.info_outline, size: 16, color: AppColors.warning),
                                   const SizedBox(width: 10),
                                   Expanded(child: Text(S.t('pos_credit_note'),
-                                      style: const TextStyle(color: _C.warning, fontSize: 12))),
+                                      style: const TextStyle(color: AppColors.warning, fontSize: 12))),
                                 ],
                               ),
                             ),
@@ -822,15 +821,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: _C.warning.withOpacity(0.08),
+                                color: AppColors.warning.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(S.t('pos_credit_amount'), style: const TextStyle(fontSize: 13, color: _C.textMid)),
+                                  Text(S.t('pos_credit_amount'), style: const TextStyle(fontSize: 13, color: AppColors.desktopTextSecondary)),
                                   Text('${creditAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _C.warning)),
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.warning)),
                                 ],
                               ),
                             ),
@@ -841,42 +840,42 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: _C.warning.withOpacity(0.06),
+                                color: AppColors.warning.withOpacity(0.06),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: _C.warning.withOpacity(0.25)),
+                                border: Border.all(color: AppColors.warning.withOpacity(0.25)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(children: [
-                                    const Icon(Icons.account_balance_wallet_outlined, size: 14, color: _C.warning),
+                                    const Icon(Icons.account_balance_wallet_outlined, size: 14, color: AppColors.warning),
                                     const SizedBox(width: 6),
                                     Text(S.t('pos_client_balance_current'),
-                                        style: const TextStyle(fontSize: 12, color: _C.textMid)),
+                                        style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
                                     const Spacer(),
                                     Text('${_selectedCustomerBalance!.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.warning)),
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.warning)),
                                   ]),
                                   if (_selectedCustomerCreditLimit != null && _selectedCustomerCreditLimit! > 0) ...[
                                     const SizedBox(height: 4),
                                     Row(children: [
                                       Text(S.t('pos_credit_limit'),
-                                          style: const TextStyle(fontSize: 12, color: _C.textMid)),
+                                          style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
                                       const Spacer(),
                                       Text('${_selectedCustomerCreditLimit!.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.accent)),
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.desktopPrimaryDark)),
                                     ]),
                                   ],
                                   const SizedBox(height: 6),
                                   Row(children: [
                                     Text(S.t('pos_balance_new_warning'),
-                                        style: const TextStyle(fontSize: 12, color: _C.textMid)),
+                                        style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
                                     const Spacer(),
                                     Text(
                                       '${(_selectedCustomerBalance! + creditAmount).toStringAsFixed(2)} ${S.t('misc_currency')}',
                                       style: TextStyle(
                                         fontSize: 13, fontWeight: FontWeight.w700,
-                                        color: _selectedCustomerBalance! > 0 ? _C.danger : _C.warning,
+                                        color: _selectedCustomerBalance! > 0 ? AppColors.danger : AppColors.warning,
                                       ),
                                     ),
                                   ]),
@@ -892,7 +891,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   // Footer
                   Container(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                    decoration: const BoxDecoration(border: Border(top: BorderSide(color: _C.border))),
+                    decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.desktopBorder))),
                     child: Row(
                       children: [
                         Expanded(
@@ -900,11 +899,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: _C.border),
+                              side: const BorderSide(color: AppColors.desktopBorder),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             child: Text(S.t('action_cancel'),
-                                style: const TextStyle(color: _C.textMid, fontWeight: FontWeight.w600)),
+                                style: const TextStyle(color: AppColors.desktopTextSecondary, fontWeight: FontWeight.w600)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -912,7 +911,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                           flex: 2,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _C.success,
+                              backgroundColor: AppColors.success,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               elevation: 0,
@@ -954,17 +953,17 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? _C.accent : (isDisabled ? _C.bg : _C.surface),
+              color: isSelected ? AppColors.desktopPrimaryDark : (isDisabled ? AppColors.desktopBackground : AppColors.desktopSurface),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isSelected ? _C.accent : _C.border),
+              border: Border.all(color: isSelected ? AppColors.desktopPrimaryDark : AppColors.desktopBorder),
             ),
             child: Column(
               children: [
-                Icon(icon, size: 18, color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid)),
+                Icon(icon, size: 18, color: isSelected ? Colors.white : (isDisabled ? AppColors.desktopTextMuted : AppColors.desktopTextSecondary)),
                 const SizedBox(height: 4),
                 Text(label, style: TextStyle(
                   fontSize: 11, fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : (isDisabled ? _C.textLight : _C.textMid),
+                  color: isSelected ? Colors.white : (isDisabled ? AppColors.desktopTextMuted : AppColors.desktopTextSecondary),
                 )),
               ],
             ),
@@ -1002,11 +1001,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     _loadTodayInvoices();
 
     if (AppSession.autoPrintTicket == true) {
-      _snack(S.t('pos_print_auto_msg'), _C.success);
+      _snack(S.t('pos_print_auto_msg'), AppColors.success);
     } else if (AppSession.autoPrintTicket == false) {
       _showPostSaleOverlay(invoiceNumber);
     } else {
-      _snack(S.t('pos_sale_success'), _C.success);
+      _snack(S.t('pos_sale_success'), AppColors.success);
     }
   }
 
@@ -1021,15 +1020,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: _C.primary,
+              color: AppColors.desktopPrimary,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(color: _C.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
+              boxShadow: [BoxShadow(color: AppColors.desktopPrimary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
             ),
             child: Row(
               children: [
                 Container(
                   width: 36, height: 36,
-                  decoration: BoxDecoration(color: _C.success, borderRadius: BorderRadius.circular(18)),
+                  decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(18)),
                   child: const Icon(Icons.check, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 14),
@@ -1040,7 +1039,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   ]),
                 ),
                 TextButton(
-                  onPressed: () { entry.remove(); _snack(S.t('pos_print_auto_msg'), _C.accent); },
+                  onPressed: () { entry.remove(); _snack(S.t('pos_print_auto_msg'), AppColors.desktopPrimaryDark); },
                   child: Text(S.t('pos_print_now'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                 ),
                 TextButton(
@@ -1076,11 +1075,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 child: TextField(
                   controller: qtyController, autofocus: true,
                   keyboardType: TextInputType.number, textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _C.textDark),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.desktopTextPrimary),
                   decoration: InputDecoration(
                     contentPadding: EdgeInsets.zero, isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _C.accent)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _C.accent, width: 1.5)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.desktopPrimaryDark)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.desktopPrimaryDark, width: 1.5)),
                   ),
                   onSubmitted: (val) {
                     final q = int.tryParse(val) ?? 1;
@@ -1094,10 +1093,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 child: Container(
                   width: 40, height: 30, alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: _C.chip, borderRadius: BorderRadius.circular(6),
+                    color: AppColors.desktopPrimaryLight, borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('${item.quantity}',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _C.accent)),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.desktopPrimaryDark)),
                 ),
               ),
         const SizedBox(width: 4),
@@ -1112,11 +1111,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       child: Container(
         width: 28, height: 28,
         decoration: BoxDecoration(
-          color: onTap == null ? _C.bg : _C.chip,
+          color: onTap == null ? AppColors.desktopBackground : AppColors.desktopPrimaryLight,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: onTap == null ? _C.border : _C.accent.withOpacity(0.3)),
+          border: Border.all(color: onTap == null ? AppColors.desktopBorder : AppColors.desktopPrimaryDark.withOpacity(0.3)),
         ),
-        child: Icon(icon, size: 14, color: onTap == null ? _C.textLight : _C.accent),
+        child: Icon(icon, size: 14, color: onTap == null ? AppColors.desktopTextMuted : AppColors.desktopPrimaryDark),
       ),
     );
   }
@@ -1125,13 +1124,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: AppColors.desktopBackground,
       body: Column(
         children: [
           _buildTopBar(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: _C.accent))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.desktopPrimaryDark))
                 : _activeTab == 0
                     ? _buildSaleTab()
                     : _buildTodaySalesTab(),
@@ -1146,7 +1145,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     final pending = AppSession.pendingSync;
 
     return Container(
-      color: _C.primary,
+      color: AppColors.desktopPrimary,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: SafeArea(
         bottom: false,
@@ -1186,7 +1185,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   Container(
                     width: 6, height: 6,
                     decoration: BoxDecoration(
-                      color: _isOnline ? _C.success : _C.danger,
+                      color: _isOnline ? AppColors.success : AppColors.danger,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1194,16 +1193,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   Text(
                     _isOnline ? S.t('pos_online_status') : S.t('pos_offline_status'),
                     style: TextStyle(
-                        fontSize: 11, color: _isOnline ? _C.success : _C.danger, fontWeight: FontWeight.w600),
+                        fontSize: 11, color: _isOnline ? AppColors.success : AppColors.danger, fontWeight: FontWeight.w600),
                   ),
                   if (!_isOnline && pending > 0) ...[
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                          color: _C.warning.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                          color: AppColors.warning.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
                       child: Text('$pending ops',
-                          style: const TextStyle(fontSize: 9, color: _C.warning, fontWeight: FontWeight.w700)),
+                          style: const TextStyle(fontSize: 9, color: AppColors.warning, fontWeight: FontWeight.w700)),
                     ),
                   ],
                   if (pending > 0) ...[
@@ -1331,7 +1330,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
-                    color: _C.accent, borderRadius: BorderRadius.circular(10)),
+                    color: AppColors.desktopPrimaryDark, borderRadius: BorderRadius.circular(10)),
                 child: Text(badge, style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w800)),
               ),
             ],
@@ -1359,31 +1358,31 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   height: 42,
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(fontSize: 13, color: _C.textDark),
+                    style: const TextStyle(fontSize: 13, color: AppColors.desktopTextPrimary),
                     decoration: InputDecoration(
                       hintText: S.t('pos_search_hint'),
-                      hintStyle: const TextStyle(color: _C.textLight, fontSize: 12),
-                      prefixIcon: const Icon(Icons.search_rounded, color: _C.textMid, size: 18),
+                      hintStyle: const TextStyle(color: AppColors.desktopTextMuted, fontSize: 12),
+                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.desktopTextSecondary, size: 18),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 15, color: _C.textMid),
+                              icon: const Icon(Icons.close_rounded, size: 15, color: AppColors.desktopTextSecondary),
                               onPressed: () { _searchController.clear(); _searchProduct(''); },
                             )
                           : const Padding(
                               padding: EdgeInsets.all(10),
-                              child: Icon(Icons.qr_code_scanner_rounded, color: _C.textLight, size: 16),
+                              child: Icon(Icons.qr_code_scanner_rounded, color: AppColors.desktopTextMuted, size: 16),
                             ),
                       filled: true,
-                      fillColor: _C.surface,
+                      fillColor: AppColors.desktopSurface,
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _C.border)),
+                          borderSide: const BorderSide(color: AppColors.desktopBorder)),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _C.border)),
+                          borderSide: const BorderSide(color: AppColors.desktopBorder)),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _C.accent, width: 1.5)),
+                          borderSide: const BorderSide(color: AppColors.desktopPrimaryDark, width: 1.5)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                       isDense: true,
                     ),
@@ -1403,9 +1402,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                         child: Row(
                           children: [
-                            Icon(Icons.inventory_2, size: 14, color: _C.accent),
+                            Icon(Icons.inventory_2, size: 14, color: AppColors.desktopPrimaryDark),
                             const SizedBox(width: 6),
-                            Text('Packs', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _C.textDark)),
+                            Text('Packs', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.desktopTextPrimary)),
                           ],
                         ),
                       ),
@@ -1424,9 +1423,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                 margin: const EdgeInsets.only(right: 8),
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: _C.chip,
+                                  color: AppColors.desktopPrimaryLight,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: _C.accent.withOpacity(0.3)),
+                                  border: Border.all(color: AppColors.desktopPrimaryDark.withOpacity(0.3)),
                                 ),
                                 child: Row(
                                   children: [
@@ -1434,16 +1433,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _C.textDark), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.desktopTextPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
                                           const Spacer(),
-                                          Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: _C.accent)),
-                                          Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: _C.textMid)),
+                                          Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.desktopPrimaryDark)),
+                                          Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: AppColors.desktopTextSecondary)),
                                         ],
                                       ),
                                     ),
                                     Container(
                                       width: 24, height: 24,
-                                      decoration: BoxDecoration(color: _C.accent, borderRadius: BorderRadius.circular(6)),
+                                      decoration: BoxDecoration(color: AppColors.desktopPrimaryDark, borderRadius: BorderRadius.circular(6)),
                                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
                                     ),
                                   ],
@@ -1459,14 +1458,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               // Product grid — 4 columns
               Expanded(
                 child: _isSearching
-                    ? const Center(child: CircularProgressIndicator(color: _C.accent, strokeWidth: 2))
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.desktopPrimaryDark, strokeWidth: 2))
                     : _searchResults.isEmpty && _searchController.text.isNotEmpty
                         ? Center(
                             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              const Icon(Icons.inventory_2_outlined, size: 56, color: _C.border),
+                              const Icon(Icons.inventory_2_outlined, size: 56, color: AppColors.desktopBorder),
                               const SizedBox(height: 12),
                               Text(S.t('pos_no_products'),
-                                  style: const TextStyle(fontSize: 14, color: _C.textMid)),
+                                  style: const TextStyle(fontSize: 14, color: AppColors.desktopTextSecondary)),
                             ]),
                           )
                         : GridView.builder(
@@ -1488,7 +1487,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         ),
 
         // ── Divider ──
-        Container(width: 1, color: _C.border),
+        Container(width: 1, color: AppColors.desktopBorder),
 
         // ── Right: cart ──
         Expanded(flex: 38, child: _buildCartPanel()),
@@ -1512,9 +1511,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       onTap: isOut ? null : () => _addToCart(item),
       child: Container(
         decoration: BoxDecoration(
-          color: _C.surface,
+          color: AppColors.desktopSurface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _C.border),
+          border: Border.all(color: AppColors.desktopBorder),
           boxShadow: const [
             BoxShadow(color: Color(0x08000000), blurRadius: 4, offset: Offset(0, 1)),
           ],
@@ -1546,7 +1545,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             angle: -0.4,
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(color: _C.danger, borderRadius: BorderRadius.circular(4)),
+                              decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(4)),
                               child: Text(S.t('pos_out_of_stock').toUpperCase(),
                                   style: const TextStyle(color: Colors.white, fontSize: 9,
                                       fontWeight: FontWeight.w800, letterSpacing: 0.8)),
@@ -1567,7 +1566,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         top: 6, left: 6,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(color: _C.success, borderRadius: BorderRadius.circular(4)),
+                          decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(4)),
                           child: const Text('NEW',
                               style: TextStyle(color: Colors.white, fontSize: 7,
                                   fontWeight: FontWeight.w800, letterSpacing: 0.4)),
@@ -1589,14 +1588,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     // Name
                     Text(
                       item['products']['name'],
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: _C.textDark),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.desktopTextPrimary),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 1),
                     // Size · Color
                     Text(
                       '${item['size']} · ${_cleanColor(colorRaw)}',
-                      style: const TextStyle(fontSize: 10, color: _C.textMid),
+                      style: const TextStyle(fontSize: 10, color: AppColors.desktopTextSecondary),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
@@ -1609,7 +1608,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             '${sellPrice.toStringAsFixed(2)} ${S.t('misc_currency')}',
                             style: TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 12,
-                              color: isOut ? _C.textLight : _C.accent,
+                              color: isOut ? AppColors.desktopTextMuted : AppColors.desktopPrimaryDark,
                             ),
                             maxLines: 1,
                           ),
@@ -1620,7 +1619,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             child: Container(
                               width: 26, height: 26,
                               decoration: BoxDecoration(
-                                color: _C.accent,
+                                color: AppColors.desktopPrimaryDark,
                                 borderRadius: BorderRadius.circular(7),
                               ),
                               child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
@@ -1630,11 +1629,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                           Container(
                             width: 26, height: 26,
                             decoration: BoxDecoration(
-                              color: _C.bg,
+                              color: AppColors.desktopBackground,
                               borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: _C.border),
+                              border: Border.all(color: AppColors.desktopBorder),
                             ),
-                            child: const Icon(Icons.block_rounded, color: _C.textLight, size: 14),
+                            child: const Icon(Icons.block_rounded, color: AppColors.desktopTextMuted, size: 14),
                           ),
                       ],
                     ),
@@ -1659,14 +1658,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     final cartIsEmpty   = _cart.isEmpty;
 
     return Container(
-      color: _C.surface,
+      color: AppColors.desktopSurface,
       child: Column(
         children: [
           // ── Total à payer — always visible at top ──
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             decoration: BoxDecoration(
-              color: _C.primary,
+              color: AppColors.desktopPrimary,
             ),
             child: Row(
               children: [
@@ -1679,7 +1678,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   const SizedBox(width: 6),
                   Container(
                     width: 20, height: 20,
-                    decoration: const BoxDecoration(color: _C.accent, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(color: AppColors.desktopPrimaryDark, shape: BoxShape.circle),
                     alignment: Alignment.center,
                     child: Text('${_cart.length}',
                         style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
@@ -1716,7 +1715,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           if (!cartIsEmpty)
             Container(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-              color: _C.bg,
+              color: AppColors.desktopBackground,
               child: Row(
                 children: [
                   Expanded(
@@ -1724,20 +1723,20 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       height: 34,
                       child: TextField(
                         controller: _cartSearchController,
-                        style: const TextStyle(fontSize: 12, color: _C.textDark),
+                        style: const TextStyle(fontSize: 12, color: AppColors.desktopTextPrimary),
                         decoration: InputDecoration(
                           hintText: 'Rechercher dans le panier...',
-                          hintStyle: const TextStyle(color: _C.textLight, fontSize: 11),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 15, color: _C.textMid),
+                          hintStyle: const TextStyle(color: AppColors.desktopTextMuted, fontSize: 11),
+                          prefixIcon: const Icon(Icons.search_rounded, size: 15, color: AppColors.desktopTextSecondary),
                           suffixIcon: _cartSearchQuery.isNotEmpty
                               ? GestureDetector(
                                   onTap: () => setState(() { _cartSearchQuery = ''; _cartSearchController.clear(); }),
-                                  child: const Icon(Icons.close_rounded, size: 13, color: _C.textMid),
+                                  child: const Icon(Icons.close_rounded, size: 13, color: AppColors.desktopTextSecondary),
                                 )
                               : null,
-                          filled: true, fillColor: _C.surface,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _C.border)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _C.border)),
+                          filled: true, fillColor: AppColors.desktopSurface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.desktopBorder)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                           isDense: true,
                         ),
@@ -1760,12 +1759,12 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                             decoration: BoxDecoration(
-                              border: Border.all(color: _C.warning.withOpacity(0.4)),
+                              border: Border.all(color: AppColors.warning.withOpacity(0.4)),
                               borderRadius: BorderRadius.circular(7),
-                              color: _C.warning.withOpacity(0.06),
+                              color: AppColors.warning.withOpacity(0.06),
                             ),
                             child: Text(S.t('pos_cart_clear'),
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _C.warning)),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.warning)),
                           ),
                         ),
                 ],
@@ -1780,22 +1779,22 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       Container(
                         width: 64, height: 64,
                         decoration: BoxDecoration(
-                          color: _C.bg, borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _C.border),
+                          color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.desktopBorder),
                         ),
-                        child: const Icon(Icons.shopping_cart_outlined, size: 32, color: _C.border),
+                        child: const Icon(Icons.shopping_cart_outlined, size: 32, color: AppColors.desktopBorder),
                       ),
                       const SizedBox(height: 12),
                       Text(S.t('pos_cart_empty'),
-                          style: const TextStyle(color: _C.textMid, fontSize: 13)),
+                          style: const TextStyle(color: AppColors.desktopTextSecondary, fontSize: 13)),
                     ]),
                   )
                 : displayedCart.isEmpty
                     ? const Center(child: Text('Aucun résultat',
-                        style: TextStyle(color: _C.textMid, fontSize: 12)))
+                        style: TextStyle(color: AppColors.desktopTextSecondary, fontSize: 12)))
                     : ListView.separated(
                         itemCount: displayedCart.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: _C.border),
+                        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.desktopBorder),
                         itemBuilder: (context, index) {
                           final item = displayedCart[index];
                           // find real index in cart for conflict check
@@ -1809,8 +1808,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           // ── Footer: client + discount + pay ──
           Container(
             decoration: const BoxDecoration(
-              color: _C.surface,
-              border: Border(top: BorderSide(color: _C.border)),
+              color: AppColors.desktopSurface,
+              border: Border(top: BorderSide(color: AppColors.desktopBorder)),
             ),
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
@@ -1831,9 +1830,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   child: ElevatedButton(
                     onPressed: (cartIsEmpty || _isProcessingPayment) ? null : _showPaymentDialog,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _C.success,
+                      backgroundColor: AppColors.success,
                       elevation: 0,
-                      disabledBackgroundColor: _C.border,
+                      disabledBackgroundColor: AppColors.desktopBorder,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isProcessingPayment
@@ -1874,7 +1873,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   Widget _buildCartItemRow(CartItem item, int realIndex, bool hasConflict) {
     return Container(
       decoration: hasConflict
-          ? const BoxDecoration(border: Border(left: BorderSide(color: _C.danger, width: 3)))
+          ? const BoxDecoration(border: Border(left: BorderSide(color: AppColors.danger, width: 3)))
           : null,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -1890,16 +1889,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       child: Text(item.productName,
                           style: TextStyle(
                               fontWeight: FontWeight.w700, fontSize: 13,
-                              color: hasConflict ? _C.danger : _C.textDark),
+                              color: hasConflict ? AppColors.danger : AppColors.desktopTextPrimary),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     if (hasConflict)
-                      const Icon(Icons.warning_amber_rounded, color: _C.danger, size: 15),
+                      const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 15),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text('${item.size} · ${item.color}',
-                    style: const TextStyle(fontSize: 10, color: _C.textMid)),
+                    style: const TextStyle(fontSize: 10, color: AppColors.desktopTextSecondary)),
                 const SizedBox(height: 7),
                 Row(
                   children: [
@@ -1912,16 +1911,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         initialValue: item.unitPrice > 0 ? item.unitPrice.toStringAsFixed(2) : '',
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _C.textDark),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.desktopTextPrimary),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                           isDense: true,
                           hintText: '0.00',
-                          hintStyle: const TextStyle(color: _C.textLight, fontSize: 11),
-                          filled: true, fillColor: _C.bg,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _C.border)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _C.border)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: _C.accent, width: 1.5)),
+                          hintStyle: const TextStyle(color: AppColors.desktopTextMuted, fontSize: 11),
+                          filled: true, fillColor: AppColors.desktopBackground,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.desktopPrimaryDark, width: 1.5)),
                         ),
                         onChanged: (val) {
                           final p = double.tryParse(val) ?? 0.0;
@@ -1943,10 +1942,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 child: Container(
                   width: 22, height: 22,
                   decoration: BoxDecoration(
-                    color: _C.danger.withOpacity(0.08),
+                    color: AppColors.danger.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: const Icon(Icons.close_rounded, color: _C.danger, size: 13),
+                  child: const Icon(Icons.close_rounded, color: AppColors.danger, size: 13),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1954,10 +1953,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 '${item.totalPrice.toStringAsFixed(2)}',
                 style: TextStyle(
                     fontWeight: FontWeight.w800, fontSize: 13,
-                    color: hasConflict ? _C.danger : _C.textDark),
+                    color: hasConflict ? AppColors.danger : AppColors.desktopTextPrimary),
               ),
               Text(S.t('misc_currency'),
-                  style: const TextStyle(fontSize: 9, color: _C.textMid, fontWeight: FontWeight.w500)),
+                  style: const TextStyle(fontSize: 9, color: AppColors.desktopTextSecondary, fontWeight: FontWeight.w500)),
             ],
           ),
         ],
@@ -1970,9 +1969,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Container(
       height: 38,
       decoration: BoxDecoration(
-        color: _C.bg,
+        color: AppColors.desktopBackground,
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: _C.border),
+        border: Border.all(color: AppColors.desktopBorder),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -1980,18 +1979,18 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           value: _selectedCustomerId,
           icon: const Padding(
             padding: EdgeInsets.only(right: 10),
-            child: Icon(Icons.expand_more_rounded, size: 16, color: _C.textMid),
+            child: Icon(Icons.expand_more_rounded, size: 16, color: AppColors.desktopTextSecondary),
           ),
-          style: const TextStyle(fontSize: 12, color: _C.textDark),
+          style: const TextStyle(fontSize: 12, color: AppColors.desktopTextPrimary),
           items: [
             DropdownMenuItem(
               value: null,
               child: Row(children: [
                 const SizedBox(width: 10),
-                const Icon(Icons.person_outline, size: 15, color: _C.textMid),
+                const Icon(Icons.person_outline, size: 15, color: AppColors.desktopTextSecondary),
                 const SizedBox(width: 8),
                 Text(S.t('pos_walkin_client'),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.textMid)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.desktopTextSecondary)),
               ]),
             ),
             ..._customers.map((c) {
@@ -2003,7 +2002,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 value: c['id'] as String,
                 child: Row(children: [
                   const SizedBox(width: 10),
-                  const Icon(Icons.person_rounded, size: 15, color: _C.accent),
+                  const Icon(Icons.person_rounded, size: 15, color: AppColors.desktopPrimaryDark),
                   const SizedBox(width: 8),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
@@ -2029,7 +2028,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       ],
                     ]),
                     Text('${S.t('pos_customer_balance')} ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}${lim > 0 ? '  ${S.t('pos_customer_credit_limit')} ${lim.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
-                        style: TextStyle(fontSize: 9, color: bal > 0 ? _C.warning : _C.textLight)),
+                        style: TextStyle(fontSize: 9, color: bal > 0 ? AppColors.warning : AppColors.desktopTextMuted)),
                   ]),
                 ]),
               );
@@ -2057,29 +2056,29 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: _C.success.withOpacity(0.06),
+        color: AppColors.success.withOpacity(0.06),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _C.success.withOpacity(0.2)),
+        border: Border.all(color: AppColors.success.withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_offer_rounded, size: 14, color: _C.success),
+          const Icon(Icons.local_offer_rounded, size: 14, color: AppColors.success),
           const SizedBox(width: 8),
           Text(
             _discountMode == 0
                 ? '-${_discountInput.toStringAsFixed(1)}%'
                 : '-${_discountAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
-            style: const TextStyle(fontSize: 12, color: _C.success, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 4),
-          Text('remise appliquée', style: const TextStyle(fontSize: 11, color: _C.textMid)),
+          Text('remise appliquée', style: const TextStyle(fontSize: 11, color: AppColors.desktopTextSecondary)),
           const Spacer(),
           Text('-${_discountAmount.toStringAsFixed(2)} ${S.t('misc_currency')}',
-              style: const TextStyle(fontSize: 12, color: _C.success, fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w700)),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () => setState(() { _isDiscountApplied = false; _discountAmount = 0; _discountInput = 0; }),
-            child: const Icon(Icons.close_rounded, size: 15, color: _C.danger),
+            child: const Icon(Icons.close_rounded, size: 15, color: AppColors.danger),
           ),
         ],
       ),
@@ -2093,8 +2092,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         Container(
           height: 34,
           decoration: BoxDecoration(
-            color: _C.bg, borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _C.border),
+            color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.desktopBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -2110,14 +2109,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             height: 34,
             child: TextField(
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(fontSize: 12, color: _C.textDark),
+              style: const TextStyle(fontSize: 12, color: AppColors.desktopTextPrimary),
               decoration: InputDecoration(
                 hintText: _discountMode == 0 ? '10' : '500',
-                hintStyle: const TextStyle(color: _C.textLight, fontSize: 12),
-                filled: true, fillColor: _C.bg,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _C.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _C.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _C.accent, width: 1.5)),
+                hintStyle: const TextStyle(color: AppColors.desktopTextMuted, fontSize: 12),
+                filled: true, fillColor: AppColors.desktopBackground,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.desktopPrimaryDark, width: 1.5)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                 isDense: true,
               ),
@@ -2179,14 +2178,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             height: 34,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: _discountInput > 0 ? _C.accent : _C.border,
+              color: _discountInput > 0 ? AppColors.desktopPrimaryDark : AppColors.desktopBorder,
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Text(S.t('pos_discount_apply'),
                 style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w700,
-                    color: _discountInput > 0 ? Colors.white : _C.textLight)),
+                    color: _discountInput > 0 ? Colors.white : AppColors.desktopTextMuted)),
           ),
         ),
       ],
@@ -2200,12 +2199,12 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSel ? _C.accent : Colors.transparent,
+          color: isSel ? AppColors.desktopPrimaryDark : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
         ),
         child: Text(label, style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w700,
-            color: isSel ? Colors.white : _C.textMid)),
+            color: isSel ? Colors.white : AppColors.desktopTextSecondary)),
       ),
     );
   }
@@ -2214,7 +2213,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(S.t('pos_cart_clear_confirm'), style: const TextStyle(fontSize: 10, color: _C.danger)),
+        Text(S.t('pos_cart_clear_confirm'), style: const TextStyle(fontSize: 10, color: AppColors.danger)),
         GestureDetector(
           onTap: () => setState(() {
             _cart.clear(); _showClearConfirm = false;
@@ -2223,7 +2222,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           child: Container(
             margin: const EdgeInsets.only(left: 6),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: _C.danger, borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(6)),
             child: Text(S.t('pos_cart_clear_yes'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
           ),
         ),
@@ -2232,8 +2231,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           child: Container(
             margin: const EdgeInsets.only(left: 4),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: _C.bg, borderRadius: BorderRadius.circular(6), border: Border.all(color: _C.border)),
-            child: Text(S.t('pos_cart_clear_no'), style: const TextStyle(color: _C.textMid, fontSize: 10)),
+            decoration: BoxDecoration(color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppColors.desktopBorder)),
+            child: Text(S.t('pos_cart_clear_no'), style: const TextStyle(color: AppColors.desktopTextSecondary, fontSize: 10)),
           ),
         ),
       ],
@@ -2250,7 +2249,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       children: [
         // ── Header bar ──
         Container(
-          color: _C.surface,
+          color: AppColors.desktopSurface,
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
           child: Column(
             children: [
@@ -2259,11 +2258,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 height: 38,
                 child: TextField(
                   controller: _invoiceSearchController,
-                  style: const TextStyle(fontSize: 13, color: _C.textDark),
+                  style: const TextStyle(fontSize: 13, color: AppColors.desktopTextPrimary),
                   decoration: InputDecoration(
                     hintText: S.t('pos_inv_search_hint'),
-                    hintStyle: const TextStyle(color: _C.textLight, fontSize: 12),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 17, color: _C.textMid),
+                    hintStyle: const TextStyle(color: AppColors.desktopTextMuted, fontSize: 12),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 17, color: AppColors.desktopTextSecondary),
                     suffixIcon: _invoiceSearchQuery.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.close_rounded, size: 14),
@@ -2274,10 +2273,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                             },
                           )
                         : null,
-                    filled: true, fillColor: _C.bg,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: _C.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: _C.border)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: _C.accent, width: 1.5)),
+                    filled: true, fillColor: AppColors.desktopBackground,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: AppColors.desktopBorder)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(9), borderSide: const BorderSide(color: AppColors.desktopPrimaryDark, width: 1.5)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                     isDense: true,
                   ),
@@ -2298,18 +2297,18 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 children: [
                   _filterChip('all',    S.t('pos_inv_filter_all'),    _allInvoices.length),
                   const SizedBox(width: 6),
-                  _filterChip('paid',   S.t('pos_inv_filter_paid'),   _allInvoices.where((i) => i['status'] == 'paid').length,    color: _C.success),
+                  _filterChip('paid',   S.t('pos_inv_filter_paid'),   _allInvoices.where((i) => i['status'] == 'paid').length,    color: AppColors.success),
                   const SizedBox(width: 6),
-                  _filterChip('credit', S.t('pos_inv_filter_credit'), _allInvoices.where((i) => i['status'] == 'partial' || i['status'] == 'unpaid').length, color: _C.warning),
+                  _filterChip('credit', S.t('pos_inv_filter_credit'), _allInvoices.where((i) => i['status'] == 'partial' || i['status'] == 'unpaid').length, color: AppColors.warning),
                   const Spacer(),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(S.t('pos_today_total'),
-                          style: const TextStyle(fontSize: 10, color: _C.textMid)),
+                          style: const TextStyle(fontSize: 10, color: AppColors.desktopTextSecondary)),
                       Text(
                         '${_allInvoices.fold<double>(0, (s, i) => s + ((i['total_amount'] as num?)?.toDouble() ?? 0)).toStringAsFixed(2)} ${S.t('misc_currency')}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _C.textDark),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.desktopTextPrimary),
                       ),
                     ],
                   ),
@@ -2323,10 +2322,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         // ── Table header ──
         Container(
           decoration: const BoxDecoration(
-            color: _C.bg,
+            color: AppColors.desktopBackground,
             border: Border(
-              top: BorderSide(color: _C.border),
-              bottom: BorderSide(color: _C.border),
+              top: BorderSide(color: AppColors.desktopBorder),
+              bottom: BorderSide(color: AppColors.desktopBorder),
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
@@ -2344,15 +2343,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         // ── Table rows ──
         Expanded(
           child: _isLoadingInvoices
-              ? const Center(child: CircularProgressIndicator(color: _C.accent, strokeWidth: 2))
+              ? const Center(child: CircularProgressIndicator(color: AppColors.desktopPrimaryDark, strokeWidth: 2))
               : _filteredInvoices.isEmpty
                   ? Center(
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        const Icon(Icons.receipt_long_outlined, size: 48, color: _C.border),
+                        const Icon(Icons.receipt_long_outlined, size: 48, color: AppColors.desktopBorder),
                         const SizedBox(height: 12),
                         Text(
                           _allInvoices.isEmpty ? S.t('pos_no_today_invoices') : S.t('pos_no_invoice_today'),
-                          style: const TextStyle(fontSize: 13, color: _C.textMid),
+                          style: const TextStyle(fontSize: 13, color: AppColors.desktopTextSecondary),
                         ),
                       ]),
                     )
@@ -2375,12 +2374,12 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Text(label,
         textAlign: right ? TextAlign.right : (center ? TextAlign.center : TextAlign.left),
         style: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w700, color: _C.textMid, letterSpacing: 0.3));
+            fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.desktopTextSecondary, letterSpacing: 0.3));
   }
 
   Widget _filterChip(String filter, String label, int count, {Color? color}) {
     final isSelected = _invoiceFilter == filter;
-    final c = color ?? _C.accent;
+    final c = color ?? AppColors.desktopPrimaryDark;
     return GestureDetector(
       onTap: () { _invoiceFilter = filter; setState(() => _applyInvoiceFilters()); },
       child: AnimatedContainer(
@@ -2389,7 +2388,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: isSelected ? c.withOpacity(0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? c : _C.border),
+          border: Border.all(color: isSelected ? c : AppColors.desktopBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -2397,16 +2396,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             Text(label,
                 style: TextStyle(fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? c : _C.textMid)),
+                    color: isSelected ? c : AppColors.desktopTextSecondary)),
             const SizedBox(width: 5),
             Container(
               width: 17, height: 17,
               decoration: BoxDecoration(
-                  color: isSelected ? c : _C.border, shape: BoxShape.circle),
+                  color: isSelected ? c : AppColors.desktopBorder, shape: BoxShape.circle),
               alignment: Alignment.center,
               child: Text('$count',
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : _C.textMid)),
+                      color: isSelected ? Colors.white : AppColors.desktopTextSecondary)),
             ),
           ],
         ),
@@ -2467,11 +2466,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
 
     return InkWell(
       onTap: () => _showInvoiceDetail(inv),
-      hoverColor: _C.rowHover,
+      hoverColor: AppColors.desktopPrimaryLight,
       child: Container(
         decoration: BoxDecoration(
-          color: index.isOdd ? _C.rowEven : _C.surface,
-          border: const Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+          color: index.isOdd ? AppColors.desktopBackground : AppColors.desktopSurface,
+          border: const Border(bottom: BorderSide(color: AppColors.desktopBorder, width: 0.5)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
         child: Row(
@@ -2482,7 +2481,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               child: Text(invNum,
                   style: TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 13,
-                      color: _C.accent),
+                      color: AppColors.desktopPrimaryDark),
                   maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             // Time
@@ -2490,7 +2489,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               flex: 20,
               child: Text(
                 createdAt != null ? _formatInvoiceDateTime(createdAt) : '',
-                style: const TextStyle(fontSize: 12, color: _C.textMid),
+                style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -2499,11 +2498,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               flex: 22,
               child: Row(
                 children: [
-                  const Icon(Icons.person_outline, size: 12, color: _C.textLight),
+                  const Icon(Icons.person_outline, size: 12, color: AppColors.desktopTextMuted),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(clientName,
-                        style: const TextStyle(fontSize: 12, color: _C.textDark),
+                        style: const TextStyle(fontSize: 12, color: AppColors.desktopTextPrimary),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
                 ],
@@ -2516,10 +2515,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text('${_formatPrice(total)} ${S.t('misc_currency')}',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _C.textDark)),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.desktopTextPrimary)),
                   if (isCredit && remaining > 0)
                     Text('-${_formatPrice(remaining)} ${S.t('misc_currency')}',
-                        style: const TextStyle(fontSize: 10, color: _C.danger, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(fontSize: 10, color: AppColors.danger, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -2532,14 +2531,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isCredit ? _C.warning.withOpacity(0.10) : _C.success.withOpacity(0.10),
+                      color: isCredit ? AppColors.warning.withOpacity(0.10) : AppColors.success.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       isCredit ? S.t('pos_inv_credit_status') : S.t('pos_paid'),
                       style: TextStyle(
                           fontSize: 10, fontWeight: FontWeight.w700,
-                          color: isCredit ? _C.warning : _C.success),
+                          color: isCredit ? AppColors.warning : AppColors.success),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -2548,10 +2547,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     child: Container(
                       width: 26, height: 26,
                       decoration: BoxDecoration(
-                        color: _C.bg, borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: _C.border),
+                        color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.desktopBorder),
                       ),
-                      child: const Icon(Icons.print_rounded, size: 13, color: _C.textMid),
+                      child: const Icon(Icons.print_rounded, size: 13, color: AppColors.desktopTextSecondary),
                     ),
                   ),
                   if (_canRefundInvoice(inv)) ...[
@@ -2561,11 +2560,11 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       child: Container(
                         width: 26, height: 26,
                         decoration: BoxDecoration(
-                          color: _C.danger.withOpacity(0.08),
+                          color: AppColors.danger.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: _C.danger.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.danger.withOpacity(0.3)),
                         ),
-                        child: const Icon(Icons.replay, size: 13, color: _C.danger),
+                        child: const Icon(Icons.replay, size: 13, color: AppColors.danger),
                       ),
                     ),
                   ],
@@ -2582,13 +2581,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Container(
       height: 44,
       decoration: const BoxDecoration(
-        color: _C.surface,
-        border: Border(top: BorderSide(color: _C.border)),
+        color: AppColors.desktopSurface,
+        border: Border(top: BorderSide(color: AppColors.desktopBorder)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Text(_pageLabel(totalPages), style: const TextStyle(fontSize: 12, color: _C.textMid)),
+          Text(_pageLabel(totalPages), style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
           const Spacer(),
           // Page buttons
           ..._buildPageButtons(totalPages),
@@ -2615,14 +2614,14 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
           width: 30, height: 30,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isActive ? _C.accent : Colors.transparent,
+            color: isActive ? AppColors.desktopPrimaryDark : Colors.transparent,
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: isActive ? _C.accent : _C.border),
+            border: Border.all(color: isActive ? AppColors.desktopPrimaryDark : AppColors.desktopBorder),
           ),
           alignment: Alignment.center,
           child: Text('${i + 1}',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
-                  color: isActive ? Colors.white : _C.textMid)),
+                  color: isActive ? Colors.white : AppColors.desktopTextSecondary)),
         ),
       ));
     }
@@ -2630,7 +2629,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     if (totalPages > 6) {
       buttons.add(const Padding(
         padding: EdgeInsets.symmetric(horizontal: 4),
-        child: Text('...', style: TextStyle(color: _C.textMid)),
+        child: Text('...', style: TextStyle(color: AppColors.desktopTextSecondary)),
       ));
     }
 
@@ -2650,10 +2649,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: onTap != null ? _C.border : _C.border.withOpacity(0.4)),
+          border: Border.all(color: onTap != null ? AppColors.desktopBorder : AppColors.desktopBorder.withOpacity(0.4)),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: 18, color: onTap != null ? _C.textMid : _C.textLight),
+        child: Icon(icon, size: 18, color: onTap != null ? AppColors.desktopTextSecondary : AppColors.desktopTextMuted),
       ),
     );
   }
@@ -2675,7 +2674,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       barrierColor: Colors.black54,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: _C.surface,
+        backgroundColor: AppColors.desktopSurface,
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 520, maxHeight: MediaQuery.of(ctx).size.height * 0.85),
@@ -2686,21 +2685,21 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
                 decoration: BoxDecoration(
-                  color: isCredit ? _C.warning.withOpacity(0.06) : _C.success.withOpacity(0.06),
+                  color: isCredit ? AppColors.warning.withOpacity(0.06) : AppColors.success.withOpacity(0.06),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  border: const Border(bottom: BorderSide(color: _C.border)),
+                  border: const Border(bottom: BorderSide(color: AppColors.desktopBorder)),
                 ),
                 child: Row(
                   children: [
                     Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: isCredit ? _C.warning.withOpacity(0.12) : _C.success.withOpacity(0.12),
+                        color: isCredit ? AppColors.warning.withOpacity(0.12) : AppColors.success.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         isCredit ? Icons.pending_actions_rounded : Icons.check_circle_rounded,
-                        color: isCredit ? _C.warning : _C.success, size: 22),
+                        color: isCredit ? AppColors.warning : AppColors.success, size: 22),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -2708,28 +2707,28 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(invNum,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _C.textDark)),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.desktopTextPrimary)),
                           const SizedBox(height: 2),
                           Text('$clientName  ·  ${createdAt != null ? _formatInvoiceDateTime(createdAt) : ''}',
-                              style: const TextStyle(fontSize: 11, color: _C.textMid)),
+                              style: const TextStyle(fontSize: 11, color: AppColors.desktopTextSecondary)),
                         ],
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isCredit ? _C.warning.withOpacity(0.12) : _C.success.withOpacity(0.12),
+                        color: isCredit ? AppColors.warning.withOpacity(0.12) : AppColors.success.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         isCredit ? S.t('pos_inv_credit_status') : S.t('pos_paid'),
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                            color: isCredit ? _C.warning : _C.success),
+                            color: isCredit ? AppColors.warning : AppColors.success),
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 18, color: _C.textMid),
+                      icon: const Icon(Icons.close, size: 18, color: AppColors.desktopTextSecondary),
                       onPressed: () => Navigator.pop(ctx),
                       padding: EdgeInsets.zero, constraints: const BoxConstraints(),
                     ),
@@ -2746,7 +2745,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     final isLoading = snapshot.connectionState == ConnectionState.waiting;
                     return isLoading
                         ? const Padding(padding: EdgeInsets.all(40),
-                            child: Center(child: CircularProgressIndicator(color: _C.accent, strokeWidth: 2)))
+                            child: Center(child: CircularProgressIndicator(color: AppColors.desktopPrimaryDark, strokeWidth: 2)))
                         : SingleChildScrollView(
                             padding: const EdgeInsets.all(24),
                             child: Column(
@@ -2757,34 +2756,34 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     decoration: const BoxDecoration(
-                                      color: _C.bg,
+                                      color: AppColors.desktopBackground,
                                       borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
                                       border: Border(
-                                        top: BorderSide(color: _C.border),
-                                        left: BorderSide(color: _C.border),
-                                        right: BorderSide(color: _C.border),
+                                        top: BorderSide(color: AppColors.desktopBorder),
+                                        left: BorderSide(color: AppColors.desktopBorder),
+                                        right: BorderSide(color: AppColors.desktopBorder),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
                                         Expanded(child: Text(S.t('pos_inv_articles'),
                                             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                                                color: _C.textMid, letterSpacing: 0.3))),
-                                        Text('Qté', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _C.textMid)),
+                                                color: AppColors.desktopTextSecondary, letterSpacing: 0.3))),
+                                        Text('Qté', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.desktopTextSecondary)),
                                         const SizedBox(width: 20),
-                                        Text('Total', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _C.textMid)),
+                                        Text('Total', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.desktopTextSecondary)),
                                       ],
                                     ),
                                   ),
                                   Container(
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: _C.border),
+                                      border: Border.all(color: AppColors.desktopBorder),
                                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
                                     ),
                                     child: Column(
                                       children: items.asMap().entries.map((entry) {
                                         return Column(children: [
-                                          if (entry.key > 0) const Divider(height: 1, color: _C.border),
+                                          if (entry.key > 0) const Divider(height: 1, color: AppColors.desktopBorder),
                                           _buildDetailItemRow(entry.value),
                                         ]);
                                       }).toList(),
@@ -2794,13 +2793,13 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                   Container(
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                        color: _C.bg, borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: _C.border)),
+                                        color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: AppColors.desktopBorder)),
                                     child: Row(children: [
-                                      const Icon(Icons.info_outline, size: 14, color: _C.textLight),
+                                      const Icon(Icons.info_outline, size: 14, color: AppColors.desktopTextMuted),
                                       const SizedBox(width: 8),
                                       Text(S.t('pos_inv_no_items'),
-                                          style: const TextStyle(fontSize: 12, color: _C.textMid)),
+                                          style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
                                     ]),
                                   ),
                                 const SizedBox(height: 16),
@@ -2809,16 +2808,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                      color: _C.bg, borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: _C.border)),
+                                      color: AppColors.desktopBackground, borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: AppColors.desktopBorder)),
                                   child: Column(
                                     children: [
-                                      _detailAmountRow(S.t('label_total'), _formatPrice(total), _C.textDark, false),
-                                      const Divider(height: 12, color: _C.border),
-                                      _detailAmountRow(S.t('pos_inv_paid_label'), _formatPrice(paid), _C.success, false),
+                                      _detailAmountRow(S.t('label_total'), _formatPrice(total), AppColors.desktopTextPrimary, false),
+                                      const Divider(height: 12, color: AppColors.desktopBorder),
+                                      _detailAmountRow(S.t('pos_inv_paid_label'), _formatPrice(paid), AppColors.success, false),
                                       if (remaining > 0) ...[
-                                        const Divider(height: 12, color: _C.border),
-                                        _detailAmountRow(S.t('pos_inv_remaining_label'), _formatPrice(remaining), _C.danger, true),
+                                        const Divider(height: 12, color: AppColors.desktopBorder),
+                                        _detailAmountRow(S.t('pos_inv_remaining_label'), _formatPrice(remaining), AppColors.danger, true),
                                       ],
                                     ],
                                   ),
@@ -2829,7 +2828,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                                 Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                      border: Border.all(color: _C.border),
+                                      border: Border.all(color: AppColors.desktopBorder),
                                       borderRadius: BorderRadius.circular(10)),
                                   child: Column(
                                     children: [
@@ -2853,7 +2852,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               // Footer
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: _C.border))),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.desktopBorder))),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -2867,8 +2866,8 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                           icon: const Icon(Icons.print_rounded, size: 15),
                           label: Text(S.t('pos_inv_reprint'), style: const TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: _C.accent,
-                            side: const BorderSide(color: _C.accent),
+                            foregroundColor: AppColors.desktopPrimaryDark,
+                            side: const BorderSide(color: AppColors.desktopPrimaryDark),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -2876,7 +2875,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                         const Spacer(),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: Text(S.t('action_close'), style: const TextStyle(color: _C.textMid)),
+                          child: Text(S.t('action_close'), style: const TextStyle(color: AppColors.desktopTextSecondary)),
                         ),
                       ],
                     ),
@@ -2913,7 +2912,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: _C.textMid)),
+        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.desktopTextSecondary)),
         Text('$value ${S.t('misc_currency')}',
             style: TextStyle(fontSize: 14,
                 fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
@@ -2942,16 +2941,16 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.textDark),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.desktopTextPrimary),
                     maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Text('${_formatPrice(unitPrice)} ${S.t('misc_currency')} × $qty',
-                    style: const TextStyle(fontSize: 11, color: _C.textMid)),
+                    style: const TextStyle(fontSize: 11, color: AppColors.desktopTextSecondary)),
               ],
             ),
           ),
           Text('${_formatPrice(totalPrice)} ${S.t('misc_currency')}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _C.textDark)),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.desktopTextPrimary)),
         ],
       ),
     );
@@ -2960,9 +2959,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
   Widget _buildDetailInfoRow(String label, String value) {
     return Row(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: _C.textMid)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.desktopTextSecondary)),
         const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _C.textDark)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.desktopTextPrimary)),
       ],
     );
   }
@@ -2985,7 +2984,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       BuildContext parentCtx, Map<String, dynamic> invoice) async {
     final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     if (!RefundService.isValidUuid(invoiceId)) {
-      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
+      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', AppColors.danger);
       return;
     }
     final reasonController = TextEditingController();
@@ -3181,7 +3180,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       BuildContext ctx, Map<String, dynamic> invoice) async {
     final invoiceId = (invoice['invoice_id'] ?? invoice['id'] ?? '') as String;
     if (!RefundService.isValidUuid(invoiceId)) {
-      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', _C.danger);
+      _snack('Cette facture n\'est pas encore synchronisée. Veuillez patienter.', AppColors.danger);
       return;
     }
     final items = await _fetchInvoiceItems(invoiceId);
@@ -3214,10 +3213,10 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
       }
       if (mounted) {
         _loadTodayInvoices();
-        _snack('Retour + Revente effectué', _C.success);
+        _snack('Retour + Revente effectué', AppColors.success);
       }
     } catch (e) {
-      if (mounted) _snack('${S.t('pos_error')} $e', _C.danger);
+      if (mounted) _snack('${S.t('pos_error')} $e', AppColors.danger);
     }
   }
 
@@ -3235,15 +3234,15 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
             children: [
               Container(
                 width: 56, height: 56,
-                decoration: BoxDecoration(color: _C.chip, borderRadius: BorderRadius.circular(14)),
-                child: const Icon(Icons.print_rounded, size: 28, color: _C.accent),
+                decoration: BoxDecoration(color: AppColors.desktopPrimaryLight, borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.print_rounded, size: 28, color: AppColors.desktopPrimaryDark),
               ),
               const SizedBox(height: 16),
               Text(S.t('pos_print_title'),
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _C.textDark)),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.desktopTextPrimary)),
               const SizedBox(height: 8),
               Text(S.t('pos_print_ask'),
-                  style: const TextStyle(fontSize: 13, color: _C.textMid), textAlign: TextAlign.center),
+                  style: const TextStyle(fontSize: 13, color: AppColors.desktopTextSecondary), textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -3252,9 +3251,9 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                       onPressed: () { AppSession.autoPrintTicket = false; AppSession.posTicketPreferenceSet = true; Navigator.pop(ctx); },
                       style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 13),
-                          side: const BorderSide(color: _C.border),
+                          side: const BorderSide(color: AppColors.desktopBorder),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                      child: Text(S.t('pos_print_manual'), style: const TextStyle(fontSize: 13, color: _C.textMid, fontWeight: FontWeight.w600)),
+                      child: Text(S.t('pos_print_manual'), style: const TextStyle(fontSize: 13, color: AppColors.desktopTextSecondary, fontWeight: FontWeight.w600)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -3262,7 +3261,7 @@ class _PosScreenState extends State<PosScreen> with TickerProviderStateMixin {
                     child: ElevatedButton(
                       onPressed: () { AppSession.autoPrintTicket = true; AppSession.posTicketPreferenceSet = true; Navigator.pop(ctx); },
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.accent, elevation: 0,
+                          backgroundColor: AppColors.desktopPrimaryDark, elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                       child: Text(S.t('pos_print_always'),
@@ -3454,9 +3453,9 @@ class _NoImageWidget extends StatelessWidget {
       color: const Color(0xFFF3F5F9),
       child: Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.image_not_supported_outlined, size: 24, color: _C.border),
+          Icon(Icons.image_not_supported_outlined, size: 24, color: AppColors.desktopBorder),
           const SizedBox(height: 3),
-          const Text('No image', style: TextStyle(fontSize: 8, color: _C.textLight)),
+          const Text('No image', style: TextStyle(fontSize: 8, color: AppColors.desktopTextMuted)),
         ]),
       ),
     );
@@ -3472,7 +3471,7 @@ class _StockBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isOut ? _C.danger : isLow ? _C.warning : _C.success;
+    final color = isOut ? AppColors.danger : isLow ? AppColors.warning : AppColors.success;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
@@ -3573,16 +3572,16 @@ class _NumpadKey extends StatelessWidget {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: isSpecial ? _C.danger.withOpacity(0.07) : _C.bg,
+          color: isSpecial ? AppColors.danger.withOpacity(0.07) : AppColors.desktopBackground,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSpecial ? _C.danger.withOpacity(0.25) : _C.border),
+          border: Border.all(color: isSpecial ? AppColors.danger.withOpacity(0.25) : AppColors.desktopBorder),
         ),
         alignment: Alignment.center,
         child: isBack
-            ? const Icon(Icons.backspace_outlined, size: 17, color: _C.textMid)
+            ? const Icon(Icons.backspace_outlined, size: 17, color: AppColors.desktopTextSecondary)
             : Text(label, style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w700,
-                color: isSpecial ? _C.danger : _C.textDark,
+                color: isSpecial ? AppColors.danger : AppColors.desktopTextPrimary,
               )),
       ),
     );
