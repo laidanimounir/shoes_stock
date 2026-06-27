@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 
 class ActivityLogsScreen extends StatefulWidget {
   const ActivityLogsScreen({super.key});
@@ -67,7 +68,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_activity_logs')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(S.t('nav_activity_logs')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
       body: Column(children: [
         Container(
           padding: const EdgeInsets.all(8), color: Colors.white,
@@ -97,7 +98,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                     margin: const EdgeInsets.only(bottom: 4),
                     child: ListTile(
                       dense: true,
-                      leading: CircleAvatar(radius: 14, backgroundColor: Colors.indigo[50], child: const Icon(Icons.notifications_none, size: 16, color: Colors.indigo)),
+                      leading: CircleAvatar(radius: 14, backgroundColor: AppColors.mobileSurfaceElevated, child: const Icon(Icons.notifications_none, size: 16, color: AppColors.mobilePrimary)),
                       title: Text(_formatDescription(log['description'] ?? ''), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       subtitle: Text('${log['user_profiles']?['full_name'] ?? ''} • ${date != null ? timeago.format(date, locale: 'fr') : ''}', style: const TextStyle(fontSize: 10)),
                     ),

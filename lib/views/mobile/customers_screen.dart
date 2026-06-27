@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/customer_local.dart';
 import '../../local_db/collections/invoice_local.dart';
@@ -117,7 +119,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           try {
             await Supabase.instance.client.from('customers').insert({'full_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'email': emailCtrl.text.trim(), 'balance': 0, 'is_active': true});
             _fetch(_searchCtrl.text);
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
         }, child: Text(S.t('action_save'))),
       ],
     ));
@@ -125,7 +127,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
 
   void _editCustomer() {
     if (!AppSession.isOwner) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_access_denied')), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_access_denied')), backgroundColor: AppColors.danger));
       return;
     }
     final c = _selected!;
@@ -149,7 +151,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             await Supabase.instance.client.from('customers').update({'full_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'email': emailCtrl.text.trim()}).eq('id', c['id']);
             if (_selected?['id'] == c['id']) setState(() { _selected!['full_name'] = nameCtrl.text; _selected!['phone'] = phoneCtrl.text; _selected!['email'] = emailCtrl.text; });
             _fetch(_searchCtrl.text);
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
         }, child: Text(S.t('action_save'))),
       ],
     ));
@@ -161,7 +163,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       title: Text(S.t('cust_archive_title')), content: Text(S.t('cust_archive_msg')),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white), child: Text(S.t('action_archive'))),
+        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning, foregroundColor: Colors.white), child: Text(S.t('action_archive'))),
       ],
     ));
     if (confirm != true) return;
@@ -169,7 +171,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       await Supabase.instance.client.from('customers').update({'is_active': false}).eq('id', _selected!['id']);
       setState(() => _selected = null);
       _fetch(_searchCtrl.text);
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
   }
 
   void _recordPayment() async {
@@ -177,7 +179,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     showDialog(context: context, builder: (ctx) => AlertDialog(
       title: Text(S.t('cust_receive_payment')),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('${S.t('pos_credit')}: ${_balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+        Text('${S.t('pos_credit')}: ${_balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.danger)),
         const SizedBox(height: 12),
         TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Montant', border: OutlineInputBorder())),
       ]),
@@ -190,7 +192,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           try {
             await DebtRecoveryService.instance.recordDebtPayment(customerId: _selected!['id'], amount: amount, paymentMethod: 'cash', storeId: AppSession.currentStoreId ?? '');
             _fetchHistory(_selected!['id']);
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
         }, child: Text(S.t('action_confirm'))),
       ],
     ));
@@ -208,7 +210,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     if (points >= 2000) {
       return {'name': 'Gold', 'color': Colors.amber, 'progress': 1.0};
     } else if (points >= 500) {
-      return {'name': 'Silver', 'color': Colors.grey, 'progress': (points - 500) / 1500.0};
+      return {'name': 'Silver', 'color': AppColors.mobileTextSecondary, 'progress': (points - 500) / 1500.0};
     } else {
       return {'name': 'Bronze', 'color': const Color(0xFF8B4513), 'progress': points > 0 ? points / 500.0 : 0.0};
     }
@@ -250,7 +252,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
         debugPrint("Error fetching customer profile: $e");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur chargement profil: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Erreur chargement profil: $e'), backgroundColor: AppColors.danger),
           );
         }
         return;
@@ -305,7 +307,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                 Center(
                   child: Container(
                     width: 40, height: 4,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: AppColors.mobileBorderStrong, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -331,14 +333,14 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
 
   Widget _buildProfileHeader(String initials, String name, String customerType, String memberSince) {
     final isWholesale = customerType == 'wholesale';
-    final badgeColor = isWholesale ? Colors.purple : Colors.teal;
+    final badgeColor = isWholesale ? AppColors.mobilePrimary : AppColors.success;
     final badgeText = isWholesale ? 'GROS' : 'DÉTAIL';
 
     return Column(
       children: [
         CircleAvatar(
           radius: 40,
-          backgroundColor: Colors.indigo,
+          backgroundColor: AppColors.mobilePrimary,
           child: Text(initials, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
         ),
         const SizedBox(height: 12),
@@ -354,7 +356,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           child: Text(badgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
         ),
         const SizedBox(height: 8),
-        Text('Membre depuis $memberSince', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text('Membre depuis $memberSince', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 13)),
       ],
     );
   }
@@ -362,11 +364,11 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
   Widget _buildStatsRow(int totalPurchases, double totalSpent, double avgOrderValue, NumberFormat currencyFormat, NumberFormat noDecFormat) {
     return Row(
       children: [
-        _buildStatCard('Achats', noDecFormat.format(totalPurchases), Icons.shopping_bag, Colors.indigo),
+        _buildStatCard('Achats', noDecFormat.format(totalPurchases), Icons.shopping_bag, AppColors.mobilePrimary),
         const SizedBox(width: 12),
-        _buildStatCard('Total', '${currencyFormat.format(totalSpent)} DA', Icons.attach_money, Colors.green),
+        _buildStatCard('Total', '${currencyFormat.format(totalSpent)} DA', Icons.attach_money, AppColors.success),
         const SizedBox(width: 12),
-        _buildStatCard('Moyen', '${currencyFormat.format(avgOrderValue)} DA', Icons.trending_up, Colors.orange),
+        _buildStatCard('Moyen', '${currencyFormat.format(avgOrderValue)} DA', Icons.trending_up, AppColors.warning),
       ],
     );
   }
@@ -385,7 +387,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             const SizedBox(height: 8),
             Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+            Text(label, style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 11)),
           ],
         ),
       ),
@@ -397,7 +399,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.amber[50]!, Colors.orange[50]!],
+          colors: [Colors.amber[50]!, AppColors.warningLight!],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -409,7 +411,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
         children: [
           Row(
             children: [
-              Icon(Icons.star, color: Colors.amber[700], size: 28),
+              Icon(Icons.star, color: AppColors.warning, size: 28),
               const SizedBox(width: 8),
               Text('Fidélité', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber[900])),
               const Spacer(),
@@ -421,7 +423,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: (tierInfo['progress'] as double).clamp(0.0, 1.0),
-              backgroundColor: Colors.grey[200],
+              backgroundColor: AppColors.mobileBorder,
               valueColor: AlwaysStoppedAnimation<Color>(tierInfo['color'] as Color),
               minHeight: 10,
             ),
@@ -431,7 +433,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildTierBadge('Bronze', points < 500, const Color(0xFF8B4513)),
-              _buildTierBadge('Silver', points < 500 || points >= 2000, Colors.grey),
+              _buildTierBadge('Silver', points < 500 || points >= 2000, AppColors.mobileTextSecondary),
               _buildTierBadge('Gold', points < 2000, Colors.amber),
             ],
           ),
@@ -458,14 +460,14 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: inactive ? Colors.grey[200] : color.withOpacity(0.15),
+        color: inactive ? AppColors.mobileBorder : color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: inactive ? Colors.grey[300]! : color),
+        border: Border.all(color: inactive ? AppColors.mobileBorderStrong! : color),
       ),
       child: Text(
         name,
         style: TextStyle(
-          color: inactive ? Colors.grey[500] : color,
+          color: inactive ? AppColors.mobileTextSecondary : color,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
@@ -477,7 +479,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red[50]?.withOpacity(0.3),
+        color: AppColors.dangerLight?.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red[100]!),
       ),
@@ -486,7 +488,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
         children: [
           Row(
             children: [
-              Icon(Icons.credit_card, color: Colors.red[700], size: 24),
+              Icon(Icons.credit_card, color: AppColors.danger, size: 24),
               const SizedBox(width: 8),
               Text('Crédit & Solde', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[900])),
             ],
@@ -497,7 +499,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Limite: ${format.format(creditLimit)} DA', style: const TextStyle(fontSize: 13)),
-                Text('${(creditProgress * 100).toStringAsFixed(0)}% utilisé', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('${(creditProgress * 100).toStringAsFixed(0)}% utilisé', style: const TextStyle(fontSize: 12, color: AppColors.mobileTextSecondary)),
               ],
             ),
             const SizedBox(height: 6),
@@ -505,8 +507,8 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: creditProgress,
-                backgroundColor: Colors.grey[200],
-                valueColor: AlwaysStoppedAnimation<Color>(creditProgress > 0.8 ? Colors.red : Colors.orange),
+                backgroundColor: AppColors.mobileBorder,
+                valueColor: AlwaysStoppedAnimation<Color>(creditProgress > 0.8 ? AppColors.danger : AppColors.warning),
                 minHeight: 8,
               ),
             ),
@@ -517,7 +519,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
               Text('Solde actuel: ', style: TextStyle(color: Colors.grey[700])),
               Text(
                 '${format.format(balance)} DA',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: balance > 0 ? Colors.red : Colors.green),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: balance > 0 ? AppColors.danger : AppColors.success),
               ),
             ],
           ),
@@ -526,15 +528,15 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.red[50],
+                color: AppColors.dangerLight,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.red[300]!),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 20),
+                  Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 20),
                   const SizedBox(width: 8),
-                  Text('Impayé: ${format.format(overdueAmount)} DA', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700])),
+                  Text('Impayé: ${format.format(overdueAmount)} DA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.danger)),
                 ],
               ),
             ),
@@ -558,7 +560,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Dernier achat', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                Text('Dernier achat', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -574,7 +576,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('Catégorie favorite', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                Text('Catégorie favorite', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -599,7 +601,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           child: _buildActionButton(
             icon: Icons.chat,
             label: 'WhatsApp',
-            color: Colors.green,
+            color: AppColors.success,
             onPressed: phone.isNotEmpty
                 ? () => ContactUtils.sendWhatsApp(context, phone, customer['full_name'] ?? '', balance)
                 : null,
@@ -610,7 +612,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           child: _buildActionButton(
             icon: Icons.phone,
             label: 'Appeler',
-            color: Colors.blue,
+            color: AppColors.info,
             onPressed: phone.isNotEmpty
                 ? () async {
                     final url = Uri.parse('tel:${ContactUtils.cleanPhone(phone)}');
@@ -624,7 +626,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           child: _buildActionButton(
             icon: Icons.receipt_long,
             label: 'Factures',
-            color: Colors.indigo,
+            color: AppColors.mobilePrimary,
             onPressed: () => Navigator.pop(sheetContext),
           ),
         ),
@@ -633,7 +635,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           child: _buildActionButton(
             icon: Icons.payments,
             label: 'Paiement',
-            color: Colors.orange,
+            color: AppColors.warning,
             onPressed: () {
               Navigator.pop(sheetContext);
               _recordPayment();
@@ -660,11 +662,11 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
-              Icon(icon, color: onPressed != null ? color : Colors.grey, size: 24),
+              Icon(icon, color: onPressed != null ? color : AppColors.mobileTextSecondary, size: 24),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(color: onPressed != null ? color : Colors.grey, fontSize: 10, fontWeight: FontWeight.w600),
+                style: TextStyle(color: onPressed != null ? color : AppColors.mobileTextSecondary, fontSize: 10, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -678,7 +680,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(
         title: Text(S.t('nav_clients')),
-        backgroundColor: Colors.indigo[900],
+        backgroundColor: AppColors.mobileBackground,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -724,17 +726,17 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                                   return ListTile(
                                     dense: true,
                                     selected: sel,
-                                    selectedTileColor: Colors.indigo.withOpacity(0.1),
+                                    selectedTileColor: AppColors.mobilePrimary.withOpacity(0.1),
                                     leading: CircleAvatar(
                                       radius: 16,
-                                      backgroundColor: sel ? Colors.indigo : Colors.grey[200],
+                                      backgroundColor: sel ? AppColors.mobilePrimary : AppColors.mobileBorder,
                                       child: Icon(Icons.person, size: 16, color: sel ? Colors.white : Colors.grey[700]),
                                     ),
                                     title: Text(c['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                     subtitle: Text(c['phone'] ?? '', style: const TextStyle(fontSize: 10)),
                                     trailing: bal > 0
-                                        ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 10))
-                                        : const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                                        ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 10))
+                                        : const Icon(Icons.check_circle, color: AppColors.success, size: 14),
                                     onTap: () { setState(() => _selected = c); _fetchHistory(c['id']); _showCustomerProfile(c); },
                                   );
                                   },
@@ -744,11 +746,11 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                     ],
                   ),
                 ),
-                Container(width: 1, color: Colors.grey[300]),
+                Container(width: 1, color: AppColors.mobileBorderStrong),
                 // Detail panel
                 Expanded(
                   child: _selected == null
-                      ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: Colors.grey)))
+                      ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
                       : _loadingHistory
                           ? const Center(child: CircularProgressIndicator())
                           : Column(
@@ -756,32 +758,32 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                                 // Header
                                 Container(
                                   padding: const EdgeInsets.all(16),
-                                  color: Colors.indigo.withOpacity(0.05),
+                                  color: AppColors.mobilePrimary.withOpacity(0.05),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(_selected!['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.indigo)),
+                                            Text(_selected!['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.mobilePrimary)),
                                             const SizedBox(height: 4),
-                                            Text(_selected!['phone'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                            Text(_selected!['phone'] ?? '', style: const TextStyle(fontSize: 12, color: AppColors.mobileTextSecondary)),
                                           ],
                                         ),
                                       ),
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                          Text(S.t('pos_credit'), style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                                          Text('${_balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _balance > 0 ? Colors.red : Colors.green)),
+                                          Text(S.t('pos_credit'), style: const TextStyle(fontSize: 11, color: AppColors.mobileTextSecondary)),
+                                          Text('${_balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _balance > 0 ? AppColors.danger : AppColors.success)),
                                           const SizedBox(height: 4),
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               if (AppSession.isOwner) ...[
-                                                IconButton(icon: const Icon(Icons.edit, size: 16, color: Colors.orange), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: _editCustomer),
+                                                IconButton(icon: const Icon(Icons.edit, size: 16, color: AppColors.warning), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: _editCustomer),
                                                 const SizedBox(width: 8),
-                                                IconButton(icon: const Icon(Icons.archive, size: 16, color: Colors.red), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: _deleteCustomer),
+                                                IconButton(icon: const Icon(Icons.archive, size: 16, color: AppColors.danger), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: _deleteCustomer),
                                               ],
                                             ],
                                           ),
@@ -793,8 +795,8 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                                 // Tabs
                                 TabBar(
                                   controller: _tabCtrl,
-                                  labelColor: Colors.indigo[900],
-                                  unselectedLabelColor: Colors.grey,
+                                  labelColor: AppColors.mobileBackground,
+                                  unselectedLabelColor: AppColors.mobileTextSecondary,
                                   tabs: [
                                     Tab(text: '${S.t('nav_invoices')} (${_invoices.length})'),
                                     Tab(text: '${S.t('nav_payments')} (${_payments.length})'),
@@ -818,7 +820,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           ? FloatingActionButton(
               mini: true,
               onPressed: _recordPayment,
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
               child: const Icon(Icons.payments, color: Colors.white, size: 20),
             )
           : null,
@@ -858,7 +860,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
             dense: true,
             title: Text('${p['created_at']?.toString().substring(0, 10) ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
             subtitle: Text('${p['payment_method'] ?? ''}', style: const TextStyle(fontSize: 10)),
-            trailing: Text('+${(p['amount'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 12)),
+            trailing: Text('+${(p['amount'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success, fontSize: 12)),
           ),
         );
       },

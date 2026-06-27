@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 
 class EmployeesScreen extends StatefulWidget {
   const EmployeesScreen({super.key});
@@ -75,21 +76,21 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
       title: Text('Confirmation'), content: Text('Voulez-vous $label ${emp['full_name']} ?'),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white), child: Text(label)),
+        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning, foregroundColor: Colors.white), child: Text(label)),
       ],
     ));
     if (confirm != true) return;
     try {
       await Supabase.instance.client.from('user_profiles').update({'is_active': newStatus}).eq('id', emp['id']);
       _fetch();
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_employees')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white, bottom: TabBar(
-        controller: _tabCtrl, labelColor: Colors.white, unselectedLabelColor: Colors.white60,
+      appBar: AppBar(title: Text(S.t('nav_employees')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white, bottom: TabBar(
+        controller: _tabCtrl, labelColor: Colors.white, unselectedLabelColor: AppColors.mobileTextSecondary,
         tabs: [Tab(text: S.t('filter_active')), Tab(text: S.t('filter_suspended')), Tab(text: S.t('filter_archived'))],
       )),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
@@ -126,7 +127,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more, color: Colors.indigo),
+                            icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more, color: AppColors.mobilePrimary),
                             onPressed: () {
                               setState(() {
                                 if (isExpanded) { _expandedIds.remove(empId); }
@@ -151,17 +152,17 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
                         child: perf == null
                             ? const SizedBox(height: 40, child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))))
                             : perf.isEmpty
-                                ? const Text('Aucune performance', style: TextStyle(color: Colors.grey, fontSize: 12))
+                                ? const Text('Aucune performance', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12))
                                 : Column(
                                     children: [
                                       const Divider(),
-                                      _perfRow('Ventes', '${(perf['total_sales'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.green),
+                                      _perfRow('Ventes', '${(perf['total_sales'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', AppColors.success),
                                       const SizedBox(height: 6),
-                                      _perfRow('Transactions', '${(perf['transactions_count'] as num?)?.toInt() ?? 0}', Colors.blue),
+                                      _perfRow('Transactions', '${(perf['transactions_count'] as num?)?.toInt() ?? 0}', AppColors.info),
                                       const SizedBox(height: 6),
-                                      _perfRow('Remboursements', '${(perf['total_refunds'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.red),
+                                      _perfRow('Remboursements', '${(perf['total_refunds'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', AppColors.danger),
                                       const SizedBox(height: 6),
-                                      _perfRow('Remises', '${(perf['total_discount_given'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', Colors.orange),
+                                      _perfRow('Remises', '${(perf['total_discount_given'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', AppColors.warning),
                                     ],
                                   ),
                       ),
@@ -180,7 +181,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProv
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.mobileTextSecondary)),
         Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       ],
     );

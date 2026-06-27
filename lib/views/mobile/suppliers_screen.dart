@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 import '../admin/comparaison_fournisseur_sheet.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/supplier_local.dart';
@@ -47,7 +49,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('suppliers').insert({'company_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'balance': 0, 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); } }, child: Text(S.t('action_save'))),
+        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('suppliers').insert({'company_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'balance': 0, 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); } }, child: Text(S.t('action_save'))),
       ],
     ));
   }
@@ -55,7 +57,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_suppliers')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
+      appBar: AppBar(title: Text(S.t('nav_suppliers')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.compare_arrows), tooltip: S.t('supp_compare'), onPressed: () => SupplierComparisonSheet.show(context)),
           IconButton(icon: Icon(_debtFilter ? Icons.filter_list_off : Icons.filter_list), onPressed: () => setState(() { _debtFilter = !_debtFilter; _fetch(); })),
@@ -86,8 +88,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                 title: Text(s['company_name'] ?? s['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(s['phone'] ?? '', style: const TextStyle(fontSize: 12)),
                 trailing: bal > 0
-                    ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
-                    : const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold))
+                    : const Icon(Icons.check_circle, color: AppColors.success, size: 20),
               ));
             }),
           ),

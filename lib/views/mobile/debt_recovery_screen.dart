@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 import '../../services/debt_recovery_service.dart';
 import '../../shared/utils/contact_utils.dart';
 
@@ -93,7 +95,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
     showDialog(context: context, builder: (ctx) => AlertDialog(
       title: Text(S.t('cust_receive_payment')),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('${S.t('pos_credit')}: ${(debtor['balance'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+        Text('${S.t('pos_credit')}: ${(debtor['balance'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.danger)),
         const SizedBox(height: 12),
         TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Montant', border: OutlineInputBorder())),
       ]),
@@ -109,7 +111,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
               paymentMethod: 'cash', storeId: AppSession.currentStoreId!, notes: 'Recouvrement dette',
             );
             _fetch();
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
         }, child: Text(S.t('action_confirm'))),
       ],
     ));
@@ -199,7 +201,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_debt_recovery')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(S.t('nav_debt_recovery')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
       body: Column(children: [
         _buildBucketCards(),
         Padding(
@@ -218,24 +220,24 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                 final cid = d['id'] as String;
                 final daysOverdue = _customerDaysOverdue[cid];
                 final isOverdue = daysOverdue != null && daysOverdue > 0;
-                final tileColor = isOverdue ? Colors.red.withOpacity(0.05) : null;
+                final tileColor = isOverdue ? AppColors.danger.withOpacity(0.05) : null;
                 return Card(margin: const EdgeInsets.only(bottom: 8), color: tileColor, child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: isOverdue ? Colors.red[100] : null,
                     child: Text(((d['full_name'] as String?)?[0] ?? '?').toUpperCase()),
                   ),
-                  title: Text(d['full_name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: isOverdue ? Colors.red[800] : null)),
+                  title: Text(d['full_name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: isOverdue ? AppColors.danger : null)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${S.t('pos_credit')}: ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(color: isOverdue ? Colors.red : Colors.red, fontWeight: FontWeight.bold)),
+                      Text('${S.t('pos_credit')}: ${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(color: isOverdue ? AppColors.danger : AppColors.danger, fontWeight: FontWeight.bold)),
                       if (isOverdue)
                         Row(
                           children: [
                             Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red[600]),
                             const SizedBox(width: 4),
                             Text('$daysOverdue ${S.t('debt_days')}',
-                                style: TextStyle(color: Colors.red[700], fontSize: 11, fontWeight: FontWeight.w600)),
+                                style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.w600)),
                           ],
                         ),
                     ],
@@ -244,17 +246,17 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.chat, color: Colors.green, size: 20),
+                        icon: const Icon(Icons.chat, color: AppColors.success, size: 20),
                         tooltip: 'WhatsApp',
                         onPressed: () => ContactUtils.sendWhatsApp(context, d['phone'] ?? '', d['full_name'], bal, days: daysOverdue),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.sms, color: Colors.blue, size: 20),
+                        icon: const Icon(Icons.sms, color: AppColors.info, size: 20),
                         tooltip: 'SMS',
                         onPressed: () => ContactUtils.sendSMS(context, d['phone'] ?? '', d['full_name'], bal),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.payments, color: Colors.green, size: 20),
+                        icon: const Icon(Icons.payments, color: AppColors.success, size: 20),
                         onPressed: () => _recordPayment(d),
                       ),
                     ],

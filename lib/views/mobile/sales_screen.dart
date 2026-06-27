@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/transaction_local.dart';
 import '../../services/refund_service.dart';
@@ -67,7 +69,7 @@ class _SalesScreenState extends State<SalesScreen> {
     if (createdAt != null) {
       final hours = DateTime.now().difference(createdAt).inHours;
       if (hours > 48 && !AppSession.isOwner) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('refund_48h_blocked')), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('refund_48h_blocked')), backgroundColor: AppColors.danger));
         return;
       }
     }
@@ -76,22 +78,22 @@ class _SalesScreenState extends State<SalesScreen> {
       content: Text('${S.t('refund_original_invoice')} ${sale['invoice_number']}\n${S.t('refund_total_amount')} ${sale['total_price']} ${S.t('misc_currency')}'),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: Text(S.t('refund_confirm'))),
+        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white), child: Text(S.t('refund_confirm'))),
       ],
     ));
     if (confirm != true) return;
     try {
       final items = [{'variant_id': sale['variant_id'] ?? sale['product_variants']?['id'], 'quantity': sale['quantity']}];
       await RefundService.instance.processRefund(invoiceId: sale['invoice_id'] ?? sale['id'], items: items, refundAmount: (sale['total_price'] as num).toDouble(), reason: '', storeId: AppSession.currentStoreId ?? '');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('refund_success')), backgroundColor: Colors.green));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('refund_success')), backgroundColor: AppColors.success));
       _fetch();
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_sales')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white, actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetch)]),
+      appBar: AppBar(title: Text(S.t('nav_sales')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white, actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetch)]),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -120,9 +122,9 @@ class _SalesScreenState extends State<SalesScreen> {
                   title: Text('${pv?['products']?['name'] ?? s['invoice_number'] ?? ''}${pv?['size'] != null ? ' (${pv['size']})' : ''}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   subtitle: Text('${s['invoice_number'] ?? ''} • ${s['created_at']?.toString().substring(0, 10) ?? ''}', style: const TextStyle(fontSize: 11)),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text('${s['total_price']} ${S.t('misc_currency')}', style: TextStyle(decoration: isRefunded ? TextDecoration.lineThrough : null, color: isRefunded ? Colors.red : Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('${s['total_price']} ${S.t('misc_currency')}', style: TextStyle(decoration: isRefunded ? TextDecoration.lineThrough : null, color: isRefunded ? AppColors.danger : Colors.black, fontWeight: FontWeight.bold, fontSize: 13)),
                     if (status == 'paid')
-                      IconButton(icon: const Icon(Icons.assignment_return, color: Colors.red, size: 18), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: () => _refund(s)),
+                      IconButton(icon: const Icon(Icons.assignment_return, color: AppColors.danger, size: 18), padding: EdgeInsets.zero, constraints: const BoxConstraints(), onPressed: () => _refund(s)),
                   ]),
                 ),
               );

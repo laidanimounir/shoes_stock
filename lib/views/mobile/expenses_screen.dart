@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
+import '../../theme/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../theme/app_colors.dart';
 import '../../local_db/isar_service.dart';
 import '../../local_db/collections/expense_local.dart';
 import '../../local_db/collections/expense_category_local.dart';
@@ -65,7 +67,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           try {
             await ExpenseService.instance.addExpense(storeId: AppSession.currentStoreId!, categoryId: catId, amount: amount, description: descCtrl.text.trim(), paymentMethod: 'cash', expenseDate: DateTime.now());
             _fetch();
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red)); }
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
         }, child: Text(S.t('action_save'))),
       ],
     )));
@@ -88,7 +90,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
     final total = filtered.fold(0.0, (s, e) => s + ((e['amount'] as num?)?.toDouble() ?? 0));
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_expenses')), backgroundColor: Colors.indigo[900], foregroundColor: Colors.white,
+      appBar: AppBar(title: Text(S.t('nav_expenses')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _add)]),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: [
         Padding(
@@ -110,7 +112,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: Column(children: [
             Row(children: [
               Text('${S.t('pos_total')}: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text('${total.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red)),
+              Text('${total.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.danger)),
             ]),
             const SizedBox(height: 8),
             SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
@@ -143,7 +145,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               style: const TextStyle(fontSize: 11)),
                           trailing: Text(
                               '-${(e['amount'] as num?)?.toDouble() ?? 0} ${S.t('misc_currency')}',
-                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
                         ),
                       );
                     },
