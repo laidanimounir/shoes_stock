@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/debt_recovery_service.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../shared/utils/contact_utils.dart';
 
 class DebtRecoveryScreen extends StatefulWidget {
@@ -142,7 +144,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           final newBalance = currentBalance - amount;
 
           return AlertDialog(
-            title: Text(S.t('debt_receive_payment'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+            title: Text(S.t('debt_receive_payment'), style: AppTextStyles.bodyMedium()),
             content: Form(
               key: formKey,
               child: Column(
@@ -164,7 +166,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                           children: [
                             Text(S.t('debt_current_balance'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                             Text('${currentBalance.toStringAsFixed(2)} DA',
-                                style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.red)),
+                                style: AppTextStyles.bodyMedium(color: Colors.red)),
                           ],
                         ),
                         if (amount > 0) ...[
@@ -174,10 +176,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                             children: [
                               Text(S.t('debt_new_balance'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                               Text('${newBalance.toStringAsFixed(2)} DA',
-                                  style: AppTextStyles.bodyMedium(
-                                    fontWeight: FontWeight.bold,
-                                    color: newBalance <= 0 ? Colors.green : Colors.orange,
-                                    fontSize: 18,
+                                  style: AppTextStyles.bodyMedium(color: newBalance <= 0 ? Colors.green : Colors.orange,
                                   )),
                             ],
                           ),
@@ -371,10 +370,10 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: color)),
+          Text(label, style: AppTextStyles.bodyMedium(color: color)),
           const SizedBox(height: 2),
           Text('${amount.toStringAsFixed(0)} DA',
-              style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.black87)),
+              style: AppTextStyles.bodyMedium(color: Colors.black87)),
         ],
       ),
     );
@@ -399,7 +398,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(S.t('debt_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+        title: Text(S.t('debt_title'), style: AppTextStyles.bodyMedium()),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
@@ -414,7 +413,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                 ),
                 child: Text(
                   '${S.t('debt_total_debt')}: ${totalDebt.toStringAsFixed(2)} DA',
-                  style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: AppTextStyles.bodyMedium(color: Colors.white),
                 ),
               ),
             ),
@@ -498,7 +497,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                       child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
                                     ),
                                     title: Text(c['full_name'] ?? S.t('misc_unknown'),
-                                        style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+                                        style: AppTextStyles.bodyMedium()),
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -529,10 +528,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                           ),
                                           child: Text(
                                             '${balance.toStringAsFixed(0)} DA',
-                                            style: AppTextStyles.bodyMedium(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red[700],
-                                              fontSize: 12,
+                                            style: AppTextStyles.bodyMedium(color: Colors.red[700],
                                             ),
                                           ),
                                         ),
@@ -600,10 +596,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                         children: [
                                           Text(
                                             _selectedCustomer!['full_name'] ?? '',
-                                            style: AppTextStyles.headingLarge(
-                                              fontSize: 26,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.indigo[800],
+                                            style: AppTextStyles.headingLarge(color: Colors.indigo[800],
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -629,10 +622,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                         Text(S.t('cust_debt'), style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                                         Text(
                                           '${((_selectedCustomer!['balance'] as num?)?.toDouble() ?? 0).toStringAsFixed(2)} DA',
-                                          style: AppTextStyles.bodyMedium(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.red,
+                                          style: AppTextStyles.bodyMedium(color: Colors.red,
                                           ),
                                         ),
                                       ],
@@ -669,7 +659,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                   onPressed: _showDebtPaymentDialog,
                                   icon: const Icon(Icons.payments),
                                   label: Text(S.t('debt_receive_payment'),
-                                      style: AppTextStyles.bodyMedium(fontSize: 16)),
+                                      style: AppTextStyles.bodyMedium()),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     foregroundColor: Colors.white,
@@ -727,11 +717,11 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
             ),
             title: Text(
               '${amount.toStringAsFixed(2)} DA',
-              style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: Colors.green[700]),
+              style: AppTextStyles.bodyMedium(color: Colors.green[700]),
             ),
             subtitle: Text(
               '${_methodLabel(method)} ${notes.isNotEmpty ? '· $notes' : ''}',
-              style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.grey[600]),
+              style: AppTextStyles.bodyMedium(color: Colors.grey[600]),
             ),
             trailing: date != null
                 ? Text('${date.day}/${date.month}/${date.year}',
@@ -772,7 +762,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           const SizedBox(width: 12),
           Text('$label:', style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
           const SizedBox(width: 8),
-          Expanded(child: Text(value, style: AppTextStyles.bodyMedium(fontSize: 15))),
+          Expanded(child: Text(value, style: AppTextStyles.bodyMedium())),
         ],
       ),
     );

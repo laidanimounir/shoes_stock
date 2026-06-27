@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 import '../../services/expense_service.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -92,7 +94,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium()),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -161,7 +163,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     leading: const Icon(Icons.calendar_today, color: Colors.indigo),
                     title: Text(
                       '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                      style: AppTextStyles.bodyMedium(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium(),
                     ),
                     subtitle: Text(S.t('exp_date')),
                     trailing: TextButton(
@@ -236,7 +238,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(S.t('exp_category_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+          title: Text(S.t('exp_category_title'), style: AppTextStyles.bodyMedium()),
           content: SizedBox(
             width: 400,
             child: Column(
@@ -367,7 +369,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(S.t('exp_title'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+        title: Text(S.t('exp_title'), style: AppTextStyles.bodyMedium()),
         backgroundColor: Colors.indigo[800],
         foregroundColor: Colors.white,
         actions: [
@@ -384,7 +386,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold)),
+        label: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium()),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -419,7 +421,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           _dateFrom != null
                               ? '${_dateFrom!.day}/${_dateFrom!.month} → ${_dateTo!.day}/${_dateTo!.month}'
                               : S.t('exp_period'),
-                          style: AppTextStyles.bodyMedium(fontSize: 13),
+                          style: AppTextStyles.bodyMedium(),
                         ),
                       ),
                       if (_dateFrom != null) ...[
@@ -507,7 +509,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                 ),
                                 title: Text(
                                   desc.isNotEmpty ? desc : catName,
-                                  style: AppTextStyles.bodyMedium(fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.bodyMedium(),
                                 ),
                                 subtitle: Text(
                                   '$catName · ${_methodLabel(method)}',
@@ -519,10 +521,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   children: [
                                     Text(
                                       '${amount.toStringAsFixed(2)} DA',
-                                      style: AppTextStyles.bodyMedium(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red[700],
-                                        fontSize: 15,
+                                      style: AppTextStyles.bodyMedium(color: Colors.red[700],
                                       ),
                                     ),
                                     Text(dateStr, style: TextStyle(color: Colors.grey[500])),
@@ -561,7 +560,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   Text(label, style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
                   const SizedBox(height: 4),
                   Text(value,
-                      style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold, color: color),
+                      style: AppTextStyles.bodyMedium(color: color),
                       overflow: TextOverflow.ellipsis),
                 ],
               ),

@@ -430,10 +430,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       ),
       child: Text(
         '${config['icon']} ${config['label']}',
-        style: AppTextStyles.bodyMedium(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: color,
+        style: AppTextStyles.bodyMedium(color: color,
         ),
       ),
     );
@@ -723,7 +720,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
               pw.Text('STEPZONE ERP',
-                style: pw.TextStyle(fontSize: 6.bold),
+                style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
                 textAlign: pw.TextAlign.center,
               ),
               pw.SizedBox(height: 2),
@@ -747,7 +744,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     style: const pw.TextStyle(fontSize: 4),
                   ),
                   pw.Text('${price.toStringAsFixed(0)} DA',
-                    style: pw.TextStyle(fontSize: 5.bold),
+                    style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold),
                   ),
                 ],
               ),
@@ -807,14 +804,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(product['name'] ?? '',
-                          style: GoogleFonts.cairo(fontSize: 22, color: kPrimaryColor),
+                          style: AppTextStyles.bodyMedium(color: kPrimaryColor),
                         ),
                         const SizedBox(height: 4),
                         Row(children: [
                           _buildCategoryBadge(product['category']),
                           const SizedBox(width: 8),
                           Text(product['suppliers']?['company_name'] ?? '',
-                            style: AppTextStyles.bodyMedium(fontSize: 13, color: Colors.grey[600]),
+                            style: AppTextStyles.bodyMedium(color: Colors.grey[600]),
                           ),
                         ]),
                         const SizedBox(height: 8),
@@ -844,7 +841,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
               // Variants table
               Text('Détail des variantes',
-                style: GoogleFonts.cairo(fontSize: 16, color: kPrimaryColor),
+                style: AppTextStyles.bodyMedium(color: kPrimaryColor),
               ),
               const SizedBox(height: 12),
 
@@ -970,7 +967,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             ),
                             children: [
                               Text('Historique des prix',
-                                style: GoogleFonts.cairo(fontSize: 13, color: kPrimaryColor),
+                                style: AppTextStyles.bodyMedium(color: kPrimaryColor),
                               ),
                               const SizedBox(height: 8),
                               _buildVariantPriceHistory(v['id']),
@@ -1052,9 +1049,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         ),
         child: Column(
           children: [
-            Text(label, style: AppTextStyles.bodyMedium(fontSize: 11, color: Colors.grey[600])),
+            Text(label, style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
             const SizedBox(height: 4),
-            Text(value, style: GoogleFonts.cairo(fontSize: 18, color: color)),
+            Text(value, style: AppTextStyles.bodyMedium(color: color)),
           ],
         ),
       ),
@@ -1301,7 +1298,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
           Text(text,
-            style: AppTextStyles.bodyMedium(fontSize: 11, color: kPrimaryColor),
+            style: AppTextStyles.bodyMedium(color: kPrimaryColor),
           ),
         ],
       ),
@@ -1322,7 +1319,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
         title: Text(S.t('prod_catalog_title'),
-          style: GoogleFonts.cairo(fontSize: 18),
+          style: AppTextStyles.bodyMedium(),
         ),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
@@ -1420,8 +1417,6 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             '$_negativeCount produit(s) avec stock négatif détecté — vérification requise',
                             style: AppTextStyles.bodyMedium(
                               color: kNegativeRed,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -1519,7 +1514,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text('Tout sélectionner (${_allVisibleVariants.length})',
-                                  style: AppTextStyles.bodyMedium(fontSize: 12),
+                                  style: AppTextStyles.bodyMedium(),
                                 ),
                                 const Spacer(),
                                 TextButton.icon(
@@ -1536,7 +1531,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${_filteredProducts.length} produit(s) trouvé(s)',
-                          style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.grey[500]),
+                          style: AppTextStyles.bodyMedium(color: Colors.grey[500]),
                         ),
                       ],
                     ),
@@ -1559,7 +1554,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 hasActiveFilters
                                   ? 'Aucun produit ne correspond aux filtres sélectionnés'
                                   : S.t('prod_no_results'),
-                                style: AppTextStyles.bodyMedium(fontSize: 18, color: Colors.grey[500]),
+                                style: AppTextStyles.bodyMedium(color: Colors.grey[500]),
                               ),
                               if (hasActiveFilters) ...[
                                 const SizedBox(height: 16),
@@ -1628,7 +1623,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         child: Text(
                                           product['name'] ?? 'Inconnu',
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                                          style: AppTextStyles.bodyMedium(),
                                         ),
                                       ),
                                       _buildCategoryBadge(product['category']),
@@ -1862,7 +1857,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               const SizedBox(width: 8),
               Text(
                 '${_selectedVariantIds.length} sélectionné(s)',
-                style: AppTextStyles.bodyMedium(fontWeight: FontWeight.bold),
+                style: AppTextStyles.bodyMedium(),
               ),
               const Spacer(),
               ElevatedButton.icon(
@@ -1907,10 +1902,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             ],
             Text(
               label,
-              style: AppTextStyles.bodyMedium(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : chipColor,
+              style: AppTextStyles.bodyMedium(color: selected ? Colors.white : chipColor,
               ),
             ),
           ],

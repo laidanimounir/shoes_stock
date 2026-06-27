@@ -383,7 +383,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text(S.t('transfer_execute'),
-                        style: AppTextStyles.bodyMedium(fontSize: 11)),
+                        style: AppTextStyles.bodyMedium()),
                   ),
                 ),
               ],

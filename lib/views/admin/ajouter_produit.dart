@@ -448,7 +448,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     _variants.isNotEmpty;
 
   TextStyle get _sectionStyle =>
-    GoogleFonts.cairo(fontSize: 16, color: kPrimaryColor);
+    AppTextStyles.bodyMedium(color: kPrimaryColor);
 
   // ─── Step Indicator ────────────────────────────────────────
 
@@ -502,8 +502,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 '${i + 1}',
                                 style: TextStyle(
                                   color: isCurrent ? Colors.white : Colors.grey[600],
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
                                 ),
                               ),
                       ),
@@ -675,7 +673,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 onPressed: _copyFromExistingProduct,
                 icon: const Icon(Icons.content_copy, size: 18),
                 label: Text('📋 Copier depuis un produit existant',
-                  style: AppTextStyles.bodyMedium(fontSize: 13),
+                  style: AppTextStyles.bodyMedium(),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: kPrimaryColor,
@@ -700,7 +698,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   elevation: 2,
                 ),
                 child: Text('Suivant  →',
-                  style: GoogleFonts.cairo(fontSize: 16),
+                  style: AppTextStyles.bodyMedium(),
                 ),
               ),
             ),
@@ -734,10 +732,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.cairo(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : Colors.grey[600],
+            style: AppTextStyles.bodyMedium(color: selected ? Colors.white : Colors.grey[600],
             ),
           ),
         ),
@@ -997,7 +992,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   '${_selectedColors.length} couleur${_selectedColors.length > 1 ? 's' : ''} = '
                   '${_selectedSizes.length * _selectedColors.length} variantes',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.cairo(fontSize: 15, color: kPrimaryColor),
+                  style: AppTextStyles.bodyMedium(color: kPrimaryColor),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1012,7 +1007,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       : _generateVariants,
                   icon: const Icon(Icons.auto_fix_high),
                   label: Text('✨ Générer les variantes',
-                    style: GoogleFonts.cairo(fontSize: 16),
+                    style: AppTextStyles.bodyMedium(),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
@@ -1062,7 +1057,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           disabledBackgroundColor: Colors.grey[300],
                         ),
                         child: Text('Suivant  →',
-                          style: GoogleFonts.cairo(fontSize: 16),
+                          style: AppTextStyles.bodyMedium(),
                         ),
                       ),
                     ),
@@ -1093,10 +1088,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: GoogleFonts.cairo(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : Colors.grey[600],
+          style: AppTextStyles.bodyMedium(color: selected ? Colors.white : Colors.grey[600],
           ),
         ),
       ),
@@ -1188,8 +1180,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 'Marge: +${_marginAmount.toStringAsFixed(0)} DA (+${_marginPercent.toStringAsFixed(1)}%)',
                                 style: TextStyle(
                                   color: kAccentGreen,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -1270,7 +1260,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                       style: TextStyle(
                                         color: Colors.grey[400],
                                         fontStyle: FontStyle.italic,
-                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -1376,8 +1365,6 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 }).toStringAsFixed(0)} DA',
                                 style: TextStyle(
                                   color: kAccentGreen,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
                                 ),
                               ),
                             ],
@@ -1427,7 +1414,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       : const Icon(Icons.save),
                   label: Text(
                     _isLoading ? 'Enregistrement...' : '💾 Enregistrer le produit',
-                    style: GoogleFonts.cairo(fontSize: 18),
+                    style: AppTextStyles.bodyMedium(),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kAccentGreen,
@@ -1470,10 +1457,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         Text(emoji, style: const TextStyle(fontSize: 20)),
         const SizedBox(height: 4),
         Text(text,
-          style: AppTextStyles.bodyMedium(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: kPrimaryColor,
+          style: AppTextStyles.bodyMedium(color: kPrimaryColor,
           ),
         ),
       ],
@@ -1498,11 +1482,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(S.t('prod_add_title'),
-              style: GoogleFonts.cairo(fontSize: 18),
+              style: AppTextStyles.bodyMedium(),
             ),
             Text(
               'Étape ${_currentStep + 1} / 3',
-              style: AppTextStyles.bodyMedium(fontSize: 12, color: Colors.white70),
+              style: AppTextStyles.bodyMedium(color: Colors.white70),
             ),
           ],
         ),
