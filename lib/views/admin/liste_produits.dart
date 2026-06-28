@@ -9,7 +9,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
 import '../../core/app_constants.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/report_service.dart';
 import '../../local_db/isar_service.dart';
@@ -20,20 +19,20 @@ import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../shared/constants/shoe_constants.dart';
 
-const Color kPrimaryColor = Color(0xFF1B4F72);
-const Color kAccentGreen = Color(0xFF2ECC71);
-const Color kWarningOrange = Color(0xFFE67E22);
-const Color kDangerRed = Color(0xFFE74C3C);
-const Color kNegativeRed = Color(0xFF7B0000);
-const Color kBackgroundColor = Color(0xFFF5F7FA);
+const Color kPrimaryColor = Color(0xFFF0A500);
+const Color kAccentGreen = Color(0xFF4ADE80);
+const Color kWarningOrange = Color(0xFFF0A500);
+const Color kDangerRed = Color(0xFFF87171);
+const Color kNegativeRed = Color(0xFFF87171);
+const Color kBackgroundColor = Color(0xFF0A0A14);
 const double kBorderRadius = 12.0;
 
 enum StockStatus { healthy, low, empty, negative }
 
 const Map<String, Map<String, dynamic>> kCategoryConfig = {
-  'homme': {'icon': '👨', 'label': 'Homme', 'color': Color(0xFF1B4F72)},
-  'femme': {'icon': '👩', 'label': 'Femme', 'color': Color(0xFFE91E8C)},
-  'enfant': {'icon': '👶', 'label': 'Enfant', 'color': Color(0xFFE67E22)},
+  'homme': {'icon': '👨', 'label': 'Homme', 'color': Color(0xFFF0A500)},
+  'femme': {'icon': '👩', 'label': 'Femme', 'color': Color(0xFFF87171)},
+  'enfant': {'icon': '👶', 'label': 'Enfant', 'color': Color(0xFFF0A500)},
 };
 
 class ListeProduitsScreen extends StatefulWidget {
@@ -406,7 +405,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (items.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres valide sélectionné'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Aucun code-barres valide sélectionné'), backgroundColor: Color(0xFFF87171)),
         );
       }
       return;
@@ -425,7 +424,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -462,7 +461,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     child: TextFormField(
                       controller: buyPriceCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: S.t('prod_buy_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_downward, color: Colors.orange)),
+                      decoration: InputDecoration(labelText: S.t('prod_buy_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_downward, color: Color(0xFFF0A500))),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -470,14 +469,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     child: TextFormField(
                       controller: sellPriceCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: S.t('prod_sell_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_upward, color: Colors.green)),
+                      decoration: InputDecoration(labelText: S.t('prod_sell_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_upward, color: Color(0xFF4ADE80))),
                     ),
                   ),
                 ],
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(S.t('prod_price_note'), style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
+                child: Text(S.t('prod_price_note'), style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8), fontStyle: FontStyle.italic)),
               )
             ],
           ),
@@ -495,15 +494,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 }).eq('id', variant['id']);
                 
                 _fetchProducts();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_variant_updated')), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_variant_updated')), backgroundColor: Color(0xFF4ADE80)));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            child: Text(S.t('action_save'), style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF)),
+            child: Text(S.t('action_save'), style: const TextStyle(color: Color(0xFFEEEEFF))),
           ),
         ],
       ),
@@ -521,8 +520,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(S.t('action_archive'), style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500)),
+            child: Text(S.t('action_archive'), style: const TextStyle(color: Color(0xFFEEEEFF))),
           ),
         ],
       ),
@@ -533,9 +532,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         await Supabase.instance.client.from('product_variants').update({'is_active': false}).eq('id', variantId);
         _fetchProducts();
       } on PostgrestException catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Color(0xFFF87171)));
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)));
       }
     }
   }
@@ -551,8 +550,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171)),
+            child: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFEEEEFF))),
           ),
         ],
       ),
@@ -563,9 +562,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         await Supabase.instance.client.from('products').update({'is_active': false}).eq('id', productId);
         _fetchProducts();
       } on PostgrestException catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Color(0xFFF87171)));
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)));
       }
     }
   }
@@ -576,7 +575,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     for (final c in kShoeColors) {
       if (c['name'] == name) return _hexToColor(c['hex'] as String);
     }
-    return Colors.grey;
+    return Color(0xFF9090A8);
   }
 
   Color _hexToColor(String hex) {
@@ -591,7 +590,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (barcodeText == null || barcodeText.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres disponible pour cette variante'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Aucun code-barres disponible pour cette variante'), backgroundColor: Color(0xFFF87171)),
         );
       }
       return;
@@ -642,7 +641,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (barcodeText == null || barcodeText.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres disponible'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Aucun code-barres disponible'), backgroundColor: Color(0xFFF87171)),
         );
       }
       return;
@@ -669,7 +668,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             ),
             const SizedBox(height: 8),
             Text('Aperçu: $barcodeText / ${variant['size']} / ${variant['color']}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
           ],
         ),
         actions: [
@@ -811,7 +810,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           _buildCategoryBadge(product['category']),
                           const SizedBox(width: 8),
                           Text(product['suppliers']?['company_name'] ?? '',
-                            style: AppTextStyles.bodyMedium(color: Colors.grey[600]),
+                            style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
                           ),
                         ]),
                         const SizedBox(height: 8),
@@ -848,7 +847,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               if (activeVariants.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: Text('Aucune variante active', style: TextStyle(color: Colors.grey))),
+                  child: Center(child: Text('Aucune variante active', style: TextStyle(color: Color(0xFF9090A8)))),
                 )
               else
                 Flexible(
@@ -864,21 +863,21 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           child: Row(
                             children: const [
                               Expanded(flex: 2, child: Text('Code-barres',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Pointure',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Couleur',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Stock',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Achat',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Vente',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               Expanded(flex: 1, child: Text('Marge',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               SizedBox(width: 64, child: Text('Actions',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                             ],
                           ),
                         ),
@@ -908,7 +907,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 11,
-                                    color: barcodeText.isNotEmpty ? Colors.black87 : Colors.grey,
+                                    color: barcodeText.isNotEmpty ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
                                   ),
                                 )),
                                 Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
@@ -929,9 +928,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 )),
                                 Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
                                 Expanded(flex: 1, child: Text(buy.toStringAsFixed(0),
-                                  style: TextStyle(fontSize: 11, color: Colors.orange[700]))),
+                                  style: TextStyle(fontSize: 11, color: Color(0xFFF0A500)))),
                                 Expanded(flex: 1, child: Text(sell.toStringAsFixed(0),
-                                  style: TextStyle(fontSize: 11, color: Colors.green[700]))),
+                                  style: TextStyle(fontSize: 11, color: Color(0xFF166534)))),
                                 Expanded(flex: 1, child: Text(
                                   margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
                                   style: TextStyle(
@@ -947,14 +946,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     children: [
                                       if (barcodeText.isNotEmpty)
                                         IconButton(
-                                          icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
+                                          icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF9090A8)),
                                           tooltip: 'Imprimer',
                                           onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(),
                                         ),
                                       IconButton(
-                                        icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                        icon: const Icon(Icons.edit, size: 16, color: Color(0xFF58A6FF)),
                                         tooltip: 'Modifier',
                                         onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
                                         padding: EdgeInsets.zero,
@@ -992,7 +991,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       onPressed: () { Navigator.pop(ctx); _printAllVariants(product); },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: kPrimaryColor,
-                        side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                        side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
                       ),
                     )
                   else
@@ -1001,14 +1000,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     children: [
                       if (AppSession.isOwner)
                         TextButton.icon(
-                          icon: const Icon(Icons.archive, color: Colors.red, size: 18),
-                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
+                          icon: const Icon(Icons.archive, color: Color(0xFFF87171), size: 18),
+                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFF87171))),
                           onPressed: () { Navigator.pop(ctx); _archiveProduct(product['id']); },
                         ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: () => Navigator.pop(ctx),
-                        style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor, foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor, foregroundColor: Color(0xFFEEEEFF)),
                         child: const Text('Fermer'),
                       ),
                     ],
@@ -1043,13 +1042,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
+          color: color.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           children: [
-            Text(label, style: AppTextStyles.bodyMedium(color: Colors.grey[600])),
+            Text(label, style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
             const SizedBox(height: 4),
             Text(value, style: AppTextStyles.bodyMedium(color: color)),
           ],
@@ -1060,8 +1059,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
   Widget _buildImageFallback() {
     return Container(
-      color: Colors.grey[200],
-      child: const Center(child: Icon(Icons.shopping_bag, size: 40, color: Colors.grey)),
+      color: Color(0xFF1E1E35),
+      child: const Center(child: Icon(Icons.shopping_bag, size: 40, color: Color(0xFF9090A8))),
     );
   }
 
@@ -1090,7 +1089,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         if (history.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Aucun historique', style: TextStyle(color: Colors.grey)),
+            child: Text('Aucun historique', style: TextStyle(color: Color(0xFF9090A8))),
           );
         }
 
@@ -1117,7 +1116,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Color(0xFF9090A8).withValues(alpha: 0.2),
                       strokeWidth: 0.5,
                     ),
                   ),
@@ -1128,7 +1127,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         reservedSize: 36,
                         getTitlesWidget: (value, meta) {
                           return Text('${value.toInt()}',
-                            style: const TextStyle(fontSize: 8, color: Colors.grey),
+                            style: const TextStyle(fontSize: 8, color: Color(0xFF9090A8)),
                           );
                         },
                       ),
@@ -1144,7 +1143,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(label,
-                              style: const TextStyle(fontSize: 7, color: Colors.grey),
+                              style: const TextStyle(fontSize: 7, color: Color(0xFF9090A8)),
                             ),
                           );
                         },
@@ -1171,13 +1170,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             radius: 3,
                             color: kWarningOrange,
                             strokeWidth: 1,
-                            strokeColor: Colors.white,
+                            strokeColor: Color(0xFFEEEEFF),
                           );
                         },
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: kWarningOrange.withOpacity(0.1),
+                        color: kWarningOrange.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
@@ -1190,7 +1189,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             : '';
                         return LineTooltipItem(
                           '$date\n${spot.y.toStringAsFixed(0)} DA',
-                          const TextStyle(color: Colors.white),
+                          const TextStyle(color: Color(0xFFEEEEFF)),
                         );
                       }).toList(),
                     ),
@@ -1202,7 +1201,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             // Table
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: Color(0xFF1E1E35)),
                 borderRadius: BorderRadius.circular(8),
               ),
               clipBehavior: Clip.antiAlias,
@@ -1210,18 +1209,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    color: const Color(0xFF795548),
+                    color: const Color(0xFF1A1400),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: const Row(
                       children: [
                         Expanded(flex: 2, child: Text('Date',
-                          style: TextStyle(color: Colors.white))),
+                          style: TextStyle(color: Color(0xFFEEEEFF)))),
                         Expanded(flex: 2, child: Text('Fournisseur',
-                          style: TextStyle(color: Colors.white))),
+                          style: TextStyle(color: Color(0xFFEEEEFF)))),
                         Expanded(flex: 1, child: Text('Prix',
-                          style: TextStyle(color: Colors.white))),
+                          style: TextStyle(color: Color(0xFFEEEEFF)))),
                         Expanded(flex: 1, child: Text('Variation',
-                          style: TextStyle(color: Colors.white))),
+                          style: TextStyle(color: Color(0xFFEEEEFF)))),
                       ],
                     ),
                   ),
@@ -1238,17 +1237,17 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
-                        color: i.isEven ? Colors.white : const Color(0xFFF8F9FA),
-                        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                        color: i.isEven ? Color(0xFFEEEEFF) : const Color(0xFFF8F9FA),
+                        border: Border(bottom: BorderSide(color: Color(0xFF1E1E35)!)),
                       ),
                       child: Row(
                         children: [
                           Expanded(flex: 2, child: Text(date,
-                            style: const TextStyle(fontSize: 10, color: Colors.grey))),
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF9090A8)))),
                           Expanded(flex: 2, child: Text(supplier,
                             style: const TextStyle(fontSize: 10))),
                           Expanded(flex: 1, child: Text('${price.toStringAsFixed(0)} DA',
-                            style: TextStyle(fontSize: 10, color: Colors.orange[700]))),
+                            style: TextStyle(fontSize: 10, color: Color(0xFFF0A500)))),
                           Expanded(
                             flex: 1,
                             child: hasChange
@@ -1269,7 +1268,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                       ),
                                     ],
                                   )
-                                : Text('-', style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+                                : Text('-', style: TextStyle(fontSize: 10, color: Color(0xFF606078))),
                           ),
                         ],
                       ),
@@ -1288,9 +1287,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: kPrimaryColor.withOpacity(0.05),
+        color: kPrimaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kPrimaryColor.withOpacity(0.12)),
+        border: Border.all(color: kPrimaryColor.withValues(alpha: 0.12)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1322,13 +1321,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           style: AppTextStyles.bodyMedium(),
         ),
         backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         elevation: 1,
         actions: [
           if (hasActiveFilters)
             TextButton(
               onPressed: _resetFilters,
-              child: const Text('Réinitialiser', style: TextStyle(color: Colors.white70)),
+              child: const Text('Réinitialiser', style: TextStyle(color: Color(0xFF9090A8))),
             ),
           IconButton(
             icon: const Icon(Icons.checklist),
@@ -1346,8 +1345,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           ? FloatingActionButton.extended(
               onPressed: widget.onAddProduct,
               backgroundColor: kAccentGreen,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              icon: const Icon(Icons.add, color: Color(0xFFEEEEFF)),
+              label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEEEEFF))),
             )
           : null,
       body: _isLoading
@@ -1357,14 +1356,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 // Search bar
                 Container(
                   padding: const EdgeInsets.all(16),
-                  color: Colors.white,
+                  color: Color(0xFFEEEEFF),
                   child: Row(
                     children: [
                       Expanded(
                         flex: 3,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Color(0xFF0A0A14),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: TextField(
@@ -1384,16 +1383,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: kWarningOrange.withOpacity(0.1),
+                            color: kWarningOrange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: kWarningOrange.withOpacity(0.3)),
+                            border: Border.all(color: kWarningOrange.withValues(alpha: 0.3)),
                           ),
                           child: Text('$_activeFilterCount filtre(s)',
                             style: TextStyle(fontSize: 11, color: kWarningOrange),
                           ),
                         ),
                       const SizedBox(width: 12),
-                      _buildMiniStat(S.t('prod_active_count'), '${_filteredProducts.length}', Icons.category, Colors.blue),
+                      _buildMiniStat(S.t('prod_active_count'), '${_filteredProducts.length}', Icons.category, Color(0xFF58A6FF)),
                     ],
                   ),
                 ),
@@ -1404,7 +1403,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: kNegativeRed.withOpacity(0.1),
+                      color: kNegativeRed.withValues(alpha: 0.1),
                       border: Border.all(color: kNegativeRed),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1428,7 +1427,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 if (_products.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
+                    color: Color(0xFFEEEEFF),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1531,7 +1530,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${_filteredProducts.length} produit(s) trouvé(s)',
-                          style: AppTextStyles.bodyMedium(color: Colors.grey[500]),
+                          style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
                         ),
                       ],
                     ),
@@ -1547,14 +1546,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                               Icon(
                                 hasActiveFilters ? Icons.filter_alt_off : Icons.inventory_2_outlined,
                                 size: 80,
-                                color: Colors.grey[300],
+                                color: Color(0xFF1E1E35),
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 hasActiveFilters
                                   ? 'Aucun produit ne correspond aux filtres sélectionnés'
                                   : S.t('prod_no_results'),
-                                style: AppTextStyles.bodyMedium(color: Colors.grey[500]),
+                                style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
                               ),
                               if (hasActiveFilters) ...[
                                 const SizedBox(height: 16),
@@ -1562,7 +1561,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   onPressed: _resetFilters,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: kPrimaryColor,
-                                    side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                                    side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
                                   ),
                                   child: const Text('Réinitialiser les filtres'),
                                 ),
@@ -1594,7 +1593,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   width: stockStatus == StockStatus.negative ? 4 : 3,
                                 )),
                                 color: stockStatus == StockStatus.negative
-                                    ? kNegativeRed.withOpacity(0.03)
+                                    ? kNegativeRed.withValues(alpha: 0.03)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(kBorderRadius + 2),
                               ),
@@ -1607,7 +1606,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     width: 60,
                                     height: 60,
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[200],
+                                      color: Color(0xFF1E1E35),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: imageUrl != null
@@ -1615,7 +1614,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                             borderRadius: BorderRadius.circular(8),
                                             child: Image.network(imageUrl, fit: BoxFit.cover),
                                           )
-                                        : const Icon(Icons.image_not_supported, color: Colors.grey),
+                                        : const Icon(Icons.image_not_supported, color: Color(0xFF9090A8)),
                                   ),
                                   title: Row(
                                     children: [
@@ -1631,15 +1630,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   ),
                                   subtitle: Row(
                                     children: [
-                                      Icon(Icons.local_shipping, size: 14, color: Colors.grey[600]),
+                                      Icon(Icons.local_shipping, size: 14, color: Color(0xFF9090A8)),
                                       const SizedBox(width: 4),
                                       Flexible(child: Text(supplierName, overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: Colors.grey[600]))),
+                                        style: TextStyle(color: Color(0xFF9090A8)))),
                                       const SizedBox(width: 12),
-                                      Icon(Icons.style, size: 14, color: Colors.grey[600]),
+                                      Icon(Icons.style, size: 14, color: Color(0xFF9090A8)),
                                       const SizedBox(width: 4),
                                       Text('${activeVariants.length} var.',
-                                        style: TextStyle(color: Colors.grey[600])),
+                                        style: TextStyle(color: Color(0xFF9090A8))),
                                       const SizedBox(width: 12),
                                       _buildStockBadge(stockStatus, totalStock),
                                     ],
@@ -1648,11 +1647,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     if (activeVariants.isEmpty)
                                       Padding(
                                         padding: const EdgeInsets.all(16),
-                                        child: Text(S.t('prod_no_active_variants'), style: const TextStyle(color: Colors.grey)),
+                                        child: Text(S.t('prod_no_active_variants'), style: const TextStyle(color: Color(0xFF9090A8))),
                                       )
                                     else
                                       Container(
-                                        color: Colors.grey[50],
+                                        color: Color(0xFF0A0A14),
                                         child: Column(
                                           children: [
 
@@ -1674,13 +1673,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                                              decoration: BoxDecoration(color: kPrimaryColor.withOpacity(0.05)),
+                                              decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.05)),
                                               child: Row(
                                                 children: [
                                                   Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold))),
                                                   Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold))),
                                                   Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))),
+                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF58A6FF)))),
                                                   SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold))),
                                                 ],
                                               ),
@@ -1712,8 +1711,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                 child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-                                                  color: variantStock < 0 ? kNegativeRed.withOpacity(0.03) : null,
+                                                  border: Border(bottom: BorderSide(color: Color(0xFF1E1E35)!)),
+                                                  color: variantStock < 0 ? kNegativeRed.withValues(alpha: 0.03) : null,
                                                 ),
                                                 child: Row(
                                                   children: [
@@ -1739,7 +1738,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                       ),
                                                     )),
                                                     Expanded(flex: 2, child: Text(v['barcode'] ?? '-',
-                                                      style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                                      style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8)))),
                                                     Expanded(
                                                       flex: 3,
                                                       child: Column(
@@ -1748,14 +1747,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                       children: [
                                                         if (AppSession.isOwner) ...[
                                                           Text('${S.t('prod_buy_short')}$buyPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Colors.orange)),
+                                                            style: const TextStyle(fontSize: 12, color: Color(0xFFF0A500))),
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Colors.green)),
+                                                            style: const TextStyle(fontSize: 12, color: Color(0xFF4ADE80))),
                                                           Text('${S.t('prod_margin_short')}$margin ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                                                            style: const TextStyle(fontSize: 11, color: Color(0xFF58A6FF))),
                                                         ] else
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Colors.green)),
+                                                            style: const TextStyle(fontSize: 12, color: Color(0xFF4ADE80))),
                                                       ],
                                                       ),
                                                     ),
@@ -1773,18 +1772,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                         children: [
                                                           if ((v['barcode'] as String?)?.isNotEmpty == true)
                                                             IconButton(
-                                                              icon: const Icon(Icons.print_outlined, size: 16, color: Colors.grey),
+                                                              icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF9090A8)),
                                                               tooltip: 'Imprimer étiquette',
                                                               onPressed: () => _printCustomQuantity(v, product['name']),
                                                             ),
                                                           if (AppSession.isOwner) ...[
                                                             IconButton(
-                                                              icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                                              icon: const Icon(Icons.edit, size: 16, color: Color(0xFF58A6FF)),
                                                               tooltip: S.t('prod_edit_price_code'),
                                                               onPressed: () => _showEditVariantDialog(v),
                                                             ),
                                                             IconButton(
-                                                              icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                                                              icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFF87171)),
                                                               tooltip: S.t('prod_archive_variant'),
                                                               onPressed: () => _archiveVariant(v['id']),
                                                             ),
@@ -1812,15 +1811,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                             onPressed: () => _showProductDetailDialog(product),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: kPrimaryColor,
-                                              side: BorderSide(color: kPrimaryColor.withOpacity(0.3)),
+                                              side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
                                             ),
                                           ),
                                           const SizedBox(width: 8),
                                           if (AppSession.isOwner)
                                             TextButton.icon(
                                               onPressed: () => _archiveProduct(product['id']),
-                                              icon: const Icon(Icons.archive, color: Colors.red, size: 18),
-                                              label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.red)),
+                                              icon: const Icon(Icons.archive, color: Color(0xFFF87171), size: 18),
+                                              label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFF87171))),
                                             ),
                                         ],
                                       ),
@@ -1844,9 +1843,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFEEEEFF),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, -2)),
+            BoxShadow(color: Color(0xFF0A0A14).withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, -2)),
           ],
         ),
         child: SafeArea(
@@ -1865,7 +1864,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 label: Text('Imprimer Barcodes (${_selectedVariantIds.length})'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Color(0xFFEEEEFF),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 onPressed: _showBulkPrintDialog,
@@ -1890,19 +1889,19 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           color: selected ? chipColor : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? chipColor : chipColor.withOpacity(0.4),
+            color: selected ? chipColor : chipColor.withValues(alpha: 0.4),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: selected ? Colors.white : chipColor),
+              Icon(icon, size: 14, color: selected ? Color(0xFFEEEEFF) : chipColor),
               const SizedBox(width: 4),
             ],
             Text(
               label,
-              style: AppTextStyles.bodyMedium(color: selected ? Colors.white : chipColor,
+              style: AppTextStyles.bodyMedium(color: selected ? Color(0xFFEEEEFF) : chipColor,
               ),
             ),
           ],
@@ -1923,9 +1922,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1949,7 +1948,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
