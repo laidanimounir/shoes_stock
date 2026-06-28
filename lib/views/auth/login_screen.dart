@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          backgroundColor: AppColors.danger,
+          backgroundColor: Color(0xFFF87171),
         ),
       );
       return;
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           message = "${S.t('auth_error_generic')} (${e.message})";
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(message), backgroundColor: Color(0xFFF87171)),
         );
       }
     } catch (e) {
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.t('auth_error_generic')),
-            backgroundColor: AppColors.danger,
+            backgroundColor: Color(0xFFF87171),
           ),
         );
       }
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ScaffoldMessenger.of(this.context).showSnackBar(
                             SnackBar(
                               content: Text(S.t('password_reset_sent')),
-                              backgroundColor: AppColors.success,
+                              backgroundColor: Color(0xFF4ADE80),
                             ),
                           );
                         }
@@ -183,8 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text('AR',
                       style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'ar'
-                            ? AppColors.mobilePrimary
-                            : AppColors.mobileTextSecondary,
+                            ? Color(0xFFF0A500)
+                            : Color(0xFF9090A8),
                       )),
                 ),
                 TextButton(
@@ -192,8 +192,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text('FR',
                       style: AppTextStyles.bodyMedium(
                         color: AppSession.locale.value == 'fr'
-                            ? AppColors.mobilePrimary
-                            : AppColors.mobileTextSecondary,
+                            ? Color(0xFFF0A500)
+                            : Color(0xFF9090A8),
                       )),
                 ),
               ],
@@ -211,8 +211,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.mobileBackground.withValues(alpha: 0.3),
-                  AppColors.mobileBackground.withValues(alpha: 0.75),
+                  Color(0xFF0A0A14).withValues(alpha: 0.3),
+                  Color(0xFF0A0A14).withValues(alpha: 0.75),
                 ],
               ),
             ),
@@ -289,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 64,
                         height: 64,
                         decoration: const BoxDecoration(
-                          color: AppColors.mobilePrimary,
+                          color: Color(0xFFF0A500),
                           shape: BoxShape.circle,
                         ),
                         child: _isLoading
@@ -316,14 +316,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         S.t('auth_no_account').toUpperCase(),
                         style: AppTextStyles.bodyMedium(
-                          color: AppColors.mobileTextSecondary,
+                          color: Color(0xFF9090A8),
                         ),
                       ),
                       const SizedBox(width: 32),
                       Text(
                         S.t('auth_forgot_password').toUpperCase(),
                         style: AppTextStyles.bodyMedium(
-                          color: AppColors.mobileTextSecondary,
+                          color: Color(0xFF9090A8),
                         ),
                       ),
                     ],
@@ -362,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: BorderSide(color: Colors.white38),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.mobilePrimary, width: 1.5),
+          borderSide: BorderSide(color: Color(0xFFF0A500), width: 1.5),
         ),
         filled: false,
       ),
