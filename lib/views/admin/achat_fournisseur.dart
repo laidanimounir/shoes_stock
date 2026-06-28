@@ -102,7 +102,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
 
  if (inputQty <= 0) {
  ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(content: Text(S.t('buy_qty_invalid')), backgroundColor: Colors.red),
+ SnackBar(content: Text(S.t('buy_qty_invalid')), backgroundColor: Color(0xFFF87171)),
  );
  return;
  }
@@ -165,7 +165,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
  decoration: BoxDecoration(
- color: (isHigher ? const Color(0xFFE67E22) : const Color(0xFF2ECC71)).withOpacity(0.15),
+ color: (isHigher ? const Color(0xFFE67E22) : const Color(0xFF2ECC71)).withValues(alpha: 0.15),
  borderRadius: BorderRadius.circular(8),
  ),
  child: Text('${isHigher ? "+" : ""}$pct%',
@@ -236,9 +236,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  child: Container(
  padding: const EdgeInsets.all(12),
  decoration: BoxDecoration(
- border: Border.all(color: color.withOpacity(0.4)),
+ border: Border.all(color: color.withValues(alpha: 0.4)),
  borderRadius: BorderRadius.circular(10),
- color: color.withOpacity(0.05),
+ color: color.withValues(alpha: 0.05),
  ),
  child: Row(children: [
  Icon(icon, color: color, size: 22),
@@ -324,7 +324,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  if (mounted) {
  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
  content: Text('Erreur création arrivage: ${e.toString()}'),
- backgroundColor: Colors.red,
+ backgroundColor: Color(0xFFF87171),
  ));
  }
  return null;
@@ -372,7 +372,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  prefixIcon: const Icon(Icons.inventory_2_outlined),
  ),
@@ -384,7 +384,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  child: ChoiceChip(
  label: Text(
  cat == 'homme' ? '👨 Homme' : cat == 'femme' ? '👩 Femme' : '👶 Enfant',
- style: AppTextStyles.bodyMedium(color: dlgCategory == cat ? Colors.white : null)),
+ style: AppTextStyles.bodyMedium(color: dlgCategory == cat ? Color(0xFFEEEEFF) : null)),
  selected: dlgCategory == cat,
  selectedColor: const Color(0xFF1B4F72),
  onSelected: (_) => setDlgState(() => dlgCategory = cat),
@@ -403,7 +403,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  ),
  keyboardType: TextInputType.number,
@@ -421,7 +421,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  ),
  )),
@@ -437,7 +437,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  prefixIcon: const Icon(Icons.tag_outlined),
  ),
@@ -457,7 +457,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  prefixIcon: const Icon(Icons.arrow_downward, color: Color(0xFFE67E22)),
  ),
@@ -475,7 +475,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: Color(0xFFE0E6ED))),
  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
  borderSide: const BorderSide(color: Color(0xFF1B4F72), width: 2)),
- filled: true, fillColor: Colors.white,
+ filled: true, fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  prefixIcon: const Icon(Icons.arrow_upward, color: Color(0xFF2ECC71)),
  ),
@@ -496,7 +496,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  style: AppTextStyles.bodyMedium()),
  style: ElevatedButton.styleFrom(
  backgroundColor: const Color(0xFF2ECC71),
- foregroundColor: Colors.white,
+ foregroundColor: Color(0xFFEEEEFF),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
  ),
  onPressed: () async {
@@ -607,13 +607,13 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  void _showPaymentDialog() {
  if (AppSession.isEmployee) {
  ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(content: Text(S.t('buy_no_permission')), backgroundColor: Colors.red),
+ SnackBar(content: Text(S.t('buy_no_permission')), backgroundColor: Color(0xFFF87171)),
  );
  return;
  }
  if (_purchaseItems.isEmpty || _selectedStoreId == null || _selectedSupplierId == null) {
  ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(content: Text(S.t('buy_fill_fields')), backgroundColor: Colors.orange),
+ SnackBar(content: Text(S.t('buy_fill_fields')), backgroundColor: Color(0xFFF0A500)),
  );
  return;
  }
@@ -661,7 +661,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  const SizedBox(height: 12),
  Text(
  S.t('buy_payment_note'),
- style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+ style: const TextStyle(color: Color(0xFF9090A8), fontStyle: FontStyle.italic),
  ),
  ],
  ),
@@ -676,7 +676,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  Navigator.pop(context); // إغلاق النافذة
  _processPurchaseTransaction(totalAmount, paid); // تنفيذ العملية
  },
- style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+ style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Color(0xFFEEEEFF)),
  child: Text(S.t('buy_confirm')),
  ),
  ],
@@ -725,7 +725,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  if (mounted) {
  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
  content: Text(S.t('buy_success')),
- backgroundColor: Colors.green,
+ backgroundColor: Color(0xFF4ADE80),
  ));
  setState(() {
  _purchaseItems.clear();
@@ -735,7 +735,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  } catch (e) {
  if (mounted) {
  setState(() => _isSubmitting = false);
- ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
  }
  }
  }
@@ -839,9 +839,9 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  elevation: 0,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(10),
- side: BorderSide(color: const Color(0xFF1B4F72).withOpacity(0.3)),
+ side: BorderSide(color: const Color(0xFF1B4F72).withValues(alpha: 0.3)),
  ),
- color: const Color(0xFF1B4F72).withOpacity(0.04),
+ color: const Color(0xFF1B4F72).withValues(alpha: 0.04),
  child: Padding(
  padding: const EdgeInsets.all(14),
  child: _isLoadingHistory
@@ -867,7 +867,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  ),
  child: Text('${_currentStock < 0 ? "⚠️ " : ""}$_currentStock pcs',
  style: AppTextStyles.bodyMedium(
- color: Colors.white)),
+ color: Color(0xFFEEEEFF))),
  ),
  ]),
  if (_lastPurchasePrice != null)
@@ -967,7 +967,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  child: Container(
  padding: const EdgeInsets.symmetric(vertical: 12),
  decoration: BoxDecoration(
- color: isSelected ? const Color(0xFF1B4F72) : Colors.white,
+ color: isSelected ? const Color(0xFF1B4F72) : Color(0xFFEEEEFF),
  borderRadius: BorderRadius.circular(8),
  border: Border.all(
  color: isSelected ? const Color(0xFF1B4F72) : const Color(0xFFE0E6ED),
@@ -977,7 +977,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  mainAxisAlignment: MainAxisAlignment.center,
  children: [
  Text(label,
- style: AppTextStyles.bodyMedium( color: isSelected ? Colors.white : const Color(0xFF6B7C93))),
+ style: AppTextStyles.bodyMedium( color: isSelected ? Color(0xFFEEEEFF) : const Color(0xFF6B7C93))),
  ],
  ),
  ),
@@ -1034,7 +1034,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  borderSide: const BorderSide(color: kPrimary, width: 2),
  ),
  filled: true,
- fillColor: Colors.white,
+ fillColor: Color(0xFFEEEEFF),
  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  prefixIcon: Icon(icon, color: kTextSec),
  );
@@ -1047,12 +1047,12 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  elevation: 0,
  title: Row(
  children: [
- const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+ const Icon(Icons.shopping_cart_outlined, color: Color(0xFFEEEEFF), size: 22),
  const SizedBox(width: 10),
  Text(
  'Achat / Approvisionnement',
  style: AppTextStyles.bodyMedium(
- color: Colors.white, ),
+ color: Color(0xFFEEEEFF), ),
  ),
  ],
  ),
@@ -1085,7 +1085,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  style: AppTextStyles.bodyMedium()),
  style: ElevatedButton.styleFrom(
  backgroundColor: const Color(0xFF1B4F72),
- foregroundColor: Colors.white,
+ foregroundColor: Color(0xFFEEEEFF),
  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
  ),
@@ -1113,7 +1113,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  Container(
  width: double.infinity,
  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
- color: kPrimary.withOpacity(0.08),
+ color: kPrimary.withValues(alpha: 0.08),
  child: Row(
  children: [
  const Icon(Icons.visibility, size: 16, color: kPrimary),
@@ -1273,14 +1273,14 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
  decoration: BoxDecoration(
- color: Colors.orange.shade50,
+ color: Color(0xFF0A0A14),
  borderRadius: BorderRadius.circular(6),
- border: Border.all(color: Colors.orange.shade300),
+ border: Border.all(color: Color(0xFF1E1E35)),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
- Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange.shade700),
+ Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFF991B1B)),
  const SizedBox(width: 4),
  Flexible(
  child: Text(
@@ -1289,7 +1289,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  ' → ${_enteredPrice.toStringAsFixed(0)} DA '
  '(${_priceDiffPercent > 0 ? "+" : ""}'
  '${_priceDiffPercent.toStringAsFixed(1)}%)',
- style: TextStyle( color: Colors.orange.shade700, ),
+ style: TextStyle( color: Color(0xFF991B1B), ),
  ),
  ),
  ],
@@ -1331,7 +1331,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  ElevatedButton.icon(
  style: ElevatedButton.styleFrom(
  backgroundColor: kPrimary,
- foregroundColor: Colors.white,
+ foregroundColor: Color(0xFFEEEEFF),
  padding: const EdgeInsets.symmetric(vertical: 16),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
  minimumSize: const Size(double.infinity, 52),
@@ -1359,7 +1359,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  color: Color(0xFF1B4F72))),
  onPressed: _showDefinePlusAchetDialog,
  style: TextButton.styleFrom(
- backgroundColor: const Color(0xFF1B4F72).withOpacity(0.08),
+ backgroundColor: const Color(0xFF1B4F72).withValues(alpha: 0.08),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
  ),
@@ -1390,20 +1390,20 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  ),
  child: Row(
  children: [
- const Icon(Icons.receipt_long_outlined, color: Colors.white),
+ const Icon(Icons.receipt_long_outlined, color: Color(0xFFEEEEFF)),
  const SizedBox(width: 8),
  Text('Bon de Commande',
  style: AppTextStyles.bodyMedium(
- color: Colors.white, )),
+ color: Color(0xFFEEEEFF), )),
  const Spacer(),
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
  decoration: BoxDecoration(
- color: Colors.white.withOpacity(0.2),
+ color: Color(0xFFEEEEFF).withValues(alpha: 0.2),
  borderRadius: BorderRadius.circular(20),
  ),
  child: Text('${_purchaseItems.length} articles',
- style: AppTextStyles.bodyMedium(color: Colors.white)),
+ style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF))),
  ),
  ],
  ),
@@ -1442,7 +1442,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  child: ListTile(
  dense: true,
  leading: CircleAvatar(
- backgroundColor: kPrimary.withOpacity(0.1),
+ backgroundColor: kPrimary.withValues(alpha: 0.1),
  child: Text('${i + 1}',
  style: const TextStyle(color: kPrimary)),
  ),
@@ -1457,7 +1457,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  margin: const EdgeInsets.only(left: 8),
  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
  decoration: BoxDecoration(
- color: const Color(0xFF2ECC71).withOpacity(0.15),
+ color: const Color(0xFF2ECC71).withValues(alpha: 0.15),
  borderRadius: BorderRadius.circular(4),
  ),
  child: Text('Nouvelle arrivage 🆕',
@@ -1488,7 +1488,7 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  Container(
  padding: const EdgeInsets.all(16),
  decoration: BoxDecoration(
- color: kPrimary.withOpacity(0.05),
+ color: kPrimary.withValues(alpha: 0.05),
  ),
  child: Column(
  children: [
@@ -1538,14 +1538,14 @@ class _AchatFournisseurScreenState extends State<AchatFournisseurScreen> {
  child: ElevatedButton.icon(
  style: ElevatedButton.styleFrom(
  backgroundColor: const Color(0xFF2ECC71),
- foregroundColor: Colors.white,
+ foregroundColor: Color(0xFFEEEEFF),
  padding: const EdgeInsets.symmetric(vertical: 18),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
  minimumSize: const Size(double.infinity, 56),
  elevation: 3,
  ),
  icon: _isSubmitting
- ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+ ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2))
  : const Icon(Icons.check_circle_outline),
  label: Text('✅ Confirmer la commande',
  style: AppTextStyles.bodyMedium()),

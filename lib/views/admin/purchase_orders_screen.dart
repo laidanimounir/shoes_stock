@@ -63,14 +63,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
       await supabase.rpc('confirm_purchase_order', params: {'p_po_id': orderId});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Commande confirmée'), backgroundColor: Colors.green),
+          SnackBar(content: Text('Commande confirmée'), backgroundColor: Color(0xFF4ADE80)),
         );
         _fetchOrders();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     }
@@ -84,14 +84,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
           .eq('id', orderId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Commande annulée'), backgroundColor: Colors.orange),
+          SnackBar(content: Text('Commande annulée'), backgroundColor: Color(0xFFF0A500)),
         );
         _fetchOrders();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     }
@@ -128,14 +128,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Stock reçu avec succès'), backgroundColor: Colors.green),
+          SnackBar(content: Text('Stock reçu avec succès'), backgroundColor: Color(0xFF4ADE80)),
         );
         _fetchOrders();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     }
@@ -149,33 +149,33 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
       case 'draft':
       case 'pending':
         icon = Icons.edit;
-        color = Colors.grey;
+        color = Color(0xFF9090A8);
         label = 'Brouillon';
         break;
       case 'confirmed':
       case 'approved':
         icon = Icons.check;
-        color = Colors.blue;
+        color = Color(0xFF58A6FF);
         label = 'Confirmée';
         break;
       case 'partially_received':
         icon = Icons.hourglass_bottom;
-        color = Colors.orange;
+        color = Color(0xFFF0A500);
         label = 'Partiellement reçue';
         break;
       case 'received':
         icon = Icons.done_all;
-        color = Colors.green;
+        color = Color(0xFF4ADE80);
         label = 'Reçue';
         break;
       case 'cancelled':
         icon = Icons.strikethrough_s;
-        color = Colors.red;
+        color = Color(0xFFF87171);
         label = 'Annulée';
         break;
       default:
         icon = Icons.help_outline;
-        color = Colors.grey;
+        color = Color(0xFF9090A8);
         label = status;
     }
     return Container(
@@ -199,21 +199,21 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: const Text('Bons de Commande'),
-        backgroundColor: Colors.indigo[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF991B1B),
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           if (AppSession.isOwner)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: DropdownButton<String?>(
-                dropdownColor: Colors.indigo[800],
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: Color(0xFF0F0F1C),
+                style: const TextStyle(color: Color(0xFFEEEEFF)),
                 underline: const SizedBox(),
                 value: _filterStoreId,
-                hint: const Text('Tous les magasins', style: TextStyle(color: Colors.white70)),
+                hint: const Text('Tous les magasins', style: TextStyle(color: Color(0xFF9090A8))),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('Tous les magasins')),
                   ..._stores.map((s) => DropdownMenuItem(value: s['id'] as String, child: Text(s['name'] as String))),
@@ -227,8 +227,8 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.indigo[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF991B1B),
+        foregroundColor: Color(0xFFEEEEFF),
         onPressed: _showCreateOrderDialog,
         child: const Icon(Icons.add),
       ),
@@ -239,9 +239,9 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[300]),
+                      Icon(Icons.receipt_long_outlined, size: 64, color: Color(0xFF1E1E35)),
                       const SizedBox(height: 16),
-                      Text('Aucun bon de commande', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                      Text('Aucun bon de commande', style: TextStyle(color: Color(0xFF9090A8), fontSize: 16)),
                     ],
                   ),
                 )
@@ -267,7 +267,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Text(o['order_number'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isCancelled ? Colors.grey : null)),
+                                      Text(o['order_number'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isCancelled ? Color(0xFF9090A8) : null)),
                                       const SizedBox(width: 8),
                                       _buildStatusChip(status),
                                     ],
@@ -275,44 +275,44 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                 ),
                                 Text(
                                   '${o['total_amount'] ?? 0} ${S.t('misc_currency')}',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isCancelled ? Colors.grey : Colors.indigo),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isCancelled ? Color(0xFF9090A8) : Color(0xFF58A6FF)),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Text(
                               '${o['supplier_id']?['company_name'] ?? '—'}',
-                              style: TextStyle(color: isCancelled ? Colors.grey[400] : Colors.grey[700], fontSize: 14),
+                              style: TextStyle(color: isCancelled ? Color(0xFF606078) : Color(0xFF9090A8), fontSize: 14),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.store, size: 14, color: Colors.grey[500]),
+                                Icon(Icons.store, size: 14, color: Color(0xFF9090A8)),
                                 const SizedBox(width: 4),
-                                Text('${o['stores']?['name'] ?? '—'}', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                Text('${o['stores']?['name'] ?? '—'}', style: TextStyle(color: Color(0xFF9090A8), fontSize: 13)),
                                 const Spacer(),
-                                Icon(Icons.inventory_2, size: 14, color: Colors.grey[500]),
+                                Icon(Icons.inventory_2, size: 14, color: Color(0xFF9090A8)),
                                 const SizedBox(width: 4),
-                                Text('$itemCount articles', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                Text('$itemCount articles', style: TextStyle(color: Color(0xFF9090A8), fontSize: 13)),
                                 const SizedBox(width: 12),
-                                Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                                Icon(Icons.access_time, size: 14, color: Color(0xFF9090A8)),
                                 const SizedBox(width: 4),
-                                Text(_formatDate(o['created_at']?.toString() ?? ''), style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                Text(_formatDate(o['created_at']?.toString() ?? ''), style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                               ],
                             ),
                             if (status == 'received' && o['received_at'] != null) ...[
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, size: 14, color: Colors.green[400]),
+                                  Icon(Icons.check_circle, size: 14, color: Color(0xFF4ADE80)),
                                   const SizedBox(width: 4),
-                                  Text('Reçue le ${_formatDate(o['received_at'].toString())}', style: TextStyle(color: Colors.green[700], fontSize: 12)),
+                                  Text('Reçue le ${_formatDate(o['received_at'].toString())}', style: TextStyle(color: Color(0xFF166534), fontSize: 12)),
                                 ],
                               ),
                             ],
                             if (o['notes'] != null && (o['notes'] as String).isNotEmpty) ...[
                               const SizedBox(height: 8),
-                              Text('${o['notes']}', style: TextStyle(color: isCancelled ? Colors.grey[300] : Colors.grey[500], fontSize: 12, fontStyle: FontStyle.italic)),
+                              Text('${o['notes']}', style: TextStyle(color: isCancelled ? Color(0xFF1E1E35) : Color(0xFF9090A8), fontSize: 12, fontStyle: FontStyle.italic)),
                             ],
                             if (status == 'draft' || status == 'pending') ...[
                               const Divider(height: 24),
@@ -322,7 +322,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.close, size: 16),
                                     label: const Text('Annuler'),
-                                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                                    style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFF87171)),
                                     onPressed: () async {
                                       final confirm = await showDialog<bool>(
                                         context: context,
@@ -333,7 +333,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Non')),
                                             ElevatedButton(
                                               onPressed: () => Navigator.pop(ctx, true),
-                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                                              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Color(0xFFEEEEFF)),
                                               child: const Text('Oui, annuler'),
                                             ),
                                           ],
@@ -347,7 +347,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.check_circle, size: 16),
                                       label: const Text('Confirmer'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Color(0xFFEEEEFF)),
                                       onPressed: AppSession.isOwner
                                           ? () async {
                                               final confirm = await showDialog<bool>(
@@ -359,7 +359,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                                     TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Non')),
                                                     ElevatedButton(
                                                       onPressed: () => Navigator.pop(ctx, true),
-                                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                                                      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Color(0xFFEEEEFF)),
                                                       child: const Text('Oui, confirmer'),
                                                     ),
                                                   ],
@@ -380,7 +380,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.close, size: 16),
                                     label: const Text('Annuler'),
-                                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                                    style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFF87171)),
                                     onPressed: () async {
                                       final confirm = await showDialog<bool>(
                                         context: context,
@@ -391,7 +391,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Non')),
                                             ElevatedButton(
                                               onPressed: () => Navigator.pop(ctx, true),
-                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                                              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Color(0xFFEEEEFF)),
                                               child: const Text('Oui, annuler'),
                                             ),
                                           ],
@@ -405,7 +405,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                     ElevatedButton.icon(
                                       icon: const Icon(Icons.inventory, size: 16),
                                       label: const Text('Recevoir le stock'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Color(0xFFEEEEFF)),
                                       onPressed: () => _receiveStock(o['id'] as String, o['store_id'] as String, items),
                                     ),
                                 ],
@@ -475,7 +475,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       margin: const EdgeInsets.only(top: 8),
                       width: 40, height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: Color(0xFF1E1E35),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -484,7 +484,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.add_shopping_cart, color: Colors.indigo),
+                          const Icon(Icons.add_shopping_cart, color: Color(0xFF58A6FF)),
                           const SizedBox(width: 8),
                           const Text('Nouveau Bon de Commande',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -583,7 +583,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                             child: _buildVariantSearchField(item, setSheetState),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                                            icon: const Icon(Icons.close, size: 18, color: Color(0xFFF87171)),
                                             onPressed: items.length > 1
                                                 ? () => setSheetState(() => items.removeAt(i))
                                                 : null,
@@ -635,8 +635,8 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                        color: Color(0xFF0A0A14),
+                        border: Border(top: BorderSide(color: Color(0xFF1E1E35)!)),
                       ),
                       child: Column(
                         children: [
@@ -645,7 +645,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                             children: [
                               const Text('Total:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                               Text('${total.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF58A6FF))),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -653,8 +653,8 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.indigo[700],
-                                foregroundColor: Colors.white,
+                                backgroundColor: Color(0xFF991B1B),
+                                foregroundColor: Color(0xFFEEEEFF),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               onPressed: isSubmitting
@@ -670,7 +670,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         }).toList();
                                         if (itemsPayload.isEmpty) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Ajoutez au moins un article'), backgroundColor: Colors.red),
+                                            const SnackBar(content: Text('Ajoutez au moins un article'), backgroundColor: Color(0xFFF87171)),
                                           );
                                           setSheetState(() => isSubmitting = false);
                                           return;
@@ -684,7 +684,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         if (ctx.mounted) Navigator.pop(ctx);
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Bon de commande créé'), backgroundColor: Colors.green),
+                                            const SnackBar(content: Text('Bon de commande créé'), backgroundColor: Color(0xFF4ADE80)),
                                           );
                                           _fetchOrders();
                                         }
@@ -692,13 +692,13 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         setSheetState(() => isSubmitting = false);
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
                                           );
                                         }
                                       }
                                     },
                               child: isSubmitting
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2))
                                   : const Text('Confirmer la commande', style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
@@ -872,7 +872,7 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Saisir les quantités reçues:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const Text('Saisir les quantités reçues:', style: TextStyle(fontSize: 13, color: Color(0xFF9090A8))),
                   const SizedBox(height: 12),
                   ...widget.poItems.map((item) {
                     final vid = item['variant_id'] as String;
@@ -893,8 +893,8 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(productName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                Text('Taille: $size  Couleur: $color', style: TextStyle(color: Colors.grey[600], fontSize: 11)),
-                                Text('Commandé: $orderedQty  Reçu: $alreadyReceived', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                                Text('Taille: $size  Couleur: $color', style: TextStyle(color: Color(0xFF9090A8), fontSize: 11)),
+                                Text('Commandé: $orderedQty  Reçu: $alreadyReceived', style: TextStyle(color: Color(0xFF9090A8), fontSize: 11)),
                               ],
                             ),
                           ),
@@ -932,7 +932,7 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
             }
             Navigator.pop(context, result);
           },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Color(0xFFEEEEFF)),
           child: const Text('Valider la réception'),
         ),
       ],

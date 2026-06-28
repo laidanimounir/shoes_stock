@@ -268,7 +268,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 
                 if (isEdit) {
                   if (!AppSession.isOwner) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_access_denied')), backgroundColor: Colors.red));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_access_denied')), backgroundColor: Color(0xFFF87171)));
                     return;
                   }
                   await Supabase.instance.client.from('customers').update(data).eq('id', customer['id']);
@@ -299,16 +299,16 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(isEdit ? 'Client modifié.' : 'Client ajouté.'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color(0xFF4ADE80),
                   ));
                 }
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Color(0xFFF87171)));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Color(0xFFEEEEFF)),
             child: Text(isEdit ? 'Modifier' : 'Enregistrer'),
           ),
         ],
@@ -327,7 +327,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500), foregroundColor: Color(0xFFEEEEFF)),
             child: Text(S.t('action_archive')),
           ),
         ],
@@ -339,11 +339,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
       await Supabase.instance.client.from('customers').update({'is_active': false}).eq('id', id);
       if (_selectedCustomer?['id'] == id) setState(() => _selectedCustomer = null);
       _fetchCustomers(_searchController.text);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('cust_archived')), backgroundColor: Colors.orange));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('cust_archived')), backgroundColor: Color(0xFFF0A500)));
     } on PostgrestException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -365,9 +365,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
 
   Map<String, dynamic> _getTierInfo(int points) {
     if (points >= 2000) {
-      return {'name': 'Gold', 'color': Colors.amber, 'progress': 1.0};
+      return {'name': 'Gold', 'color': Color(0xFFFBBF24), 'progress': 1.0};
     } else if (points >= 500) {
-      return {'name': 'Silver', 'color': Colors.grey, 'progress': (points - 500) / 1500.0};
+      return {'name': 'Silver', 'color': Color(0xFF9090A8), 'progress': (points - 500) / 1500.0};
     } else {
       return {'name': 'Bronze', 'color': const Color(0xFF8B4513), 'progress': points > 0 ? points / 500.0 : 0.0};
     }
@@ -409,7 +409,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         debugPrint("Error fetching customer profile: $e");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur chargement profil: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Erreur chargement profil: $e'), backgroundColor: Color(0xFFF87171)),
           );
         }
         return;
@@ -454,7 +454,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         builder: (context, scrollController) {
           return Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFFEEEEFF),
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: ListView(
@@ -464,7 +464,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 Center(
                   child: Container(
                     width: 40, height: 4,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: Color(0xFF1E1E35), borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -490,15 +490,15 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
 
   Widget _buildProfileHeader(String initials, String name, String customerType, String memberSince) {
     final isWholesale = customerType == 'wholesale';
-    final badgeColor = isWholesale ? Colors.purple : Colors.teal;
+    final badgeColor = isWholesale ? Color(0xFF58A6FF) : Color(0xFF58A6FF);
     final badgeText = isWholesale ? 'GROS' : 'DÉTAIL';
 
     return Column(
       children: [
         CircleAvatar(
           radius: 40,
-          backgroundColor: Colors.indigo,
-          child: Text(initials, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+          backgroundColor: Color(0xFF58A6FF),
+          child: Text(initials, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFEEEEFF))),
         ),
         const SizedBox(height: 12),
         Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
@@ -506,14 +506,14 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: badgeColor.withOpacity(0.1),
+            color: badgeColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: badgeColor),
           ),
           child: Text(badgeText, style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
         ),
         const SizedBox(height: 8),
-        Text('Membre depuis $memberSince', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text('Membre depuis $memberSince', style: TextStyle(color: Color(0xFF9090A8), fontSize: 13)),
       ],
     );
   }
@@ -521,11 +521,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   Widget _buildStatsRow(int totalPurchases, double totalSpent, double avgOrderValue, NumberFormat currencyFormat, NumberFormat noDecFormat) {
     return Row(
       children: [
-        _buildStatCard('Achats', noDecFormat.format(totalPurchases), Icons.shopping_bag, Colors.indigo),
+        _buildStatCard('Achats', noDecFormat.format(totalPurchases), Icons.shopping_bag, Color(0xFF58A6FF)),
         const SizedBox(width: 12),
-        _buildStatCard('Total', '${currencyFormat.format(totalSpent)} DA', Icons.attach_money, Colors.green),
+        _buildStatCard('Total', '${currencyFormat.format(totalSpent)} DA', Icons.attach_money, Color(0xFF4ADE80)),
         const SizedBox(width: 12),
-        _buildStatCard('Moyen', '${currencyFormat.format(avgOrderValue)} DA', Icons.trending_up, Colors.orange),
+        _buildStatCard('Moyen', '${currencyFormat.format(avgOrderValue)} DA', Icons.trending_up, Color(0xFFF0A500)),
       ],
     );
   }
@@ -535,7 +535,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -544,7 +544,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             const SizedBox(height: 8),
             Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+            Text(label, style: TextStyle(color: Color(0xFF9090A8), fontSize: 11)),
           ],
         ),
       ),
@@ -556,23 +556,23 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.amber[50]!, Colors.orange[50]!],
+          colors: [Color(0xFF2B1A0D)!, Color(0xFF1A1400)!],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber[200]!),
+        border: Border.all(color: Color(0xFFFBBF24)!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.star, color: Colors.amber[700], size: 28),
+              Icon(Icons.star, color: Color(0xFFFBBF24), size: 28),
               const SizedBox(width: 8),
-              Text('Fidélité', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.amber[900])),
+              Text('Fidélité', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFBBF24))),
               const Spacer(),
-              Text('${format.format(points)} pts', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amber[900])),
+              Text('${format.format(points)} pts', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFBBF24))),
             ],
           ),
           const SizedBox(height: 16),
@@ -580,7 +580,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: (tierInfo['progress'] as double).clamp(0.0, 1.0),
-              backgroundColor: Colors.grey[200],
+              backgroundColor: Color(0xFF1E1E35),
               valueColor: AlwaysStoppedAnimation<Color>(tierInfo['color'] as Color),
               minHeight: 10,
             ),
@@ -590,8 +590,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildTierBadge('Bronze', points < 500, const Color(0xFF8B4513)),
-              _buildTierBadge('Silver', points < 500 || points >= 2000, Colors.grey),
-              _buildTierBadge('Gold', points < 2000, Colors.amber),
+              _buildTierBadge('Silver', points < 500 || points >= 2000, Color(0xFF9090A8)),
+              _buildTierBadge('Gold', points < 2000, Color(0xFFFBBF24)),
             ],
           ),
           const SizedBox(height: 8),
@@ -599,7 +599,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: (tierInfo['color'] as Color).withOpacity(0.2),
+                color: (tierInfo['color'] as Color).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -617,14 +617,14 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: inactive ? Colors.grey[200] : color.withOpacity(0.15),
+        color: inactive ? Color(0xFF1E1E35) : color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: inactive ? Colors.grey[300]! : color),
+        border: Border.all(color: inactive ? Color(0xFF1E1E35)! : color),
       ),
       child: Text(
         name,
         style: TextStyle(
-          color: inactive ? Colors.grey[500] : color,
+          color: inactive ? Color(0xFF9090A8) : color,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
@@ -636,18 +636,18 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red[50]?.withOpacity(0.3),
+        color: Color(0xFF2B0D0D)?.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red[100]!),
+        border: Border.all(color: Color(0xFF2B0D0D)!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.credit_card, color: Colors.red[700], size: 24),
+              Icon(Icons.credit_card, color: Color(0xFF991B1B), size: 24),
               const SizedBox(width: 8),
-              Text('Crédit & Solde', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[900])),
+              Text('Crédit & Solde', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF87171))),
             ],
           ),
           const SizedBox(height: 12),
@@ -656,7 +656,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Limite: ${format.format(creditLimit)} DA', style: const TextStyle(fontSize: 13)),
-                Text('${(creditProgress * 100).toStringAsFixed(0)}% utilisé', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('${(creditProgress * 100).toStringAsFixed(0)}% utilisé', style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
               ],
             ),
             const SizedBox(height: 6),
@@ -664,8 +664,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: creditProgress,
-                backgroundColor: Colors.grey[200],
-                valueColor: AlwaysStoppedAnimation<Color>(creditProgress > 0.8 ? Colors.red : Colors.orange),
+                backgroundColor: Color(0xFF1E1E35),
+                valueColor: AlwaysStoppedAnimation<Color>(creditProgress > 0.8 ? Color(0xFFF87171) : Color(0xFFF0A500)),
                 minHeight: 8,
               ),
             ),
@@ -673,10 +673,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           ],
           Row(
             children: [
-              Text('Solde actuel: ', style: TextStyle(color: Colors.grey[700])),
+              Text('Solde actuel: ', style: TextStyle(color: Color(0xFF9090A8))),
               Text(
                 '${format.format(balance)} DA',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: balance > 0 ? Colors.red : Colors.green),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: balance > 0 ? Color(0xFFF87171) : Color(0xFF4ADE80)),
               ),
             ],
           ),
@@ -685,15 +685,15 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.red[50],
+                color: Color(0xFF2B0D0D),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red[300]!),
+                border: Border.all(color: Color(0xFFF87171)!),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.red[700], size: 20),
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFF991B1B), size: 20),
                   const SizedBox(width: 8),
-                  Text('Impayé: ${format.format(overdueAmount)} DA', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[700])),
+                  Text('Impayé: ${format.format(overdueAmount)} DA', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF991B1B))),
                 ],
               ),
             ),
@@ -707,9 +707,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue[50]?.withOpacity(0.3),
+        color: Color(0xFF0D1F3A)?.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[100]!),
+        border: Border.all(color: Color(0xFF0D1F3A)!),
       ),
       child: Row(
         children: [
@@ -717,11 +717,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Dernier achat', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                Text('Dernier achat', style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 16, color: Colors.blue[700]),
+                    Icon(Icons.calendar_today, size: 16, color: Color(0xFF58A6FF)),
                     const SizedBox(width: 6),
                     Text(lastPurchaseDate, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
@@ -733,12 +733,12 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('Catégorie favorite', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                Text('Catégorie favorite', style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.category, size: 16, color: Colors.blue[700]),
+                    Icon(Icons.category, size: 16, color: Color(0xFF58A6FF)),
                     const SizedBox(width: 6),
                     Text(topCategory, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
@@ -758,7 +758,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           child: _buildActionButton(
             icon: Icons.chat,
             label: 'WhatsApp',
-            color: Colors.green,
+            color: Color(0xFF4ADE80),
             onPressed: phone.isNotEmpty
                 ? () => ContactUtils.sendWhatsApp(context, phone, customer['full_name'] ?? '', balance)
                 : null,
@@ -769,7 +769,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           child: _buildActionButton(
             icon: Icons.phone,
             label: 'Appeler',
-            color: Colors.blue,
+            color: Color(0xFF58A6FF),
             onPressed: phone.isNotEmpty
                 ? () async {
                     final url = Uri.parse('tel:${ContactUtils.cleanPhone(phone)}');
@@ -783,7 +783,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           child: _buildActionButton(
             icon: Icons.receipt_long,
             label: 'Factures',
-            color: Colors.indigo,
+            color: Color(0xFF58A6FF),
             onPressed: () => Navigator.pop(sheetContext),
           ),
         ),
@@ -792,7 +792,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           child: _buildActionButton(
             icon: Icons.payments,
             label: 'Paiement',
-            color: Colors.orange,
+            color: Color(0xFFF0A500),
             onPressed: () {
               Navigator.pop(sheetContext);
               _showAddPaymentDialog();
@@ -810,7 +810,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
     VoidCallback? onPressed,
   }) {
     return Material(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onPressed,
@@ -819,11 +819,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
-              Icon(icon, color: onPressed != null ? color : Colors.grey, size: 24),
+              Icon(icon, color: onPressed != null ? color : Color(0xFF9090A8), size: 24),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(color: onPressed != null ? color : Colors.grey, fontSize: 10, fontWeight: FontWeight.w600),
+                style: TextStyle(color: onPressed != null ? color : Color(0xFF9090A8), fontSize: 10, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -844,7 +844,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("${S.t('pos_credit')}: ${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("${S.t('pos_credit')}: ${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF87171))),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
@@ -888,15 +888,15 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                 
                 _fetchCustomerHistory(_selectedCustomer!['id']); // التحديث الآلي
                 _fetchCustomers(_searchController.text); // لتحديث القائمة الجانبية
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_payment_recorded')), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('msg_payment_recorded')), backgroundColor: Color(0xFF4ADE80)));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-            child: Text(S.t('action_confirm'), style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF)),
+            child: Text(S.t('action_confirm'), style: const TextStyle(color: Color(0xFFEEEEFF))),
           ),
         ],
       ),
@@ -913,11 +913,11 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(S.t('cust_title_full')),
-        backgroundColor: Colors.indigo[800],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF0F0F1C),
+        foregroundColor: Color(0xFFEEEEFF),
       ),
       body: Row(
         children: [
@@ -926,7 +926,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             flex: 4,
             child: Container(
               margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+              decoration: BoxDecoration(color: Color(0xFFEEEEFF), borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withValues(alpha: 0.05), blurRadius: 10)]),
               child: Column(
                 children: [
                   Padding(
@@ -951,7 +951,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                             IconButton(
                               onPressed: () => _showAddEditCustomerDialog(),
                               icon: const Icon(Icons.person_add_alt_1),
-                              color: Colors.indigo,
+                              color: Color(0xFF58A6FF),
                               tooltip: S.t('cust_add_tooltip'),
                             )
                           ],
@@ -960,10 +960,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text(S.t('cust_with_debt'), style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                            Text(S.t('cust_with_debt'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 13)),
                             Switch(
                               value: _showOnlyWithDebt,
-                              activeColor: Colors.orange,
+                              activeColor: Color(0xFFF0A500),
                               onChanged: (val) {
                                 setState(() {
                                   _showOnlyWithDebt = val;
@@ -981,7 +981,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                     child: _isLoading 
                       ? const Center(child: CircularProgressIndicator())
                       : _customers.isEmpty 
-                        ? Center(child: Text(S.t('cust_no_results'), style: const TextStyle(color: Colors.grey)))
+                        ? Center(child: Text(S.t('cust_no_results'), style: const TextStyle(color: Color(0xFF9090A8))))
                         : ListView.separated(
                           itemCount: _customers.length,
                           separatorBuilder: (_, _) => const Divider(height: 1),
@@ -993,16 +993,16 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                             
                             return ListTile(
                               selected: isSelected,
-                              selectedTileColor: Colors.indigo.withOpacity(0.1),
+                              selectedTileColor: Color(0xFF58A6FF).withValues(alpha: 0.1),
                               leading: CircleAvatar(
-                                backgroundColor: isSelected ? Colors.indigo : Colors.grey[200],
-                                child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
+                                backgroundColor: isSelected ? Color(0xFF58A6FF) : Color(0xFF1E1E35),
+                                child: Icon(Icons.person, color: isSelected ? Color(0xFFEEEEFF) : Color(0xFF9090A8)),
                               ),
                               title: Text(c['full_name'] ?? S.t('misc_unknown'), style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text(c['phone'] ?? c['email'] ?? S.t('misc_no_phone')),
                               trailing: hasDebt 
-                                  ? Text('${balance.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
-                                  : const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                                  ? Text('${balance.toStringAsFixed(2)} ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold))
+                                  : const Icon(Icons.check_circle, color: Color(0xFF4ADE80), size: 16),
                               onTap: () => _selectCustomer(c),
                             );
                           },
@@ -1018,9 +1018,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
             flex: 6,
             child: Container(
               margin: const EdgeInsetsDirectional.only(top: 16, bottom: 16, end: 16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+              decoration: BoxDecoration(color: Color(0xFFEEEEFF), borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withValues(alpha: 0.05), blurRadius: 10)]),
               child: _selectedCustomer == null
-                  ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: Colors.grey, fontSize: 18)))
+                  ? Center(child: Text(S.t('cust_no_client_selected'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 18)))
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -1028,7 +1028,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.indigo.withOpacity(0.05),
+                            color: Color(0xFF58A6FF).withValues(alpha: 0.05),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                           ),
                           child: Row(
@@ -1038,15 +1038,15 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(_selectedCustomer!['full_name'], style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                    Text(_selectedCustomer!['full_name'], style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF58A6FF))),
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        const Icon(Icons.phone, size: 16, color: Colors.grey),
+                                        const Icon(Icons.phone, size: 16, color: Color(0xFF9090A8)),
                                         const SizedBox(width: 8),
                                         Text(_selectedCustomer!['phone'] ?? 'Non renseigné'),
                                         const SizedBox(width: 24),
-                                        const Icon(Icons.email, size: 16, color: Colors.grey),
+                                        const Icon(Icons.email, size: 16, color: Color(0xFF9090A8)),
                                         const SizedBox(width: 8),
                                         Text(_selectedCustomer!['email'] ?? 'Non renseigné'),
                                       ],
@@ -1057,17 +1057,17 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text("Crédit (Dette)", style: TextStyle(color: Colors.grey)),
+                                  const Text("Crédit (Dette)", style: TextStyle(color: Color(0xFF9090A8))),
                                   Text(
                                     '${_currentBalance.toStringAsFixed(2)} DA',
-                                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _currentBalance > 0 ? Colors.red : Colors.green),
+                                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _currentBalance > 0 ? Color(0xFFF87171) : Color(0xFF4ADE80)),
                                   ),
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
                                       if (AppSession.isOwner) ...[
-                                        IconButton(icon: const Icon(Icons.edit, color: Colors.orange, size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
-                                        IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
+                                        IconButton(icon: const Icon(Icons.edit, color: Color(0xFFF0A500), size: 20), onPressed: () => _showAddEditCustomerDialog(_selectedCustomer)),
+                                        IconButton(icon: const Icon(Icons.delete, color: Color(0xFFF87171), size: 20), onPressed: () => _deleteCustomer(_selectedCustomer!['id'])),
                                       ]
                                     ],
                                   )
@@ -1080,8 +1080,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                         // ONGLETS (TABS)
                         TabBar(
                           controller: _tabController,
-                          labelColor: Colors.indigo,
-                          indicatorColor: Colors.indigo,
+                          labelColor: Color(0xFF58A6FF),
+                          indicatorColor: Color(0xFF58A6FF),
                           tabs: [
                             Tab(icon: const Icon(Icons.shopping_bag), text: S.t('cust_tabs_invoices')),
                             Tab(icon: const Icon(Icons.account_balance_wallet), text: S.t('cust_tabs_payments')),
@@ -1109,8 +1109,8 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
                             icon: const Icon(Icons.payments),
                             label: Text(S.t('cust_register_payment_btn'), style: const TextStyle(fontSize: 16)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Color(0xFF4ADE80),
+                              foregroundColor: Color(0xFFEEEEFF),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
                           ),
@@ -1138,9 +1138,9 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Color(0xFF1E1E35))),
           child: ListTile(
-            leading: CircleAvatar(backgroundColor: Colors.indigo[50], child: const Icon(Icons.shopping_bag, color: Colors.indigo)),
+            leading: CircleAvatar(backgroundColor: Color(0xFF0A0A14), child: const Icon(Icons.shopping_bag, color: Color(0xFF58A6FF))),
             title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}"),
             trailing: Column(
@@ -1148,7 +1148,7 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Color(0xFFF87171) : Color(0xFF4ADE80), fontSize: 12)),
               ],
             ),
           ),
@@ -1170,10 +1170,10 @@ class _GestionClientsScreenState extends State<GestionClientsScreen> with Single
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade200)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Color(0xFF1E1E35))),
           child: ListTile(
-            leading: CircleAvatar(backgroundColor: Colors.green[50], child: const Icon(Icons.check_circle, color: Colors.green)),
-            title: Text("${S.t('cust_payment_of')} ${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            leading: CircleAvatar(backgroundColor: Color(0xFF0D2B1A), child: const Icon(Icons.check_circle, color: Color(0xFF4ADE80))),
+            title: Text("${S.t('cust_payment_of')} ${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4ADE80))),
             subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('label_notes')}: ${pay['notes']}"),
           ),
         );

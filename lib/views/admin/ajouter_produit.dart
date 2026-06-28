@@ -62,7 +62,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.t('prod_no_permission')), backgroundColor: Colors.red),
+            SnackBar(content: Text(S.t('prod_no_permission')), backgroundColor: Color(0xFFF87171)),
           );
           Navigator.of(context).pop();
         }
@@ -201,7 +201,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
   void _generateVariants() {
     if (_selectedSizes.isEmpty || _selectedColors.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Color(0xFFF87171)),
       );
       return;
     }
@@ -320,13 +320,13 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       if ((v['size'] as String).isEmpty || (v['color'] as String).isEmpty ||
           sellPriceStr.isEmpty || buyPriceStr.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Colors.red),
+          SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Color(0xFFF87171)),
         );
         return;
       }
       if (double.tryParse(sellPriceStr) == null || double.tryParse(buyPriceStr) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.t('msg_invalid')), backgroundColor: Colors.red),
+          SnackBar(content: Text(S.t('msg_invalid')), backgroundColor: Color(0xFFF87171)),
         );
         return;
       }
@@ -334,7 +334,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
     if (_selectedStoreId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('pos_select_store')), backgroundColor: Colors.red),
+        SnackBar(content: Text(S.t('pos_select_store')), backgroundColor: Color(0xFFF87171)),
       );
       return;
     }
@@ -374,7 +374,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Colors.green),
+          SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Color(0xFF4ADE80)),
         );
 
         _nameController.clear();
@@ -394,13 +394,13 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     } on PostgrestException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     } finally {
@@ -456,8 +456,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4)],
+        color: Color(0xFFEEEEFF),
+        boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.04), blurRadius: 4)],
       ),
       child: Center(
         child: SizedBox(
@@ -475,7 +475,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           height: 2,
                           color: isCompleted || isCurrent
                               ? kPrimaryColor
-                              : Colors.grey[300],
+                              : Color(0xFF1E1E35),
                         ),
                       ),
                     Container(
@@ -491,17 +491,17 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         border: Border.all(
                           color: isCompleted || isCurrent
                               ? (isCompleted ? kAccentGreen : kPrimaryColor)
-                              : Colors.grey[400]!,
+                              : Color(0xFF606078)!,
                           width: 2,
                         ),
                       ),
                       child: Center(
                         child: isCompleted
-                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            ? const Icon(Icons.check, color: Color(0xFFEEEEFF), size: 18)
                             : Text(
                                 '${i + 1}',
                                 style: TextStyle(
-                                  color: isCurrent ? Colors.white : Colors.grey[600],
+                                  color: isCurrent ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
                                 ),
                               ),
                       ),
@@ -512,7 +512,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           height: 2,
                           color: isCompleted
                               ? kAccentGreen
-                              : Colors.grey[300],
+                              : Color(0xFF1E1E35),
                         ),
                       ),
                   ],
@@ -545,12 +545,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         width: 140,
                         height: 140,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Color(0xFFEEEEFF),
                           borderRadius: BorderRadius.circular(kBorderRadius),
                           border: Border.all(
                             color: _imageFile != null || _imageBytes != null
                                 ? Colors.transparent
-                                : Colors.grey[400]!,
+                                : Color(0xFF606078)!,
                             width: 2,
                             style: _imageFile != null || _imageBytes != null
                                 ? BorderStyle.solid
@@ -570,11 +570,11 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 : Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.add_a_photo, size: 36, color: Colors.grey[400]),
+                                      Icon(Icons.add_a_photo, size: 36, color: Color(0xFF606078)),
                                       const SizedBox(height: 8),
                                       Text('Ajouter\nune photo',
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(color: Colors.grey[500]),
+                                        style: TextStyle(color: Color(0xFF9090A8)),
                                       ),
                                     ],
                                   ),
@@ -592,10 +592,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.check, color: Colors.white, size: 12),
+                                Icon(Icons.check, color: Color(0xFFEEEEFF), size: 12),
                                 SizedBox(width: 2),
                                 Text('Compressée ✓',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Color(0xFFEEEEFF)),
                                 ),
                               ],
                             ),
@@ -616,7 +616,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   labelText: '${S.t('prod_name')} *',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Color(0xFFEEEEFF),
                 ),
                 validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
                 onChanged: (_) => setState(() {}),
@@ -629,7 +629,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   labelText: S.t('label_description'),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Color(0xFFEEEEFF),
                 ),
               ),
               const SizedBox(height: 24),
@@ -657,7 +657,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   labelText: S.t('label_store'),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Color(0xFFEEEEFF),
                 ),
                 value: _selectedStoreId,
                 items: _stores.map((s) => DropdownMenuItem<String>(
@@ -693,7 +693,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       : null,
                   style: ElevatedButton.styleFrom(
                   backgroundColor: kAccentGreen,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Color(0xFFEEEEFF),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   elevation: 2,
                 ),
@@ -723,16 +723,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? kPrimaryColor : Colors.white,
+            color: selected ? kPrimaryColor : Color(0xFFEEEEFF),
             borderRadius: BorderRadius.circular(kBorderRadius),
             border: Border.all(
-              color: selected ? kPrimaryColor : Colors.grey[300]!,
+              color: selected ? kPrimaryColor : Color(0xFF1E1E35)!,
             ),
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium(color: selected ? Colors.white : Colors.grey[600],
+            style: AppTextStyles.bodyMedium(color: selected ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
             ),
           ),
         ),
@@ -764,21 +764,21 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     selected: _selectedSizes.contains(s),
                     onSelected: (_) => _toggleSize(s),
                     selectedColor: kPrimaryColor,
-                    checkmarkColor: Colors.white,
+                    checkmarkColor: Color(0xFFEEEEFF),
                     labelStyle: TextStyle(
-                      color: _selectedSizes.contains(s) ? Colors.white : Colors.grey[700],
+                      color: _selectedSizes.contains(s) ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
                     ),
                     side: BorderSide(
-                      color: _selectedSizes.contains(s) ? kPrimaryColor : Colors.grey[300]!,
+                      color: _selectedSizes.contains(s) ? kPrimaryColor : Color(0xFF1E1E35)!,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   )),
                   ..._selectedSizes
                     .where((s) => !sizes.contains(s))
                     .map((s) => Chip(
-                      label: Text(s, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                      label: Text(s, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFEEEEFF))),
                       backgroundColor: kPrimaryColor,
-                      deleteIcon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      deleteIcon: const Icon(Icons.close, color: Color(0xFFEEEEFF), size: 16),
                       onDeleted: () => _toggleSize(s),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     )),
@@ -859,7 +859,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           shape: BoxShape.circle,
                           color: _hexToColor(hex),
                           border: Border.all(
-                            color: isSelected ? kPrimaryColor : Colors.grey[300]!,
+                            color: isSelected ? kPrimaryColor : Color(0xFF1E1E35)!,
                             width: isSelected ? 3 : 1,
                           ),
                           boxShadow: isSelected
@@ -867,7 +867,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                               : null,
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, color: Colors.white, size: 20)
+                            ? const Icon(Icons.check, color: Color(0xFFEEEEFF), size: 20)
                             : null,
                       ),
                     );
@@ -876,7 +876,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                     .where((name) => !kShoeColors.any((c) => c['name'] == name))
                     .map((name) => Chip(
                       label: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: Color(0xFF1E1E35),
                       deleteIcon: const Icon(Icons.close, size: 16),
                       onDeleted: () => _toggleColor(name),
                     )),
@@ -951,7 +951,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                    const Icon(Icons.info_outline, size: 16, color: Color(0xFF9090A8)),
                     const SizedBox(width: 8),
                     const Text('Pièces par carton:'),
                     const SizedBox(width: 12),
@@ -1011,10 +1011,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Color(0xFFEEEEFF),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                     elevation: 2,
-                    disabledBackgroundColor: Colors.grey[300],
+                    disabledBackgroundColor: Color(0xFF1E1E35),
                   ),
                 ),
               ),
@@ -1030,8 +1030,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                       child: OutlinedButton(
                         onPressed: () => setState(() => _currentStep = 0),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          side: BorderSide(color: Colors.grey[400]!),
+                          foregroundColor: Color(0xFF9090A8),
+                          side: BorderSide(color: Color(0xFF606078)!),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                         ),
                         child: const Text('← Retour',
@@ -1051,10 +1051,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: kAccentGreen,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Color(0xFFEEEEFF),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                           elevation: 2,
-                          disabledBackgroundColor: Colors.grey[300],
+                          disabledBackgroundColor: Color(0xFF1E1E35),
                         ),
                         child: Text('Suivant  →',
                           style: AppTextStyles.bodyMedium(),
@@ -1079,16 +1079,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? kPrimaryColor : Colors.white,
+          color: selected ? kPrimaryColor : Color(0xFFEEEEFF),
           borderRadius: BorderRadius.circular(kBorderRadius),
           border: Border.all(
-            color: selected ? kPrimaryColor : Colors.grey[300]!,
+            color: selected ? kPrimaryColor : Color(0xFF1E1E35)!,
           ),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMedium(color: selected ? Colors.white : Colors.grey[600],
+          style: AppTextStyles.bodyMedium(color: selected ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
           ),
         ),
       ),
@@ -1199,16 +1199,16 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: Color(0xFF0A0A14),
                     borderRadius: BorderRadius.circular(kBorderRadius),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(color: Color(0xFF1E1E35)!),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey[300]),
+                      Icon(Icons.inventory_2_outlined, size: 48, color: Color(0xFF1E1E35)),
                       const SizedBox(height: 12),
                       Text('Générez d\'abord les variantes (étape 2)',
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: Color(0xFF9090A8)),
                       ),
                     ],
                   ),
@@ -1228,15 +1228,15 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           child: Row(
                             children: [
                               const Expanded(flex: 2, child: Text('Code-barres',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               const Expanded(flex: 1, child: Text('Pointure',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               const Expanded(flex: 1, child: Text('Couleur',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               const Expanded(flex: 1, child: Text('Achat',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               const Expanded(flex: 1, child: Text('Vente',
-                                style: TextStyle(color: Colors.white))),
+                                style: TextStyle(color: Color(0xFFEEEEFF)))),
                               const SizedBox(width: 40),
                             ],
                           ),
@@ -1248,7 +1248,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                           final sell = double.tryParse(v['sell_price'].toString()) ?? 0;
                           return Container(
                             decoration: BoxDecoration(
-                              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                              border: Border(bottom: BorderSide(color: Color(0xFF1E1E35)!)),
                             ),
                             child: Row(
                               children: [
@@ -1258,7 +1258,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                     padding: const EdgeInsets.all(8),
                                     child: Text('Auto',
                                       style: TextStyle(
-                                        color: Colors.grey[400],
+                                        color: Color(0xFF606078),
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
@@ -1285,7 +1285,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: _getColorForName(v['color'] as String),
-                                            border: Border.all(color: Colors.grey[300]!),
+                                            border: Border.all(color: Color(0xFF1E1E35)!),
                                           ),
                                         ),
                                         const SizedBox(width: 4),
@@ -1340,7 +1340,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                                 SizedBox(
                                   width: 40,
                                   child: IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                    icon: const Icon(Icons.delete_outline, color: Color(0xFFF87171), size: 18),
                                     onPressed: () => _removeVariant(i),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -1353,7 +1353,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                         // Margin summary footer
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          color: Colors.grey[50],
+                          color: Color(0xFF0A0A14),
                           child: Row(
                             children: [
                               const Spacer(),
@@ -1409,7 +1409,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   icon: _isLoading
                       ? const SizedBox(
                           width: 20, height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2),
                         )
                       : const Icon(Icons.save),
                   label: Text(
@@ -1418,10 +1418,10 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kAccentGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Color(0xFFEEEEFF),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                     elevation: 4,
-                    disabledBackgroundColor: Colors.grey[300],
+                    disabledBackgroundColor: Color(0xFF1E1E35),
                   ),
                 ),
               ),
@@ -1434,8 +1434,8 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
                 child: OutlinedButton(
                   onPressed: () => setState(() => _currentStep = 1),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[700],
-                    side: BorderSide(color: Colors.grey[400]!),
+                    foregroundColor: Color(0xFF9090A8),
+                    side: BorderSide(color: Color(0xFF606078)!),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
                   ),
                   child: const Text('← Retour',
@@ -1468,7 +1468,7 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
     for (final c in kShoeColors) {
       if (c['name'] == name) return _hexToColor(c['hex'] as String);
     }
-    return Colors.grey;
+    return Color(0xFF9090A8);
   }
 
   // ─── BUILD ─────────────────────────────────────────────────
@@ -1486,12 +1486,12 @@ class _AjouterProduitScreenState extends State<AjouterProduitScreen> {
             ),
             Text(
               'Étape ${_currentStep + 1} / 3',
-              style: AppTextStyles.bodyMedium(color: Colors.white70),
+              style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
             ),
           ],
         ),
         backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         elevation: 1,
       ),
       body: _blocked

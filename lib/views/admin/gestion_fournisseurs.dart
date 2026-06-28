@@ -178,16 +178,16 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(isEdit ? S.t('msg_updated') : S.t('msg_saved')),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color(0xFF4ADE80),
                   ));
                 }
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Color(0xFFEEEEFF)),
             child: Text(isEdit ? S.t('action_edit') : S.t('action_add')),
           ),
         ],
@@ -206,7 +206,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500), foregroundColor: Color(0xFFEEEEFF)),
             child: Text(S.t('action_archive')),
           ),
         ],
@@ -218,11 +218,11 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
      
       await Supabase.instance.client.from('suppliers').update({'is_active': false}).eq('id', id);
       _fetchSuppliers();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_archived')), backgroundColor: Colors.orange));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_archived')), backgroundColor: Color(0xFFF0A500)));
     } on PostgrestException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -234,11 +234,11 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(S.t('supp_title')),
-        backgroundColor: Colors.teal[800],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF0F0F1C),
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           IconButton(
             icon: const Icon(Icons.compare_arrows),
@@ -247,10 +247,10 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
           ),
           Row(
             children: [
-              Text(S.t('supp_with_debt'), style: const TextStyle(color: Colors.white)),
+              Text(S.t('supp_with_debt'), style: const TextStyle(color: Color(0xFFEEEEFF))),
               Switch(
                 value: _showOnlyWithDebt,
-                activeColor: Colors.orange,
+                activeColor: Color(0xFFF0A500),
                 onChanged: (val) {
                   setState(() {
                     _showOnlyWithDebt = val;
@@ -267,7 +267,7 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _filteredSuppliers.isEmpty
-              ? Center(child: Text(_showOnlyWithDebt ? S.t('supp_no_debt') : S.t('supp_no_results'), style: const TextStyle(fontSize: 18, color: Colors.grey)))
+              ? Center(child: Text(_showOnlyWithDebt ? S.t('supp_no_debt') : S.t('supp_no_results'), style: const TextStyle(fontSize: 18, color: Color(0xFF9090A8))))
               : ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: _filteredSuppliers.length,
@@ -279,10 +279,10 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Color(0xFFEEEEFF),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
-                        border: BorderDirectional(start: BorderSide(color: hasDebt ? Colors.red : Colors.green, width: 6)), // مؤشر بصري للديون
+                        boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.04), blurRadius: 8)],
+                        border: BorderDirectional(start: BorderSide(color: hasDebt ? Color(0xFFF87171) : Color(0xFF4ADE80), width: 6)), // مؤشر بصري للديون
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -297,21 +297,21 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(S.t('supp_debt_credit'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                Text(S.t('supp_debt_credit'), style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
                                 Text(
                                   '${balance.toStringAsFixed(2)} ${S.t('misc_currency')}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
-                                    color: hasDebt ? Colors.red : Colors.green,
+                                    color: hasDebt ? Color(0xFFF87171) : Color(0xFF4ADE80),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(width: 24),
                             if (_userRole == 'owner') ...[
-                              IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _showAddEditDialog(s)),
-                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _deleteSupplier(s['id'])),
+                              IconButton(icon: const Icon(Icons.edit, color: Color(0xFFF0A500)), onPressed: () => _showAddEditDialog(s)),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Color(0xFFF87171)), onPressed: () => _deleteSupplier(s['id'])),
                             ]
                           ],
                         ),
@@ -497,7 +497,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("${S.t('supp_current_debt')}${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+            Text("${S.t('supp_current_debt')}${_currentBalance.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF87171))),
             const SizedBox(height: 16),
             TextFormField(
               controller: amountCtrl,
@@ -531,15 +531,15 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
                 });
                 
                 _fetchProfileData();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_payment_recorded')), backgroundColor: Colors.green));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('supp_payment_recorded')), backgroundColor: Color(0xFF4ADE80)));
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Colors.red));
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            child: Text(S.t('debt_confirm_payment'), style: const TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF)),
+            child: Text(S.t('debt_confirm_payment'), style: const TextStyle(color: Color(0xFFEEEEFF))),
           ),
         ],
       ),
@@ -551,13 +551,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.supplier['company_name']),
-        backgroundColor: Colors.teal[900],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF0F0F1C),
+        foregroundColor: Color(0xFFEEEEFF),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          indicatorColor: Colors.orange,
+          labelColor: Color(0xFFEEEEFF),
+          unselectedLabelColor: Color(0xFF9090A8),
+          indicatorColor: Color(0xFFF0A500),
           tabs: [
             Tab(icon: const Icon(Icons.receipt), text: S.t('supp_tabs_purchases')),
             Tab(icon: const Icon(Icons.payments), text: S.t('supp_tabs_payments')),
@@ -575,9 +575,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
             ),
       floatingActionButton: _userRole == 'owner' ? FloatingActionButton.extended(
         onPressed: _showAddPaymentDialog,
-        backgroundColor: Colors.orange,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(S.t('supp_make_payment'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Color(0xFFF0A500),
+        icon: const Icon(Icons.add, color: Color(0xFFEEEEFF)),
+        label: Text(S.t('supp_make_payment'), style: const TextStyle(color: Color(0xFFEEEEFF), fontWeight: FontWeight.bold)),
       ) : null,
     );
   }
@@ -596,7 +596,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: const CircleAvatar(backgroundColor: Colors.teal, child: Icon(Icons.receipt, color: Colors.white)),
+            leading: const CircleAvatar(backgroundColor: Color(0xFF58A6FF), child: Icon(Icons.receipt, color: Color(0xFFEEEEFF))),
             title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}"),
             trailing: Column(
@@ -604,7 +604,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Colors.red : Colors.green, fontSize: 12)),
+                Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Color(0xFFF87171) : Color(0xFF4ADE80), fontSize: 12)),
               ],
             ),
           ),
@@ -626,8 +626,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.monetization_on, color: Colors.white)),
-            title: Text("${S.t('supp_payment_of')}${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            leading: const CircleAvatar(backgroundColor: Color(0xFF4ADE80), child: Icon(Icons.monetization_on, color: Color(0xFFEEEEFF))),
+            title: Text("${S.t('supp_payment_of')}${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4ADE80))),
             subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('supp_reason')}${pay['notes']}"),
           ),
         );

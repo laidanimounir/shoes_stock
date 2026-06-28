@@ -70,7 +70,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     if (_selectedFromStoreId == null || _selectedToStoreId == null || _selectedVariantId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veuillez remplir tous les champs'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('Veuillez remplir tous les champs'), backgroundColor: Color(0xFFF0A500)),
         );
       }
       return;
@@ -78,7 +78,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     if (_selectedFromStoreId == _selectedToStoreId) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Les magasins doivent être différents'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('Les magasins doivent être différents'), backgroundColor: Color(0xFFF0A500)),
         );
       }
       return;
@@ -86,7 +86,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     if (_quantity < 1) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Quantité invalide'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('Quantité invalide'), backgroundColor: Color(0xFFF0A500)),
         );
       }
       return;
@@ -103,7 +103,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transfert créé, en attente'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Transfert créé, en attente'), backgroundColor: Color(0xFF4ADE80)),
         );
       }
 
@@ -117,7 +117,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     }
@@ -131,7 +131,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.desktopPrimary),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500)),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(S.t('action_confirm')),
           ),
@@ -146,14 +146,14 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transfert effectué avec succès'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Transfert effectué avec succès'), backgroundColor: Color(0xFF4ADE80)),
         );
       }
       _fetchTransfers();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
         );
       }
     }
@@ -162,11 +162,11 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.desktopBackground,
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(S.t('transfer_title')),
-        backgroundColor: AppColors.desktopSurface,
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF13131F),
+        foregroundColor: Color(0xFFEEEEFF),
         elevation: 0,
       ),
       body: _isLoading
@@ -185,13 +185,13 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     final availableToStores = _stores.where((s) => s['id'] != _selectedFromStoreId).toList();
     return Container(
       padding: const EdgeInsets.all(16),
-      color: AppColors.desktopSurface,
+      color: Color(0xFF13131F),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('transfer_new'),
               style: AppTextStyles.headingLarge(
-                  color: Colors.white)),
+                  color: Color(0xFFEEEEFF))),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -199,11 +199,11 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedFromStoreId,
                   decoration: _inputDecoration(S.t('transfer_from')),
-                  dropdownColor: AppColors.desktopSurface,
-                  style: AppTextStyles.bodyMedium(color: Colors.white),
+                  dropdownColor: Color(0xFF13131F),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF)),
                   items: _stores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(
                     value: s['id'] as String?,
-                    child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white)),
+                    child: Text(s['name'] ?? '', style: const TextStyle(color: Color(0xFFEEEEFF))),
                   )).toList(),
                   onChanged: (v) => setState(() => _selectedFromStoreId = v),
                 ),
@@ -213,11 +213,11 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _selectedToStoreId,
                   decoration: _inputDecoration(S.t('transfer_to')),
-                  dropdownColor: AppColors.desktopSurface,
-                  style: AppTextStyles.bodyMedium(color: Colors.white),
+                  dropdownColor: Color(0xFF13131F),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF)),
                   items: availableToStores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(
                     value: s['id'] as String?,
-                    child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white)),
+                    child: Text(s['name'] ?? '', style: const TextStyle(color: Color(0xFFEEEEFF))),
                   )).toList(),
                   onChanged: (v) => setState(() => _selectedToStoreId = v),
                 ),
@@ -244,7 +244,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 controller: controller,
                 focusNode: focusNode,
                 decoration: _inputDecoration(S.t('transfer_variant')),
-                style: AppTextStyles.bodyMedium(color: Colors.white),
+                style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF)),
               );
             },
           ),
@@ -256,7 +256,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   initialValue: _quantity.toString(),
                   keyboardType: TextInputType.number,
                   decoration: _inputDecoration(S.t('transfer_qty')),
-                  style: AppTextStyles.bodyMedium(color: Colors.white),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF)),
                   onChanged: (v) => _quantity = int.tryParse(v) ?? 1,
                 ),
               ),
@@ -266,8 +266,8 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                 icon: const Icon(Icons.send, size: 16),
                 label: Text(S.t('action_add')),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.desktopPrimary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Color(0xFFF0A500),
+                  foregroundColor: Color(0xFFEEEEFF),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
@@ -282,16 +282,16 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary),
+      labelStyle: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
       filled: true,
-      fillColor: AppColors.desktopBackground,
+      fillColor: Color(0xFF0A0A14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.desktopBorder),
+        borderSide: BorderSide(color: Color(0xFF1E1E35)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.desktopBorder),
+        borderSide: BorderSide(color: Color(0xFF1E1E35)),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     );
@@ -301,7 +301,7 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
     if (_transfers.isEmpty) {
       return Center(
         child: Text(S.t('transfer_no_transfers'),
-            style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+            style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
       );
     }
     return ListView.builder(
@@ -322,13 +322,13 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
         String statusLabel;
         switch (status) {
           case 'completed':
-            statusColor = Colors.green;
+            statusColor = Color(0xFF4ADE80);
             statusLabel = S.t('transfer_status_done');
           case 'cancelled':
-            statusColor = Colors.red;
+            statusColor = Color(0xFFF87171);
             statusLabel = S.t('action_cancel');
           default:
-            statusColor = Colors.orange;
+            statusColor = Color(0xFFF0A500);
             statusLabel = S.t('transfer_status_pending');
         }
 
@@ -336,9 +336,9 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.desktopSurface,
+            color: Color(0xFF13131F),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+            border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
           ),
           child: Row(
             children: [
@@ -348,14 +348,14 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   children: [
                     Text(variantName,
                         style: AppTextStyles.bodyMedium(
-                            color: Colors.white),
+                            color: Color(0xFFEEEEFF)),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text('$fromName → $toName',
-                        style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                        style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
                     const SizedBox(height: 2),
                     Text('${S.t('label_quantity')}: $qty',
-                        style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                        style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
                   ],
                 ),
               ),
@@ -377,8 +377,8 @@ class _StockTransferScreenState extends State<StockTransferScreen> {
                   child: ElevatedButton(
                     onPressed: () => _executeTransfer(t['id'] as String),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Color(0xFF4ADE80),
+                      foregroundColor: Color(0xFFEEEEFF),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),

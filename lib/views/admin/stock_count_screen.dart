@@ -52,7 +52,7 @@ class _StockCountScreenState extends State<StockCountScreen> {
       await _loadInventoryForCount();
       if (mounted) setState(() => _isCounting = true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -94,29 +94,29 @@ class _StockCountScreenState extends State<StockCountScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(S.t('action_save')),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF4ADE80),
         ));
         setState(() { _activeCountId = null; _isCounting = false; _inventoryItems = []; });
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text('Comptage de Stock'),
-        backgroundColor: Colors.teal[800],
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF0F0F1C),
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           if (_isCounting)
             TextButton.icon(
               onPressed: _closeCount,
-              icon: const Icon(Icons.check, color: Colors.white),
-              label: const Text('Fermer', style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.check, color: Color(0xFFEEEEFF)),
+              label: const Text('Fermer', style: TextStyle(color: Color(0xFFEEEEFF))),
             ),
         ],
       ),
@@ -133,11 +133,11 @@ class _StockCountScreenState extends State<StockCountScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.inventory_2, size: 80, color: Colors.teal),
+          const Icon(Icons.inventory_2, size: 80, color: Color(0xFF58A6FF)),
           const SizedBox(height: 16),
-          Text('Comptage de Stock', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+          Text('Comptage de Stock', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F0F1C))),
           const SizedBox(height: 8),
-          Text('Initier un comptage pour vérifier les quantités en magasin', style: TextStyle(color: Colors.grey[600])),
+          Text('Initier un comptage pour vérifier les quantités en magasin', style: TextStyle(color: Color(0xFF9090A8))),
           const SizedBox(height: 24),
           DropdownButtonFormField<String>(
             initialValue: _selectedStoreId,
@@ -158,8 +158,8 @@ class _StockCountScreenState extends State<StockCountScreen> {
               icon: const Icon(Icons.play_arrow),
               label: Text('Démarrer le Comptage', style: TextStyle(fontSize: 16)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal[800],
-                foregroundColor: Colors.white,
+                backgroundColor: Color(0xFF0F0F1C),
+                foregroundColor: Color(0xFFEEEEFF),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -175,12 +175,12 @@ class _StockCountScreenState extends State<StockCountScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(12),
-          color: Colors.teal[50],
+          color: Color(0xFF0D1F3A),
           child: Row(
             children: [
-              const Icon(Icons.inventory, color: Colors.teal),
+              const Icon(Icons.inventory, color: Color(0xFF58A6FF)),
               const SizedBox(width: 8),
-              Text('Comptage en cours', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal[800])),
+              Text('Comptage en cours', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F0F1C))),
               const Spacer(),
               Text('${_inventoryItems.length} articles'),
             ],
@@ -209,7 +209,7 @@ class _StockCountScreenState extends State<StockCountScreen> {
                           width: 120,
                           child: Row(
                             children: [
-                              Text('$expected → ', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                              Text('$expected → ', style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                               SizedBox(
                                 width: 50,
                                 child: TextField(

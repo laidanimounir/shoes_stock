@@ -621,7 +621,7 @@ class _EmpTileState extends State<_EmpTile> {
           ),
           child: Row(children: [
             Container(width: 32, height: 32,
-              decoration: BoxDecoration(color: isSel ? Colors.white.withValues(alpha: 0.15) : pal[1], borderRadius: BorderRadius.circular(7)),
+              decoration: BoxDecoration(color: isSel ? Color(0xFFEEEEFF).withValues(alpha: 0.15) : pal[1], borderRadius: BorderRadius.circular(7)),
               alignment: Alignment.center,
               child: Text(letter, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isSel ? _T.white : pal[0])),
             ),
@@ -630,10 +630,10 @@ class _EmpTileState extends State<_EmpTile> {
               Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSel ? _T.white : _T.sidebarHead), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
               Row(children: [
-                Container(width: 5, height: 5, decoration: BoxDecoration(color: isSel ? Colors.white54 : dot, shape: BoxShape.circle)),
+                Container(width: 5, height: 5, decoration: BoxDecoration(color: isSel ? Color(0xFF606078) : dot, shape: BoxShape.circle)),
                 const SizedBox(width: 5),
                 Expanded(child: Text(store ?? (isDeleted ? S.t('emp_status_archived') : S.t('misc_no_store')),
-                    style: TextStyle(fontSize: 11, color: isSel ? Colors.white70 : _T.sidebarText), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    style: TextStyle(fontSize: 11, color: isSel ? Color(0xFF9090A8) : _T.sidebarText), maxLines: 1, overflow: TextOverflow.ellipsis)),
               ]),
             ])),
           ]),
@@ -690,7 +690,7 @@ class _FormShell extends StatelessWidget {
       Row(children: [
         ElevatedButton(onPressed: saving ? null : onSave,
             style: ElevatedButton.styleFrom(backgroundColor: _T.brand, foregroundColor: _T.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-            child: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text(saveLabel)),
+            child: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2)) : Text(saveLabel)),
         const SizedBox(width: 8),
         TextButton(onPressed: onCancel, style: TextButton.styleFrom(foregroundColor: _T.inkMid, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11)), child: Text(S.t('action_cancel'), style: const TextStyle(fontSize: 13.5))),
       ]),
