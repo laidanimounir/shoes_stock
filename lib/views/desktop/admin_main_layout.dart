@@ -1,9 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_strings.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_text_styles.dart';
 import '../../shared/widgets/language_toggle_button.dart';
 import '../admin/dashboard_screen.dart';
 import 'pos_screen.dart';
@@ -26,50 +25,49 @@ import '../../widgets/offline_banner.dart';
 import '../../services/notification_service.dart';
 import '../admin/notifications_screen.dart';
 
-// ─── Admin Color Palette (Shoe Store – Dark Professional) ──────────────────
-// Inspired by premium leather goods: deep navy, warm gold, crisp white.
-// These are used locally here; migrate to AppColors if you want global access.
-class _AdminPalette {
-  // Sidebar background – deep navy (like premium shoe box packaging)
-  static const sidebarBg = Color(0xFF0F1A2E);
-  // Sidebar selected item
-  static const sidebarSelected = Color(0xFF1E3A5F);
-  // Gold accent – stitching / luxury touch
-  static const gold = Color(0xFFD4A853);
-  static const goldLight = Color(0x22D4A853);
-  // Text
-  static const textPrimary = Color(0xFFECEFF4);
-  static const textMuted = Color(0xFF8A9BB5);
-  // Section divider
-  static const divider = Color(0xFF1E2D45);
-  // Header
-  static const headerBg = Color(0xFF0B1220);
-  static const headerBorder = Color(0xFF1E2D45);
-  // Stat chip background
-  static const chipBg = Color(0xFF162035);
-  // Online indicator
-  static const online = Color(0xFF4CAF50);
-  static const offline = Color(0xFFEF5350);
+class _Palette {
+  _Palette._();
+  static const sbBg = Color(0xFF0A0A14);
+  static const sbActive = Color(0xFF1A1A35);
+  static const sbActiveBorder = Color(0xFFF0A500);
+  static const sbText = Color(0xFF9090A8);
+  static const sbTextActive = Color(0xFFEEEEFF);
+  static const sbSection = Color(0xFF404058);
+  static const sbDivider = Color(0xFF1E1E35);
+  static const sbIconInactive = Color(0xFF606078);
+  static const sbIconActive = Color(0xFFF0A500);
+
+  static const headerBg = Color(0xFF0F0F1C);
+  static const headerBorder = Color(0xFF1E1E35);
+  static const pagesBg = Color(0xFF0A0A14);
+
+  static const onlineGreen = Color(0xFF4ADE80);
+  static const offlineRed = Color(0xFFF87171);
+  static const onlineBg = Color(0xFF0D2B1A);
+  static const offlineBg = Color(0xFF2B0D0D);
+  static const chipBg = Color(0xFF13132A);
+
+  static const badgeRed = Color(0xFFE53935);
+  static const avatarBg = Color(0xFF1A1A35);
+  static const avatarBorder = Color(0xFFF0A500);
+  static const roleBg = Color(0xFF1A1400);
+  static const roleText = Color(0xFFF0A500);
 }
 
-// ─── Nav item model ────────────────────────────────────────────────────────
 class _NavItem {
   final IconData icon;
   final IconData selectedIcon;
   final String labelKey;
-  final int? badge; // optional badge count
 
   const _NavItem({
     required this.icon,
     required this.selectedIcon,
     required this.labelKey,
-    this.badge,
   });
 }
 
-// ─── Nav groups ────────────────────────────────────────────────────────────
 class _NavGroup {
-  final String titleKey; // translation key for group label
+  final String titleKey;
   final List<_NavItem> items;
 
   const _NavGroup({required this.titleKey, required this.items});
@@ -85,26 +83,14 @@ class AdminMainLayout extends StatefulWidget {
 class _AdminMainLayoutState extends State<AdminMainLayout> {
   int _selectedIndex = 0;
   late final List<Widget> _screens;
+  bool _sidebarExpanded = false;
 
-  // ── Live clock ─────────────────────────────────────────────────────────
   late Timer _clockTimer;
   DateTime _now = DateTime.now();
 
-  // ── Hardcoded header data – REPLACE WITH REAL SUPABASE QUERIES ─────────
-  // TODO: fetch from your stores table using the logged-in user's store_id
   final String _currentStoreName = 'AIN DHAB';
-  // TODO: replace with real connectivity check (e.g. ConnectivityService)
   final bool _isOnline = true;
-  // TODO: fetch from sales table WHERE date = today AND store_id = current
-  final double _todaySales = 145750.0;
-  // TODO: fetch count of today's transactions
-  final int _todayTransactions = 23;
-  // TODO: fetch best selling product name today
-  final String _bestProduct = 'Nike Air Max 270';
-  // TODO: fetch low stock count (items below min threshold)
-  final int _lowStockCount = 4;
 
-  // ── Nav groups definition ───────────────────────────────────────────────
   static List<_NavGroup> get _groups => [
         _NavGroup(
           titleKey: 'nav_group_main',
@@ -218,7 +204,6 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
         ),
       ];
 
-  // Flat list to map _selectedIndex → screen
   static List<_NavItem> get _flatItems =>
       _groups.expand((g) => g.items).toList();
 
@@ -227,33 +212,27 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     super.initState();
 
     _screens = [
-      // ── MAIN ─────────────────────────────────────────────────────────
-      const DashboardScreen(),    // 0 – dashboard
-      const PosScreen(),          // 1 – POS
-      // ── INVENTORY ────────────────────────────────────────────────────
-      const GestionStoresScreen(),// 2 – stores
-      const InventoryScreen(),    // 3 – inventory
-      const SizeRunScreen(),      // 4 – size runs
-      ListeProduitsScreen(        // 5 – products list
+      const DashboardScreen(),
+      const PosScreen(),
+      const GestionStoresScreen(),
+      const InventoryScreen(),
+      const SizeRunScreen(),
+      ListeProduitsScreen(
         onAddProduct: () => setState(() => _selectedIndex = 6),
       ),
-      const AjouterProduitScreen(),// 6 – add product
-      // ── PEOPLE ───────────────────────────────────────────────────────
-      const GestionClientsScreen(),    // 7 – clients
-      const GestionFournisseursScreen(), // 8 – suppliers
-      const GestionEmployesScreen(),   // 9 – employees
-      // ── PURCHASES ────────────────────────────────────────────────────
-      const AchatFournisseurScreen(),  // 10 – purchases
-      const PurchaseOrdersScreen(),    // 11 – purchase orders
-      // ── REPORTS ──────────────────────────────────────────────────────
-      const SalesHistoryScreen(),      // 12 – sales history
-      const ExpensesScreen(),          // 13 – expenses
-      const DebtRecoveryScreen(),      // 14 – recovery
-      const ActivityLogsScreen(),      // 15 – activity
-      const HealthScreen(),            // 16 – health
+      const AjouterProduitScreen(),
+      const GestionClientsScreen(),
+      const GestionFournisseursScreen(),
+      const GestionEmployesScreen(),
+      const AchatFournisseurScreen(),
+      const PurchaseOrdersScreen(),
+      const SalesHistoryScreen(),
+      const ExpensesScreen(),
+      const DebtRecoveryScreen(),
+      const ActivityLogsScreen(),
+      const HealthScreen(),
     ];
 
-    // Start live clock
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
@@ -267,19 +246,26 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final adminEmail =
-        Supabase.instance.client.auth.currentUser?.email?.split('@').first ??
-            'Admin';
+    final userEmail =
+        Supabase.instance.client.auth.currentUser?.email ?? 'Admin';
+    final displayName =
+        userEmail.split('@').first;
     final initials =
-        adminEmail.isNotEmpty ? adminEmail[0].toUpperCase() : 'A';
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A';
 
     return Scaffold(
-      backgroundColor: _AdminPalette.sidebarBg,
+      backgroundColor: _Palette.pagesBg,
       body: Row(
         children: [
-          // ── Sidebar ─────────────────────────────────────────────────
-          _buildSidebar(adminEmail, initials),
-          // ── Main content ─────────────────────────────────────────────
+          MouseRegion(
+            onEnter: (_) => setState(() => _sidebarExpanded = true),
+            onExit: (_) => setState(() => _sidebarExpanded = false),
+            child: _buildSidebar(displayName, initials),
+          ),
+          Container(
+            width: 1,
+            color: const Color(0xFF1E1E35),
+          ),
           Expanded(
             child: Column(
               children: [
@@ -287,7 +273,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 _buildHeader(),
                 Expanded(
                   child: Container(
-                    color: AppColors.desktopBackground,
+                    color: const Color(0xFF0D0D1A),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 250),
                       child: _screens[_selectedIndex],
@@ -302,224 +288,148 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     );
   }
 
-  // ── Sidebar ─────────────────────────────────────────────────────────────
-  Widget _buildSidebar(String adminEmail, String initials) {
-    return Container(
-      width: 260,
-      color: _AdminPalette.sidebarBg,
+  // ═══════════════════════════════════════════════════════════
+  //  SIDEBAR
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildSidebar(String displayName, String initials) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      clipBehavior: Clip.hardEdge,
+      width: _sidebarExpanded ? 220 : 64,
+      decoration: const BoxDecoration(
+        color: _Palette.sbBg,
+      ),
       child: Column(
         children: [
-          // Brand header
-          _buildBrandHeader(adminEmail, initials),
-
-          // Nav groups with scroll + fade hint
-          Expanded(
-            child: Stack(
-              children: [
-                ListView(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 8, horizontal: 10),
-                  children: _buildNavGroups(),
-                ),
-                // Bottom fade hint – shows the user there's more below
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            _AdminPalette.sidebarBg.withValues(alpha: 0),
-                            _AdminPalette.sidebarBg.withValues(alpha: 0.95),
-                          ],
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: _AdminPalette.textMuted,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Bottom actions
+          _buildBrandArea(),
+          _buildUserArea(displayName, initials),
+          Expanded(child: _buildNavArea()),
+          _buildClock(),
           _buildSidebarFooter(),
         ],
       ),
     );
   }
 
-  Widget _buildBrandHeader(String adminEmail, String initials) {
+  // ── Brand Area ──────────────────────────────────────────
+  Widget _buildBrandArea() {
     return Container(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 24, 20, 20),
+      height: 64,
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: _AdminPalette.divider, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: _Palette.sbDivider)),
       ),
-      child: Column(
-        children: [
-          // Logo + brand
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: _AdminPalette.goldLight,
-                  border: Border.all(
-                    color: _AdminPalette.gold.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.storefront_rounded,
-                  color: _AdminPalette.gold,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'STEPZONE',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: _AdminPalette.textPrimary,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  Text(
-                    'ERP · Gestion',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: _AdminPalette.gold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Admin user chip
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: _AdminPalette.chipBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _AdminPalette.divider,
-                width: 1,
-              ),
-            ),
-            child: Row(
+      child: _sidebarExpanded
+          ? Row(
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _AdminPalette.gold,
-                  ),
-                  child: Center(
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F1A2E),
-                      ),
-                    ),
+                const SizedBox(width: 16),
+                const Icon(Icons.storefront_rounded,
+                    color: _Palette.sbActiveBorder, size: 18),
+                const SizedBox(width: 10),
+                const Text(
+                  'STEPZONE',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _Palette.sbTextActive,
+                    letterSpacing: 1.2,
                   ),
                 ),
+              ],
+            )
+          : const Center(
+              child: Icon(Icons.storefront_rounded,
+                  color: _Palette.sbActiveBorder, size: 18),
+            ),
+    );
+  }
+
+  // ── User Area ───────────────────────────────────────────
+  Widget _buildUserArea(String displayName, String initials) {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _Palette.sbDivider)),
+      ),
+      child: _sidebarExpanded
+          ? Row(
+              children: [
+                _buildAvatar(initials, 36),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        adminEmail,
+                        displayName,
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: _AdminPalette.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _Palette.sbTextActive,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: _AdminPalette.online,
-                              shape: BoxShape.circle,
-                            ),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _Palette.roleBg,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Admin',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _Palette.roleText,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            S.t('label_role_admin'),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: _AdminPalette.gold,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
+            )
+          : Center(child: _buildAvatar(initials, 40)),
+    );
+  }
+
+  Widget _buildAvatar(String initials, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: _Palette.avatarBg,
+        shape: BoxShape.circle,
+        border:
+            Border.all(color: _Palette.avatarBorder, width: 1.5),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            fontSize: size > 38 ? 15 : 13,
+            fontWeight: FontWeight.w700,
+            color: _Palette.sbActiveBorder,
           ),
-        ],
+        ),
       ),
     );
   }
 
-  List<Widget> _buildNavGroups() {
-    final flatItems = _flatItems;
+  // ── Nav Area ────────────────────────────────────────────
+  Widget _buildNavArea() {
     int flatIndex = 0;
     final widgets = <Widget>[];
 
     for (final group in _groups) {
-      // Group label
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(
-              left: 8, top: 16, bottom: 6),
-          child: Text(
-            // TODO: use S.t(group.titleKey) when you add the keys
-            _groupLabel(group.titleKey),
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: _AdminPalette.textMuted,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-      );
+      if (_sidebarExpanded) {
+        widgets.add(_buildSectionLabel(group.titleKey));
+      }
 
       for (final item in group.items) {
         final idx = flatIndex;
@@ -527,20 +437,18 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
           idx,
           item.icon,
           item.selectedIcon,
-          // TODO: use S.t(item.labelKey)
           S.t(item.labelKey),
-          badge: item.badge,
+          badge: null,
         ));
         flatIndex++;
       }
 
-      // Divider after each group except last
-      if (group != _groups.last) {
+      if (_sidebarExpanded && group != _groups.last) {
         widgets.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
             child: Divider(
-              color: _AdminPalette.divider,
+              color: _Palette.sbDivider,
               thickness: 1,
               height: 1,
             ),
@@ -549,9 +457,34 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
       }
     }
 
-    // Extra bottom padding so last item isn't hidden under the fade
-    widgets.add(const SizedBox(height: 40));
-    return widgets;
+    widgets.add(SizedBox(height: _sidebarExpanded ? 16 : 4));
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      children: widgets,
+    );
+  }
+
+  Widget _buildSectionLabel(String key) {
+    const map = {
+      'nav_group_main': 'PRINCIPAL',
+      'nav_group_inventory': 'INVENTAIRE',
+      'nav_group_people': 'PERSONNES',
+      'nav_group_purchases': 'ACHATS',
+      'nav_group_reports': 'RAPPORTS',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(left: 14, top: 10, bottom: 4),
+      child: Text(
+        map[key] ?? key.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: _Palette.sbSection,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
   }
 
   Widget _buildNavItem(
@@ -562,363 +495,390 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     int? badge,
   }) {
     final isSelected = _selectedIndex == index;
+    final showBadge = badge != null && badge > 0;
+
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.only(bottom: 2),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        clipBehavior: Clip.hardEdge,
+        height: 40,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
-          color: isSelected
-              ? _AdminPalette.sidebarSelected
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? _Palette.sbActive : Colors.transparent,
+          borderRadius: isSelected
+              ? const BorderRadius.only(
+                  topRight: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                )
+              : BorderRadius.circular(8),
           border: isSelected
-              ? Border.all(
-                  color: _AdminPalette.gold.withValues(alpha: 0.3),
-                  width: 1,
+              ? const Border(
+                  left: BorderSide(
+                      color: _Palette.sbActiveBorder, width: 3),
                 )
               : null,
         ),
-        child: Row(
-          children: [
-            // Icon box
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? _AdminPalette.gold.withValues(alpha: 0.15)
-                    : _AdminPalette.divider,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                isSelected ? selectedIcon : icon,
-                color: isSelected
-                    ? _AdminPalette.gold
-                    : _AdminPalette.textMuted,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected
-                      ? _AdminPalette.textPrimary
-                      : _AdminPalette.textMuted,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Badge
-            if (badge != null && badge > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _AdminPalette.gold.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$badge',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: _AdminPalette.gold,
-                    fontWeight: FontWeight.w600,
+        child: _sidebarExpanded
+            ? Row(
+                children: [
+                  const SizedBox(width: 12),
+                  Icon(
+                    isSelected ? selectedIcon : icon,
+                    size: 18,
+                    color: isSelected
+                        ? _Palette.sbIconActive
+                        : _Palette.sbIconInactive,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected
+                            ? _Palette.sbTextActive
+                            : _Palette.sbText,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (showBadge) _buildBadge(badge),
+                  if (!showBadge) const SizedBox(width: 6),
+                ],
+              )
+            : ClipRect(
+                child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  Icon(
+                    isSelected ? selectedIcon : icon,
+                    size: 18,
+                    color: isSelected
+                        ? _Palette.sbIconActive
+                        : _Palette.sbIconInactive,
+                  ),
+                  if (showBadge)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: _buildBadge(badge),
+                    ),
+                ],
               ),
-            // Selected indicator dot
-            if (isSelected && badge == null)
-              Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _AdminPalette.gold.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
+            ),
+      ),
+    );
+  }
+
+  Widget _buildBadge(int badge) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: const BoxDecoration(
+        color: _Palette.badgeRed,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$badge',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSidebarFooter() {
+  // ── Clock (bottom of sidebar) ───────────────────────────
+  Widget _buildClock() {
+    final hour = _now.hour.toString().padLeft(2, '0');
+    final min = _now.minute.toString().padLeft(2, '0');
+    final sec = _now.second.toString().padLeft(2, '0');
+    final dateStr =
+        '${_now.day.toString().padLeft(2, '0')}/${_now.month.toString().padLeft(2, '0')}';
+
+    final timeStr =
+        _sidebarExpanded ? '$hour:$min:$sec' : '$hour:$min';
+    final fontSize = _sidebarExpanded ? 12.0 : 10.0;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      height: 36,
+      clipBehavior: Clip.hardEdge,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
         border: Border(
-          top: BorderSide(color: _AdminPalette.divider, width: 1),
+          top: BorderSide(color: Color(0xFF1E1E35)),
+          bottom: BorderSide(color: Color(0xFF1E1E35)),
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Notification bell
-          ValueListenableBuilder<int>(
-            valueListenable: NotificationService.instance.unreadCount,
-            builder: (context, count, _) {
-              return _FooterIconButton(
-                icon: Icons.notifications_outlined,
-                badge: count,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const NotificationsScreen()),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-          // Language toggle
-          const LanguageToggleButton(),
-          const Spacer(),
-          // Logout
-          GestureDetector(
-            onTap: () => Supabase.instance.client.auth.signOut(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.redAccent.withValues(alpha: 0.4),
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.logout_rounded,
-                      size: 14, color: Colors.redAccent),
-                  const SizedBox(width: 6),
-                  Text(
-                    S.t('auth_logout'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+          Text(
+            timeStr,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFFEEEEFF),
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
+          if (_sidebarExpanded)
+            Text(
+              dateStr,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF606078),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // ── Top Header ───────────────────────────────────────────────────────────
-  Widget _buildHeader() {
-    final hour = _now.hour.toString().padLeft(2, '0');
-    final min = _now.minute.toString().padLeft(2, '0');
-    final sec = _now.second.toString().padLeft(2, '0');
-    final dateStr =
-        '${_now.day.toString().padLeft(2, '0')}/${_now.month.toString().padLeft(2, '0')}/${_now.year}';
+  // ── Footer ──────────────────────────────────────────────
+  Widget _buildSidebarFooter() {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _Palette.sbDivider)),
+      ),
+      child: _sidebarExpanded
+          ? Row(
+              children: [
+                ValueListenableBuilder<int>(
+                  valueListenable: NotificationService.instance.unreadCount,
+                  builder: (context, count, _) {
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen()),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            children: [
+                              const Icon(Icons.notifications_outlined,
+                                  color: _Palette.sbText, size: 18),
+                              if (count > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: _buildBadge(count),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Notifications',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _Palette.sbText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                const LanguageToggleButton(),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Supabase.instance.client.auth.signOut(),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.logout_rounded,
+                          size: 18, color: _Palette.offlineRed),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Déconnexion',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _Palette.offlineRed,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable:
+                          NotificationService.instance.unreadCount,
+                      builder: (context, count, _) {
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const NotificationsScreen()),
+                          ),
+                          child: Stack(
+                            children: [
+                              const Icon(Icons.notifications_outlined,
+                                  color: _Palette.sbText, size: 18),
+                              if (count > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: _buildBadge(count),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () =>
+                          Supabase.instance.client.auth.signOut(),
+                      child: const Icon(Icons.logout_rounded,
+                          size: 18, color: _Palette.offlineRed),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+    );
+  }
 
-    // Current screen title
+  // ═══════════════════════════════════════════════════════════
+  //  HEADER
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildHeader() {
     final flatItems = _flatItems;
     final currentLabel = _selectedIndex < flatItems.length
         ? S.t(flatItems[_selectedIndex].labelKey)
         : '';
 
+    final dateStr = _formatDateFr(_now);
+
     return Container(
-      height: 56,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: _AdminPalette.headerBg,
-        border: const Border(
-          bottom: BorderSide(color: _AdminPalette.headerBorder, width: 1),
+      decoration: const BoxDecoration(
+        color: _Palette.headerBg,
+        border: Border(
+          bottom: BorderSide(color: _Palette.headerBorder, width: 0.5),
         ),
       ),
       child: Row(
         children: [
-          // Current page name
           Text(
             currentLabel,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: _AdminPalette.textPrimary,
+              color: Color(0xFFEEEEFF),
             ),
           ),
-
           const Spacer(),
-
-          // ── Stat chips ─────────────────────────────────────────────
-          // Low stock alert
-          if (_lowStockCount > 0)
-            _HeaderChip(
-              icon: Icons.warning_amber_rounded,
-              label:
-                  // TODO: replace _lowStockCount with real query result
-                  '$_lowStockCount ${S.t('header_low_stock')}',
-              iconColor: Colors.orange,
-              textColor: Colors.orange,
-            ),
-
-          const SizedBox(width: 8),
-
-          // Today's sales
-          _HeaderChip(
-            icon: Icons.trending_up_rounded,
-            // TODO: replace _todaySales with real Supabase query
-            label:
-                '${_formatAmount(_todaySales)} DZD',
-            iconColor: _AdminPalette.gold,
-            textColor: _AdminPalette.gold,
+          _headerChip(
+            icon: _isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+            label: _isOnline ? 'En ligne' : 'Hors ligne',
+            bgColor: _isOnline ? _Palette.onlineBg : _Palette.offlineBg,
+            textColor: _isOnline ? _Palette.onlineGreen : _Palette.offlineRed,
+            dotColor:
+                _isOnline ? _Palette.onlineGreen : _Palette.offlineRed,
           ),
-
           const SizedBox(width: 8),
-
-          // Transaction count
-          _HeaderChip(
-            icon: Icons.receipt_outlined,
-            // TODO: replace _todayTransactions with real query
-            label: '$_todayTransactions ${S.t('header_transactions')}',
-            iconColor: _AdminPalette.textMuted,
-            textColor: _AdminPalette.textMuted,
-          ),
-
-          const SizedBox(width: 8),
-
-          // Store name
-          _HeaderChip(
+          _headerChip(
             icon: Icons.store_outlined,
-            // TODO: replace _currentStoreName with real store from user session
             label: _currentStoreName,
-            iconColor: _AdminPalette.textMuted,
-            textColor: _AdminPalette.textPrimary,
+            bgColor: _Palette.chipBg,
+            textColor: _Palette.sbText,
           ),
-
           const SizedBox(width: 8),
-
-          // Connection status
-          _HeaderChip(
-            icon: _isOnline
-                ? Icons.wifi_rounded
-                : Icons.wifi_off_rounded,
-            // TODO: replace _isOnline with real connectivity stream
-            label: _isOnline
-                ? S.t('header_online')
-                : S.t('header_offline'),
-            iconColor:
-                _isOnline ? _AdminPalette.online : _AdminPalette.offline,
-            textColor:
-                _isOnline ? _AdminPalette.online : _AdminPalette.offline,
-          ),
-
-          const SizedBox(width: 8),
-
-          // Date
-          _HeaderChip(
+          _headerChip(
             icon: Icons.calendar_today_outlined,
             label: dateStr,
-            iconColor: _AdminPalette.textMuted,
-            textColor: _AdminPalette.textMuted,
+            bgColor: _Palette.chipBg,
+            textColor: _Palette.sbText,
           ),
-
           const SizedBox(width: 8),
-
-          // Live clock
-          _HeaderChip(
-            icon: Icons.access_time_rounded,
-            label: '$hour:$min:$sec',
-            iconColor: _AdminPalette.textMuted,
-            textColor: _AdminPalette.textPrimary,
-          ),
-
-          const SizedBox(width: 12),
-
-          // Notification bell in header
           ValueListenableBuilder<int>(
             valueListenable: NotificationService.instance.unreadCount,
             builder: (context, count, _) {
-              return _FooterIconButton(
-                icon: Icons.notifications_outlined,
-                badge: count,
-                color: _AdminPalette.textMuted,
+              return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (_) => const NotificationsScreen()),
                 ),
+                child: Stack(
+                  children: [
+                    const Icon(Icons.notifications_outlined,
+                        color: _Palette.sbText, size: 20),
+                    if (count > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: _buildBadge(count),
+                      ),
+                  ],
+                ),
               );
             },
           ),
+          const SizedBox(width: 8),
+          const LanguageToggleButton(),
         ],
       ),
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-  String _groupLabel(String key) {
-    // TODO: replace with S.t(key) once you add translation keys:
-    // nav_group_main, nav_group_inventory, nav_group_people,
-    // nav_group_purchases, nav_group_reports
-    const map = {
-      'nav_group_main': 'PRINCIPAL',
-      'nav_group_inventory': 'INVENTAIRE',
-      'nav_group_people': 'PERSONNES',
-      'nav_group_purchases': 'ACHATS',
-      'nav_group_reports': 'RAPPORTS',
-    };
-    return map[key] ?? key.toUpperCase();
-  }
-
-  String _formatAmount(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return amount.toStringAsFixed(0);
-  }
-}
-
-// ── Shared small widgets ───────────────────────────────────────────────────
-
-class _HeaderChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-  final Color textColor;
-
-  const _HeaderChip({
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _headerChip({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required Color textColor,
+    Color? dotColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _AdminPalette.chipBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _AdminPalette.divider,
-          width: 1,
-        ),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _Palette.sbDivider, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: iconColor),
+          if (dotColor != null) ...[
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 5),
+          ],
+          Icon(icon, size: 13, color: textColor),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: textColor,
               fontWeight: FontWeight.w500,
             ),
@@ -927,64 +887,16 @@ class _HeaderChip extends StatelessWidget {
       ),
     );
   }
-}
 
-class _FooterIconButton extends StatelessWidget {
-  final IconData icon;
-  final int badge;
-  final Color? color;
-  final VoidCallback onTap;
-
-  const _FooterIconButton({
-    required this.icon,
-    this.badge = 0,
-    this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _AdminPalette.chipBg,
-              borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: _AdminPalette.divider, width: 1),
-            ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: color ?? _AdminPalette.textMuted,
-            ),
-          ),
-          if (badge > 0)
-            Positioned(
-              right: 4,
-              top: 4,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '$badge',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+  String _formatDateFr(DateTime d) {
+    const days = [
+      'Lundi', 'Mardi', 'Mercredi', 'Jeudi',
+      'Vendredi', 'Samedi', 'Dimanche',
+    ];
+    const months = [
+      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+    ];
+    return '${days[d.weekday - 1]} ${d.day} ${months[d.month - 1]} ${d.year}';
   }
 }

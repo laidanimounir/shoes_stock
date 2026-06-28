@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_session.dart';
-import '../../theme/app_colors.dart';
 import '../../services/refund_service.dart';
 
 class RefundModal extends StatefulWidget {
@@ -78,7 +77,7 @@ class _RefundModalState extends State<RefundModal> {
     final selectedItems = _refundableItems.where((i) => i['selected']).toList();
     if (selectedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('refund_min_one_item')), backgroundColor: AppColors.danger),
+        SnackBar(content: Text(S.t('refund_min_one_item')), backgroundColor: Color(0xFFF87171)),
       );
       return;
     }
@@ -107,13 +106,13 @@ class _RefundModalState extends State<RefundModal> {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.t('refund_success')), backgroundColor: AppColors.success),
+        SnackBar(content: Text(S.t('refund_success')), backgroundColor: Color(0xFF4ADE80)),
       );
       Navigator.of(context).pop(true); // Return true to indicate refresh
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(e.toString()), backgroundColor: Color(0xFFF87171)),
         );
       }
     } finally {
@@ -130,13 +129,13 @@ class _RefundModalState extends State<RefundModal> {
     final hoursSince = DateTime.now().difference(createdAt).inHours;
     final ageText = S.t('refund_invoice_age').replaceAll('{hours}', hoursSince.toString());
 
-    final ageColor = hoursSince > 48 ? AppColors.danger : AppColors.success;
+    final ageColor = hoursSince > 48 ? Color(0xFFF87171) : Color(0xFF4ADE80);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: ageColor.withOpacity(0.1),
+        color: ageColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ageColor.withOpacity(0.3)),
+        border: Border.all(color: ageColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -204,12 +203,12 @@ class _RefundModalState extends State<RefundModal> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              color: AppColors.dangerLight,
+              color: Color(0xFF2B0D0D),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(S.t('refund_total_amount'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.danger)),
-                  Text('${_totalRefundAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.danger)),
+                  Text(S.t('refund_total_amount'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFF87171))),
+                  Text('${_totalRefundAmount.toStringAsFixed(2)} DA', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFF87171))),
                 ],
               ),
             ),
@@ -227,12 +226,12 @@ class _RefundModalState extends State<RefundModal> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(S.t('action_cancel'), style: const TextStyle(color: AppColors.desktopTextSecondary)),
+          child: Text(S.t('action_cancel'), style: const TextStyle(color: Color(0xFF9090A8))),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _processRefund,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
-          child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text(S.t('refund_confirm')),
+          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Color(0xFFEEEEFF)),
+          child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2)) : Text(S.t('refund_confirm')),
         ),
       ],
     );
