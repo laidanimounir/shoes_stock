@@ -1,13 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../core/app_session.dart';
 import '../core/connectivity_service.dart';
 import '../core/sync_engine.dart';
 import '../core/app_strings.dart';
 
-/// Persistent top banner shown when offline or when sync items are pending.
-/// Embed at the top of your main Column in each layout.
+class _T {
+  _T._();
+  static const statusPaidBg = Color(0xFF0D2B1A);
+  static const statusUnpaidBg = Color(0xFF2B0D0D);
+  static const statusPaidText = Color(0xFF4ADE80);
+  static const statusUnpaidText = Color(0xFFF87171);
+  static const textPrimary = Color(0xFFEEEEFF);
+  static const accentGold = Color(0xFFF0A500);
+}
+
 class OfflineBanner extends StatefulWidget {
   const OfflineBanner({super.key});
 
@@ -56,8 +63,8 @@ class _OfflineBannerState extends State<OfflineBanner> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: _isOnline
-              ? [const Color(0xFF1B5E20), const Color(0xFF2E7D32)]
-              : [const Color(0xFFB71C1C), const Color(0xFFC62828)],
+              ? [_T.statusPaidBg, _T.statusPaidBg]
+              : [_T.statusUnpaidBg, _T.statusUnpaidBg],
         ),
       ),
       child: _shouldShow
@@ -65,16 +72,19 @@ class _OfflineBannerState extends State<OfflineBanner> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  // ── Status indicator ──
                   Container(
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _isOnline ? Colors.greenAccent : Colors.redAccent,
+                      color: _isOnline
+                          ? _T.statusPaidText
+                          : _T.statusUnpaidText,
                       boxShadow: [
                         BoxShadow(
-                          color: (_isOnline ? Colors.greenAccent : Colors.redAccent)
+                          color: (_isOnline
+                                  ? _T.statusPaidText
+                                  : _T.statusUnpaidText)
                               .withValues(alpha: 0.6),
                           blurRadius: 6,
                           spreadRadius: 1,
@@ -84,15 +94,16 @@ class _OfflineBannerState extends State<OfflineBanner> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    _isOnline ? S.t('offline_connected') : S.t('offline_mode'),
-                    style: GoogleFonts.raleway(
-                      color: Colors.white,
+                    _isOnline
+                        ? S.t('offline_connected')
+                        : S.t('offline_mode'),
+                    style: const TextStyle(
+                      color: _T.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const Spacer(),
-                  // ── Pending count ──
                   StreamBuilder<int>(
                     stream: SyncEngine.instance.pendingCountStream,
                     initialData: AppSession.pendingSync,
@@ -103,12 +114,12 @@ class _OfflineBannerState extends State<OfflineBanner> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.check_circle_outline,
-                                color: Colors.greenAccent, size: 14),
+                                color: _T.statusPaidText, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               S.t('offline_synced'),
-                              style: GoogleFonts.raleway(
-                                color: Colors.greenAccent,
+                              style: const TextStyle(
+                                color: _T.statusPaidText,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -121,13 +132,12 @@ class _OfflineBannerState extends State<OfflineBanner> {
                         children: [
                           Text(
                             '$count ${S.t('offline_pending')}',
-                            style: GoogleFonts.raleway(
-                              color: Colors.white70,
+                            style: const TextStyle(
+                              color: _T.textPrimary,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          // Show sync button only when online + pending > 0
                           if (_isOnline) ...[
                             const SizedBox(width: 8),
                             SizedBox(
@@ -140,12 +150,14 @@ class _OfflineBannerState extends State<OfflineBanner> {
                                         width: 14,
                                         height: 14,
                                         child: CircularProgressIndicator(
-                                          color: Colors.white,
+                                          color: _T.accentGold,
                                           strokeWidth: 1.5,
                                         ),
                                       )
-                                    : const Icon(Icons.cloud_upload_outlined,
-                                        color: Colors.white, size: 16),
+                                    : const Icon(
+                                        Icons.cloud_upload_outlined,
+                                        color: _T.accentGold,
+                                        size: 16),
                                 onPressed: _isSyncing ? null : _triggerSync,
                                 tooltip: S.t('offline_sync_now'),
                               ),
