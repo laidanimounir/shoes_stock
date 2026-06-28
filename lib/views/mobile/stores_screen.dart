@@ -50,7 +50,7 @@ class _StoresScreenState extends State<StoresScreen> {
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('stores').insert({'name': nameCtrl.text.trim(), 'address': addrCtrl.text.trim(), 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); } }, child: Text(S.t('action_save'))),
+        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('stores').insert({'name': nameCtrl.text.trim(), 'address': addrCtrl.text.trim(), 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171))); } }, child: Text(S.t('action_save'))),
       ],
     ));
   }
@@ -71,8 +71,8 @@ class _StoresScreenState extends State<StoresScreen> {
           try {
             await Supabase.instance.client.from('stores').update({'name': nameCtrl.text.trim(), 'address': addrCtrl.text.trim()}).eq('id', store['id']);
             _fetch();
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_updated')), backgroundColor: AppColors.success));
-          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); }
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_updated')), backgroundColor: Color(0xFF4ADE80)));
+          } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171))); }
         }, child: Text(S.t('action_save'))),
       ],
     ));
@@ -86,23 +86,23 @@ class _StoresScreenState extends State<StoresScreen> {
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
         ElevatedButton(onPressed: () async {
           Navigator.pop(ctx, true);
-        }, style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white), child: Text(S.t('action_delete'))),
+        }, style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Colors.white), child: Text(S.t('action_delete'))),
       ],
     ));
     if (confirm != true) return;
     try {
       await Supabase.instance.client.from('stores').delete().eq('id', store['id']);
       _fetch();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_deleted')), backgroundColor: AppColors.success));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_deleted')), backgroundColor: Color(0xFF4ADE80)));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_delete_error')), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('store_delete_error')), backgroundColor: Color(0xFFF87171)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_stores')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white,
+      appBar: AppBar(title: Text(S.t('nav_stores')), backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _add)]),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -139,7 +139,7 @@ class _StoresScreenState extends State<StoresScreen> {
                                     },
                                     itemBuilder: (_) => [
                                       PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
-                                      PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppColors.danger), title: Text(S.t('action_delete'), style: TextStyle(color: AppColors.danger)))),
+                                      PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: Color(0xFFF87171)), title: Text(S.t('action_delete'), style: TextStyle(color: Color(0xFFF87171))))),
                                     ],
                                   )
                                 : null,

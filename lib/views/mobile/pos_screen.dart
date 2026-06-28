@@ -117,9 +117,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     if (_storeId == null) return;
     final vid = v['id'];
     int avail = await _getStockForVariant(vid);
-    if (avail <= 0) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_stock_empty_warning')), backgroundColor: AppColors.warning)); return; }
+    if (avail <= 0) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_stock_empty_warning')), backgroundColor: Color(0xFFFBBF24))); return; }
     final inCart = _cart.where((i) => i.variantId == vid).fold(0, (s, i) => s + i.quantity);
-    if (inCart >= avail) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_stock_insufficient')} $avail'), backgroundColor: AppColors.danger)); return; }
+    if (inCart >= avail) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_stock_insufficient')} $avail'), backgroundColor: Color(0xFFF87171))); return; }
     final idx = _cart.indexWhere((i) => i.variantId == vid);
     if (idx >= 0) { setState(() => _cart[idx].quantity++); }
     else {
@@ -181,7 +181,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Pack ${bundle['name']} ajouté au panier'),
-      backgroundColor: AppColors.success,
+      backgroundColor: Color(0xFF4ADE80),
     ));
   }
 
@@ -200,7 +200,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         dense: true,
         leading: v['products']?['image_url'] != null
             ? ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.network(v['products']['image_url'], width: 36, height: 36, fit: BoxFit.cover))
-            : Container(width: 36, height: 36, color: AppColors.mobileBorder, child: const Icon(Icons.image, size: 18)),
+            : Container(width: 36, height: 36, color: Color(0xFF1E1E35), child: const Icon(Icons.image, size: 18)),
         title: Text(v['products']?['name'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         subtitle: Text('${v['size']} / ${v['color']} — ${v['sell_price']} ${S.t('misc_currency')}', style: const TextStyle(fontSize: 11)),
         trailing: Row(
@@ -209,14 +209,14 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: stock < 3 ? AppColors.dangerLight : AppColors.successLight,
+                color: stock < 3 ? Color(0xFF2B0D0D) : Color(0xFF0D2B1A),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text('$stock', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: stock < 3 ? AppColors.danger : AppColors.success)),
+              child: Text('$stock', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: stock < 3 ? Color(0xFFF87171) : Color(0xFF4ADE80))),
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.add_shopping_cart, size: 18, color: AppColors.mobilePrimary),
+              icon: const Icon(Icons.add_shopping_cart, size: 18, color: Color(0xFFF0A500)),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               onPressed: stock > 0 ? () => _addToCart(v) : null,
@@ -270,7 +270,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
   void _scanBarcode() {
     showModalBottomSheet(context: context, isScrollControlled: true, builder: (ctx) {
       return FractionallySizedBox(heightFactor: 0.8, child: Column(children: [
-        AppBar(title: Text(S.t('owner_scanner_title')), automaticallyImplyLeading: false, backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white,
+        AppBar(title: Text(S.t('owner_scanner_title')), automaticallyImplyLeading: false, backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white,
           actions: [IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx))]),
         Expanded(child: MobileScanner(onDetect: (c) async {
           final b = c.barcodes.firstOrNull?.rawValue;
@@ -278,7 +278,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
           Navigator.pop(ctx);
           final variant = await _lookupBarcode(b);
           if (variant == null) {
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Aucun produit trouvé pour ce code-barres'), backgroundColor: AppColors.danger));
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Aucun produit trouvé pour ce code-barres'), backgroundColor: Color(0xFFF87171)));
             return;
           }
           _addToCart(variant);
@@ -367,9 +367,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
           final parts = msg.split('|');
           final bal = parts.length > 1 ? parts[1] : '0';
           final lim = parts.length > 2 ? parts[2] : '0';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim)), backgroundColor: AppColors.danger));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_credit_limit_exceeded').replaceAll('{balance}', bal).replaceAll('{limit}', lim)), backgroundColor: Color(0xFFF87171)));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
         }
       }
     }
@@ -380,7 +380,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.t('nav_pos')),
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.qr_code_scanner), onPressed: _scanBarcode),
@@ -393,10 +393,10 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                 // Store + Customer bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  color: AppColors.mobileSurfaceElevated,
+                  color: Color(0xFF1E1E2E),
                   child: Row(
                     children: [
-                      Icon(Icons.store, size: 16, color: AppColors.mobileBackground),
+                      Icon(Icons.store, size: 16, color: Color(0xFF0A0A14)),
                       const SizedBox(width: 4),
                       Text(_storeName ?? S.t('pos_select_store'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       const Spacer(),
@@ -405,8 +405,8 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                           onTap: () => _selectCustomer(),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: AppColors.mobileSurfaceElevated, borderRadius: BorderRadius.circular(8)),
-                            child: Text(_customerId != null ? _customers.firstWhere((c) => c['id'] == _customerId, orElse: () => {'full_name': ''})['full_name'] ?? '' : S.t('pos_select_client'), style: const TextStyle(fontSize: 11, color: AppColors.mobilePrimary)),
+                            decoration: BoxDecoration(color: Color(0xFF1E1E2E), borderRadius: BorderRadius.circular(8)),
+                            child: Text(_customerId != null ? _customers.firstWhere((c) => c['id'] == _customerId, orElse: () => {'full_name': ''})['full_name'] ?? '' : S.t('pos_select_client'), style: const TextStyle(fontSize: 11, color: Color(0xFFF0A500))),
                           ),
                         ),
                     ],
@@ -440,7 +440,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                         child: _isSearching
                             ? const Padding(padding: EdgeInsets.all(16), child: AppShimmerListTile())
                             : _searchCtrl.text.isNotEmpty && _searchResults.isEmpty
-                                ? Center(child: Text(S.t('prod_no_results'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
+                                ? Center(child: Text(S.t('prod_no_results'), style: const TextStyle(color: Color(0xFF9090A8))))
                                 : _bundles.isNotEmpty && _searchCtrl.text.isEmpty
                                     ? Column(
                                         children: [
@@ -448,9 +448,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                             padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                                             child: Row(
                                               children: [
-                                                Icon(Icons.inventory, size: 16, color: AppColors.mobileBackground),
+                                                Icon(Icons.inventory, size: 16, color: Color(0xFF0A0A14)),
                                                 const SizedBox(width: 6),
-                                                Text('Packs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.mobileBackground)),
+                                                Text('Packs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0A0A14))),
                                               ],
                                             ),
                                           ),
@@ -470,17 +470,17 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                                     margin: const EdgeInsets.only(right: 8),
                                                     padding: const EdgeInsets.all(10),
                                                     decoration: BoxDecoration(
-                                                      color: AppColors.mobileSurfaceElevated,
+                                                      color: Color(0xFF1E1E2E),
                                                       borderRadius: BorderRadius.circular(12),
-                                                      border: Border.all(color: AppColors.mobilePrimary.withOpacity(0.3)),
+                                                      border: Border.all(color: Color(0xFFF0A500).withOpacity(0.3)),
                                                     ),
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.mobilePrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                                        Text(b['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFF0A500)), maxLines: 1, overflow: TextOverflow.ellipsis),
                                                         const Spacer(),
-                                                        Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.mobileBackground)),
-                                                        Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: AppColors.mobileTextSecondary)),
+                                                        Text('$price ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0A0A14))),
+                                                        Text('${(b['items'] as List?)?.length ?? 0} articles', style: TextStyle(fontSize: 10, color: Color(0xFF9090A8))),
                                                       ],
                                                     ),
                                                   ),
@@ -519,12 +519,12 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                       // Cart panel
                       Container(
                         width: 1,
-                        color: AppColors.mobileBorderStrong,
+                        color: Color(0xFF2A2A40),
                       ),
                       Expanded(
                         flex: 4,
                         child: _cart.isEmpty
-                            ? Center(child: Text(S.t('pos_cart_empty'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
+                            ? Center(child: Text(S.t('pos_cart_empty'), style: const TextStyle(color: Color(0xFF9090A8))))
                             : Column(
                                 children: [
                                   Expanded(
@@ -544,14 +544,14 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                                   children: [
                                                     Expanded(child: Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                                     IconButton(
-                                                      icon: const Icon(Icons.close, size: 16, color: AppColors.danger),
+                                                      icon: const Icon(Icons.close, size: 16, color: Color(0xFFF87171)),
                                                       padding: EdgeInsets.zero,
                                                       constraints: const BoxConstraints(),
                                                       onPressed: () => setState(() => _cart.removeAt(i)),
                                                     ),
                                                   ],
                                                 ),
-                                                Text('${item.size} / ${item.color}', style: TextStyle(fontSize: 11, color: AppColors.mobileTextSecondary)),
+                                                Text('${item.size} / ${item.color}', style: TextStyle(fontSize: 11, color: Color(0xFF9090A8))),
                                                 const SizedBox(height: 4),
                                                 Row(
                                                   children: [
@@ -587,8 +587,8 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                       children: [
                                         if (_hasDiscount) ...[
                                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                                            Text(S.t('pos_discount'), style: const TextStyle(fontSize: 12, color: AppColors.mobileTextSecondary)),
-                                            Text('-$_discountPercent%', style: const TextStyle(fontSize: 12, color: AppColors.danger)),
+                                            Text(S.t('pos_discount'), style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
+                                            Text('-$_discountPercent%', style: const TextStyle(fontSize: 12, color: Color(0xFFF87171))),
                                           ]),
                                           const SizedBox(height: 4),
                                         ],
@@ -607,9 +607,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                                   child: Row(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
-                                                      Icon(Icons.card_giftcard, size: 14, color: AppColors.mobilePrimary),
+                                                      Icon(Icons.card_giftcard, size: 14, color: Color(0xFFF0A500)),
                                                       const SizedBox(width: 4),
-                                                      Text(S.t('pos_redeem_points'), style: TextStyle(fontSize: 11, color: AppColors.mobilePrimary)),
+                                                      Text(S.t('pos_redeem_points'), style: TextStyle(fontSize: 11, color: Color(0xFFF0A500))),
                                                     ],
                                                   ),
                                                 ),
@@ -620,15 +620,15 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                                 child: Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                                   decoration: BoxDecoration(
-                                                    color: _hasDiscount ? AppColors.dangerLight : AppColors.mobileBackground,
+                                                    color: _hasDiscount ? Color(0xFF2B0D0D) : Color(0xFF0A0A14),
                                                     borderRadius: BorderRadius.circular(8),
                                                   ),
                                                   child: Row(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
-                                                      Icon(Icons.percent, size: 14, color: _hasDiscount ? AppColors.danger : AppColors.mobileTextSecondary),
+                                                      Icon(Icons.percent, size: 14, color: _hasDiscount ? Color(0xFFF87171) : Color(0xFF9090A8)),
                                                       const SizedBox(width: 4),
-                                                      Text(_hasDiscount ? '$_discountPercent%' : S.t('pos_discount'), style: TextStyle(fontSize: 11, color: _hasDiscount ? AppColors.danger : AppColors.mobileTextSecondary)),
+                                                      Text(_hasDiscount ? '$_discountPercent%' : S.t('pos_discount'), style: TextStyle(fontSize: 11, color: _hasDiscount ? Color(0xFFF87171) : Color(0xFF9090A8))),
                                                     ],
                                                   ),
                                                 ),
@@ -636,7 +636,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                             ),
                                             const SizedBox(width: 12),
                                             Text('${S.t('pos_total')}: ', style: const TextStyle(fontSize: 16)),
-                                            Text('${_subtotal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.mobileBackground)),
+                                            Text('${_subtotal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0A0A14))),
                                           ],
                                         ),
                                         const SizedBox(height: 8),
@@ -644,7 +644,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                                           width: double.infinity,
                                           child: ElevatedButton(
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: AppColors.success,
+                                              backgroundColor: Color(0xFF4ADE80),
                                               foregroundColor: Colors.white,
                                               padding: const EdgeInsets.symmetric(vertical: 14),
                                             ),
@@ -687,20 +687,20 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
                 if (custType == 'wholesale')
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(4)),
-                    child: Text(S.t('pos_customer_type_wholesale'), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.warning)),
+                    decoration: BoxDecoration(color: Color(0xFF2B1A0D), borderRadius: BorderRadius.circular(4)),
+                    child: Text(S.t('pos_customer_type_wholesale'), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFFBBF24))),
                   ),
                 const SizedBox(width: 4),
                 if (points > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(color: AppColors.mobilePrimaryLight, borderRadius: BorderRadius.circular(4)),
-                    child: Text('$points pts', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.mobilePrimary)),
+                    decoration: BoxDecoration(color: Color(0xFF1A1400), borderRadius: BorderRadius.circular(4)),
+                    child: Text('$points pts', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFFF0A500))),
                   ),
               ]),
               subtitle: Text('${S.t('pos_customer_balance')} ${balance.toStringAsFixed(0)} ${S.t('misc_currency')}${creditLimit > 0 ? '  ${S.t('pos_customer_credit_limit')} ${creditLimit.toStringAsFixed(0)} ${S.t('misc_currency')}' : ''}',
-                  style: TextStyle(fontSize: 11, color: balance > 0 ? AppColors.warning : AppColors.mobileTextSecondary)),
-              trailing: c['id'] == _customerId ? const Icon(Icons.check, color: AppColors.success) : null,
+                  style: TextStyle(fontSize: 11, color: balance > 0 ? Color(0xFFFBBF24) : Color(0xFF9090A8))),
+              trailing: c['id'] == _customerId ? const Icon(Icons.check, color: Color(0xFF4ADE80)) : null,
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() {
@@ -713,7 +713,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
             );
           }),
           ListTile(
-            leading: const Icon(Icons.remove_circle_outline, color: AppColors.mobileTextSecondary),
+            leading: const Icon(Icons.remove_circle_outline, color: Color(0xFF9090A8)),
             title: Text(S.t('pos_no_client')),
             onTap: () { Navigator.pop(ctx); setState(() { _customerId = null; _customerType = null; _customerPoints = 0; _isWholesale = false; }); },
           ),
@@ -736,7 +736,7 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
         ElevatedButton(onPressed: () async {
           final pts = int.tryParse(ctrl.text) ?? 0;
           if (pts <= 0 || pts > _customerPoints) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_insufficient').replaceAll('{points}', '$_customerPoints')), backgroundColor: AppColors.danger));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_insufficient').replaceAll('{points}', '$_customerPoints')), backgroundColor: Color(0xFFF87171)));
             return;
           }
           try {
@@ -744,9 +744,9 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
             if (ctx.mounted) Navigator.pop(ctx);
             final discAmount = (discount as num?)?.toDouble() ?? 0;
             setState(() { _hasDiscount = true; _discountPercent = discAmount / _subtotal * 100; _customerPoints -= pts; });
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_success').replaceAll('{points}', '$pts').replaceAll('{amount}', discAmount.toStringAsFixed(2))), backgroundColor: AppColors.success));
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_success').replaceAll('{points}', '$pts').replaceAll('{amount}', discAmount.toStringAsFixed(2))), backgroundColor: Color(0xFF4ADE80)));
           } catch (e) {
-            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_error')), backgroundColor: AppColors.danger));
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('pos_redeem_error')), backgroundColor: Color(0xFFF87171)));
           }
         }, child: Text(S.t('pos_redeem_confirm'))),
       ],
@@ -761,13 +761,13 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       content: TextField(controller: ctrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Pourcentage % (max: $maxDisc%)', border: OutlineInputBorder())),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
-        TextButton(onPressed: () { Navigator.pop(ctx); setState(() { _hasDiscount = false; _discountPercent = 0; }); }, child: Text(S.t('action_remove'), style: const TextStyle(color: AppColors.danger))),
+        TextButton(onPressed: () { Navigator.pop(ctx); setState(() { _hasDiscount = false; _discountPercent = 0; }); }, child: Text(S.t('action_remove'), style: const TextStyle(color: Color(0xFFF87171)))),
         ElevatedButton(onPressed: () {
           final p = double.tryParse(ctrl.text) ?? 0;
           if (p > maxDisc) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(S.t('pos_discount_exceeds').replaceAll('{max}', maxDisc.toStringAsFixed(0))),
-              backgroundColor: AppColors.danger,
+              backgroundColor: Color(0xFFF87171),
             ));
             return;
           }
@@ -784,11 +784,11 @@ class _PosScreenMobileState extends State<PosScreenMobile> {
       child: Container(
         width: 24, height: 24,
         decoration: BoxDecoration(
-          color: onTap == null ? AppColors.mobileBackground : AppColors.mobileSurfaceElevated,
+          color: onTap == null ? Color(0xFF0A0A14) : Color(0xFF1E1E2E),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: onTap == null ? AppColors.mobileBorderStrong! : AppColors.mobilePrimary.withOpacity(0.3)),
+          border: Border.all(color: onTap == null ? Color(0xFF2A2A40)! : Color(0xFFF0A500).withOpacity(0.3)),
         ),
-        child: Icon(icon, size: 14, color: onTap == null ? AppColors.mobileTextMuted : AppColors.mobileBackground),
+        child: Icon(icon, size: 14, color: onTap == null ? Color(0xFF606078) : Color(0xFF0A0A14)),
       ),
     );
   }
@@ -824,11 +824,11 @@ class _PaymentDialogState extends State<_PaymentDialog> {
         // Amount
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: AppColors.mobileSurfaceElevated, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: Color(0xFF1E1E2E), borderRadius: BorderRadius.circular(12)),
           child: Column(children: [
-            Text(S.t('pos_total'), style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
+            Text(S.t('pos_total'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
             const SizedBox(height: 4),
-            Text('${total.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.mobileBackground)),
+            Text('${total.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0A0A14))),
           ]),
         ),
         const SizedBox(height: 16),
@@ -858,33 +858,33 @@ class _PaymentDialogState extends State<_PaymentDialog> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text('${S.t('pos_change_label')} ${change.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                    style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(color: Color(0xFF4ADE80), fontWeight: FontWeight.bold)),
               ),
             if (_method == 'cash' && cashAmount > 0 && cashAmount < total)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text('${S.t('pos_insufficient')} ${(total - cashAmount).toStringAsFixed(0)} ${S.t('misc_currency')}',
-                    style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold)),
               ),
           ]),
         if (_method == 'mixed')
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text('${S.t('pos_credit_amount')}: ${(total - cashAmount).toStringAsFixed(0)} ${S.t('misc_currency')}',
-                style: const TextStyle(color: AppColors.warning, fontWeight: FontWeight.bold)),
+                style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.bold)),
           ),
         // Credit note
         if (_method == 'credit')
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(8)),
-            child: Text(S.t('pos_credit_note'), style: const TextStyle(color: AppColors.warning, fontSize: 12)),
+            decoration: BoxDecoration(color: Color(0xFF2B1A0D), borderRadius: BorderRadius.circular(8)),
+            child: Text(S.t('pos_credit_note'), style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 12)),
           ),
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(S.t('action_cancel'))),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Colors.white),
           onPressed: () {
             if (_method == 'cash' && cashAmount < total) return;
             Navigator.pop(context, '$_method|${_method == 'credit' ? '0' : cashAmount.toString()}');
@@ -903,14 +903,14 @@ class _PaymentDialogState extends State<_PaymentDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: sel ? AppColors.mobileBackground : AppColors.mobileBackground,
+            color: sel ? Color(0xFF0A0A14) : Color(0xFF0A0A14),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: sel ? AppColors.mobileBackground! : AppColors.mobileBorderStrong!),
+            border: Border.all(color: sel ? Color(0xFF0A0A14)! : Color(0xFF2A2A40)!),
           ),
           child: Column(children: [
-            Icon(icon, size: 18, color: sel ? Colors.white : AppColors.mobileTextSecondary),
+            Icon(icon, size: 18, color: sel ? Colors.white : Color(0xFF9090A8)),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: sel ? Colors.white : AppColors.mobileTextSecondary)),
+            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: sel ? Colors.white : Color(0xFF9090A8))),
           ]),
         ),
       ),

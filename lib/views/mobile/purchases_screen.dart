@@ -84,19 +84,19 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
         paymentMethod: 'cash',
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Achat enregistré'), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Achat enregistré'), backgroundColor: Color(0xFF4ADE80)));
         setState(() { _cart.clear(); _totalQty = 0; _totalCost = 0; });
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_purchases')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(S.t('nav_purchases')), backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white),
       body: _loading ? const Center(child: CircularProgressIndicator()) : Column(children: [
         Container(padding: const EdgeInsets.all(12), color: Colors.white, child: Column(children: [
           DropdownButtonFormField<String>(value: _supplierId, decoration: const InputDecoration(labelText: 'Fournisseur', border: OutlineInputBorder()),
@@ -117,7 +117,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                 ));
               }),
             ),
-            Container(width: 1, color: AppColors.mobileBorderStrong),
+            Container(width: 1, color: Color(0xFF2A2A40)),
             Expanded(
               child: _cart.isEmpty ? Center(child: Text(S.t('pos_cart_empty'))) : Column(children: [
                 Expanded(child: ListView.builder(itemCount: _cart.length, itemBuilder: (_, i) {
@@ -130,7 +130,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                 Container(padding: const EdgeInsets.all(12), child: Column(children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('$_totalQty ${S.t('inv_units')} - ${S.t('pos_total')}:'), Text('$_totalCost ${S.t('misc_currency')}', style: const TextStyle(fontWeight: FontWeight.bold))]),
                   const SizedBox(height: 8),
-                  SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white), onPressed: _cart.isEmpty ? null : _save, child: Text(S.t('action_save')))),
+                  SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Colors.white), onPressed: _cart.isEmpty ? null : _save, child: Text(S.t('action_save')))),
                 ])),
               ]),
             ),

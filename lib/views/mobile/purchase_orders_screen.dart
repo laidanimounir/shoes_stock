@@ -55,11 +55,11 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
     try {
       await supabase.rpc('confirm_purchase_order', params: {'p_po_id': orderId});
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande confirmée'), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande confirmée'), backgroundColor: Color(0xFF4ADE80)));
         _fetchOrders();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -70,11 +70,11 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
           .update({'status': 'cancelled', 'updated_at': DateTime.now().toUtc().toIso8601String()})
           .eq('id', orderId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande annulée'), backgroundColor: AppColors.warning));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande annulée'), backgroundColor: Color(0xFFFBBF24)));
         _fetchOrders();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -107,11 +107,11 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
         'p_items': jsonEncode(receivedItems),
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stock reçu'), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stock reçu'), backgroundColor: Color(0xFF4ADE80)));
         _fetchOrders();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -169,7 +169,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       margin: const EdgeInsets.only(top: 8),
                       width: 40, height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.mobileBorderStrong,
+                        color: Color(0xFF2A2A40),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -178,7 +178,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.add_shopping_cart, color: AppColors.mobilePrimary),
+                          const Icon(Icons.add_shopping_cart, color: Color(0xFFF0A500)),
                           const SizedBox(width: 8),
                           const Text('Nouveau Bon de Commande',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -261,7 +261,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                             child: _buildVariantSearchField(item, setSheetState),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.close, size: 18, color: AppColors.danger),
+                                            icon: const Icon(Icons.close, size: 18, color: Color(0xFFF87171)),
                                             onPressed: items.length > 1
                                                 ? () => setSheetState(() => items.removeAt(i))
                                                 : null,
@@ -313,8 +313,8 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.mobileSurfaceElevated,
-                        border: Border(top: BorderSide(color: AppColors.mobileBorder!)),
+                        color: Color(0xFF1E1E2E),
+                        border: Border(top: BorderSide(color: Color(0xFF1E1E35)!)),
                       ),
                       child: Column(
                         children: [
@@ -323,7 +323,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                             children: [
                               const Text('Total:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                               Text('${total.toStringAsFixed(2)} ${S.t('misc_currency')}',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.mobilePrimary)),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF0A500))),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -331,7 +331,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.mobileBackground,
+                                backgroundColor: Color(0xFF0A0A14),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
@@ -348,7 +348,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         }).toList();
                                         if (itemsPayload.isEmpty) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Ajoutez au moins un article'), backgroundColor: AppColors.danger),
+                                            const SnackBar(content: Text('Ajoutez au moins un article'), backgroundColor: Color(0xFFF87171)),
                                           );
                                           setSheetState(() => isSubmitting = false);
                                           return;
@@ -362,7 +362,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         if (ctx.mounted) Navigator.pop(ctx);
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Bon de commande créé'), backgroundColor: AppColors.success),
+                                            const SnackBar(content: Text('Bon de commande créé'), backgroundColor: Color(0xFF4ADE80)),
                                           );
                                           _fetchOrders();
                                         }
@@ -370,7 +370,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                         setSheetState(() => isSubmitting = false);
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+                                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)),
                                           );
                                         }
                                       }
@@ -478,33 +478,33 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
       case 'draft':
       case 'pending':
         icon = Icons.edit;
-        color = AppColors.mobileTextSecondary;
+        color = Color(0xFF9090A8);
         label = S.t('order_status_draft');
         break;
       case 'confirmed':
       case 'approved':
         icon = Icons.check;
-        color = AppColors.info;
+        color = Color(0xFF58A6FF);
         label = S.t('order_status_confirmed');
         break;
       case 'partially_received':
         icon = Icons.hourglass_bottom;
-        color = AppColors.warning;
+        color = Color(0xFFFBBF24);
         label = S.t('order_status_partial');
         break;
       case 'received':
         icon = Icons.done_all;
-        color = AppColors.success;
+        color = Color(0xFF4ADE80);
         label = S.t('order_status_received');
         break;
       case 'cancelled':
         icon = Icons.strikethrough_s;
-        color = AppColors.danger;
+        color = Color(0xFFF87171);
         label = S.t('order_status_cancelled');
         break;
       default:
         icon = Icons.help_outline;
-        color = AppColors.mobileTextSecondary;
+        color = Color(0xFF9090A8);
         label = status;
     }
     return Container(
@@ -524,9 +524,9 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('order_title')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
+      appBar: AppBar(title: Text(S.t('order_title')), backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
         onPressed: _showCreateOrderDialog,
         child: const Icon(Icons.add),
@@ -550,7 +550,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
               ),
               Expanded(child: _filtered.isEmpty
                   ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.mobileBorderStrong),
+                      Icon(Icons.receipt_long_outlined, size: 64, color: Color(0xFF2A2A40)),
                       const SizedBox(height: 12), Text(S.t('order_no_orders')),
                     ]))
                   : RefreshIndicator(onRefresh: _fetchOrders, child: ListView.builder(padding: const EdgeInsets.all(8), itemCount: _filtered.length, itemBuilder: (_, i) {
@@ -562,16 +562,16 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        Expanded(child: Text(o['order_number'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isCancelled ? AppColors.mobileTextSecondary : null))),
+                        Expanded(child: Text(o['order_number'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isCancelled ? Color(0xFF9090A8) : null))),
                         _statusChip(status),
                       ]),
                       const SizedBox(height: 4),
-                      Text('${o['supplier_id']?['company_name'] ?? '—'}', style: TextStyle(color: isCancelled ? AppColors.mobileTextMuted : AppColors.mobileTextSecondary, fontSize: 13)),
+                      Text('${o['supplier_id']?['company_name'] ?? '—'}', style: TextStyle(color: isCancelled ? Color(0xFF606078) : Color(0xFF9090A8), fontSize: 13)),
                       const SizedBox(height: 4),
                       Row(children: [
-                        Text('${items.length} ${S.t('order_items')}', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
+                        Text('${items.length} ${S.t('order_items')}', style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                         const Spacer(),
-                        Text('${o['total_amount'] ?? 0} ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.bold, color: isCancelled ? AppColors.mobileTextSecondary : AppColors.mobilePrimary)),
+                        Text('${o['total_amount'] ?? 0} ${S.t('misc_currency')}', style: TextStyle(fontWeight: FontWeight.bold, color: isCancelled ? Color(0xFF9090A8) : Color(0xFFF0A500))),
                       ]),
                       if (status == 'draft' || status == 'pending') ...[
                         const SizedBox(height: 8),
@@ -581,14 +581,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.close, size: 16),
                                 label: Text(S.t('order_status_cancelled')),
-                                style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
+                                style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFF87171)),
                                 onPressed: () async {
                                   final c = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
                                     title: Text(S.t('order_status_cancelled')),
                                     content: Text(S.t('order_cancel_confirm').replaceAll('{order}', o['order_number'] ?? '')),
                                     actions: [
                                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('no'))),
-                                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white), child: Text(S.t('yes'))),
+                                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Colors.white), child: Text(S.t('yes'))),
                                     ],
                                   ));
                                   if (c == true) _cancelOrder(o['id']);
@@ -601,13 +601,13 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.check_circle, size: 16),
                                   label: Text(S.t('order_confirm')),
-                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.info, foregroundColor: Colors.white),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Colors.white),
                                   onPressed: () async {
                                     final c = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
                                       title: Text(S.t('order_confirm')), content: Text(S.t('order_confirm_confirm').replaceAll('{order}', o['order_number'] ?? '')),
                                       actions: [
                                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('no'))),
-                                        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.info, foregroundColor: Colors.white), child: Text(S.t('yes'))),
+                                        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF), foregroundColor: Colors.white), child: Text(S.t('yes'))),
                                       ],
                                     ));
                                     if (c == true) _confirmOrder(o['id']);
@@ -625,14 +625,14 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.close, size: 16),
                                 label: Text(S.t('order_status_cancelled')),
-                                style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
+                                style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFF87171)),
                                 onPressed: () async {
                                   final c = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
                                     title: Text(S.t('order_status_cancelled')),
                                     content: Text(S.t('order_cancel_confirm').replaceAll('{order}', o['order_number'] ?? '')),
                                     actions: [
                                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('no'))),
-                                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white), child: Text(S.t('yes'))),
+                                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Colors.white), child: Text(S.t('yes'))),
                                     ],
                                   ));
                                   if (c == true) _cancelOrder(o['id']);
@@ -645,7 +645,7 @@ class _PurchaseOrdersScreenState extends State<PurchaseOrdersScreen> {
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.inventory, size: 16),
                                   label: Text(S.t('order_receive')),
-                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Colors.white),
                                   onPressed: () => _receiveStock(o['id'] as String, o['store_id'] as String, items),
                                 ),
                               ),
@@ -750,7 +750,7 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Saisir les quantités reçues:', style: TextStyle(fontSize: 13, color: AppColors.mobileTextSecondary)),
+                  const Text('Saisir les quantités reçues:', style: TextStyle(fontSize: 13, color: Color(0xFF9090A8))),
                   const SizedBox(height: 12),
                   ...widget.poItems.map((item) {
                     final vid = item['variant_id'] as String;
@@ -771,8 +771,8 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(productName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                Text('Taille: $size  Couleur: $colorInfo', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 11)),
-                                Text('Commandé: $orderedQty  Reçu: $alreadyReceived', style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 11)),
+                                Text('Taille: $size  Couleur: $colorInfo', style: TextStyle(color: Color(0xFF9090A8), fontSize: 11)),
+                                Text('Commandé: $orderedQty  Reçu: $alreadyReceived', style: TextStyle(color: Color(0xFF9090A8), fontSize: 11)),
                               ],
                             ),
                           ),
@@ -810,7 +810,7 @@ class _ReceiveStockDialogState extends State<_ReceiveStockDialog> {
             }
             Navigator.pop(context, result);
           },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4ADE80), foregroundColor: Colors.white),
           child: const Text('Valider la réception'),
         ),
       ],

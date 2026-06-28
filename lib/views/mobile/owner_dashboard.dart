@@ -361,7 +361,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               AppBar(
                 title: Text(S.t('owner_scanner_title')),
                 automaticallyImplyLeading: false,
-                backgroundColor: AppColors.mobileBackground,
+                backgroundColor: Color(0xFF0A0A14),
                 foregroundColor: Colors.white,
                 actions: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
@@ -405,7 +405,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       if (mounted) Navigator.pop(context);
 
       if (res == null) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_product_not_found')), backgroundColor: AppColors.danger));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_product_not_found')), backgroundColor: Color(0xFFF87171)));
         return;
       }
 
@@ -420,7 +420,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(res['products']['name'], style: const TextStyle(color: AppColors.mobilePrimary, fontWeight: FontWeight.bold)),
+              title: Text(res['products']['name'], style: const TextStyle(color: Color(0xFFF0A500), fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -433,19 +433,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     const Divider(height: 24),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: AppColors.mobileBackground, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: Color(0xFF0A0A14), borderRadius: BorderRadius.circular(8)),
                       child: Column(
                         children: [
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_buy_price')), Text('$buyP ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.warning, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_buy_price')), Text('$buyP ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.bold))]),
                           const SizedBox(height: 4),
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_sell_price')), Text('$sellP ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_sell_price')), Text('$sellP ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFF4ADE80), fontWeight: FontWeight.bold))]),
                           const Divider(),
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_net_margin')), Text('+$margin ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.mobilePrimary, fontWeight: FontWeight.bold))]),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(S.t('owner_net_margin')), Text('+$margin ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFFF0A500), fontWeight: FontWeight.bold))]),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(S.t('owner_stocks_per_store'), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.mobileTextSecondary)),
+                    Text(S.t('owner_stocks_per_store'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF9090A8))),
                     const SizedBox(height: 8),
                     ...inventory.map((inv) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
@@ -453,7 +453,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('• ${inv['stores']['name']}'),
-                          Text('${inv['quantity']} ${S.t('inv_units')}', style: TextStyle(fontWeight: FontWeight.bold, color: (inv['quantity'] as int) > 0 ? AppColors.success : AppColors.danger)),
+                          Text('${inv['quantity']} ${S.t('inv_units')}', style: TextStyle(fontWeight: FontWeight.bold, color: (inv['quantity'] as int) > 0 ? Color(0xFF4ADE80) : Color(0xFFF87171))),
                         ],
                       ),
                     )),
@@ -470,7 +470,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: Color(0xFFF87171)));
       }
     }
   }
@@ -478,11 +478,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.mobileBackground,
+      backgroundColor: Color(0xFF0A0A14),
       drawer: _buildDrawer(context),
       appBar: AppBar(
         title: Text(S.t('owner_dash_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -499,11 +499,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(
                     value: _selectedStoreId,
-                    dropdownColor: AppColors.mobilePrimaryDark,
+                    dropdownColor: Color(0xFFF0A500),
                     icon: const Icon(Icons.store_outlined, color: Colors.white, size: 16),
                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                     items: [
-                      DropdownMenuItem(value: null, child: Text(S.t('filter_all'), style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12))),
+                      DropdownMenuItem(value: null, child: Text(S.t('filter_all'), style: TextStyle(color: Color(0xFF9090A8), fontSize: 12))),
                       ..._stores.map((s) => DropdownMenuItem(
                             value: s['id'] as String?,
                             child: Text(s['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
@@ -539,7 +539,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: AppColors.danger,
+                          color: Color(0xFFF87171),
                           shape: BoxShape.circle,
                         ),
                         child: Text(
@@ -561,7 +561,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             onPressed: () => _fetchDashboardData(isRefresh: true),
           ),
           IconButton(
-            icon: const Icon(Icons.summarize, color: AppColors.success),
+            icon: const Icon(Icons.summarize, color: Color(0xFF4ADE80)),
             tooltip: 'Rapport de Clôture',
             onPressed: () => ReportService.instance.showEndOfDayReportDialog(context, _selectedStoreId),
           ),
@@ -597,7 +597,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Text(S.t('owner_financial_health'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.mobilePrimary)),
+                    child: Text(S.t('owner_financial_health'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF0A500))),
                   ),
                   KpiCardsSection(
                     salesToday: _salesToday,
@@ -612,7 +612,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   const SizedBox(height: 32),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Text(S.t('owner_store_performance'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.mobilePrimary)),
+                    child: Text(S.t('owner_store_performance'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF0A500))),
                   ),
                   SizedBox(
                     height: 200,
@@ -631,7 +631,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         margin: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.mobilePrimary.withOpacity(_currentStorePage == entry.key ? 0.9 : 0.2),
+                          color: Color(0xFFF0A500).withOpacity(_currentStorePage == entry.key ? 0.9 : 0.2),
                         ),
                       );
                     }).toList(),
@@ -641,27 +641,27 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   const SizedBox(height: 16),
                   const SlowMovingSection(),
                   const SizedBox(height: 16),
-                  _buildSectionHeader(S.t('dash_revenue_chart'), Icons.bar_chart, AppColors.info),
+                  _buildSectionHeader(S.t('dash_revenue_chart'), Icons.bar_chart, Color(0xFF58A6FF)),
                   _buildChartCard(),
                   const SizedBox(height: 16),
-                  _buildSectionHeader(S.t('dash_top_products_title'), Icons.star, AppColors.warning),
+                  _buildSectionHeader(S.t('dash_top_products_title'), Icons.star, Color(0xFFFBBF24)),
                   _buildTopProductsCard(),
                   const SizedBox(height: 16),
-                  _buildSectionHeader('Performance par Taille', Icons.straighten, AppColors.success),
+                  _buildSectionHeader('Performance par Taille', Icons.straighten, Color(0xFF4ADE80)),
                   _buildSizeAnalyticsCard(),
                   const SizedBox(height: 16),
-                  _buildSectionHeader(S.t('turnover_title'), Icons.repeat, AppColors.mobilePrimary),
+                  _buildSectionHeader(S.t('turnover_title'), Icons.repeat, Color(0xFFF0A500)),
                   _buildInventoryTurnoverCard(),
                   const SizedBox(height: 16),
-                  _buildSectionHeader(S.t('forecast_title'), Icons.trending_up, AppColors.success),
+                  _buildSectionHeader(S.t('forecast_title'), Icons.trending_up, Color(0xFF4ADE80)),
                   _buildSalesForecastCard(),
                   const SizedBox(height: 16),
                   if (_lowStockAlerts.isNotEmpty) ...[
-                    _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, AppColors.danger),
+                    _buildSectionHeader(S.t('inv_low_stock_alerts'), Icons.warning_amber_rounded, Color(0xFFF87171)),
                     _buildLowStockList(),
                   ],
                   const SizedBox(height: 24),
-                  _buildSectionHeader(S.t('owner_recent_activities'), Icons.history, AppColors.mobilePrimary),
+                  _buildSectionHeader(S.t('owner_recent_activities'), Icons.history, Color(0xFFF0A500)),
                   _buildActivityList(),
                   const SizedBox(height: 80),
                 ],
@@ -672,7 +672,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _scanBarcode,
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         child: const Icon(Icons.qr_code_scanner, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -685,7 +685,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                icon: const Icon(Icons.dashboard, color: AppColors.mobilePrimary),
+                icon: const Icon(Icons.dashboard, color: Color(0xFFF0A500)),
                 onPressed: () {},
               ),
               IconButton(
@@ -734,24 +734,24 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: AppColors.mobileBackground),
+            decoration: BoxDecoration(color: Color(0xFF0A0A14)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const CircleAvatar(
                   radius: 28,
-                  backgroundColor: AppColors.mobileTextMuted,
+                  backgroundColor: Color(0xFF606078),
                   child: Icon(Icons.storefront, color: Colors.white, size: 28),
                 ),
                 const SizedBox(height: 12),
                 Text(S.t('owner_dash_title'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(S.t('owner_role_label'), style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
+                Text(S.t('owner_role_label'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
               ],
             ),
           ),
           ...menuItems.map((item) => ListTile(
-            leading: Icon(item['icon'] as IconData, color: AppColors.mobileBackground),
+            leading: Icon(item['icon'] as IconData, color: Color(0xFF0A0A14)),
             title: Text(item['label'] as String, style: const TextStyle(fontWeight: FontWeight.w500)),
             onTap: () {
               Navigator.pop(context);
@@ -784,7 +784,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(S.t('dash_revenue_chart'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.mobilePrimary)),
+                Text(S.t('dash_revenue_chart'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF0A500))),
                 Row(
                   children: [
                     _periodChip('week', S.t('dash_week')),
@@ -800,7 +800,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             SizedBox(
               height: 200,
               child: data.isEmpty
-                  ? Center(child: Text(S.t('dash_no_data'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
+                  ? Center(child: Text(S.t('dash_no_data'), style: const TextStyle(color: Color(0xFF9090A8))))
                   : LineChart(
                       LineChartData(
                         gridData: FlGridData(
@@ -808,7 +808,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           drawVerticalLine: false,
                           horizontalInterval: maxRevenue > 0 ? (maxRevenue / 4).ceilToDouble() : 1,
                           getDrawingHorizontalLine: (value) => FlLine(
-                            color: AppColors.mobileBorder!,
+                            color: Color(0xFF1E1E35)!,
                             strokeWidth: 0.5,
                           ),
                         ),
@@ -820,7 +820,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                               getTitlesWidget: (value, meta) {
                                 final v = value.toInt();
                                 return Text('$v',
-                                    style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 9));
+                                    style: const TextStyle(color: Color(0xFF9090A8), fontSize: 9));
                               },
                             ),
                           ),
@@ -837,7 +837,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 6),
                                   child: Text(label,
-                                      style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 9)),
+                                      style: const TextStyle(color: Color(0xFF9090A8), fontSize: 9)),
                                 );
                               },
                             ),
@@ -853,7 +853,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                               return FlSpot(i.toDouble(), rev);
                             }),
                             isCurved: true,
-                            color: AppColors.info,
+                            color: Color(0xFF58A6FF),
                             barWidth: 2.5,
                             isStrokeCapRound: true,
                             dotData: FlDotData(
@@ -861,18 +861,18 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                               getDotPainter: (spot, percent, barData, index) {
                                 if (index == data.length - 1) {
                                   return FlDotCirclePainter(
-                                    radius: 4, color: AppColors.info,
+                                    radius: 4, color: Color(0xFF58A6FF),
                                     strokeWidth: 2, strokeColor: Colors.white,
                                   );
                                 }
                                 return FlDotCirclePainter(
-                                  radius: 2, color: AppColors.info.withOpacity(0.5), strokeWidth: 0,
+                                  radius: 2, color: Color(0xFF58A6FF).withOpacity(0.5), strokeWidth: 0,
                                 );
                               },
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: AppColors.info.withOpacity(0.08),
+                              color: Color(0xFF58A6FF).withOpacity(0.08),
                             ),
                           ),
                         ],
@@ -882,7 +882,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                               final rev = spot.y.toInt();
                               return LineTooltipItem(
                                 '$rev ${S.t('misc_currency')}',
-                                const TextStyle(color: AppColors.info, fontWeight: FontWeight.bold, fontSize: 12),
+                                const TextStyle(color: Color(0xFF58A6FF), fontWeight: FontWeight.bold, fontSize: 12),
                               );
                             }).toList(),
                           ),
@@ -906,16 +906,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.info.withOpacity(0.12) : Colors.transparent,
+          color: isSelected ? Color(0xFF58A6FF).withOpacity(0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: isSelected ? AppColors.info.withOpacity(0.4) : AppColors.mobileBorderStrong!,
+            color: isSelected ? Color(0xFF58A6FF).withOpacity(0.4) : Color(0xFF2A2A40)!,
             width: 0.8,
           ),
         ),
         child: Text(label,
             style: TextStyle(
-              color: isSelected ? AppColors.info : AppColors.mobileTextSecondary,
+              color: isSelected ? Color(0xFF58A6FF) : Color(0xFF9090A8),
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
             )),
@@ -931,7 +931,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: _topProducts.isEmpty
-            ? Center(child: Text(S.t('dash_no_products_sold'), style: const TextStyle(color: AppColors.mobileTextSecondary)))
+            ? Center(child: Text(S.t('dash_no_products_sold'), style: const TextStyle(color: Color(0xFF9090A8))))
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -946,12 +946,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         Container(
                           width: 24, height: 24,
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.15),
+                            color: Color(0xFFFBBF24).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Center(
                             child: Text('${index + 1}',
-                                style: const TextStyle(color: AppColors.warning, fontSize: 11, fontWeight: FontWeight.bold)),
+                                style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -963,7 +963,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                                   maxLines: 1, overflow: TextOverflow.ellipsis),
                               Text(p['variant_info'] ?? '',
-                                  style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 10)),
+                                  style: const TextStyle(color: Color(0xFF9090A8), fontSize: 10)),
                             ],
                           ),
                         ),
@@ -971,9 +971,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text('${p['total_sold'] ?? 0}',
-                                style: const TextStyle(color: AppColors.info, fontSize: 13, fontWeight: FontWeight.bold)),
+                                style: const TextStyle(color: Color(0xFF58A6FF), fontSize: 13, fontWeight: FontWeight.bold)),
                             Text(S.t('dash_item_count'),
-                                style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 9)),
+                                style: const TextStyle(color: Color(0xFF9090A8), fontSize: 9)),
                           ],
                         ),
                       ],
@@ -991,7 +991,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.mobileBackground!, AppColors.mobilePrimary!],
+          colors: [Color(0xFF0A0A14)!, Color(0xFFF0A500)!],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
@@ -1004,7 +1004,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(child: Text(store['name'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-              const Icon(Icons.storefront, color: AppColors.mobileTextSecondary),
+              const Icon(Icons.storefront, color: Color(0xFF9090A8)),
             ],
           ),
           const Spacer(),
@@ -1015,25 +1015,25 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(S.t('dash_today_sales'), style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
+                  Text(S.t('dash_today_sales'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                   Text("${store['today_sales'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(S.t('dash_net_profit'), style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
-                  Text("+${store['today_profit'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: AppColors.success, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(S.t('dash_net_profit'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
+                  Text("+${store['today_profit'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
             ],
           ),
-          const Divider(color: AppColors.mobileTextMuted, height: 20),
+          const Divider(color: Color(0xFF606078), height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(S.t('dash_stock_value'), style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
-              Text("${store['stock_value'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: AppColors.warning, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(S.t('dash_stock_value'), style: const TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
+              Text("${store['stock_value'].toStringAsFixed(0)} ${S.t('misc_currency')}", style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -1066,7 +1066,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: data.isEmpty
-            ? Text(S.t('dash_no_data'), style: const TextStyle(color: AppColors.mobileTextSecondary))
+            ? Text(S.t('dash_no_data'), style: const TextStyle(color: Color(0xFF9090A8)))
             : Column(
                 children: data.map((item) {
                   final size = item['size'] as String? ?? '-';
@@ -1087,8 +1087,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: barWidth.clamp(0.0, 1.0),
-                              backgroundColor: AppColors.successLight,
-                              color: AppColors.success,
+                              backgroundColor: Color(0xFF0D2B1A),
+                              color: Color(0xFF4ADE80),
                               minHeight: 16,
                             ),
                           ),
@@ -1096,11 +1096,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         const SizedBox(width: 8),
                         SizedBox(
                           width: 60,
-                          child: Text('$sold vendus', style: TextStyle(fontSize: 11, color: AppColors.mobileTextSecondary)),
+                          child: Text('$sold vendus', style: TextStyle(fontSize: 11, color: Color(0xFF9090A8))),
                         ),
                         SizedBox(
                           width: 50,
-                          child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.success)),
+                          child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4ADE80))),
                         ),
                       ],
                     ),
@@ -1120,7 +1120,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: data.isEmpty
-            ? Text(S.t('dash_no_data'), style: const TextStyle(color: AppColors.mobileTextSecondary))
+            ? Text(S.t('dash_no_data'), style: const TextStyle(color: Color(0xFF9090A8)))
             : Column(
                 children: data.take(10).map((item) {
                   final name = item['product_name'] as String? ?? '';
@@ -1142,7 +1142,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                                   maxLines: 1, overflow: TextOverflow.ellipsis),
                               if (variant.isNotEmpty)
                                 Text(variant,
-                                    style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 10)),
+                                    style: const TextStyle(color: Color(0xFF9090A8), fontSize: 10)),
                             ],
                           ),
                         ),
@@ -1159,13 +1159,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: rate > 2 ? AppColors.successLight : rate > 0.5 ? AppColors.warningLight : AppColors.dangerLight,
+                              color: rate > 2 ? Color(0xFF0D2B1A) : rate > 0.5 ? Color(0xFF2B1A0D) : Color(0xFF2B0D0D),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('${rate.toStringAsFixed(1)}x',
                                 style: TextStyle(
                                     fontSize: 11, fontWeight: FontWeight.bold,
-                                    color: rate > 2 ? AppColors.success : rate > 0.5 ? AppColors.warning : AppColors.danger),
+                                    color: rate > 2 ? Color(0xFF4ADE80) : rate > 0.5 ? Color(0xFFFBBF24) : Color(0xFFF87171)),
                                 textAlign: TextAlign.center),
                           ),
                         ),
@@ -1192,15 +1192,15 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.show_chart, color: AppColors.success, size: 18),
+                const Icon(Icons.show_chart, color: Color(0xFF4ADE80), size: 18),
                 const SizedBox(width: 8),
                 Text(S.t('forecast_next_3'),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.success)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF4ADE80))),
               ],
             ),
             const SizedBox(height: 16),
             if (data.isEmpty)
-              Text(S.t('dash_no_data'), style: const TextStyle(color: AppColors.mobileTextSecondary))
+              Text(S.t('dash_no_data'), style: const TextStyle(color: Color(0xFF9090A8)))
             else
               SizedBox(
                 height: 160,
@@ -1234,7 +1234,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(label,
-                                  style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 10)),
+                                  style: const TextStyle(color: Color(0xFF9090A8), fontSize: 10)),
                             );
                           },
                         ),
@@ -1245,7 +1245,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           reservedSize: 40,
                           getTitlesWidget: (value, meta) {
                             return Text('${value.toInt()}',
-                                style: const TextStyle(color: AppColors.mobileTextSecondary, fontSize: 9));
+                                style: const TextStyle(color: Color(0xFF9090A8), fontSize: 9));
                           },
                         ),
                       ),
@@ -1258,7 +1258,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       drawVerticalLine: false,
                       horizontalInterval: maxVal > 0 ? (maxVal / 4).ceilToDouble() : 1,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: AppColors.mobileBorder!,
+                        color: Color(0xFF1E1E35)!,
                         strokeWidth: 0.5,
                       ),
                     ),
@@ -1269,7 +1269,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         barRods: [
                           BarChartRodData(
                             toY: rev,
-                            color: AppColors.success,
+                            color: Color(0xFF4ADE80),
                             width: 24,
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                           ),
@@ -1302,8 +1302,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             subtitle: Text("${S.t('label_store')}: ${alert['store_name'] ?? ''}", style: const TextStyle(fontSize: 12)),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: AppColors.dangerLight, borderRadius: BorderRadius.circular(12)),
-              child: Text("${alert['quantity']} ${S.t('owner_qty_remaining')}", style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 12)),
+              decoration: BoxDecoration(color: Color(0xFF2B0D0D), borderRadius: BorderRadius.circular(12)),
+              child: Text("${alert['quantity']} ${S.t('owner_qty_remaining')}", style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold, fontSize: 12)),
             ),
           );
         },
@@ -1325,7 +1325,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           final log = _recentActivities[index];
           final date = DateTime.parse(log['created_at']);
           return ListTile(
-            leading: CircleAvatar(backgroundColor: AppColors.mobileSurfaceElevated, child: const Icon(Icons.notifications_none, size: 20, color: AppColors.mobilePrimary)),
+            leading: CircleAvatar(backgroundColor: Color(0xFF1E1E2E), child: const Icon(Icons.notifications_none, size: 20, color: Color(0xFFF0A500))),
             title: Text(log['description'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             subtitle: Text("${log['user_profiles']['full_name']} • ${timeago.format(date, locale: 'fr')}", style: const TextStyle(fontSize: 11)),
           );
@@ -1432,14 +1432,14 @@ class _ProfileSheetState extends State<_ProfileSheet> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white),
               onPressed: () async {
                 if (newPassCtrl.text.isEmpty || newPassCtrl.text.length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_min_chars')), backgroundColor: AppColors.warning));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_min_chars')), backgroundColor: Color(0xFFFBBF24)));
                   return;
                 }
                 if (newPassCtrl.text != confirmCtrl.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_passwords_mismatch')), backgroundColor: AppColors.danger));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_passwords_mismatch')), backgroundColor: Color(0xFFF87171)));
                   return;
                 }
                 try {
@@ -1448,11 +1448,11 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_password_changed')), backgroundColor: AppColors.success));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('owner_password_changed')), backgroundColor: Color(0xFF4ADE80)));
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: AppColors.danger));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('pos_error')} $e'), backgroundColor: Color(0xFFF87171)));
                   }
                 }
               },
@@ -1474,7 +1474,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(ctx);
               await Supabase.instance.client.auth.signOut();
@@ -1508,7 +1508,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 12),
                         width: 40, height: 4,
-                        decoration: BoxDecoration(color: AppColors.mobileBorderStrong, borderRadius: BorderRadius.circular(2)),
+                        decoration: BoxDecoration(color: Color(0xFF2A2A40), borderRadius: BorderRadius.circular(2)),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1518,7 +1518,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                         children: [
                           CircleAvatar(
                             radius: 36,
-                            backgroundColor: AppColors.mobileBackground,
+                            backgroundColor: Color(0xFF0A0A14),
                             child: Text(
                               _fullName.isNotEmpty ? _fullName[0].toUpperCase() : 'P',
                               style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
@@ -1530,13 +1530,13 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.mobileSurfaceElevated,
+                              color: Color(0xFF1E1E2E),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(S.t('owner_role_label'), style: TextStyle(color: AppColors.mobileBackground, fontWeight: FontWeight.w600, fontSize: 12)),
+                            child: Text(S.t('owner_role_label'), style: TextStyle(color: Color(0xFF0A0A14), fontWeight: FontWeight.w600, fontSize: 12)),
                           ),
                           const SizedBox(height: 4),
-                          Text(_email, style: TextStyle(color: AppColors.mobileTextSecondary, fontSize: 12)),
+                          Text(_email, style: TextStyle(color: Color(0xFF9090A8), fontSize: 12)),
                         ],
                       ),
                     ),
@@ -1546,8 +1546,8 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                     // Changer mot de passe
                     ListTile(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      tileColor: AppColors.mobileSurfaceElevated,
-                      leading: Icon(Icons.lock_outline, color: AppColors.mobileBackground),
+                      tileColor: Color(0xFF1E1E2E),
+                      leading: Icon(Icons.lock_outline, color: Color(0xFF0A0A14)),
                       title: Text(S.t('owner_change_password'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: _changePassword,
@@ -1556,8 +1556,8 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                     // PIN Lock toggle
                     ListTile(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      tileColor: AppColors.mobileSurfaceElevated,
-                      leading: Icon(Icons.lock_outline, color: AppColors.mobileBackground),
+                      tileColor: Color(0xFF1E1E2E),
+                      leading: Icon(Icons.lock_outline, color: Color(0xFF0A0A14)),
                       title: Text('Verrouillage PIN', style: const TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: const Text('Protéger l\'application par code PIN', style: TextStyle(fontSize: 12)),
                       trailing: Switch(
@@ -1581,9 +1581,9 @@ class _ProfileSheetState extends State<_ProfileSheet> {
                     // Déconnexion
                     ListTile(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      tileColor: AppColors.dangerLight,
-                      leading: const Icon(Icons.logout, color: AppColors.danger),
-                      title: Text(S.t('auth_logout'), style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
+                      tileColor: Color(0xFF2B0D0D),
+                      leading: const Icon(Icons.logout, color: Color(0xFFF87171)),
+                      title: Text(S.t('auth_logout'), style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.w600)),
                       onTap: _signOut,
                     ),
                     const SizedBox(height: 24),

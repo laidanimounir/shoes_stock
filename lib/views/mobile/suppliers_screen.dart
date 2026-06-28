@@ -49,7 +49,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
-        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('suppliers').insert({'company_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'balance': 0, 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger)); } }, child: Text(S.t('action_save'))),
+        ElevatedButton(onPressed: () async { if (nameCtrl.text.isEmpty) return; Navigator.pop(ctx); try { await Supabase.instance.client.from('suppliers').insert({'company_name': nameCtrl.text.trim(), 'phone': phoneCtrl.text.trim(), 'balance': 0, 'is_active': true}); _fetch(); } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171))); } }, child: Text(S.t('action_save'))),
       ],
     ));
   }
@@ -57,7 +57,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.t('nav_suppliers')), backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white,
+      appBar: AppBar(title: Text(S.t('nav_suppliers')), backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.compare_arrows), tooltip: S.t('supp_compare'), onPressed: () => SupplierComparisonSheet.show(context)),
           IconButton(icon: Icon(_debtFilter ? Icons.filter_list_off : Icons.filter_list), onPressed: () => setState(() { _debtFilter = !_debtFilter; _fetch(); })),
@@ -88,8 +88,8 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                 title: Text(s['company_name'] ?? s['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(s['phone'] ?? '', style: const TextStyle(fontSize: 12)),
                 trailing: bal > 0
-                    ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold))
-                    : const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                    ? Text('${bal.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold))
+                    : const Icon(Icons.check_circle, color: Color(0xFF4ADE80), size: 20),
               ));
             }),
           ),

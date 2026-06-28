@@ -66,9 +66,9 @@ void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) 
             try {
               await Supabase.instance.client.from('products').update({'name': nameCtrl.text.trim()}).eq('id', product['id']);
               if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('form_product_edited')), backgroundColor: AppColors.success));
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('form_product_edited')), backgroundColor: Color(0xFF4ADE80)));
             } catch (e) {
-              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
             }
           },
           child: Text(S.t('action_save')),
@@ -110,7 +110,7 @@ Future<void> _showPriceHistory(BuildContext context, String variantId) async {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text('Achat: ${(h['purchase_price'] as num?)?.toStringAsFixed(0) ?? '-'}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.warning)),
+                            style: const TextStyle(fontSize: 11, color: Color(0xFFFBBF24))),
                           Text('Vente: ${(h['sell_price_at_arrival'] as num?)?.toStringAsFixed(0) ?? '-'}',
                             style: TextStyle(fontSize: 11, color: Colors.green[700], fontWeight: FontWeight.bold)),
                         ],
@@ -125,7 +125,7 @@ Future<void> _showPriceHistory(BuildContext context, String variantId) async {
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur chargement historique'), backgroundColor: AppColors.danger),
+        const SnackBar(content: Text('Erreur chargement historique'), backgroundColor: Color(0xFFF87171)),
       );
     }
   }
@@ -137,10 +137,10 @@ void _toggleProductActive(BuildContext context, Map<String, dynamic> product) as
     await Supabase.instance.client.from('products').update({'is_active': newActive}).eq('id', product['id']);
     if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(newActive ? S.t('form_product_reactivated') : S.t('form_product_archived')),
-      backgroundColor: newActive ? AppColors.success : AppColors.warning,
+      backgroundColor: newActive ? Color(0xFF4ADE80) : Color(0xFFFBBF24),
     ));
   } catch (e) {
-    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
   }
 }
 
@@ -249,7 +249,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.t('prod_catalog_title')),
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetch),
@@ -261,7 +261,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductScreen()));
                 _fetch();
               },
-              backgroundColor: AppColors.success,
+              backgroundColor: Color(0xFF4ADE80),
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
@@ -337,17 +337,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     children: [
                                       Container(
                                         width: 48, height: 48,
-                                        decoration: BoxDecoration(color: AppColors.mobileBorder, borderRadius: BorderRadius.circular(8)),
+                                        decoration: BoxDecoration(color: Color(0xFF1E1E35), borderRadius: BorderRadius.circular(8)),
                                         child: p['image_url'] != null
                                             ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p['image_url'], fit: BoxFit.cover))
-                                            : const Icon(Icons.image, color: AppColors.mobileTextSecondary),
+                                            : const Icon(Icons.image, color: Color(0xFF9090A8)),
                                       ),
                                       if (p['is_active'] == false)
                                         Positioned(
                                           top: 0, right: 0,
                                           child: Container(
                                             padding: const EdgeInsets.all(2),
-                                            decoration: const BoxDecoration(color: AppColors.warning, shape: BoxShape.circle),
+                                            decoration: const BoxDecoration(color: Color(0xFFFBBF24), shape: BoxShape.circle),
                                             child: const Icon(Icons.archive, size: 12, color: Colors.white),
                                           ),
                                         ),
@@ -355,7 +355,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   ),
                                   title: Row(
                                     children: [
-                                      Expanded(child: Text(p['name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: p['is_active'] == false ? AppColors.mobileTextSecondary : null))),
+                                      Expanded(child: Text(p['name'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: p['is_active'] == false ? Color(0xFF9090A8) : null))),
                                       _catBadge(p['category']),
                                     ],
                                   ),
@@ -371,7 +371,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           itemBuilder: (_) => [
                                             PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text(S.t('form_edit')))),
                                             PopupMenuItem(value: 'archive', child: ListTile(
-                                              leading: Icon(Icons.archive, size: 18, color: AppColors.warning),
+                                              leading: Icon(Icons.archive, size: 18, color: Color(0xFFFBBF24)),
                                               title: Text((p['is_active'] ?? true) ? S.t('form_archive') : S.t('form_reactivate')),
                                             )),
                                           ],
@@ -383,8 +383,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                           margin: const EdgeInsets.only(right: 4),
-                                          decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(4)),
-                                          child: Text(S.t('filter_archived_single'), style: TextStyle(fontSize: 9, color: AppColors.warning)),
+                                          decoration: BoxDecoration(color: Color(0xFF2B1A0D), borderRadius: BorderRadius.circular(4)),
+                                          child: Text(S.t('filter_archived_single'), style: TextStyle(fontSize: 9, color: Color(0xFFFBBF24))),
                                         ),
                                       Text('${variants.length} var.', style: const TextStyle(fontSize: 12)),
                                       const SizedBox(width: 8),
@@ -403,7 +403,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         children: [
                                           if (v['barcode'] != null)
                                             IconButton(
-                                              icon: const Icon(Icons.qr_code_2, size: 18, color: AppColors.mobilePrimary),
+                                              icon: const Icon(Icons.qr_code_2, size: 18, color: Color(0xFFF0A500)),
                                               padding: EdgeInsets.zero,
                                               constraints: const BoxConstraints(),
                                               onPressed: () => _generateBarcodePdf(v as Map<String, dynamic>),
@@ -420,10 +420,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: qty < 3 ? AppColors.dangerLight : AppColors.successLight,
+                                              color: qty < 3 ? Color(0xFF2B0D0D) : Color(0xFF0D2B1A),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
-                                            child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty < 3 ? AppColors.danger : AppColors.success)),
+                                            child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty < 3 ? Color(0xFFF87171) : Color(0xFF4ADE80))),
                                           ),
                                         ],
                                       ),
@@ -454,16 +454,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _catBadge(String? cat) {
-    final colors = {'homme': AppColors.info, 'femme': Colors.pink, 'enfant': AppColors.warning};
+    final colors = {'homme': Color(0xFF58A6FF), 'femme': Colors.pink, 'enfant': Color(0xFFFBBF24)};
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: (colors[cat] ?? AppColors.mobileTextSecondary).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(cat ?? '', style: TextStyle(fontSize: 10, color: colors[cat] ?? AppColors.mobileTextSecondary, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(color: (colors[cat] ?? Color(0xFF9090A8)).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      child: Text(cat ?? '', style: TextStyle(fontSize: 10, color: colors[cat] ?? Color(0xFF9090A8), fontWeight: FontWeight.bold)),
     );
   }
 
   Widget _stockBadge(int qty) {
-    final color = qty <= 0 ? AppColors.danger : qty < 5 ? AppColors.warning : AppColors.success;
+    final color = qty <= 0 ? Color(0xFFF87171) : qty < 5 ? Color(0xFFFBBF24) : Color(0xFF4ADE80);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),

@@ -43,7 +43,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.t('prod_no_permission')), backgroundColor: AppColors.danger),
+            SnackBar(content: Text(S.t('prod_no_permission')), backgroundColor: Color(0xFFF87171)),
           );
           Navigator.pop(context);
         }
@@ -110,7 +110,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty || _storeId == null) return;
     if (_sizes.isEmpty || _colors.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: AppColors.danger));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('auth_fill_fields')), backgroundColor: Color(0xFFF87171)));
       return;
     }
     setState(() => _saving = true);
@@ -140,11 +140,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         'p_store_id': _storeId,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_add_product_success')), backgroundColor: Color(0xFF4ADE80)));
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -156,7 +156,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${S.t('prod_add_btn')} (${_step + 1}/3)'),
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
       ),
       body: _saving
@@ -172,7 +172,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         height: 4,
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
-                          color: i <= _step ? AppColors.mobileBackground : AppColors.mobileBorderStrong,
+                          color: i <= _step ? Color(0xFF0A0A14) : Color(0xFF2A2A40),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -198,7 +198,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               flex: 2,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.mobileBackground,
+                  backgroundColor: Color(0xFF0A0A14),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -232,9 +232,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
             child: Container(
               width: 120, height: 120,
               decoration: BoxDecoration(
-                color: AppColors.mobileBackground,
+                color: Color(0xFF0A0A14),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.mobileBorderStrong!),
+                border: Border.all(color: Color(0xFF2A2A40)!),
               ),
               child: _imageFile != null
                   ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.file(_imageFile!, fit: BoxFit.cover))
@@ -243,9 +243,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate, size: 40, color: AppColors.mobileTextMuted),
+                            Icon(Icons.add_photo_alternate, size: 40, color: Color(0xFF606078)),
                             const SizedBox(height: 4),
-                            Text(S.t('prod_add_image'), style: TextStyle(fontSize: 12, color: AppColors.mobileTextSecondary)),
+                            Text(S.t('prod_add_image'), style: TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
                           ],
                         ),
             ),
@@ -306,11 +306,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.mobileSurfaceElevated : AppColors.mobileSurfaceElevated,
+                  color: selected ? Color(0xFF1E1E2E) : Color(0xFF1E1E2E),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: selected ? AppColors.mobilePrimary : AppColors.mobileBorderStrong!),
+                  border: Border.all(color: selected ? Color(0xFFF0A500) : Color(0xFF2A2A40)!),
                 ),
-                child: Text(name, style: TextStyle(fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? AppColors.mobileBackground : Colors.grey[700])),
+                child: Text(name, style: TextStyle(fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? Color(0xFF0A0A14) : Colors.grey[700])),
               ),
             );
           }).toList(),
@@ -330,11 +330,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 width: 52, height: 52,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.mobileSurfaceElevated : AppColors.mobileSurfaceElevated,
+                  color: selected ? Color(0xFF1E1E2E) : Color(0xFF1E1E2E),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: selected ? AppColors.mobilePrimary : AppColors.mobileBorderStrong!),
+                  border: Border.all(color: selected ? Color(0xFFF0A500) : Color(0xFF2A2A40)!),
                 ),
-                child: Text(s, style: TextStyle(fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? AppColors.mobileBackground : Colors.grey[700])),
+                child: Text(s, style: TextStyle(fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? Color(0xFF0A0A14) : Colors.grey[700])),
               ),
             );
           }).toList(),
@@ -370,7 +370,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.mobileSurfaceElevated,
+            color: Color(0xFF1E1E2E),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -379,7 +379,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('${S.t('prod_buy_price')}: $_buyPrice  |  ${S.t('prod_sell_price')}: $_sellPrice',
-                  style: TextStyle(color: AppColors.mobileTextSecondary)),
+                  style: TextStyle(color: Color(0xFF9090A8))),
             ],
           ),
         ),

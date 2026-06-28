@@ -103,14 +103,14 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: AppColors.mobileBackground),
+              decoration: BoxDecoration(color: Color(0xFF0A0A14)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   const CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppColors.mobileTextMuted,
+                    backgroundColor: Color(0xFF606078),
                     child: Icon(Icons.person, color: Colors.white, size: 28),
                   ),
                   const SizedBox(height: 12),
@@ -125,14 +125,14 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                 final total = (comm?['total_commission'] as num?)?.toDouble() ?? 0;
                 final rate = (comm?['avg_commission_rate'] as num?)?.toDouble() ?? 0;
                 return ListTile(
-                  leading: Icon(Icons.monetization_on, color: AppColors.warning),
+                  leading: Icon(Icons.monetization_on, color: Color(0xFFFBBF24)),
                   title: Text('Commission: ${total.toStringAsFixed(0)} DA'),
                   subtitle: Text('Taux: $rate%'),
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.receipt_long, color: AppColors.mobileBackground),
+              leading: Icon(Icons.receipt_long, color: Color(0xFF0A0A14)),
               title: Text('Mon Rapport du Jour'),
               onTap: () {
                 Navigator.pop(context);
@@ -141,7 +141,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
             ),
             const Divider(),
             ListTile(
-              leading: Icon(Icons.money_off, color: AppColors.mobileBackground),
+              leading: Icon(Icons.money_off, color: Color(0xFF0A0A14)),
               title: Text(S.t('nav_expenses')),
               onTap: () {
                 Navigator.pop(context);
@@ -149,7 +149,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.notifications, color: AppColors.mobileBackground),
+              leading: Icon(Icons.notifications, color: Color(0xFF0A0A14)),
               title: Text(S.t('nav_activity')),
               onTap: () {
                 Navigator.pop(context);
@@ -158,8 +158,8 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.danger),
-              title: Text(S.t('auth_logout'), style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+              leading: const Icon(Icons.logout, color: Color(0xFFF87171)),
+              title: Text(S.t('auth_logout'), style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold)),
               onTap: () async {
                 Navigator.pop(context);
                 final confirm = await showDialog<bool>(
@@ -174,7 +174,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, true),
-                        child: Text(S.t('auth_logout'), style: const TextStyle(color: AppColors.danger)),
+                        child: Text(S.t('auth_logout'), style: const TextStyle(color: Color(0xFFF87171))),
                       ),
                     ],
                   ),
@@ -189,7 +189,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
       ),
       appBar: AppBar(
         title: Text(S.t('owner_dash_title')),
-        backgroundColor: AppColors.mobileBackground,
+        backgroundColor: Color(0xFF0A0A14),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -215,7 +215,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: AppColors.danger,
+                          color: Color(0xFFF87171),
                           shape: BoxShape.circle,
                         ),
                         child: Text(
@@ -243,7 +243,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.mobileBackground,
+        selectedItemColor: Color(0xFF0A0A14),
         onTap: (i) => setState(() => _currentIndex = i),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.point_of_sale), label: S.t('nav_pos')),
@@ -275,7 +275,7 @@ class _PosTabState extends State<_PosTab> {
               AppBar(
                 title: Text(S.t('owner_scanner_title')),
                 automaticallyImplyLeading: false,
-                backgroundColor: AppColors.mobileBackground,
+                backgroundColor: Color(0xFF0A0A14),
                 foregroundColor: Colors.white,
                 actions: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
@@ -364,15 +364,15 @@ class _PosTabState extends State<_PosTab> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.qr_code_scanner, size: 80, color: AppColors.mobilePrimaryLight),
+          Icon(Icons.qr_code_scanner, size: 80, color: Color(0xFF1A1400)),
           const SizedBox(height: 16),
-          Text(S.t('owner_scanner_hint'), style: const TextStyle(color: AppColors.mobileTextSecondary)),
+          Text(S.t('owner_scanner_hint'), style: const TextStyle(color: Color(0xFF9090A8))),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _scanBarcode,
             icon: const Icon(Icons.qr_code_scanner),
             label: Text(S.t('owner_scanner_start')),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.mobileBackground, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0A0A14), foregroundColor: Colors.white),
           ),
         ],
       ),
@@ -461,8 +461,8 @@ class _ProductsTabState extends State<_ProductsTab> {
                 subtitle: Text('${S.t('prod_sell_price')}: ${v['sell_price']} ${S.t('misc_currency')}'),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: qty > 0 ? AppColors.successLight : AppColors.dangerLight, borderRadius: BorderRadius.circular(8)),
-                  child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty > 0 ? AppColors.success : AppColors.danger)),
+                  decoration: BoxDecoration(color: qty > 0 ? Color(0xFF0D2B1A) : Color(0xFF2B0D0D), borderRadius: BorderRadius.circular(8)),
+                  child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, color: qty > 0 ? Color(0xFF4ADE80) : Color(0xFFF87171))),
                 ),
               );
             }).toList(),
@@ -552,10 +552,10 @@ class _InventoryTabState extends State<_InventoryTab> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: qty < 3 ? AppColors.dangerLight : AppColors.successLight,
+                color: qty < 3 ? Color(0xFF2B0D0D) : Color(0xFF0D2B1A),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: qty < 3 ? AppColors.danger : AppColors.success)),
+              child: Text('$qty', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: qty < 3 ? Color(0xFFF87171) : Color(0xFF4ADE80))),
             ),
           ),
         );
@@ -632,7 +632,7 @@ class _CustomersTabState extends State<_CustomersTab> {
               } catch (e, s) { debugPrint('[EmployeeDashboard] error: $e\n$s'); }
               _fetch();
             } catch (e) {
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
             }
           }, child: Text(S.t('action_save'))),
         ],
@@ -661,7 +661,7 @@ class _CustomersTabState extends State<_CustomersTab> {
               await DebtRecoveryService.instance.recordDebtPayment(customerId: customer['id'], amount: amount, paymentMethod: 'cash', storeId: AppSession.currentStoreId ?? '', notes: 'Paiement mobile employee');
               _fetch();
             } catch (e) {
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
             }
           }, child: Text(S.t('action_confirm'))),
         ],
@@ -696,11 +696,11 @@ class _CustomersTabState extends State<_CustomersTab> {
                       subtitle: Text(c['phone'] ?? ''),
                       trailing: balance > 0
                           ? Row(mainAxisSize: MainAxisSize.min, children: [
-                              Text('${balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                              Text('${balance.toStringAsFixed(0)} ${S.t('misc_currency')}', style: const TextStyle(color: Color(0xFFF87171), fontWeight: FontWeight.bold)),
                               const SizedBox(width: 8),
-                              IconButton(icon: const Icon(Icons.payments, color: AppColors.success), onPressed: () => _recordPayment(c)),
+                              IconButton(icon: const Icon(Icons.payments, color: Color(0xFF4ADE80)), onPressed: () => _recordPayment(c)),
                             ])
-                          : const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                          : const Icon(Icons.check_circle, color: Color(0xFF4ADE80), size: 20),
                     );
                   },
                 ),
@@ -773,7 +773,7 @@ class _SalesTabState extends State<_SalesTab> {
     if (hoursSince > 48) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.t('refund_48h_blocked')), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(S.t('refund_48h_blocked')), backgroundColor: Color(0xFFF87171)),
         );
       }
       return;
@@ -786,7 +786,7 @@ class _SalesTabState extends State<_SalesTab> {
         content: Text('${S.t('refund_original_invoice')} ${sale['invoice_number']}\n${S.t('refund_total_amount')} ${sale['total_price']} ${S.t('misc_currency')}'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white), child: Text(S.t('refund_confirm'))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171), foregroundColor: Colors.white), child: Text(S.t('refund_confirm'))),
         ],
       ),
     );
@@ -810,10 +810,10 @@ class _SalesTabState extends State<_SalesTab> {
           'invoice_id': invoiceId, 'amount': sale['total_price'],
         });
       } catch (e, s) { debugPrint('[EmployeeDashboard] error: $e\n$s'); }
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('refund_success')} $response'), backgroundColor: AppColors.success));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('refund_success')} $response'), backgroundColor: Color(0xFF4ADE80)));
       _fetch();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: AppColors.danger));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Color(0xFFF87171)));
     }
   }
 
@@ -835,9 +835,9 @@ class _SalesTabState extends State<_SalesTab> {
               title: Text('${s['product_variants']?['products']?['name'] ?? ''} (${s['product_variants']?['size'] ?? ''})'),
               subtitle: Text('${s['invoice_number']} • ${s['created_at']?.toString().substring(0, 10) ?? ''}'),
               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('${s['total_price']} ${S.t('misc_currency')}', style: TextStyle(decoration: isRefunded ? TextDecoration.lineThrough : null, color: isRefunded ? AppColors.danger : Colors.black)),
+                Text('${s['total_price']} ${S.t('misc_currency')}', style: TextStyle(decoration: isRefunded ? TextDecoration.lineThrough : null, color: isRefunded ? Color(0xFFF87171) : Colors.black)),
                 if (status == 'paid')
-                  IconButton(icon: const Icon(Icons.assignment_return, color: AppColors.danger, size: 20), onPressed: () => _refund(s)),
+                  IconButton(icon: const Icon(Icons.assignment_return, color: Color(0xFFF87171), size: 20), onPressed: () => _refund(s)),
               ]),
             ),
           );
@@ -883,7 +883,7 @@ class _DailyReportDialogState extends State<_DailyReportDialog> {
     return AlertDialog(
       title: Row(
         children: [
-          const Icon(Icons.receipt_long, color: AppColors.mobilePrimary, size: 20),
+          const Icon(Icons.receipt_long, color: Color(0xFFF0A500), size: 20),
           const SizedBox(width: 8),
           const Text('Mon Rapport du Jour', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         ],
@@ -930,7 +930,7 @@ class _DailyReportDialogState extends State<_DailyReportDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, color: AppColors.mobileTextSecondary)),
+          Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF9090A8))),
           Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
