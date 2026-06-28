@@ -41,6 +41,8 @@ class FilterBottomSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      barrierColor: Colors.black54,
+      backgroundColor: const Color(0xFF13131F),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -60,6 +62,15 @@ class FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late Map<String, dynamic> _filters;
   DateTimeRange? _dateRange;
+
+  static const _bgCard = Color(0xFF13131F);
+  static const _bgInput = Color(0xFF1E1E2E);
+  static const _borderDefault = Color(0xFF1E1E35);
+  static const _accentGold = Color(0xFFF0A500);
+  static const _textPrimary = Color(0xFFEEEEFF);
+  static const _textSecondary = Color(0xFF9090A8);
+  static const _textMuted = Color(0xFF606078);
+  static const _bgPage = Color(0xFF0A0A14);
 
   @override
   void initState() {
@@ -89,24 +100,34 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         children: [
           Row(
             children: [
-              Text(S.t('action_filter'), style: Theme.of(context).textTheme.titleLarge),
+              Text(S.t('action_filter'),
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _textPrimary)),
               const Spacer(),
               if (widget.onReset != null)
                 TextButton(
-                  onPressed: () { widget.onReset!(); Navigator.pop(context); },
-                  child: Text(S.t('log_reset_filters')),
+                  onPressed: () {
+                    widget.onReset!();
+                    Navigator.pop(context);
+                  },
+                  child: Text(S.t('log_reset_filters'),
+                      style: const TextStyle(color: _textSecondary)),
                 ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
+                icon:
+                    const Icon(Icons.close, color: _textMuted),
               ),
             ],
           ),
-          const Divider(),
+          const Divider(color: _borderDefault, thickness: 1),
           Flexible(
             child: SingleChildScrollView(
               child: Column(
-                children: widget.fields.map((f) => _buildField(f)).toList(),
+                children:
+                    widget.fields.map((f) => _buildField(f)).toList(),
               ),
             ),
           ),
@@ -116,16 +137,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             child: ElevatedButton(
               onPressed: () {
                 if (_dateRange != null) {
-                  _filters['date_from'] = _dateRange!.start.toIso8601String();
-                  _filters['date_to'] = _dateRange!.end.toIso8601String();
+                  _filters['date_from'] =
+                      _dateRange!.start.toIso8601String();
+                  _filters['date_to'] =
+                      _dateRange!.end.toIso8601String();
                 }
                 widget.onApply(_filters);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: _accentGold,
+                foregroundColor: _bgPage,
+                elevation: 0,
+                minimumSize: const Size(0, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600),
               ),
               child: Text(S.t('action_apply')),
             ),
@@ -137,17 +166,37 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   }
 
   Widget _buildField(FilterField field) {
+    final inputDec = InputDecoration(
+      labelText: field.label,
+      labelStyle: const TextStyle(color: _textMuted, fontSize: 13),
+      filled: true,
+      fillColor: _bgInput,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _borderDefault),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _borderDefault),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _accentGold),
+      ),
+      isDense: true,
+    );
+
     switch (field.type) {
       case FilterFieldType.text:
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextField(
-            decoration: InputDecoration(
-              labelText: field.label,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
-            onChanged: (v) => _filters[field.id] = v.isEmpty ? null : v,
+            cursorColor: _accentGold,
+            style:
+                const TextStyle(color: _textPrimary, fontSize: 14),
+            decoration: inputDec,
+            onChanged: (v) =>
+                _filters[field.id] = v.isEmpty ? null : v,
           ),
         );
       case FilterFieldType.dropdown:
@@ -155,16 +204,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           padding: const EdgeInsets.only(bottom: 12),
           child: DropdownButtonFormField<String>(
             value: _filters[field.id] as String?,
-            decoration: InputDecoration(
-              labelText: field.label,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
+            dropdownColor: _bgCard,
+            style:
+                const TextStyle(color: _textPrimary, fontSize: 14),
+            icon:
+                const Icon(Icons.keyboard_arrow_down, color: _textMuted),
+            decoration: inputDec,
             items: [
-              DropdownMenuItem<String>(value: null, child: Text(S.t('filter_all_select'))),
+              DropdownMenuItem<String>(
+                  value: null, child: Text(S.t('filter_all_select'))),
               if (field.options != null)
                 ...field.options!.map(
-                  (o) => DropdownMenuItem<String>(value: o, child: Text(o)),
+                  (o) => DropdownMenuItem<String>(
+                      value: o, child: Text(o)),
                 ),
             ],
             onChanged: (v) => _filters[field.id] = v,
@@ -176,7 +228,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(field.label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+              Text(field.label,
+                  style: const TextStyle(
+                      fontSize: 13, color: _textMuted)),
               const SizedBox(height: 4),
               if (field.options != null)
                 Wrap(
@@ -184,9 +238,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   children: field.options!.map((o) {
                     final selected = _filters[field.id] == o;
                     return FilterChip(
-                      label: Text(o, style: const TextStyle(fontSize: 12)),
+                      label: Text(o,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: selected
+                                  ? _bgPage
+                                  : _textPrimary)),
                       selected: selected,
-                      onSelected: (_) => setState(() => _filters[field.id] = selected ? null : o),
+                      backgroundColor: _bgInput,
+                      selectedColor: _accentGold,
+                      checkmarkColor: _bgPage,
+                      side: BorderSide(
+                        color: selected
+                            ? _accentGold
+                            : _borderDefault,
+                      ),
+                      onSelected: (_) => setState(() =>
+                          _filters[field.id] =
+                              selected ? null : o),
                     );
                   }).toList(),
                 ),
@@ -207,15 +276,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               if (picked != null) setState(() => _dateRange = picked);
             },
             child: InputDecorator(
-              decoration: InputDecoration(
+              decoration: inputDec.copyWith(
                 labelText: field.label,
-                border: const OutlineInputBorder(),
-                isDense: true,
               ),
               child: Text(
                 _dateRange != null
                     ? '${_dateRange!.start.toLocal().toString().substring(0, 10)} → ${_dateRange!.end.toLocal().toString().substring(0, 10)}'
                     : S.t('filter_select_period'),
+                style: const TextStyle(
+                    color: _textSecondary, fontSize: 14),
               ),
             ),
           ),
