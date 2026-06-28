@@ -186,10 +186,10 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.desktopBackground,
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(S.t('size_run_title')),
-        backgroundColor: AppColors.desktopSurface,
+        backgroundColor: Color(0xFF13131F),
         actions: [
           if (_selectedProduct != null)
             TextButton.icon(
@@ -207,8 +207,8 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
           Container(
             width: 280,
             decoration: BoxDecoration(
-              color: AppColors.desktopSurface,
-              border: Border(right: BorderSide(color: AppColors.desktopBorder)),
+              color: Color(0xFF13131F),
+              border: Border(right: BorderSide(color: Color(0xFF1E1E35))),
             ),
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -219,7 +219,7 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
                       final isSelected = _selectedProduct?['id'] == p['id'];
                       return ListTile(
                         selected: isSelected,
-                        selectedTileColor: AppColors.desktopPrimary.withValues(alpha: 0.1),
+                        selectedTileColor: Color(0xFFF0A500).withValues(alpha: 0.1),
                         title: Text(p['name'] ?? '', style: const TextStyle(fontSize: 13)),
                         subtitle: Text(p['category'] ?? '', style: const TextStyle(fontSize: 11)),
                         onTap: () {
@@ -295,9 +295,9 @@ class _SizeRunScreenState extends State<SizeRunScreen> {
   Widget _buildSizeCard(String size, int qty) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.desktopBorder),
+        border: Border.all(color: Color(0xFF1E1E35)),
       ),
       padding: const EdgeInsets.all(8),
       child: Column(

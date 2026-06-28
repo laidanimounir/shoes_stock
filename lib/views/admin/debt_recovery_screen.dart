@@ -268,7 +268,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                     }
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Color(0xFFEEEEFF)),
                 child: Text(S.t('debt_confirm_payment')),
               ),
             ],
@@ -373,7 +373,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
           Text(label, style: AppTextStyles.bodyMedium(color: color)),
           const SizedBox(height: 2),
           Text('${amount.toStringAsFixed(0)} DA',
-              style: AppTextStyles.bodyMedium(color: Colors.black87)),
+              style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF))),
         ],
       ),
     );
@@ -400,7 +400,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
       appBar: AppBar(
         title: Text(S.t('debt_title'), style: AppTextStyles.bodyMedium()),
         backgroundColor: Colors.indigo[800],
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           Padding(
             padding: const EdgeInsetsDirectional.only(end: 16),
@@ -413,7 +413,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                 ),
                 child: Text(
                   '${S.t('debt_total_debt')}: ${totalDebt.toStringAsFixed(2)} DA',
-                  style: AppTextStyles.bodyMedium(color: Colors.white),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF)),
                 ),
               ),
             ),
@@ -432,9 +432,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                   child: Container(
                     margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Color(0xFFEEEEFF),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                      boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.05), blurRadius: 10)],
                     ),
                     child: Column(
                       children: [
@@ -494,7 +494,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                     selectedTileColor: Colors.indigo.withOpacity(0.08),
                                     leading: CircleAvatar(
                                       backgroundColor: isSelected ? Colors.indigo : Colors.grey[200],
-                                      child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey[700]),
+                                      child: Icon(Icons.person, color: isSelected ? Color(0xFFEEEEFF) : Colors.grey[700]),
                                     ),
                                     title: Text(c['full_name'] ?? S.t('misc_unknown'),
                                         style: AppTextStyles.bodyMedium()),
@@ -561,9 +561,9 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                   child: Container(
                     margin: const EdgeInsetsDirectional.only(top: 16, bottom: 16, end: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Color(0xFFEEEEFF),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                      boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.05), blurRadius: 10)],
                     ),
                     child: _selectedCustomer == null
                         ? Center(
@@ -662,7 +662,7 @@ class _DebtRecoveryScreenState extends State<DebtRecoveryScreen>
                                       style: AppTextStyles.bodyMedium()),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
+                                    foregroundColor: Color(0xFFEEEEFF),
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                   ),
                                 ),

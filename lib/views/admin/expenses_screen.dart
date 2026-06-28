@@ -218,7 +218,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Color(0xFFEEEEFF)),
               child: Text(S.t('action_save')),
             ),
           ],
@@ -277,7 +277,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           }
                         }
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Color(0xFFEEEEFF)),
                       child: Text(S.t('action_add')),
                     ),
                   ],
@@ -371,7 +371,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       appBar: AppBar(
         title: Text(S.t('exp_title'), style: AppTextStyles.bodyMedium()),
         backgroundColor: Colors.indigo[800],
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           IconButton(
             icon: const Icon(Icons.category),
@@ -384,7 +384,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddExpenseDialog,
         backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         icon: const Icon(Icons.add),
         label: Text(S.t('exp_add'), style: AppTextStyles.bodyMedium()),
       ),
@@ -542,9 +542,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFEEEEFF),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+          boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.04), blurRadius: 8)],
         ),
         child: Row(
           children: [

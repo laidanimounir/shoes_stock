@@ -41,7 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'sale':
         return Colors.green;
       default:
-        return AppColors.desktopPrimary;
+        return Color(0xFFF0A500);
     }
   }
 
@@ -60,18 +60,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.t('notif_title')),
-        backgroundColor: AppColors.desktopSurface,
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF13131F),
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           TextButton.icon(
             onPressed: () async {
               await service.markAllRead();
               if (mounted) setState(() {});
             },
-            icon: const Icon(Icons.done_all, color: Colors.white70),
+            icon: const Icon(Icons.done_all, color: Color(0xFF9090A8)),
             label: Text(
               S.t('notif_mark_all_read'),
-              style: const TextStyle(color: Colors.white70),
+              style: const TextStyle(color: Color(0xFF9090A8)),
             ),
           ),
         ],
@@ -146,7 +146,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Colors.blueAccent,
+                            color: Color(0xFF58A6FF),
                             shape: BoxShape.circle,
                           ),
                         ),

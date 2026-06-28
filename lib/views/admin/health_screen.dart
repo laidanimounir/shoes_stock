@@ -119,7 +119,7 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.desktopBackground,
+      backgroundColor: Color(0xFF0A0A14),
       body: Column(
         children: [
           _buildHeader(),
@@ -150,9 +150,9 @@ class _HealthScreenState extends State<HealthScreen> {
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         border: Border(
-          bottom: BorderSide(color: AppColors.desktopBorder, width: 0.8),
+          bottom: BorderSide(color: Color(0xFF1E1E35), width: 0.8),
         ),
       ),
       child: Row(
@@ -161,10 +161,10 @@ class _HealthScreenState extends State<HealthScreen> {
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.desktopPrimary.withValues(alpha: 0.12),
-              border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
+              color: Color(0xFFF0A500).withValues(alpha: 0.12),
+              border: Border.all(color: Color(0xFFF0A500), width: 1.2),
             ),
-            child: const Icon(Icons.monitor_heart_rounded, color: AppColors.desktopPrimary, size: 18),
+            child: const Icon(Icons.monitor_heart_rounded, color: Color(0xFFF0A500), size: 18),
           ),
           const SizedBox(width: 12),
           Column(
@@ -173,15 +173,15 @@ class _HealthScreenState extends State<HealthScreen> {
             children: [
               Text('Santé du système',
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: Color(0xFFEEEEFF))),
               Text('Diagnostic & synchronisation',
                   style: AppTextStyles.bodyMedium(
-                      color: AppColors.desktopPrimary)),
+                      color: Color(0xFFF0A500))),
             ],
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.backup_rounded, color: AppColors.desktopPrimary, size: 18),
+            icon: const Icon(Icons.backup_rounded, color: Color(0xFFF0A500), size: 18),
             onPressed: () async {
               try {
                 final path = await BackupService.instance.exportToJson();
@@ -202,7 +202,7 @@ class _HealthScreenState extends State<HealthScreen> {
             tooltip: 'Exporter la base locale',
           ),
           IconButton(
-            icon: const Icon(Icons.restore_rounded, color: Colors.greenAccent, size: 18),
+            icon: const Icon(Icons.restore_rounded, color: Color(0xFF4ADE80), size: 18),
             onPressed: () async {
               final result = await BackupService.instance.restoreFromJson();
               if (!mounted) return;
@@ -240,7 +240,7 @@ class _HealthScreenState extends State<HealthScreen> {
             tooltip: S.t('restore_backup'),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.desktopPrimary, size: 18),
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFFF0A500), size: 18),
             onPressed: _refresh,
             tooltip: 'Actualiser',
           ),
@@ -254,43 +254,43 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+        border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('STATUT SYSTÈME',
               style: AppTextStyles.bodyMedium(
-                  color: AppColors.desktopTextSecondary)),
+                  color: Color(0xFF9090A8))),
           const SizedBox(height: 16),
           _statusRow(
             Icons.wifi,
             'Connexion',
             _isOnline ? 'En ligne' : 'Hors ligne',
-            _isOnline ? AppColors.success : AppColors.danger,
+            _isOnline ? Color(0xFF4ADE80) : Color(0xFFF87171),
           ),
           const SizedBox(height: 12),
           _statusRow(
             Icons.sync,
             'Mode',
             AppSession.isOfflineMode ? 'Hors ligne (forcé)' : 'En ligne',
-            AppSession.isOfflineMode ? AppColors.warning : AppColors.success,
+            AppSession.isOfflineMode ? Color(0xFFFBBF24) : Color(0xFF4ADE80),
           ),
           const SizedBox(height: 12),
           _statusRow(
             Icons.person,
             'Utilisateur',
             AppSession.currentUserId ?? 'Non connecté',
-            AppColors.info,
+            Color(0xFF58A6FF),
           ),
           const SizedBox(height: 12),
           _statusRow(
             Icons.store,
             'Magasin',
             AppSession.currentStoreId ?? 'Aucun',
-            AppColors.info,
+            Color(0xFF58A6FF),
           ),
         ],
       ),
@@ -302,9 +302,9 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+        border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,18 +314,18 @@ class _HealthScreenState extends State<HealthScreen> {
             children: [
               Text('SYNCHRONISATION',
                   style: AppTextStyles.bodyMedium(
-                      color: AppColors.desktopTextSecondary)),
+                      color: Color(0xFF9090A8))),
               SizedBox(
                 height: 32,
                 child: ElevatedButton.icon(
                   onPressed: _isSyncing ? null : _triggerSync,
                   icon: _isSyncing
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFEEEEFF)))
                       : const Icon(Icons.sync_rounded, size: 14),
                   label: Text(_isSyncing ? 'En cours...' : 'Sync', style: const TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.desktopPrimary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFFF0A500),
+                    foregroundColor: Color(0xFFEEEEFF),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -339,21 +339,21 @@ class _HealthScreenState extends State<HealthScreen> {
             Icons.access_time,
             'Dernière sync',
             _lastSyncAt != null ? timeago.format(_lastSyncAt!, locale: 'fr') : 'Jamais',
-            _lastSyncAt != null ? AppColors.info : AppColors.desktopTextSecondary,
+            _lastSyncAt != null ? Color(0xFF58A6FF) : Color(0xFF9090A8),
           ),
           const SizedBox(height: 12),
           _statusRow(
             Icons.hourglass_empty,
             'En attente',
             '$_pendingCount opérations',
-            _pendingCount > 0 ? AppColors.warning : AppColors.success,
+            _pendingCount > 0 ? Color(0xFFFBBF24) : Color(0xFF4ADE80),
           ),
           const SizedBox(height: 12),
           _statusRow(
             Icons.error_outline,
             'Échouées',
             '$_failedCount opérations',
-            _failedCount > 0 ? AppColors.danger : AppColors.success,
+            _failedCount > 0 ? Color(0xFFF87171) : Color(0xFF4ADE80),
           ),
         ],
       ),
@@ -365,16 +365,16 @@ class _HealthScreenState extends State<HealthScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+        border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('BASE LOCALE (ISAR)',
               style: AppTextStyles.bodyMedium(
-                  color: AppColors.desktopTextSecondary)),
+                  color: Color(0xFF9090A8))),
           const SizedBox(height: 16),
           ..._collectionCounts.entries.map((e) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -382,7 +382,7 @@ class _HealthScreenState extends State<HealthScreen> {
               Icons.storage,
               e.key,
               '${e.value} entrées',
-              AppColors.teal,
+              Color(0xFF58A6FF),
             ),
           )),
         ],
@@ -405,11 +405,11 @@ class _HealthScreenState extends State<HealthScreen> {
         Expanded(
           child: Text(label,
               style: AppTextStyles.bodyMedium(
-                  color: AppColors.desktopTextSecondary)),
+                  color: Color(0xFF9090A8))),
         ),
         Text(value,
             style: AppTextStyles.bodyMedium(
-                color: Colors.white),
+                color: Color(0xFFEEEEFF)),
             maxLines: 1, overflow: TextOverflow.ellipsis),
       ],
     );

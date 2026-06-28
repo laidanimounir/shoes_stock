@@ -156,7 +156,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
       appBar: AppBar(
         title: Text(S.t('promo_title')),
         backgroundColor: Colors.indigo[900],
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

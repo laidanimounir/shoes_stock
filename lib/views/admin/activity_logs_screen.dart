@@ -354,7 +354,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       appBar: AppBar(
         title: Text(S.t('nav_activity')),
         backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Color(0xFFEEEEFF),
         elevation: 0,
         actions: [
           IconButton(
@@ -380,7 +380,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   // ─────────────────────────────────────────
   Widget _buildFilterBar() {
     return Container(
-      color: Colors.white,
+      color: Color(0xFFEEEEFF),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Wrap(
         spacing: 10,
@@ -600,12 +600,12 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFEEEEFF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Color(0xFF0A0A14).withOpacity(0.04),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
@@ -758,7 +758,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         ((_currentPage + 1) * _rowsPerPage).clamp(0, _totalCount);
 
     return Container(
-      color: Colors.white,
+      color: Color(0xFFEEEEFF),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
@@ -872,7 +872,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
               fontSize: 13,
               fontWeight:
                   isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
+              color: isSelected ? Color(0xFFEEEEFF) : Colors.grey.shade700,
             ),
           ),
         ),
