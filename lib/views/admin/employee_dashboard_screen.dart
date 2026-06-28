@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../core/app_session.dart';
 import '../../services/report_service.dart';
@@ -113,7 +112,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Erreur chargement rapport: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Color(0xFFF87171),
         ));
       }
       return;
@@ -137,16 +136,16 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.receipt_long_rounded, color: AppColors.desktopPrimary, size: 20),
+            const Icon(Icons.receipt_long_rounded, color: Color(0xFFF0A500), size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text('Rapport du Jour — $userName',
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: Color(0xFFEEEEFF))),
             ),
           ],
         ),
-        backgroundColor: AppColors.desktopSurface,
+        backgroundColor: Color(0xFF13131F),
         content: SizedBox(
           width: 400,
           child: SingleChildScrollView(
@@ -157,14 +156,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 _reportRow('Ventes', '$totalSales'),
                 _reportRow('Revenu total', '${totalRevenue.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 _reportRow('Remise moyenne', '${avgDiscount.toStringAsFixed(1)}%'),
-                const Divider(color: AppColors.desktopBorder, height: 16),
+                const Divider(color: Color(0xFF1E1E35), height: 16),
                 _reportRow('Factures', '$totalInvoices'),
                 _reportRow('Remboursements', '$totalRefunds (${refundAmount.toStringAsFixed(0)} ${S.t('misc_currency')})'),
-                const Divider(color: AppColors.desktopBorder, height: 16),
+                const Divider(color: Color(0xFF1E1E35), height: 16),
                 _reportRow('Espèces encaissées', '${cashCollected.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 _reportRow('Crédit accordé', '${creditGiven.toStringAsFixed(0)} ${S.t('misc_currency')}'),
                 if (topProduct.isNotEmpty) ...[
-                  const Divider(color: AppColors.desktopBorder, height: 16),
+                  const Divider(color: Color(0xFF1E1E35), height: 16),
                   _reportRow('Top produit', '$topProduct ($topProductQty)'),
                 ],
               ],
@@ -180,15 +179,15 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.print_rounded, size: 16, color: AppColors.desktopPrimary),
+                const Icon(Icons.print_rounded, size: 16, color: Color(0xFFF0A500)),
                 const SizedBox(width: 4),
-                Text('Imprimer', style: AppTextStyles.bodyMedium(color: AppColors.desktopPrimary)),
+                Text('Imprimer', style: AppTextStyles.bodyMedium(color: Color(0xFFF0A500))),
               ],
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(S.t('action_close'), style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+            child: Text(S.t('action_close'), style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
           ),
         ],
       ),
@@ -203,10 +202,10 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         children: [
           Text(label,
               style: AppTextStyles.bodyMedium(
-                  color: AppColors.desktopTextSecondary)),
+                  color: Color(0xFF9090A8))),
           Text(value,
               style: AppTextStyles.bodyMedium(
-                  color: Colors.white)),
+                  color: Color(0xFFEEEEFF))),
         ],
       ),
     );
@@ -221,16 +220,16 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
     final dateStr = '${S.t(dayKey)} ${now.day} ${S.t(monthKey)} ${now.year}';
 
     return Scaffold(
-      backgroundColor: AppColors.desktopBackground,
+      backgroundColor: Color(0xFF0A0A14),
       body: Column(
         children: [
           Container(
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: AppColors.desktopSurface,
+              color: Color(0xFF13131F),
               border: Border(
-                bottom: BorderSide(color: AppColors.desktopBorder, width: 0.8),
+                bottom: BorderSide(color: Color(0xFF1E1E35), width: 0.8),
               ),
             ),
             child: Row(
@@ -239,10 +238,10 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   width: 36, height: 36,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.desktopPrimary.withValues(alpha: 0.12),
-                    border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
+                    color: Color(0xFFF0A500).withValues(alpha: 0.12),
+                    border: Border.all(color: Color(0xFFF0A500), width: 1.2),
                   ),
-                  child: const Icon(Icons.dashboard_rounded, color: AppColors.desktopPrimary, size: 18),
+                  child: const Icon(Icons.dashboard_rounded, color: Color(0xFFF0A500), size: 18),
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -251,24 +250,24 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   children: [
                     Text(S.t('dash_employee_dashboard'),
                         style: AppTextStyles.headingLarge(
-                            color: Colors.white)),
+                            color: Color(0xFFEEEEFF))),
                     Text(dateStr,
                         style: AppTextStyles.bodyMedium(
-                            color: AppColors.desktopPrimary)),
+                            color: Color(0xFFF0A500))),
                   ],
                 ),
                 const Spacer(),
                 Container(
                   width: 36, height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.desktopPrimary.withValues(alpha: 0.12),
+                    color: Color(0xFFF0A500).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: AppColors.desktopPrimary.withValues(alpha: 0.35), width: 0.8),
+                        color: Color(0xFFF0A500).withValues(alpha: 0.35), width: 0.8),
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.refresh_rounded, color: AppColors.desktopPrimary, size: 18),
+                    icon: const Icon(Icons.refresh_rounded, color: Color(0xFFF0A500), size: 18),
                     onPressed: _fetchData,
                     tooltip: S.t('action_refresh'),
                   ),
@@ -319,28 +318,28 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             title: S.t('dash_my_sales_today'),
             value: '${(stats['my_sales_today'] as num?)?.toInt() ?? 0}',
             icon: Icons.person_rounded,
-            color: AppColors.desktopPrimary,
+            color: Color(0xFFF0A500),
           ),
           const SizedBox(width: 12),
           _miniCard(
             title: S.t('dash_today_sales_count'),
             value: '${(stats['today_sales_count'] as num?)?.toInt() ?? 0}',
             icon: Icons.receipt_long_rounded,
-            color: AppColors.teal,
+            color: Color(0xFF58A6FF),
           ),
           const SizedBox(width: 12),
           _miniCard(
             title: S.t('dash_today_revenue'),
             value: '${(stats['today_revenue'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
             icon: Icons.trending_up_rounded,
-            color: AppColors.info,
+            color: Color(0xFF58A6FF),
           ),
           const SizedBox(width: 12),
           _miniCard(
             title: S.t('dash_low_stock'),
             value: '${(stats['low_stock_count'] as num?)?.toInt() ?? 0}',
             icon: Icons.warning_rounded,
-            color: AppColors.danger,
+            color: Color(0xFFF87171),
           ),
         ],
       ),
@@ -357,7 +356,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.desktopSurface,
+          color: Color(0xFF13131F),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
@@ -379,11 +378,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 children: [
                   Text(value,
                       style: AppTextStyles.bodyMedium(
-                          color: Colors.white),
+                          color: Color(0xFFEEEEFF)),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text(title,
                       style: AppTextStyles.bodyMedium(
-                          color: AppColors.desktopTextSecondary),
+                          color: Color(0xFF9090A8)),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
@@ -403,30 +402,30 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopPrimary.withValues(alpha: 0.3), width: 0.8),
+        border: Border.all(color: Color(0xFFF0A500).withValues(alpha: 0.3), width: 0.8),
       ),
       child: Row(
         children: [
           Container(
             width: 38, height: 38,
             decoration: BoxDecoration(
-              color: AppColors.desktopPrimary.withValues(alpha: 0.15),
+              color: Color(0xFFF0A500).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.monetization_on_rounded, color: AppColors.desktopPrimary, size: 18),
+            child: const Icon(Icons.monetization_on_rounded, color: Color(0xFFF0A500), size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('COMMISSION DU MOIS', style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+              Text('COMMISSION DU MOIS', style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
               const SizedBox(height: 4),
               Text('${totalComm.toStringAsFixed(0)} ${S.t('misc_currency')}',
-                  style: AppTextStyles.bodyMedium(color: Colors.white)),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFFEEEEFF))),
               Text('Taux: $rate% | $salesCount vente(s)',
-                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                  style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
             ],
           )),
         ],
@@ -439,9 +438,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+        border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +450,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             children: [
               Text(S.t('dash_my_sales'),
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 12),
@@ -459,13 +458,13 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
               ? SizedBox(
                   height: 80,
                   child: Center(child: Text(S.t('dash_no_sales'),
-                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))))
+                      style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)))))
               : ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: sales.length,
                   separatorBuilder: (_, __) => Divider(
-                      color: AppColors.desktopBorder, height: 1, thickness: 0.5),
+                      color: Color(0xFF1E1E35), height: 1, thickness: 0.5),
                   itemBuilder: (context, index) {
                     final s = sales[index];
                     final createdAt = s['created_at'] as String?;
@@ -483,11 +482,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                           Container(
                             width: 32, height: 32,
                             decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.12),
+                              color: Color(0xFF4ADE80).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.receipt_rounded,
-                                color: AppColors.success, size: 16),
+                                color: Color(0xFF4ADE80), size: 16),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -496,17 +495,17 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                               children: [
                                 Text('${((s['total_amount'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
                                     style: AppTextStyles.bodyMedium(
-                                        color: Colors.white)),
+                                        color: Color(0xFFEEEEFF))),
                                 Text(customerName,
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.desktopTextSecondary)),
+                                        color: Color(0xFF9090A8))),
                               ],
                             ),
                           ),
                           if (timeAgo.isNotEmpty)
                             Text(timeAgo,
                                 style: AppTextStyles.bodyMedium(
-                                    color: AppColors.desktopTextSecondary)),
+                                    color: Color(0xFF9090A8))),
                         ],
                       ),
                     );
@@ -525,20 +524,20 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.desktopSurface,
+            color: Color(0xFF13131F),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+            border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_rounded, color: AppColors.danger, size: 16),
+                  const Icon(Icons.warning_rounded, color: Color(0xFFF87171), size: 16),
                   const SizedBox(width: 8),
                   Text(S.t('dash_low_stock'),
                       style: AppTextStyles.headingLarge(
-                          color: Colors.white)),
+                          color: Color(0xFFEEEEFF))),
                 ],
               ),
               const SizedBox(height: 12),
@@ -553,7 +552,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                 SizedBox(
                   height: 40,
                   child: Center(child: Text(S.t('dash_no_data'),
-                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                      style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))))
                 )
               else
                 ListView.separated(
@@ -561,7 +560,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: items.length,
                   separatorBuilder: (_, __) => Divider(
-                      color: AppColors.desktopBorder, height: 1, thickness: 0.5),
+                      color: Color(0xFF1E1E35), height: 1, thickness: 0.5),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return Padding(
@@ -572,7 +571,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                             child: Text(
                               '${item['product_name'] ?? ''} (${item['size'] ?? ''} - ${item['color'] ?? ''})',
                               style: AppTextStyles.bodyMedium(
-                                  color: Colors.white),
+                                  color: Color(0xFFEEEEFF)),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -580,12 +579,12 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.danger.withValues(alpha: 0.15),
+                              color: Color(0xFFF87171).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text('${item['quantity'] ?? 0}',
                                 style: AppTextStyles.bodyMedium(
-                                    color: AppColors.danger)),
+                                    color: Color(0xFFF87171))),
                           ),
                         ],
                       ),
@@ -644,20 +643,20 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+        border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.people_rounded, color: AppColors.desktopPrimary, size: 18),
+              const Icon(Icons.people_rounded, color: Color(0xFFF0A500), size: 18),
               const SizedBox(width: 8),
               Text('Employés',
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 12),
@@ -666,7 +665,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             physics: const NeverScrollableScrollPhysics(),
             itemCount: employees.length,
             separatorBuilder: (_, __) => Divider(
-                color: AppColors.desktopBorder, height: 1, thickness: 0.5),
+                color: Color(0xFF1E1E35), height: 1, thickness: 0.5),
             itemBuilder: (context, index) {
               final e = employees[index];
               final name = e['full_name'] as String? ?? '${e['first_name'] ?? ''} ${e['last_name'] ?? ''}'.trim();
@@ -678,14 +677,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                     Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.desktopPrimary.withValues(alpha: 0.15),
+                        color: Color(0xFFF0A500).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
                         child: Text(
                           name.isNotEmpty ? name[0].toUpperCase() : '?',
                           style: AppTextStyles.bodyMedium(
-                              color: AppColors.desktopPrimary),
+                              color: Color(0xFFF0A500)),
                         ),
                       ),
                     ),
@@ -693,22 +692,22 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                     Expanded(
                       child: Text(name,
                           style: AppTextStyles.bodyMedium(
-                              color: Colors.white),
+                              color: Color(0xFFEEEEFF)),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     Container(
                       height: 30,
                       decoration: BoxDecoration(
-                        color: AppColors.desktopPrimary.withValues(alpha: 0.12),
+                        color: Color(0xFFF0A500).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.desktopPrimary.withValues(alpha: 0.35), width: 0.8),
+                        border: Border.all(color: Color(0xFFF0A500).withValues(alpha: 0.35), width: 0.8),
                       ),
                       child: TextButton(
                         style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10)),
                         onPressed: () => _showCashierReportDialog(userId, name),
                         child: Text('Rapport du Jour',
                             style: AppTextStyles.bodyMedium(
-                                color: AppColors.desktopPrimary)),
+                                color: Color(0xFFF0A500))),
                       ),
                     ),
                   ],
@@ -775,8 +774,8 @@ class _EmpShimmerBoxState extends State<_EmpShimmerBox>
       builder: (_, __) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Color.lerp(AppColors.desktopSurface, AppColors.desktopBackground, _anim.value),
-          border: Border.all(color: AppColors.desktopBorder, width: 0.8),
+          color: Color.lerp(Color(0xFF13131F), Color(0xFF0A0A14), _anim.value),
+          border: Border.all(color: Color(0xFF1E1E35), width: 0.8),
         ),
       ),
     );
