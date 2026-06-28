@@ -259,10 +259,10 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(S.t('store_title')),
-        backgroundColor: Colors.indigo[800],
+        backgroundColor: Color(0xFF0F0F1C),
         foregroundColor: Colors.white,
         actions: [
           if (_userRole == 'owner')
@@ -274,7 +274,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                 label: Text(S.t('store_add'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: Colors.indigo[800],
+                  foregroundColor: Color(0xFF0F0F1C),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -343,7 +343,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                 ),
                               ],
                               border: BorderDirectional(
-                                start: BorderSide(color: Colors.indigo[700]!, width: 5),
+                                start: BorderSide(color: Color(0xFF0F0F1C)!, width: 5),
                               ),
                             ),
                             child: Padding(
@@ -353,7 +353,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.warehouse, color: Colors.indigo[700], size: 32),
+                                      Icon(Icons.warehouse, color: Color(0xFF0F0F1C), size: 32),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -361,7 +361,7 @@ class _GestionStoresScreenState extends State<GestionStoresScreen> {
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.indigo[900],
+                                            color: Color(0xFF0F0F1C),
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
