@@ -4,10 +4,15 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_strings.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../core/app_session.dart';
-import '../../services/report_service.dart';
+
+class _T {
+  _T._();
+  static const bgPage = Color(0xFF0A0A14);
+  static const statusUnpaidBg = Color(0xFF2B0D0D);
+  static const statusPaidText = Color(0xFF4ADE80);
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,7 +24,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  List<dynamic> _stores = [];
   String? _selectedStoreId;
 
   Map<String, dynamic> _stats = {};
@@ -57,21 +61,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> _init() async {
-    await _fetchStores();
     await _fetchAll();
-  }
-
-  Future<void> _fetchStores() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('stores')
-          .select()
-          .eq('is_active', true)
-          .order('name');
-      if (mounted) setState(() => _stores = res);
-    } catch (e) {
-      debugPrint('Error fetching stores: $e');
-    }
   }
 
   Future<void> _fetchAll() async {
@@ -144,7 +134,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         setState(() => _isLoading = false);
         _animController.forward();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.t('error_loading_data')), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(S.t('error_loading_data'), style: TextStyle(color: _T.statusPaidText)),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            backgroundColor: _T.statusUnpaidBg,
+          ),
         );
       }
     }
@@ -173,144 +168,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.desktopBackground,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _isLoading
-                ? _buildShimmer()
-                : FadeTransition(
-                    opacity: _fadeAnim,
-                    child: _buildBody(),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final now = DateTime.now();
-    final daysKeys = ['day_sun', 'day_mon', 'day_tue', 'day_wed', 'day_thu', 'day_fri', 'day_sat'];
-    final dayKey = daysKeys[now.weekday % 7];
-    final monthKey = 'month_${now.month}';
-    final dateStr = '${S.t(dayKey)} ${now.day} ${S.t(monthKey)} ${now.year}';
-
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border, width: 0.8),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.desktopPrimary.withValues(alpha: 0.12),
-              border: Border.all(color: AppColors.desktopPrimary, width: 1.2),
+      backgroundColor: _T.bgPage,
+      body: _isLoading
+          ? _buildShimmer()
+          : FadeTransition(
+              opacity: _fadeAnim,
+              child: _buildBody(),
             ),
-            child: const Icon(Icons.dashboard_rounded, color: AppColors.desktopPrimary, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(S.t('dash_title'),
-                  style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
-              Text(dateStr,
-                  style: AppTextStyles.bodyMedium(
-                      color: AppColors.desktopPrimary)),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppColors.desktopBackground,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border, width: 0.8),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String?>(
-                value: _selectedStoreId,
-                dropdownColor: AppColors.desktopSurface,
-                icon: const Icon(Icons.store_outlined, color: AppColors.desktopPrimary, size: 16),
-                style: AppTextStyles.bodyMedium(color: Colors.white),
-                items: [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text(S.t('inv_all_stores'),
-                        style: AppTextStyles.bodyMedium(color: Colors.white70)),
-                  ),
-                  ..._stores.map((s) => DropdownMenuItem(
-                        value: s['id'] as String?,
-                        child: Text(s['name'],
-                            style: AppTextStyles.bodyMedium(color: Colors.white)),
-                      )),
-                ],
-                onChanged: (val) {
-                  setState(() => _selectedStoreId = val);
-                  _fetchAll();
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 0.8),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
-              onPressed: _fetchAll,
-              tooltip: S.t('action_refresh'),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.35), width: 0.8),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(Icons.summarize_rounded, color: AppColors.success, size: 18),
-              onPressed: () => ReportService.instance.showEndOfDayReportDialog(context, _selectedStoreId),
-              tooltip: 'Rapport de Clôture',
-            ),
-          ),
-          const SizedBox(width: 4),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.download_rounded, color: AppColors.desktopPrimary, size: 18),
-            tooltip: 'Exporter',
-            onSelected: (v) async {
-              if (v == 'sales') await ReportService.instance.generateDailySalesReport(DateTime.now(), _selectedStoreId);
-              else if (v == 'inventory') await ReportService.instance.generateInventoryReport(_selectedStoreId);
-              else if (v == 'debts') await ReportService.instance.generateDebtReport(_selectedStoreId);
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'sales', child: ListTile(leading: Icon(Icons.receipt, size: 18), title: Text('Rapport ventes'))),
-              const PopupMenuItem(value: 'inventory', child: ListTile(leading: Icon(Icons.inventory, size: 18), title: Text("Rapport inventaire"))),
-              const PopupMenuItem(value: 'debts', child: ListTile(leading: Icon(Icons.money_off, size: 18), title: Text('Rapport dettes'))),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -347,7 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_today'),
             value: '${(stats['today_revenue'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
             icon: Icons.trending_up_rounded,
-            color: AppColors.info,
+            color: const Color(0xFF58A6FF),
           ),
           const SizedBox(width: 12),
           _kpiCard(
@@ -355,7 +219,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_item_count'),
             value: '${(stats['today_sales_count'] as num?)?.toInt() ?? 0}',
             icon: Icons.receipt_long_rounded,
-            color: AppColors.teal,
+            color: const Color(0xFF58A6FF),
           ),
           const SizedBox(width: 12),
           _kpiCard(
@@ -363,7 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_today'),
             value: '${(stats['today_expenses'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
             icon: Icons.money_off_rounded,
-            color: AppColors.danger,
+            color: const Color(0xFFF87171),
           ),
           const SizedBox(width: 12),
           _kpiCard(
@@ -371,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_sales_count'),
             value: '${(stats['month_revenue'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
             icon: Icons.calendar_month_rounded,
-            color: AppColors.success,
+            color: const Color(0xFF4ADE80),
           ),
           const SizedBox(width: 12),
           _kpiCard(
@@ -379,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             subtitle: S.t('dash_item_count'),
             value: '${(stats['month_sales_count'] as num?)?.toInt() ?? 0}',
             icon: Icons.shopping_cart_rounded,
-            color: AppColors.desktopPrimary,
+            color: const Color(0xFFF0A500),
           ),
         ],
       ),
@@ -395,43 +259,43 @@ class _DashboardScreenState extends State<DashboardScreen>
           _miniKpiCard(
             title: S.t('dash_customer_debt'),
             value: '${(stats['customer_debt_total'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
-            color: AppColors.warning,
+            color: const Color(0xFFFBBF24),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_supplier_debt'),
             value: '${(stats['supplier_debt_total'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
-            color: AppColors.danger,
+            color: const Color(0xFFF87171),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_stock_value'),
             value: '${(stats['stock_value'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
-            color: AppColors.teal,
+            color: const Color(0xFF58A6FF),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_total_profit'),
             value: '${(stats['total_profit'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
-            color: AppColors.purple,
+            color: const Color(0xFF58A6FF),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_avg_margin'),
             value: '${(stats['avg_margin'] as num?)?.toInt() ?? 0} ${S.t('misc_currency')}',
-            color: AppColors.teal,
+            color: const Color(0xFF58A6FF),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_low_stock'),
             value: '${(stats['low_stock_count'] as num?)?.toInt() ?? 0}',
-            color: AppColors.danger,
+            color: const Color(0xFFF87171),
           ),
           const SizedBox(width: 10),
           _miniKpiCard(
             title: S.t('dash_active_cust'),
             value: '${(stats['active_customers'] as num?)?.toInt() ?? 0}',
-            color: AppColors.purple,
+            color: const Color(0xFF58A6FF),
           ),
         ],
       ),
@@ -490,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.desktopSurface,
+          color: const Color(0xFF13131F),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
@@ -512,18 +376,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   child: Text(title,
                       style: AppTextStyles.bodyMedium(
-                          color: AppColors.desktopTextSecondary),
+                          color: const Color(0xFF9090A8)),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
             Text(value,
                 style: AppTextStyles.bodyMedium(
-                    color: Colors.white),
+                    color: const Color(0xFFEEEEFF)),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
             Text(subtitle,
                 style: AppTextStyles.bodyMedium(
-                    color: AppColors.desktopTextSecondary)),
+                    color: const Color(0xFF9090A8))),
           ],
         ),
       ),
@@ -539,7 +403,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.desktopSurface,
+          color: const Color(0xFF13131F),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: color.withValues(alpha: 0.15), width: 0.8),
         ),
@@ -549,11 +413,11 @@ class _DashboardScreenState extends State<DashboardScreen>
           children: [
             Text(title,
                 style: AppTextStyles.bodyMedium(
-                    color: AppColors.desktopTextSecondary)),
+                    color: const Color(0xFF9090A8))),
             const SizedBox(height: 4),
             Text(value,
                 style: AppTextStyles.bodyMedium(
-                    color: Colors.white),
+                    color: const Color(0xFFEEEEFF)),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
@@ -568,9 +432,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,10 +447,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   children: [
                     Text(S.t('dash_revenue_chart'),
                         style: AppTextStyles.headingLarge(
-                            color: Colors.white)),
+                            color: const Color(0xFFEEEEFF))),
                     Text(S.t('dash_${_chartPeriod}'),
                         style: AppTextStyles.bodyMedium(
-                            color: AppColors.desktopTextSecondary)),
+                            color: const Color(0xFF9090A8))),
                   ],
                 ),
               ),
@@ -605,7 +469,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Expanded(
             child: data.isEmpty
                 ? Center(child: Text(S.t('dash_no_data'),
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))))
                 : LineChart(
                     LineChartData(
                       gridData: FlGridData(
@@ -613,7 +477,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         drawVerticalLine: false,
                         horizontalInterval: maxRevenue > 0 ? (maxRevenue / 4).ceilToDouble() : 1,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: AppColors.border,
+                          color: const Color(0xFF1E1E35),
                           strokeWidth: 0.5,
                         ),
                       ),
@@ -627,7 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                               if (v % 2 == 0 || v == 0) {
                                 return Text('$v',
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.desktopTextSecondary));
+                                        color: const Color(0xFF9090A8)));
                               }
                               return const SizedBox.shrink();
                             },
@@ -647,7 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(label,
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.desktopTextSecondary)),
+                                        color: const Color(0xFF9090A8))),
                               );
                             },
                           ),
@@ -663,7 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             return FlSpot(i.toDouble(), rev);
                           }),
                           isCurved: true,
-                          color: AppColors.info,
+                          color: const Color(0xFF58A6FF),
                           barWidth: 2.5,
                           isStrokeCapRound: true,
                           dotData: FlDotData(
@@ -672,21 +536,21 @@ class _DashboardScreenState extends State<DashboardScreen>
                               if (index == data.length - 1) {
                                 return FlDotCirclePainter(
                                   radius: 4,
-                                  color: AppColors.info,
+                                  color: const Color(0xFF58A6FF),
                                   strokeWidth: 2,
                                   strokeColor: Colors.white,
                                 );
                               }
                               return FlDotCirclePainter(
                                 radius: 2,
-                                color: AppColors.info.withValues(alpha: 0.5),
+                                color: const Color(0xFF58A6FF).withValues(alpha: 0.5),
                                 strokeWidth: 0,
                               );
                             },
                           ),
                           belowBarData: BarAreaData(
                             show: true,
-                            color: AppColors.info.withValues(alpha: 0.08),
+                            color: const Color(0xFF58A6FF).withValues(alpha: 0.08),
                           ),
                         ),
                       ],
@@ -697,7 +561,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             return LineTooltipItem(
                               '$rev ${S.t('misc_currency')}',
                               TextStyle(
-                                color: AppColors.info,
+                                color: const Color(0xFF58A6FF),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -724,19 +588,19 @@ class _DashboardScreenState extends State<DashboardScreen>
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.info.withValues(alpha: 0.15)
+              ? const Color(0xFF58A6FF).withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isSelected
-                ? AppColors.info.withValues(alpha: 0.4)
-                : AppColors.border,
+                ? const Color(0xFF58A6FF).withValues(alpha: 0.4)
+                : const Color(0xFF1E1E35),
             width: 0.8,
           ),
         ),
         child: Text(label,
             style: AppTextStyles.bodyMedium(
-                color: isSelected ? AppColors.info : AppColors.desktopTextSecondary)),
+                color: isSelected ? const Color(0xFF58A6FF) : const Color(0xFF9090A8))),
       ),
     );
   }
@@ -746,29 +610,29 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('dash_top_products_title'),
               style: AppTextStyles.headingLarge(
-                  color: Colors.white)),
+                  color: const Color(0xFFEEEEFF))),
           const SizedBox(height: 4),
           Text(S.t('dash_month'),
               style: AppTextStyles.bodyMedium(
-                  color: AppColors.desktopTextSecondary)),
+                  color: const Color(0xFF9090A8))),
           const SizedBox(height: 12),
           Expanded(
             child: products.isEmpty
                 ? Center(child: Text(S.t('dash_no_products_sold'),
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))))
                 : ListView.separated(
                     itemCount: products.length,
                     separatorBuilder: (_, __) => Divider(
-                        color: AppColors.border, height: 1, thickness: 0.5),
+                        color: const Color(0xFF1E1E35), height: 1, thickness: 0.5),
                     itemBuilder: (context, index) {
                       final p = products[index];
                       return Padding(
@@ -778,13 +642,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Container(
                               width: 24, height: 24,
                               decoration: BoxDecoration(
-                                color: AppColors.desktopPrimary.withValues(alpha: 0.15),
+                                color: const Color(0xFFF0A500).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Center(
                                 child: Text('${index + 1}',
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.desktopPrimary)),
+                                        color: const Color(0xFFF0A500))),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -794,11 +658,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 children: [
                                   Text(p['product_name'] ?? '',
                                       style: AppTextStyles.bodyMedium(
-                                          color: Colors.white),
+                                          color: const Color(0xFFEEEEFF)),
                                       maxLines: 1, overflow: TextOverflow.ellipsis),
                                   Text(p['variant_info'] ?? '',
                                       style: AppTextStyles.bodyMedium(
-                                          color: AppColors.desktopTextSecondary)),
+                                          color: const Color(0xFF9090A8))),
                                 ],
                               ),
                             ),
@@ -807,10 +671,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                               children: [
                                 Text('${p['total_sold'] ?? 0}',
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.info)),
+                                        color: const Color(0xFF58A6FF))),
                                 Text(S.t('dash_item_count'),
                                     style: AppTextStyles.bodyMedium(
-                                        color: AppColors.desktopTextSecondary)),
+                                        color: const Color(0xFF9090A8))),
                               ],
                             ),
                           ],
@@ -829,9 +693,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,14 +705,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Text(S.t('dash_recent_activity'),
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: const Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: activity.isEmpty
                 ? Center(child: Text(S.t('dash_no_activity'),
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))))
                 : ListView.builder(
                     itemCount: activity.length,
                     itemBuilder: (context, index) {
@@ -864,7 +728,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Container(
                               width: 6, height: 6,
                               decoration: BoxDecoration(
-                                color: AppColors.desktopPrimary.withValues(alpha: 0.5),
+                                color: const Color(0xFFF0A500).withValues(alpha: 0.5),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -875,14 +739,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     ? '${(a['description']?.toString() ?? '').substring(0, 47)}...'
                                     : (a['description']?.toString() ?? ''),
                                 style: AppTextStyles.bodyMedium(
-                                    color: AppColors.desktopTextPrimary),
+                                    color: const Color(0xFFEEEEFF)),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (timeAgo.isNotEmpty)
                               Text(timeAgo,
                                   style: AppTextStyles.bodyMedium(
-                                      color: AppColors.desktopTextSecondary)),
+                                      color: const Color(0xFF9090A8))),
                           ],
                         ),
                       );
@@ -899,21 +763,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(S.t('dash_debt_clients'),
               style: AppTextStyles.headingLarge(
-                  color: Colors.white)),
+                  color: const Color(0xFFEEEEFF))),
           const SizedBox(height: 8),
           Expanded(
             child: clients.isEmpty
                 ? Center(child: Text(S.t('dash_no_debt_clients'),
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))))
                 : ListView.builder(
                     itemCount: clients.length,
                     itemBuilder: (context, index) {
@@ -928,7 +792,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     ? '${(c['full_name']?.toString() ?? '').substring(0, 18)}...'
                                     : (c['full_name'] ?? ''),
                                 style: AppTextStyles.bodyMedium(
-                                    color: AppColors.desktopTextPrimary),
+                                    color: const Color(0xFFEEEEFF)),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -936,7 +800,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Text(
                               '${((c['balance'] as num?)?.toInt() ?? 0)} ${S.t('misc_currency')}',
                               style: AppTextStyles.bodyMedium(
-                                  color: AppColors.warning),
+                                  color: const Color(0xFFFBBF24)),
                             ),
                           ],
                         ),
@@ -954,9 +818,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -966,14 +830,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Text('Stock Faible',
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: const Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: items.isEmpty
                 ? Center(child: Text('Aucun stock faible',
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)))
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))))
                 : ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
@@ -985,7 +849,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             Container(
                               width: 6, height: 6,
                               decoration: BoxDecoration(
-                                color: AppColors.danger.withValues(alpha: 0.5),
+                                color: const Color(0xFFF87171).withValues(alpha: 0.5),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -994,14 +858,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                               child: Text(
                                 '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
                                 style: AppTextStyles.bodyMedium(
-                                    color: AppColors.desktopTextPrimary),
+                                    color: const Color(0xFFEEEEFF)),
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             Text(
                               '${item['quantity'] ?? 0}',
                               style: AppTextStyles.bodyMedium(
-                                  color: AppColors.danger),
+                                  color: const Color(0xFFF87171)),
                             ),
                           ],
                         ),
@@ -1020,9 +884,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1032,25 +896,25 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Row(
                 children: [
-                  const Icon(Icons.slow_motion_video, color: Colors.orange, size: 18),
+                  const Icon(Icons.slow_motion_video, color: const Color(0xFFF0A500), size: 18),
                   const SizedBox(width: 8),
                   Text('Produits à rotation lente',
                       style: AppTextStyles.headingLarge(
-                          color: Colors.white)),
+                          color: const Color(0xFFEEEEFF))),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: const Color(0xFFF0A500).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _slowDays,
-                    dropdownColor: AppColors.desktopSurface,
+                    dropdownColor: const Color(0xFF13131F),
                     style: AppTextStyles.bodyMedium(
-                        color: Colors.orange),
+                        color: const Color(0xFFF0A500)),
                     items: const [
                       DropdownMenuItem(value: 30, child: Text('30j')),
                       DropdownMenuItem(value: 60, child: Text('60j')),
@@ -1069,7 +933,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text('Aucun produit lent',
-                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))),
             ))
           else
             SizedBox(
@@ -1086,7 +950,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Container(
                           width: 6, height: 6,
                           decoration: BoxDecoration(
-                            color: days > 90 ? AppColors.danger.withValues(alpha: 0.5) : Colors.orange.withValues(alpha: 0.5),
+                            color: days > 90 ? const Color(0xFFF87171).withValues(alpha: 0.5) : const Color(0xFFF0A500).withValues(alpha: 0.5),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -1094,14 +958,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Expanded(
                           child: Text(
                             '${item['product_name'] ?? ''} (${item['size'] ?? ''})',
-                            style: AppTextStyles.bodyMedium(color: AppColors.desktopTextPrimary),
+                            style: AppTextStyles.bodyMedium(color: const Color(0xFFEEEEFF)),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           '$days j',
                           style: AppTextStyles.bodyMedium(
-                              color: days > 90 ? AppColors.danger : Colors.orange),
+                              color: days > 90 ? const Color(0xFFF87171) : const Color(0xFFF0A500)),
                         ),
                       ],
                     ),
@@ -1121,20 +985,20 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.straighten, color: AppColors.teal, size: 18),
+              const Icon(Icons.straighten, color: const Color(0xFF58A6FF), size: 18),
               const SizedBox(width: 8),
               Text(S.t('size_analytics_title'),
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: const Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 12),
@@ -1142,7 +1006,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(S.t('dash_no_data'),
-                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))),
             ))
           else
             ...data.map((item) {
@@ -1167,8 +1031,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: barWidth.clamp(0.0, 1.0),
-                          backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-                          color: AppColors.teal,
+                          backgroundColor: const Color(0xFF58A6FF).withValues(alpha: 0.15),
+                          color: const Color(0xFF58A6FF),
                           minHeight: 14,
                         ),
                       ),
@@ -1178,19 +1042,19 @@ class _DashboardScreenState extends State<DashboardScreen>
                       width: 70,
                       child: Text('$sold ${S.t('dash_item_count')}',
                           style: AppTextStyles.bodyMedium(
-                              color: AppColors.desktopTextSecondary)),
+                              color: const Color(0xFF9090A8))),
                     ),
                     SizedBox(
                       width: 60,
                       child: Text('${revenue.toStringAsFixed(0)} ${S.t('misc_currency')}',
                           style: AppTextStyles.bodyMedium(
-                              color: AppColors.teal)),
+                              color: const Color(0xFF58A6FF))),
                     ),
                     SizedBox(
                       width: 40,
                       child: Text('${pct.toStringAsFixed(1)}%',
                           style: AppTextStyles.bodyMedium(
-                              color: AppColors.desktopPrimary)),
+                              color: const Color(0xFFF0A500))),
                     ),
                   ],
                 ),
@@ -1226,20 +1090,20 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.desktopSurface,
+        color: const Color(0xFF13131F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: const Color(0xFF1E1E35), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month, color: AppColors.teal, size: 18),
+              const Icon(Icons.calendar_month, color: const Color(0xFF58A6FF), size: 18),
               const SizedBox(width: 8),
               Text('Analyse Saisonnière',
                   style: AppTextStyles.headingLarge(
-                      color: Colors.white)),
+                      color: const Color(0xFFEEEEFF))),
             ],
           ),
           const SizedBox(height: 12),
@@ -1255,10 +1119,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: ChoiceChip(
                     label: Text(DateFormat('MMM', 'fr').format(DateTime(2020, m)),
                         style: AppTextStyles.bodyMedium(
-                            color: selected ? Colors.white : AppColors.teal)),
+                            color: selected ? Colors.white : const Color(0xFF58A6FF))),
                     selected: selected,
-                    selectedColor: AppColors.teal,
-                    backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                    selectedColor: const Color(0xFF58A6FF),
+                    backgroundColor: const Color(0xFF58A6FF).withValues(alpha: 0.15),
                     onSelected: (_) {
                       setState(() => _seasonalityMonth = m);
                       _fetchSeasonality();
@@ -1272,13 +1136,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           if (_loadingSeasonality)
             const Center(child: Padding(
               padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.teal),
+              child: CircularProgressIndicator(strokeWidth: 2, color: const Color(0xFF58A6FF)),
             ))
           else if (_seasonalityData.isEmpty)
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(S.t('dash_no_data'),
-                  style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary)),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8))),
             ))
           else
             _buildSeasonalityChart(),
@@ -1294,7 +1158,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       ..sort((a, b) => (a['year'] as int).compareTo(b['year'] as int));
     final years = sorted.map((e) => e['year'] as int).toList();
     final maxRevenue = sorted.fold<double>(0, (p, v) => p > (v['total_revenue'] as num).toDouble() ? p : (v['total_revenue'] as num).toDouble());
-    final colors = [AppColors.teal, AppColors.desktopPrimary, AppColors.purple];
+    final colors = [const Color(0xFF58A6FF), const Color(0xFFF0A500), const Color(0xFF58A6FF)];
 
     return SizedBox(
       height: 180,
@@ -1307,7 +1171,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '${years[groupIndex]}\n${NumberFormat('#,##0', 'fr').format(rod.toY.toInt())} ${S.t('misc_currency')}',
-                  const TextStyle(color: Colors.white),
+                  const TextStyle(color: const Color(0xFFEEEEFF)),
                 );
               },
             ),
@@ -1324,7 +1188,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     padding: const EdgeInsets.only(top: 4),
                     child: Text('${years[idx]}',
                         style: AppTextStyles.bodyMedium(
-                            color: Colors.white)),
+                            color: const Color(0xFFEEEEFF))),
                   );
                 },
               ),
@@ -1335,7 +1199,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 reservedSize: 40,
                 getTitlesWidget: (value, meta) {
                   return Text('${value.toInt()}',
-                      style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary));
+                      style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8)));
                 },
               ),
             ),
@@ -1374,7 +1238,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.desktopBackground,
+        color: _T.bgPage,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -1382,28 +1246,28 @@ class _DashboardScreenState extends State<DashboardScreen>
           Row(
             children: [
               Expanded(child: Text('Année',
-                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF58A6FF)))),
               Expanded(child: Text('Revenu',
-                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF58A6FF)))),
               Expanded(child: Text('Unités',
-                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF58A6FF)))),
               Expanded(child: Text('Top Catégorie',
-                  style: AppTextStyles.bodyMedium(color: AppColors.teal))),
+                  style: AppTextStyles.bodyMedium(color: const Color(0xFF58A6FF)))),
             ],
           ),
-          const Divider(color: AppColors.border),
+          const Divider(color: const Color(0xFF1E1E35)),
           ...sorted.map((d) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
                 Expanded(child: Text('${d['year']}',
-                    style: AppTextStyles.bodyMedium(color: Colors.white))),
+                    style: const TextStyle(fontSize: 14, color: Color(0xFFEEEEFF)))),
                 Expanded(child: Text('${NumberFormat('#,##0', 'fr').format((d['total_revenue'] as num).toInt())} ${S.t('misc_currency')}',
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))),
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8)))),
                 Expanded(child: Text('${d['total_units']}',
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopTextSecondary))),
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFF9090A8)))),
                 Expanded(child: Text(d['top_category'] ?? '-',
-                    style: AppTextStyles.bodyMedium(color: AppColors.desktopPrimary),
+                    style: AppTextStyles.bodyMedium(color: const Color(0xFFF0A500)),
                     overflow: TextOverflow.ellipsis)),
               ],
             ),
@@ -1487,9 +1351,9 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       builder: (_, __) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Color.lerp(AppColors.desktopSurface, AppColors.desktopBackground, _anim.value),
+          color: Color.lerp(const Color(0xFF13131F), _T.bgPage, _anim.value),
           border: Border.all(
-              color: AppColors.border, width: 0.8),
+              color: const Color(0xFF1E1E35), width: 0.8),
         ),
       ),
     );
