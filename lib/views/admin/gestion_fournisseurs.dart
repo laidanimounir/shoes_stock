@@ -127,7 +127,8 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isEdit ? S.t('supp_edit') : S.t('supp_add')),
+        backgroundColor: Color(0xFF13131F),
+        title: Text(isEdit ? S.t('supp_edit') : S.t('supp_add'), style: const TextStyle(color: Color(0xFFEEEEFF))),
         content: Form(
           key: formKey,
           child: Column(
@@ -135,24 +136,48 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: InputDecoration(labelText: S.t('supp_company'), prefixIcon: const Icon(Icons.business), border: const OutlineInputBorder()),
+                style: const TextStyle(color: Color(0xFFEEEEFF)),
+                decoration: InputDecoration(
+                  labelText: S.t('supp_company'),
+                  labelStyle: const TextStyle(color: Color(0xFF8888AA)),
+                  prefixIcon: const Icon(Icons.business, color: Color(0xFF555570)),
+                  border: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF58A6FF))),
+                ),
                 validator: (v) => v!.isEmpty ? S.t('msg_required') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: contactCtrl,
-                decoration: InputDecoration(labelText: S.t('supp_contact'), prefixIcon: const Icon(Icons.person), border: const OutlineInputBorder()),
+                style: const TextStyle(color: Color(0xFFEEEEFF)),
+                decoration: InputDecoration(
+                  labelText: S.t('supp_contact'),
+                  labelStyle: const TextStyle(color: Color(0xFF8888AA)),
+                  prefixIcon: const Icon(Icons.person, color: Color(0xFF555570)),
+                  border: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF58A6FF))),
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: phoneCtrl,
-                decoration: InputDecoration(labelText: S.t('label_phone'), prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder()),
+                style: const TextStyle(color: Color(0xFFEEEEFF)),
+                decoration: InputDecoration(
+                  labelText: S.t('label_phone'),
+                  labelStyle: const TextStyle(color: Color(0xFF8888AA)),
+                  prefixIcon: const Icon(Icons.phone, color: Color(0xFF555570)),
+                  border: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF58A6FF))),
+                ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'), style: const TextStyle(color: Color(0xFF8888AA)))),
           ElevatedButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -200,10 +225,11 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.t('supp_archive_title')),
-        content: Text(S.t('supp_archive_msg')),
+        backgroundColor: Color(0xFF13131F),
+        title: Text(S.t('supp_archive_title'), style: const TextStyle(color: Color(0xFFEEEEFF))),
+        content: Text(S.t('supp_archive_msg'), style: const TextStyle(color: Color(0xFF8888AA))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'), style: const TextStyle(color: Color(0xFF8888AA)))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500), foregroundColor: Color(0xFFEEEEFF)),
@@ -279,16 +305,15 @@ class _GestionFournisseursScreenState extends State<GestionFournisseursScreen> {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: Color(0xFFEEEEFF),
+                        color: Color(0xFF13131F),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Color(0xFF0A0A14).withOpacity(0.04), blurRadius: 8)],
                         border: BorderDirectional(start: BorderSide(color: hasDebt ? Color(0xFFF87171) : Color(0xFF4ADE80), width: 6)), // مؤشر بصري للديون
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         onTap: () => _openSupplierProfile(s), // فتح الملف التفصيلي
-                        title: Text(s['company_name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        subtitle: Text('${S.t('supp_contact_prefix')}${s['contact_name'] ?? '-'} • ${S.t('label_phone_short')}${s['phone'] ?? '-'}'),
+                        title: Text(s['company_name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFEEEEFF))),
+                        subtitle: Text('${S.t('supp_contact_prefix')}${s['contact_name'] ?? '-'} • ${S.t('label_phone_short')}${s['phone'] ?? '-'}', style: const TextStyle(color: Color(0xFF8888AA))),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -493,7 +518,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.t('supp_new_payment')),
+        backgroundColor: Color(0xFF13131F),
+        title: Text(S.t('supp_new_payment'), style: const TextStyle(color: Color(0xFFEEEEFF))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -502,17 +528,32 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
             TextFormField(
               controller: amountCtrl,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: S.t('supp_payment_amount'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.euro)),
+              style: const TextStyle(color: Color(0xFFEEEEFF)),
+              decoration: InputDecoration(
+                labelText: S.t('supp_payment_amount'),
+                labelStyle: const TextStyle(color: Color(0xFF8888AA)),
+                border: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF58A6FF))),
+                prefixIcon: const Icon(Icons.euro, color: Color(0xFF555570)),
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: notesCtrl,
-              decoration: InputDecoration(labelText: S.t('supp_payment_notes'), border: const OutlineInputBorder()),
+              style: const TextStyle(color: Color(0xFFEEEEFF)),
+              decoration: InputDecoration(
+                labelText: S.t('supp_payment_notes'),
+                labelStyle: const TextStyle(color: Color(0xFF8888AA)),
+                border: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E1E35))),
+                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF58A6FF))),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'), style: const TextStyle(color: Color(0xFF8888AA)))),
           ElevatedButton(
             onPressed: () async {
               final amount = double.tryParse(amountCtrl.text);
@@ -549,6 +590,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF0A0A14),
       appBar: AppBar(
         title: Text(widget.supplier['company_name']),
         backgroundColor: Color(0xFF0F0F1C),
@@ -583,7 +625,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   }
 
   Widget _buildInvoicesTab() {
-    if (_invoices.isEmpty) return Center(child: Text(S.t('supp_no_invoices')));
+    if (_invoices.isEmpty) return Center(child: Text(S.t('supp_no_invoices'), style: const TextStyle(color: Color(0xFF8888AA))));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _invoices.length,
@@ -594,16 +636,17 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         final date = DateTime.parse(inv['created_at']).toLocal();
         
         return Card(
+          color: Color(0xFF13131F),
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Color(0xFF58A6FF), child: Icon(Icons.receipt, color: Color(0xFFEEEEFF))),
-            title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}"),
+            title: Text(inv['invoice_number'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEEEEFF))),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('sales_sold_by')}: ${inv['user_profiles']['full_name']}", style: const TextStyle(color: Color(0xFF8888AA))),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text("${S.t('label_total')}: ${total.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEEEEFF))),
                 Text("${S.t('pos_paid_status')}: ${paid.toStringAsFixed(2)} ${S.t('misc_currency')}", style: TextStyle(color: paid < total ? Color(0xFFF87171) : Color(0xFF4ADE80), fontSize: 12)),
               ],
             ),
@@ -614,7 +657,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
   }
 
   Widget _buildPaymentsTab() {
-    if (_payments.isEmpty) return Center(child: Text(S.t('supp_no_payments')));
+    if (_payments.isEmpty) return Center(child: Text(S.t('supp_no_payments'), style: const TextStyle(color: Color(0xFF8888AA))));
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _payments.length,
@@ -624,11 +667,12 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen> with Sing
         final date = DateTime.parse(pay['payment_date']).toLocal();
         
         return Card(
+          color: Color(0xFF13131F),
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Color(0xFF4ADE80), child: Icon(Icons.monetization_on, color: Color(0xFFEEEEFF))),
             title: Text("${S.t('supp_payment_of')}${amount.toStringAsFixed(2)} ${S.t('misc_currency')}", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4ADE80))),
-            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('supp_reason')}${pay['notes']}"),
+            subtitle: Text("${date.day}/${date.month}/${date.year} • ${S.t('supp_reason')}${pay['notes']}", style: const TextStyle(color: Color(0xFF8888AA))),
           ),
         );
       },
