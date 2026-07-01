@@ -9,43 +9,38 @@ import '../../local_db/collections/user_profile_local.dart';
 import '../../widgets/offline_banner.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DESIGN SYSTEM
+// DESIGN SYSTEM (Dark Gold/Blue — aligned with SalesHistoryScreen reference)
 // ═══════════════════════════════════════════════════════════════════════════════
 class _T {
-  static const white       = Color(0xFFFFFFFF);
-  static const bg          = Color(0xFFF4F6F9);
-  static const surface     = Color(0xFFFFFFFF);
-  static const border      = Color(0xFFDDE2EA);
-  static const ink         = Color(0xFF1C2333);
-  static const inkMid      = Color(0xFF4B5568);
-  static const inkLight    = Color(0xFF8898A8);
-  static const brand       = Color(0xFF1A5CFF);
-  static const brandBg     = Color(0xFFEBF0FF);
-  static const active      = Color(0xFF12A454);
-  static const activeBg    = Color(0xFFE6F9EE);
-  static const suspended   = Color(0xFFF59E0B);
-  static const suspendedBg = Color(0xFFFFF8E1);
-  static const archived    = Color(0xFF8898A8);
-  static const archivedBg  = Color(0xFFF0F2F5);
-  static const danger      = Color(0xFFE53935);
-  static const sidebarBg   = Color(0xFF1C2333);
-  static const sidebarHov  = Color(0xFF253047);
-  static const sidebarText = Color(0xFFB8C4D4);
-  static const sidebarHead = Color(0xFFFFFFFF);
+  static const white       = Color(0xFFEEEEFF); // textPrimary
+  static const bg          = Color(0xFF0A0A14); // bgPage
+  static const surface     = Color(0xFF13131F); // bgCard
+  static const border      = Color(0xFF1E1E35); // borderColor
+  static const ink         = Color(0xFFEEEEFF); // textPrimary
+  static const inkMid      = Color(0xFF8888AA); // textSecondary
+  static const inkLight    = Color(0xFF555570); // textMuted
+  static const brand       = Color(0xFFFFC107); // accentGold (primary actions)
+  static const brandBg     = Color(0xFF1A1400); // gold-tinted dark bg
+  static const active      = Color(0xFF4ADE80); // statusPaidText
+  static const activeBg    = Color(0xFF0D2B1A); // statusPaidBg
+  static const suspended   = Color(0xFFFBBF24); // statusRefundedText
+  static const suspendedBg = Color(0xFF2B1A0D); // statusRefundedBg
+  static const archived    = Color(0xFF8888AA); // textSecondary
+  static const archivedBg  = Color(0xFF111120); // bgTableRowAlt
+  static const danger      = Color(0xFFF87171); // statusUnpaidText
+  static const sidebarBg   = Color(0xFF0F0F1C); // bgAppBar
+  static const sidebarHov  = Color(0xFF1E1E35); // bgTableHover
+  static const sidebarText = Color(0xFF8888AA); // textSecondary
+  static const sidebarHead = Color(0xFFEEEEFF); // textPrimary
+  static const accentBlue  = Color(0xFF58A6FF); // secondary accent
 }
 
 final _avatarPalettes = [
-  [const Color(0xFF3B82F6), const Color(0xFFEFF6FF)],
-  [const Color(0xFF10B981), const Color(0xFFECFDF5)],
-  [const Color(0xFF8B5CF6), const Color(0xFFF5F3FF)],
-  [const Color(0xFFF59E0B), const Color(0xFFFFFBEB)],
-  [const Color(0xFFEF4444), const Color(0xFFFEF2F2)],
-  [const Color(0xFF06B6D4), const Color(0xFFECFEFF)],
-  [const Color(0xFF84CC16), const Color(0xFFF7FEE7)],
-  [const Color(0xFFF97316), const Color(0xFFFFF7ED)],
+  Color(0xFF3B82F6), Color(0xFF10B981), Color(0xFF8B5CF6), Color(0xFFF59E0B),
+  Color(0xFFEF4444), Color(0xFF06B6D4), Color(0xFF84CC16), Color(0xFFF97316),
 ];
 
-List<Color> _pal(String name) {
+Color _pal(String name) {
   final i = name.isEmpty ? 0 : name.codeUnitAt(0) % _avatarPalettes.length;
   return _avatarPalettes[i];
 }
@@ -209,7 +204,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
   Future<void> _toggle(String id, String action) async {
     if (action != 'reactivate') {
-      final ok = await showDialog<bool>(context: context, barrierColor: Colors.black38, builder: (_) => _ConfirmDialog(title: action == 'suspend' ? S.t('emp_confirm_suspend') : S.t('emp_confirm_archive'), body: action == 'suspend' ? S.t('emp_confirm_suspend_msg') : S.t('emp_confirm_archive_msg'), confirmColor: action == 'suspend' ? _T.suspended : _T.danger, confirmLabel: S.t('action_confirm'), cancelLabel: S.t('action_cancel')));
+      final ok = await showDialog<bool>(context: context, barrierColor: Colors.black54, builder: (_) => _ConfirmDialog(title: action == 'suspend' ? S.t('emp_confirm_suspend') : S.t('emp_confirm_archive'), body: action == 'suspend' ? S.t('emp_confirm_suspend_msg') : S.t('emp_confirm_archive_msg'), confirmColor: action == 'suspend' ? _T.suspended : _T.danger, confirmLabel: S.t('action_confirm'), cancelLabel: S.t('action_cancel')));
       if (ok != true) return;
     }
     try {
@@ -246,7 +241,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
   void _beginEdit(Map<String, dynamic> e) { _efn.text = e['first_name'] as String? ?? ''; _eln.text = e['last_name'] as String? ?? ''; _eph.text = e['phone'] as String? ?? ''; _ead.text = e['address'] as String? ?? ''; _ejt.text = e['job_title'] as String? ?? ''; _epw.clear(); _storeEdit = e['store_id'] as String?; _hiredEdit = _dt(e['hired_at']); _ecommission.text = (e['commission_rate'] as num?)?.toString() ?? '0'; setState(() { _editing = true; _creating = false; }); }
   void _cancel() => setState(() { _creating = false; _editing = false; _clearCreate(); });
   void _clearCreate() { for (final c in [_fn,_ln,_em,_ph,_ad,_jt,_pw]) c.clear(); _storeCreate = _stores.isNotEmpty ? _stores.first['id'] as String? : null; _hiredCreate = DateTime.now(); _createKey.currentState?.reset(); }
-  void _snack(String msg, Color bg) { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500)), backgroundColor: bg, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), margin: const EdgeInsets.fromLTRB(16, 0, 16, 20))); }
+  void _snack(String msg, Color bg) { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: _T.bg)), backgroundColor: bg, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), margin: const EdgeInsets.fromLTRB(16, 0, 16, 20))); }
 
   @override
   void dispose() { _tab.dispose(); _search.dispose(); _debounce?.cancel(); for (final c in _sc.values) c.dispose(); for (final c in [_fn,_ln,_em,_ph,_ad,_jt,_pw,_efn,_eln,_eph,_ead,_ejt,_epw]) c.dispose(); super.dispose(); }
@@ -315,7 +310,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
             onPressed: _online ? _beginCreate : null,
             icon: const Icon(Icons.add_rounded, size: 15),
             label: Text(S.t('emp_add'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-            style: ElevatedButton.styleFrom(backgroundColor: _T.brand, foregroundColor: _T.white, disabledBackgroundColor: _T.sidebarHov, disabledForegroundColor: _T.inkLight, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            style: ElevatedButton.styleFrom(backgroundColor: _T.brand, foregroundColor: _T.bg, disabledBackgroundColor: _T.sidebarHov, disabledForegroundColor: _T.inkLight, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           )),
         ),
       ]),
@@ -345,7 +340,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
   }
 
   Widget _buildEmpty() => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Container(width: 68, height: 68, decoration: BoxDecoration(color: _T.brandBg, borderRadius: BorderRadius.circular(18)),
+    Container(width: 68, height: 68, decoration: BoxDecoration(color: _T.brandBg, borderRadius: BorderRadius.circular(18), border: Border.all(color: _T.border)),
         child: const Icon(Icons.people_alt_outlined, size: 32, color: _T.brand)),
     const SizedBox(height: 14),
     Text(S.t('emp_select_hint'), style: const TextStyle(fontSize: 14, color: _T.inkMid, fontWeight: FontWeight.w500)),
@@ -358,7 +353,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     final ln = e['last_name']  as String? ?? '';
     final name = '$fn $ln'.trim().isNotEmpty ? '$fn $ln'.trim() : (e['full_name'] as String? ?? '?');
     final letter   = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final pal      = _pal(letter);
+    final palColor = _pal(letter);
     final jobTitle = e['job_title'] as String? ?? '';
     final email    = e['email']     as String? ?? '';
     final phone    = e['phone']     as String? ?? '';
@@ -377,8 +372,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
     return SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Header card
       Container(color: _T.surface, padding: const EdgeInsets.fromLTRB(32, 28, 32, 24), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(width: 60, height: 60, decoration: BoxDecoration(color: pal[1], borderRadius: BorderRadius.circular(14)), alignment: Alignment.center,
-            child: Text(letter, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: pal[0]))),
+        Container(width: 60, height: 60, decoration: BoxDecoration(color: palColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)), alignment: Alignment.center,
+            child: Text(letter, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: palColor))),
         const SizedBox(width: 18),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(name, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: _T.ink, letterSpacing: -0.3)),
@@ -444,8 +439,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
               children: [
                 const Icon(Icons.monetization_on_rounded, size: 16, color: _T.brand),
                 const SizedBox(width: 8),
-                Text('COMMISSION',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
+                const Text('COMMISSION',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
               ],
             ),
             const SizedBox(height: 12),
@@ -484,8 +479,8 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
               children: [
                 const Icon(Icons.bar_chart_rounded, size: 16, color: _T.brand),
                 const SizedBox(width: 8),
-                Text('PERFORMANCE (30 JOURS)',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
+                const Text('PERFORMANCE (30 JOURS)',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _T.inkLight, letterSpacing: 1.0)),
               ],
             ),
             const SizedBox(height: 16),
@@ -521,7 +516,7 @@ class _GestionEmployesScreenState extends State<GestionEmployesScreen>
 
   Widget _buildActionBtn(String label, IconData icon, Color color, VoidCallback onTap) =>
       OutlinedButton.icon(onPressed: onTap, icon: Icon(icon, size: 14), label: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-          style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color.withValues(alpha: 0.35)), backgroundColor: color.withValues(alpha: 0.05), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
+          style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color.withValues(alpha: 0.35)), backgroundColor: color.withValues(alpha: 0.08), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
 
   // ── Forms ────────────────────────────────────────────────────────────────────
   Widget _buildCreateForm() => _FormShell(
@@ -599,7 +594,7 @@ class _EmpTileState extends State<_EmpTile> {
     final ln = e['last_name']  as String? ?? '';
     final name = '$fn $ln'.trim().isNotEmpty ? '$fn $ln'.trim() : (e['full_name'] as String? ?? '?');
     final letter   = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final pal      = _pal(letter);
+    final palColor = _pal(letter);
     final isActive = (e['is_active'] as bool?) ?? true;
     final isDeleted= (e['is_permanently_deleted'] as bool?) ?? false;
     final store    = e['stores']?['name'] as String?;
@@ -621,19 +616,19 @@ class _EmpTileState extends State<_EmpTile> {
           ),
           child: Row(children: [
             Container(width: 32, height: 32,
-              decoration: BoxDecoration(color: isSel ? Color(0xFFEEEEFF).withValues(alpha: 0.15) : pal[1], borderRadius: BorderRadius.circular(7)),
+              decoration: BoxDecoration(color: isSel ? _T.bg.withValues(alpha: 0.2) : palColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(7)),
               alignment: Alignment.center,
-              child: Text(letter, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isSel ? _T.white : pal[0])),
+              child: Text(letter, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isSel ? _T.bg : palColor)),
             ),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSel ? _T.white : _T.sidebarHead), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSel ? _T.bg : _T.sidebarHead), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
               Row(children: [
-                Container(width: 5, height: 5, decoration: BoxDecoration(color: isSel ? Color(0xFF606078) : dot, shape: BoxShape.circle)),
+                Container(width: 5, height: 5, decoration: BoxDecoration(color: isSel ? _T.bg.withValues(alpha: 0.6) : dot, shape: BoxShape.circle)),
                 const SizedBox(width: 5),
                 Expanded(child: Text(store ?? (isDeleted ? S.t('emp_status_archived') : S.t('misc_no_store')),
-                    style: TextStyle(fontSize: 11, color: isSel ? Color(0xFF9090A8) : _T.sidebarText), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    style: TextStyle(fontSize: 11, color: isSel ? _T.bg.withValues(alpha: 0.7) : _T.sidebarText), maxLines: 1, overflow: TextOverflow.ellipsis)),
               ]),
             ])),
           ]),
@@ -689,8 +684,8 @@ class _FormShell extends StatelessWidget {
       ])),
       Row(children: [
         ElevatedButton(onPressed: saving ? null : onSave,
-            style: ElevatedButton.styleFrom(backgroundColor: _T.brand, foregroundColor: _T.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-            child: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Color(0xFFEEEEFF), strokeWidth: 2)) : Text(saveLabel)),
+            style: ElevatedButton.styleFrom(backgroundColor: _T.brand, foregroundColor: _T.bg, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+            child: saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.bg, strokeWidth: 2)) : Text(saveLabel)),
         const SizedBox(width: 8),
         TextButton(onPressed: onCancel, style: TextButton.styleFrom(foregroundColor: _T.inkMid, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11)), child: Text(S.t('action_cancel'), style: const TextStyle(fontSize: 13.5))),
       ]),
@@ -723,7 +718,7 @@ class _StoreDD extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (stores.isEmpty) return const SizedBox(height: 44, child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _T.brand))));
-    return DropdownButtonFormField<String>(value: value ?? (stores.isNotEmpty ? stores.first['id'] as String? : null), isExpanded: true, style: const TextStyle(fontSize: 13.5, color: _T.ink), decoration: _fieldDec('${S.t('emp_assign_store')} *'), items: stores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem<String>(value: s['id'] as String?, child: Text(s['name'] as String? ?? ''))).toList(), onChanged: onChanged, validator: (v) => v == null ? S.t('msg_required') : null);
+    return DropdownButtonFormField<String>(value: value ?? (stores.isNotEmpty ? stores.first['id'] as String? : null), isExpanded: true, dropdownColor: _T.surface, style: const TextStyle(fontSize: 13.5, color: _T.ink), decoration: _fieldDec('${S.t('emp_assign_store')} *'), items: stores.map<DropdownMenuItem<String>>((s) => DropdownMenuItem<String>(value: s['id'] as String?, child: Text(s['name'] as String? ?? ''))).toList(), onChanged: onChanged, validator: (v) => v == null ? S.t('msg_required') : null);
   }
 }
 
@@ -732,7 +727,7 @@ class _DateFld extends StatelessWidget {
   const _DateFld({required this.label, required this.value, required this.required, required this.onPicked, required this.ctx});
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: () async { final d = await showDatePicker(context: ctx, initialDate: value ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now(), builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _T.brand)), child: child!)); if (d != null) onPicked(d); },
+    onTap: () async { final d = await showDatePicker(context: ctx, initialDate: value ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now(), builder: (c, child) => Theme(data: Theme.of(c).copyWith(colorScheme: const ColorScheme.dark(primary: _T.brand, surface: _T.surface, onSurface: _T.ink)), child: child!)); if (d != null) onPicked(d); },
     borderRadius: BorderRadius.circular(8),
     child: InputDecorator(decoration: _fieldDec('$label${required ? ' *' : ''}', suffix: const Icon(Icons.calendar_today_outlined, size: 15, color: _T.inkLight)),
         child: Text(value != null ? '${value!.day.toString().padLeft(2,'0')}/${value!.month.toString().padLeft(2,'0')}/${value!.year}' : S.t('misc_not_available'), style: TextStyle(fontSize: 13.5, color: value != null ? _T.ink : _T.inkLight))),
@@ -752,7 +747,7 @@ class _ConfirmDialog extends StatelessWidget {
   final String title, body, confirmLabel, cancelLabel; final Color confirmColor;
   const _ConfirmDialog({required this.title, required this.body, required this.confirmColor, required this.confirmLabel, required this.cancelLabel});
   @override
-  Widget build(BuildContext context) => Dialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: Container(width: 380, padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget build(BuildContext context) => Dialog(backgroundColor: _T.surface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: Container(width: 380, padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
     Text(title, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: _T.ink)),
     const SizedBox(height: 10),
     Text(body, style: const TextStyle(fontSize: 13.5, color: _T.inkMid, height: 1.5)),
@@ -760,7 +755,7 @@ class _ConfirmDialog extends StatelessWidget {
     Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       TextButton(onPressed: () => Navigator.pop(context, false), style: TextButton.styleFrom(foregroundColor: _T.inkMid, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)), child: Text(cancelLabel, style: const TextStyle(fontSize: 13.5))),
       const SizedBox(width: 8),
-      ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: confirmColor, foregroundColor: _T.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text(confirmLabel, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
+      ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: confirmColor, foregroundColor: _T.bg, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text(confirmLabel, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700))),
     ]),
   ])));
 }
