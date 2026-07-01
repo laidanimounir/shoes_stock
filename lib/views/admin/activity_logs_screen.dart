@@ -10,6 +10,32 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../../core/app_session.dart';
 import '../../core/app_strings.dart';
 
+class _T {
+  _T._();
+  static const bgPage = Color(0xFF0A0A14);
+  static const bgAppBar = Color(0xFF0F0F1C);
+  static const bgCard = Color(0xFF13131F);
+  static const bgTable = Color(0xFF0D0D1A);
+  static const bgTableHeader = Color(0xFF1A1400);
+  static const bgTableRowAlt = Color(0xFF111120);
+  static const bgTableHover = Color(0xFF1E1E35);
+  static const accentGold = Color(0xFFFFC107);
+  static const accentBlue = Color(0xFF58A6FF);
+  static const textPrimary = Color(0xFFEEEEFF);
+  static const textSecondary = Color(0xFF8888AA);
+  static const textMuted = Color(0xFF555570);
+  static const borderColor = Color(0xFF1E1E35);
+  static const statusPaidBg = Color(0xFF0D2B1A);
+  static const statusPaidText = Color(0xFF4ADE80);
+  static const statusRefundedBg = Color(0xFF2B1A0D);
+  static const statusRefundedText = Color(0xFFFBBF24);
+  static const statusUnpaidBg = Color(0xFF2B0D0D);
+  static const statusUnpaidText = Color(0xFFF87171);
+  static const statusPartialBg = Color(0xFF1A1A0D);
+  static const statusPartialText = Color(0xFFFDE68A);
+  static const shimmerColor = Color(0xFF252538);
+}
+
 // ─────────────────────────────────────────────
 //  Période rapide
 // ─────────────────────────────────────────────
@@ -88,11 +114,6 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   DateTime? _dateTo;
   QuickPeriod _quickPeriod = QuickPeriod.none;
 
-  // ── theme ─────────────────────────────────
-  static const Color _primary = Color(0xFF37474F);   // blue-grey 800
-  static const Color _accent  = Color(0xFF1976D2);   // blue 700
-  static const Color _bg      = Color(0xFFF5F7FA);
-
   @override
   void initState() {
     super.initState();
@@ -155,20 +176,20 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       case 'SALE':
       case 'OUT':
       case 'CREATE_EMPLOYEE':
-      case 'REACTIVATE_EMPLOYEE':     return Colors.green;
+      case 'REACTIVATE_EMPLOYEE':     return _T.statusPaidText;
       case 'SUPPLY':
       case 'IN':
       case 'UPDATE_EMPLOYEE':
-      case 'ADD_DEBT_RECOVERY':       return Colors.blue;
+      case 'ADD_DEBT_RECOVERY':       return _T.accentBlue;
       case 'UPDATE_TRANSACTION':
       case 'SUSPEND_EMPLOYEE':
-      case 'ADD_EXPENSE':             return Colors.orange;
+      case 'ADD_EXPENSE':             return _T.statusPartialText;
       case 'DELETE_TRANSACTION':
       case 'PERMANENT_DELETE_EMPLOYEE':
-      case 'DELETE_EMPLOYEE':         return Colors.red;
+      case 'DELETE_EMPLOYEE':         return _T.statusUnpaidText;
       case 'RETURN':
-      case 'REFUND_PROCESSED':        return Colors.purple;
-      default:                        return Colors.grey;
+      case 'REFUND_PROCESSED':        return const Color(0xFFC084FC);
+      default:                        return _T.textMuted;
     }
   }
 
@@ -293,6 +314,20 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       firstDate: DateTime(2020),
       lastDate: now.add(const Duration(days: 1)),
       locale: Locale(AppSession.locale.value),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: _T.accentGold,
+              onPrimary: _T.bgPage,
+              surface: _T.bgCard,
+              onSurface: _T.textPrimary,
+            ),
+            dialogTheme: const DialogThemeData(backgroundColor: _T.bgCard),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -350,15 +385,22 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: _T.bgPage,
       appBar: AppBar(
-        title: Text(S.t('nav_activity')),
-        backgroundColor: _primary,
-        foregroundColor: Color(0xFFEEEEFF),
+        title: Text(
+          S.t('nav_activity'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _T.textPrimary,
+          ),
+        ),
+        backgroundColor: _T.bgAppBar,
+        foregroundColor: _T.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: _T.textMuted),
             onPressed: _fetchLogs,
             tooltip: 'Actualiser',
           ),
@@ -380,7 +422,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   // ─────────────────────────────────────────
   Widget _buildFilterBar() {
     return Container(
-      color: Color(0xFFEEEEFF),
+      color: _T.bgCard,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Wrap(
         spacing: 10,
@@ -423,14 +465,14 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
               onPressed: _resetFilters,
               icon: const Icon(Icons.clear_all, size: 16),
               label: const Text('Réinitialiser'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: _T.statusUnpaidText),
             ),
 
           // Spacer + count + export
           const SizedBox(width: 20),
           Text(
             '$_totalCount ${S.t('log_results_count')}',
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: const TextStyle(color: _T.textSecondary, fontSize: 13),
           ),
           const SizedBox(width: 12),
           FilledButton.icon(
@@ -438,9 +480,14 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
             icon: const Icon(Icons.file_download_outlined, size: 16),
             label: Text(_isExporting ? '...' : 'Exporter'),
             style: FilledButton.styleFrom(
-              backgroundColor: _primary,
+              backgroundColor: _T.accentGold,
+              foregroundColor: _T.bgPage,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              textStyle: const TextStyle(fontSize: 13),
+              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -457,24 +504,27 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       'delete_employee', 'add_expense', 'add_debt_recovery',
       'REFUND_PROCESSED',
     ];
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: S.t('log_filter_action'),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        isDense: true,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: _T.bgTableHeader,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _T.borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: _selectedActionType,
           isExpanded: true,
           isDense: true,
+          dropdownColor: _T.bgTableHeader,
+          icon: const Icon(Icons.unfold_more_rounded,
+              color: _T.textMuted, size: 16),
           items: actionTypes.map((type) => DropdownMenuItem<String?>(
             value: type,
             child: Text(
               type == null ? S.t('log_all_actions') : _getActionLabel(type),
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 13, color: _T.textPrimary),
             ),
           )).toList(),
           onChanged: (val) {
@@ -500,26 +550,26 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: active ? _accent : Colors.grey.shade300,
+            color: active ? _T.accentGold : _T.borderColor,
           ),
-          color: active ? _accent.withOpacity(0.08) : null,
+          color: active ? _T.accentGold.withValues(alpha: 0.08) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.calendar_today, size: 14,
-                color: active ? _accent : Colors.grey),
+                color: active ? _T.accentGold : _T.textMuted),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
-                    color: active ? _accent : Colors.grey.shade700)),
+                    color: active ? _T.accentGold : _T.textSecondary)),
             if (onClear != null) ...[
               const SizedBox(width: 4),
               GestureDetector(
                 onTap: onClear,
                 child: Icon(Icons.close, size: 14,
-                    color: active ? _accent : Colors.grey),
+                    color: active ? _T.accentGold : _T.textMuted),
               ),
             ],
           ],
@@ -535,28 +585,31 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: _quickPeriod != QuickPeriod.none
-              ? _accent
-              : Colors.grey.shade300,
+              ? _T.accentGold
+              : _T.borderColor,
         ),
         color: _quickPeriod != QuickPeriod.none
-            ? _accent.withOpacity(0.08)
+            ? _T.accentGold.withValues(alpha: 0.08)
             : null,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<QuickPeriod>(
           value: _quickPeriod,
           isDense: true,
+          dropdownColor: _T.bgTableHeader,
           icon: Icon(Icons.schedule, size: 16,
-              color: _quickPeriod != QuickPeriod.none ? _accent : Colors.grey),
+              color: _quickPeriod != QuickPeriod.none
+                  ? _T.accentGold
+                  : _T.textMuted),
           style: TextStyle(
             fontSize: 13,
             color: _quickPeriod != QuickPeriod.none
-                ? _accent
-                : Colors.grey.shade700,
+                ? _T.accentGold
+                : _T.textSecondary,
           ),
           items: QuickPeriod.values.map((p) => DropdownMenuItem(
             value: p,
-            child: Text(p.label()),
+            child: Text(p.label(), style: const TextStyle(color: _T.textPrimary)),
           )).toList(),
           onChanged: (val) {
             if (val == null) return;
@@ -581,17 +634,22 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
   // ─────────────────────────────────────────
   Widget _buildTableSection() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: _T.accentGold),
+      );
     }
     if (_logs.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
+            const Icon(Icons.history, size: 48, color: _T.textMuted),
+            const SizedBox(height: 14),
             Text(S.t('log_no_results'),
-                style: const TextStyle(fontSize: 18, color: Colors.grey)),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _T.textSecondary)),
           ],
         ),
       );
@@ -600,18 +658,12 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Color(0xFFEEEEFF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-              color: Color(0xFF0A0A14).withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
-        ],
+        color: _T.bgCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _T.borderColor),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: SingleChildScrollView(
@@ -625,31 +677,33 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
 
   Widget _buildDataTable() {
     return DataTable(
-      headingRowColor: WidgetStateProperty.all(
-        const Color(0xFFF0F4F8),
-      ),
+      headingRowColor: WidgetStateProperty.all(_T.bgTableHeader),
       headingTextStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
-        color: Color(0xFF37474F),
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        color: _T.accentGold,
+        letterSpacing: 1.0,
       ),
       dataRowMinHeight: 52,
       dataRowMaxHeight: 64,
       columnSpacing: 24,
       horizontalMargin: 20,
       dividerThickness: 0.8,
+      border: TableBorder(
+        horizontalInside: BorderSide(color: _T.borderColor),
+      ),
       columns: const [
-        DataColumn(label: Text('Date / Heure')),
-        DataColumn(label: Text('Utilisateur')),
-        DataColumn(label: Text('Rôle')),
-        DataColumn(label: Text('Action')),
-        DataColumn(label: Text('Détails')),
+        DataColumn(label: Text('DATE / HEURE')),
+        DataColumn(label: Text('UTILISATEUR')),
+        DataColumn(label: Text('RÔLE')),
+        DataColumn(label: Text('ACTION')),
+        DataColumn(label: Text('DÉTAILS')),
       ],
-      rows: _logs.map((log) => _buildDataRow(log)).toList(),
+      rows: _logs.asMap().entries.map((e) => _buildDataRow(e.value, e.key)).toList(),
     );
   }
 
-  DataRow _buildDataRow(dynamic log) {
+  DataRow _buildDataRow(dynamic log, int index) {
     final date     = DateTime.parse(log['created_at']).toLocal();
     final userName = log['user_profiles']?['full_name'] ?? S.t('misc_unknown');
     final role     = log['user_profiles']?['role'] ?? '—';
@@ -661,8 +715,12 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     // Parse description JSON / format for display
     final raw = log['description'] as String? ?? '';
     final shortDesc = _formatDescription(raw);
+    final isEven = index.isEven;
 
     return DataRow(
+      color: WidgetStateProperty.all(
+        isEven ? _T.bgTable : _T.bgTableRowAlt,
+      ),
       cells: [
         // ── Date ──────────────────────────
         DataCell(
@@ -673,12 +731,13 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
               Text(
                 DateFormat('dd/MM/yy HH:mm').format(date),
                 style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _T.textPrimary),
               ),
               Text(
                 timeago.format(date, locale: AppSession.locale.value),
-                style: TextStyle(
-                    fontSize: 11, color: Colors.grey.shade500),
+                style: const TextStyle(fontSize: 11, color: _T.textMuted),
               ),
             ],
           ),
@@ -688,7 +747,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         DataCell(
           Text(userName,
               style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w500)),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: _T.textPrimary)),
         ),
 
         // ── Role ──────────────────────────
@@ -696,14 +757,14 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.blueGrey.shade50,
+              color: _T.bgTableHeader,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.blueGrey.shade100),
+              border: Border.all(color: _T.borderColor),
             ),
             child: Text(role,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 11,
-                    color: Colors.blueGrey.shade600,
+                    color: _T.textSecondary,
                     fontWeight: FontWeight.w500)),
           ),
         ),
@@ -713,9 +774,9 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withOpacity(0.3)),
+              border: Border.all(color: color.withValues(alpha: 0.35)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -738,8 +799,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
             message: raw,
             child: Text(
               shortDesc.isEmpty ? '—' : shortDesc,
-              style: TextStyle(
-                  fontSize: 12, color: Colors.grey.shade700),
+              style: const TextStyle(fontSize: 12, color: _T.textSecondary),
             ),
           ),
         ),
@@ -758,23 +818,29 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
         ((_currentPage + 1) * _rowsPerPage).clamp(0, _totalCount);
 
     return Container(
-      color: Color(0xFFEEEEFF),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: _T.bgCard,
+        border: Border(top: BorderSide(color: _T.borderColor)),
+      ),
       child: Row(
         children: [
           // Rows per page
           const Text('Lignes / page :',
-              style: TextStyle(fontSize: 13, color: Colors.grey)),
+              style: TextStyle(fontSize: 13, color: _T.textSecondary)),
           const SizedBox(width: 8),
           DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: _rowsPerPage,
               isDense: true,
+              dropdownColor: _T.bgTableHeader,
               items: _rowsPerPageOptions
                   .map((n) => DropdownMenuItem(
                       value: n,
                       child: Text('$n',
-                          style: const TextStyle(fontSize: 13))))
+                          style: const TextStyle(
+                              fontSize: 13, color: _T.textPrimary))))
                   .toList(),
               onChanged: (val) {
                 if (val == null) return;
@@ -790,14 +856,14 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
           const SizedBox(width: 24),
           Text(
             'Affichage $firstItem–$lastItem sur $_totalCount',
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+            style: const TextStyle(fontSize: 13, color: _T.textSecondary),
           ),
 
           const Spacer(),
 
           // Prev button
           _pageButton(
-            icon: Icons.chevron_left,
+            icon: Icons.chevron_left_rounded,
             enabled: _currentPage > 0,
             onTap: () {
               setState(() => _currentPage--);
@@ -810,7 +876,7 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
 
           // Next button
           _pageButton(
-            icon: Icons.chevron_right,
+            icon: Icons.chevron_right_rounded,
             enabled: _currentPage < totalPages - 1,
             onTap: () {
               setState(() => _currentPage++);
@@ -843,7 +909,11 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
       if (p == -1) {
         return const Padding(
           padding: EdgeInsets.symmetric(horizontal: 4),
-          child: Text('…', style: TextStyle(color: Colors.grey)),
+          child: Text('…',
+              style: TextStyle(
+                  color: _T.textMuted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700)),
         );
       }
       final isSelected = p == _currentPage;
@@ -855,14 +925,14 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
                 _fetchLogs();
               },
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: 34,
-          height: 34,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
-            color: isSelected ? _accent : Colors.transparent,
+            color: isSelected ? _T.accentGold : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: isSelected ? _accent : Colors.grey.shade300,
+              color: isSelected ? _T.accentGold : _T.borderColor,
             ),
           ),
           alignment: Alignment.center,
@@ -870,9 +940,8 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
             '${p + 1}',
             style: TextStyle(
               fontSize: 13,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Color(0xFFEEEEFF) : Colors.grey.shade700,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? _T.bgPage : _T.textSecondary,
             ),
           ),
         ),
@@ -888,18 +957,16 @@ class _ActivityLogsScreenState extends State<ActivityLogsScreen> {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        width: 34,
-        height: 34,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.grey.shade300),
-          color: enabled ? null : Colors.grey.shade100,
+          border: Border.all(color: _T.borderColor),
         ),
-        alignment: Alignment.center,
-        child: Icon(icon,
-            size: 18,
-            color: enabled ? Colors.grey.shade700 : Colors.grey.shade400),
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.3,
+          child: Icon(icon, size: 18, color: _T.textPrimary),
+        ),
       ),
     );
   }
