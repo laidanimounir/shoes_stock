@@ -19,20 +19,46 @@ import '../../local_db/collections/inventory_local.dart';
 import '../../local_db/collections/store_local.dart';
 import '../../shared/constants/shoe_constants.dart';
 
-const Color kPrimaryColor = Color(0xFFF0A500);
-const Color kAccentGreen = Color(0xFF4ADE80);
-const Color kWarningOrange = Color(0xFFF0A500);
-const Color kDangerRed = Color(0xFFF87171);
-const Color kNegativeRed = Color(0xFFF87171);
-const Color kBackgroundColor = Color(0xFF0A0A14);
+class _T {
+  _T._();
+  static const bgPage = Color(0xFF0A0A14);
+  static const bgAppBar = Color(0xFF0F0F1C);
+  static const bgCard = Color(0xFF13131F);
+  static const bgTable = Color(0xFF0D0D1A);
+  static const bgTableHeader = Color(0xFF1A1400);
+  static const bgTableRowAlt = Color(0xFF111120);
+  static const bgTableHover = Color(0xFF1E1E35);
+  static const accentGold = Color(0xFFFFC107);
+  static const accentBlue = Color(0xFF58A6FF);
+  static const textPrimary = Color(0xFFEEEEFF);
+  static const textSecondary = Color(0xFF8888AA);
+  static const textMuted = Color(0xFF555570);
+  static const borderColor = Color(0xFF1E1E35);
+  static const statusPaidBg = Color(0xFF0D2B1A);
+  static const statusPaidText = Color(0xFF4ADE80);
+  static const statusRefundedBg = Color(0xFF2B1A0D);
+  static const statusRefundedText = Color(0xFFFBBF24);
+  static const statusUnpaidBg = Color(0xFF2B0D0D);
+  static const statusUnpaidText = Color(0xFFF87171);
+  static const statusPartialBg = Color(0xFF1A1A0D);
+  static const statusPartialText = Color(0xFFFDE68A);
+  static const shimmerColor = Color(0xFF252538);
+}
+
+const Color kPrimaryColor = _T.accentGold;
+const Color kAccentGreen = _T.statusPaidText;
+const Color kWarningOrange = _T.accentGold;
+const Color kDangerRed = _T.statusUnpaidText;
+const Color kNegativeRed = _T.statusUnpaidText;
+const Color kBackgroundColor = _T.bgPage;
 const double kBorderRadius = 12.0;
 
 enum StockStatus { healthy, low, empty, negative }
 
 const Map<String, Map<String, dynamic>> kCategoryConfig = {
-  'homme': {'icon': '👨', 'label': 'Homme', 'color': Color(0xFFF0A500)},
-  'femme': {'icon': '👩', 'label': 'Femme', 'color': Color(0xFFF87171)},
-  'enfant': {'icon': '👶', 'label': 'Enfant', 'color': Color(0xFFF0A500)},
+  'homme': {'icon': '👨', 'label': 'Homme', 'color': _T.accentGold},
+  'femme': {'icon': '👩', 'label': 'Femme', 'color': _T.statusUnpaidText},
+  'enfant': {'icon': '👶', 'label': 'Enfant', 'color': _T.accentGold},
 };
 
 class ListeProduitsScreen extends StatefulWidget {
@@ -77,20 +103,20 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
     if (AppSession.isOfflineMode) {
       final isar = await IsarService.getInstance();
-      
+
       final localProducts = await isar.productLocals
           .filter()
           .isActiveEqualTo(true)
           .findAll();
-          
+
       final localSuppliers = await isar.supplierLocals.where().findAll();
       final supplierMap = {for (var s in localSuppliers) s.supabaseId: s};
-      
+
       final localVariants = await isar.productVariantLocals
           .filter()
           .isActiveEqualTo(true)
           .findAll();
-          
+
       final localInventory = await isar.inventoryLocals.where().findAll();
       final localStores = await isar.storeLocals.where().findAll();
       final storeMap = {for (var st in localStores) st.supabaseId: st};
@@ -333,7 +359,10 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Imprimer ${selectedVariants.length} étiquettes'),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Imprimer ${selectedVariants.length} étiquettes',
+            style: const TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
         content: SizedBox(
           width: 400,
           child: ListView.builder(
@@ -348,7 +377,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     Expanded(
                       child: Text(
                         '${v['_productName']} / ${v['size']} / ${v['color']}',
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize: 13, color: _T.textPrimary),
                       ),
                     ),
                     SizedBox(
@@ -356,10 +385,19 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       child: TextField(
                         controller: controllers[i],
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
+                        style: const TextStyle(color: _T.textPrimary, fontSize: 13),
+                        cursorColor: _T.accentGold,
+                        decoration: InputDecoration(
                           labelText: 'Qté',
+                          labelStyle: const TextStyle(color: _T.textSecondary, fontSize: 11),
                           isDense: true,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          filled: true,
+                          fillColor: const Color(0xFF1E1E2E),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: _T.borderColor),
+                          ),
                         ),
                       ),
                     ),
@@ -372,11 +410,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: const Text('Annuler', style: TextStyle(color: _T.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Imprimer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accentGold,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Imprimer', style: TextStyle(color: _T.bgPage, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -405,7 +448,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (items.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres valide sélectionné'), backgroundColor: Color(0xFFF87171)),
+          SnackBar(
+            content: const Text('Aucun code-barres valide sélectionné'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
       }
       return;
@@ -424,13 +473,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         '${config['icon']} ${config['label']}',
-        style: AppTextStyles.bodyMedium(color: color,
-        ),
+        style: AppTextStyles.bodyMedium(color: color),
       ),
     );
   }
@@ -444,45 +492,56 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${S.t('prod_edit_variant')}${variant['size']} - ${variant['color']}'),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('${S.t('prod_edit_variant')}${variant['size']} - ${variant['color']}',
+            style: const TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
         content: Form(
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
+              _themedField(
                 controller: barcodeCtrl,
-                decoration: InputDecoration(labelText: S.t('prod_barcode'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.qr_code)),
+                label: S.t('prod_barcode'),
+                icon: Icons.qr_code_rounded,
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: _themedField(
                       controller: buyPriceCtrl,
+                      label: S.t('prod_buy_price'),
+                      icon: Icons.arrow_downward_rounded,
+                      iconColor: _T.accentGold,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: S.t('prod_buy_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_downward, color: Color(0xFFF0A500))),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextFormField(
+                    child: _themedField(
                       controller: sellPriceCtrl,
+                      label: S.t('prod_sell_price'),
+                      icon: Icons.arrow_upward_rounded,
+                      iconColor: _T.statusPaidText,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: S.t('prod_sell_price'), border: const OutlineInputBorder(), prefixIcon: const Icon(Icons.arrow_upward, color: Color(0xFF4ADE80))),
                     ),
                   ),
                 ],
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(S.t('prod_price_note'), style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8), fontStyle: FontStyle.italic)),
+                child: Text(S.t('prod_price_note'),
+                    style: const TextStyle(fontSize: 12, color: _T.textMuted, fontStyle: FontStyle.italic)),
               )
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.t('action_cancel'))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(S.t('action_cancel'), style: const TextStyle(color: _T.textSecondary))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -492,36 +551,99 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                   'sell_price': double.tryParse(sellPriceCtrl.text) ?? 0,
                   'barcode': barcodeCtrl.text.trim(),
                 }).eq('id', variant['id']);
-                
+
                 _fetchProducts();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.t('prod_variant_updated')), backgroundColor: Color(0xFF4ADE80)));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(S.t('prod_variant_updated')),
+                    backgroundColor: _T.statusPaidBg,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ));
+                }
               } on PostgrestException catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'), backgroundColor: Color(0xFFF87171)));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(e.code == '42501' ? S.t('msg_access_denied') : '${S.t('msg_error')}: ${e.message}'),
+                    backgroundColor: _T.statusUnpaidBg,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ));
+                }
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${S.t('msg_error')}: $e'), backgroundColor: Color(0xFFF87171)));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('${S.t('msg_error')}: $e'),
+                    backgroundColor: _T.statusUnpaidBg,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ));
+                }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF58A6FF)),
-            child: Text(S.t('action_save'), style: const TextStyle(color: Color(0xFFEEEEFF))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accentBlue,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(S.t('action_save'), style: const TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
 
-  
+  Widget _themedField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    Color? iconColor,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: _T.textPrimary, fontSize: 14),
+      cursorColor: _T.accentGold,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: _T.textSecondary, fontSize: 13),
+        prefixIcon: Icon(icon, color: iconColor ?? _T.textMuted, size: 18),
+        filled: true,
+        fillColor: const Color(0xFF1E1E2E),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _T.borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _T.borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _T.accentGold),
+        ),
+      ),
+    );
+  }
+
   Future<void> _archiveVariant(String variantId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.t('prod_archive_variant_title')),
-        content: Text(S.t('prod_archive_variant_msg')),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(S.t('prod_archive_variant_title'), style: const TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w700)),
+        content: Text(S.t('prod_archive_variant_msg'), style: const TextStyle(color: _T.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'), style: const TextStyle(color: _T.textSecondary))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF0A500)),
-            child: Text(S.t('action_archive'), style: const TextStyle(color: Color(0xFFEEEEFF))),
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accentGold, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: Text(S.t('action_archive'), style: const TextStyle(color: _T.bgPage, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -532,26 +654,43 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         await Supabase.instance.client.from('product_variants').update({'is_active': false}).eq('id', variantId);
         _fetchProducts();
       } on PostgrestException catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Color(0xFFF87171)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
       }
     }
   }
 
-  
   Future<void> _archiveProduct(String productId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.t('prod_archive_title')),
-        content: Text(S.t('prod_archive_msg')),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(S.t('prod_archive_title'), style: const TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w700)),
+        content: Text(S.t('prod_archive_msg'), style: const TextStyle(color: _T.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.t('action_cancel'), style: const TextStyle(color: _T.textSecondary))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF87171)),
-            child: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFEEEEFF))),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -562,9 +701,25 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         await Supabase.instance.client.from('products').update({'is_active': false}).eq('id', productId);
         _fetchProducts();
       } on PostgrestException catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'), backgroundColor: Color(0xFFF87171)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e.code == '42501' ? 'Accès refusé : Autorisations insuffisantes' : 'Erreur: ${e.message}'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: Color(0xFFF87171)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
       }
     }
   }
@@ -575,7 +730,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     for (final c in kShoeColors) {
       if (c['name'] == name) return _hexToColor(c['hex'] as String);
     }
-    return Color(0xFF9090A8);
+    return _T.textSecondary;
   }
 
   Color _hexToColor(String hex) {
@@ -590,7 +745,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (barcodeText == null || barcodeText.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres disponible pour cette variante'), backgroundColor: Color(0xFFF87171)),
+          SnackBar(
+            content: const Text('Aucun code-barres disponible pour cette variante'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
       }
       return;
@@ -609,11 +770,17 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Imprimer les étiquettes'),
-        content: Text('Imprimer ${variants.length} étiquette(s) pour "${product['name']}"?'),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Imprimer les étiquettes', style: TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w800)),
+        content: Text('Imprimer ${variants.length} étiquette(s) pour "${product['name']}"?', style: const TextStyle(color: _T.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Imprimer')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler', style: TextStyle(color: _T.textSecondary))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accentGold, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: const Text('Imprimer', style: TextStyle(color: _T.bgPage, fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
@@ -641,7 +808,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     if (barcodeText == null || barcodeText.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun code-barres disponible'), backgroundColor: Color(0xFFF87171)),
+          SnackBar(
+            content: const Text('Aucun code-barres disponible'),
+            backgroundColor: _T.statusUnpaidBg,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
       }
       return;
@@ -651,34 +824,39 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(children: [Icon(Icons.print), SizedBox(width: 8), Text('Quantité d\'impression')]),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(children: [
+          Icon(Icons.print_rounded, color: _T.accentGold),
+          SizedBox(width: 8),
+          Text('Quantité d\'impression', style: TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
+        ]),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Combien d\'étiquettes imprimer?'),
+            const Text('Combien d\'étiquettes imprimer?', style: TextStyle(color: _T.textSecondary)),
             const SizedBox(height: 12),
-            TextField(
+            _themedField(
               controller: qtyCtrl,
+              label: 'Nombre de copies',
+              icon: Icons.numbers_rounded,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de copies',
-                border: OutlineInputBorder(),
-                suffixText: 'copies',
-              ),
             ),
             const SizedBox(height: 8),
             Text('Aperçu: $barcodeText / ${variant['size']} / ${variant['color']}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8))),
+              style: const TextStyle(fontSize: 12, color: _T.textMuted)),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler', style: TextStyle(color: _T.textSecondary))),
           ElevatedButton(
             onPressed: () {
               final qty = int.tryParse(qtyCtrl.text) ?? 1;
               if (qty > 0) Navigator.pop(ctx, qty);
             },
-            child: Text('Imprimer ${qtyCtrl.text} copie(s)'),
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accentGold, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: Text('Imprimer ${qtyCtrl.text} copie(s)', style: const TextStyle(color: _T.bgPage, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -773,6 +951,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
+        backgroundColor: _T.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 8,
         child: Container(
@@ -803,14 +982,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(product['name'] ?? '',
-                          style: AppTextStyles.bodyMedium(color: kPrimaryColor),
+                          style: AppTextStyles.bodyMedium(color: _T.textPrimary),
                         ),
                         const SizedBox(height: 4),
                         Row(children: [
                           _buildCategoryBadge(product['category']),
                           const SizedBox(width: 8),
                           Text(product['suppliers']?['company_name'] ?? '',
-                            style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
+                            style: AppTextStyles.bodyMedium(color: _T.textSecondary),
                           ),
                         ]),
                         const SizedBox(height: 8),
@@ -819,7 +998,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close_rounded, color: _T.textSecondary),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -829,7 +1008,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
               // Info cards
               Row(
                 children: [
-                  _buildInfoCard('📦 Variantes', '${activeVariants.length}', kPrimaryColor),
+                  _buildInfoCard('📦 Variantes', '${activeVariants.length}', _T.accentGold),
                   const SizedBox(width: 12),
                   _buildInfoCard('💰 Prix achat moy.', '${avgBuy.toStringAsFixed(0)} DA', kWarningOrange),
                   const SizedBox(width: 12),
@@ -840,14 +1019,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
               // Variants table
               Text('Détail des variantes',
-                style: AppTextStyles.bodyMedium(color: kPrimaryColor),
+                style: AppTextStyles.bodyMedium(color: _T.textPrimary),
               ),
               const SizedBox(height: 12),
 
               if (activeVariants.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: Text('Aucune variante active', style: TextStyle(color: Color(0xFF9090A8)))),
+                  child: Center(child: Text('Aucune variante active', style: TextStyle(color: _T.textSecondary))),
                 )
               else
                 Flexible(
@@ -858,26 +1037,26 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                       children: [
                         // Header
                         Container(
-                          color: kPrimaryColor,
+                          color: _T.bgTableHeader,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           child: Row(
                             children: const [
                               Expanded(flex: 2, child: Text('Code-barres',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Pointure',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Couleur',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Stock',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Achat',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Vente',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               Expanded(flex: 1, child: Text('Marge',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                               SizedBox(width: 64, child: Text('Actions',
-                                style: TextStyle(color: Color(0xFFEEEEFF)))),
+                                style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 12))),
                             ],
                           ),
                         ),
@@ -895,82 +1074,90 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           final varStatus = _getStockStatus(qty);
                           final barcodeText = v['barcode'] as String? ?? '';
 
-                          return ExpansionTile(
-                            key: PageStorageKey(v['id']),
-                            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                            childrenPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-                            leading: null,
-                            title: Row(
-                              children: [
-                                Expanded(flex: 2, child: Text(barcodeText.isNotEmpty ? barcodeText : '-',
-                                  style: TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 11,
-                                    color: barcodeText.isNotEmpty ? Color(0xFFEEEEFF) : Color(0xFF9090A8),
-                                  ),
-                                )),
-                                Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w600))),
-                                Expanded(flex: 1, child: Row(
-                                  children: [
-                                    Container(
-                                      width: 12, height: 12,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: _getColorForName(v['color'] as String? ?? ''),
-                                      ),
+                          return Container(
+                            decoration: const BoxDecoration(
+                              color: _T.bgTable,
+                              border: Border(bottom: BorderSide(color: _T.borderColor)),
+                            ),
+                            child: ExpansionTile(
+                              key: PageStorageKey(v['id']),
+                              iconColor: _T.textSecondary,
+                              collapsedIconColor: _T.textMuted,
+                              tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                              childrenPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                              expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+                              leading: null,
+                              title: Row(
+                                children: [
+                                  Expanded(flex: 2, child: Text(barcodeText.isNotEmpty ? barcodeText : '-',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                      color: barcodeText.isNotEmpty ? _T.textPrimary : _T.textMuted,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Flexible(child: Text(v['color'] as String? ?? '',
-                                      style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
-                                  ],
-                                )),
-                                Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
-                                Expanded(flex: 1, child: Text(buy.toStringAsFixed(0),
-                                  style: TextStyle(fontSize: 11, color: Color(0xFFF0A500)))),
-                                Expanded(flex: 1, child: Text(sell.toStringAsFixed(0),
-                                  style: TextStyle(fontSize: 11, color: Color(0xFF166534)))),
-                                Expanded(flex: 1, child: Text(
-                                  margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: margin >= 0 ? kAccentGreen : kDangerRed,
-                                  ),
-                                )),
-                                SizedBox(
-                                  width: 64,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                  )),
+                                  Expanded(flex: 1, child: Text(v['size'] as String? ?? '',
+                                    style: const TextStyle(fontWeight: FontWeight.w700, color: _T.textPrimary))),
+                                  Expanded(flex: 1, child: Row(
                                     children: [
-                                      if (barcodeText.isNotEmpty)
+                                      Container(
+                                        width: 12, height: 12,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _getColorForName(v['color'] as String? ?? ''),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(child: Text(v['color'] as String? ?? '',
+                                        style: const TextStyle(fontSize: 11, color: _T.textSecondary), overflow: TextOverflow.ellipsis)),
+                                    ],
+                                  )),
+                                  Expanded(flex: 1, child: _buildStockBadge(varStatus, qty, compact: true)),
+                                  Expanded(flex: 1, child: Text(buy.toStringAsFixed(0),
+                                    style: const TextStyle(fontSize: 11, color: _T.accentGold))),
+                                  Expanded(flex: 1, child: Text(sell.toStringAsFixed(0),
+                                    style: const TextStyle(fontSize: 11, color: _T.statusPaidText))),
+                                  Expanded(flex: 1, child: Text(
+                                    margin >= 0 ? '+${margin.toStringAsFixed(0)}' : margin.toStringAsFixed(0),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: margin >= 0 ? kAccentGreen : kDangerRed,
+                                    ),
+                                  )),
+                                  SizedBox(
+                                    width: 64,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        if (barcodeText.isNotEmpty)
+                                          IconButton(
+                                            icon: const Icon(Icons.print_outlined, size: 16, color: _T.textSecondary),
+                                            tooltip: 'Imprimer',
+                                            onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
                                         IconButton(
-                                          icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF9090A8)),
-                                          tooltip: 'Imprimer',
-                                          onPressed: () => _showPrintChoice(v, product['name'] as String? ?? ''),
+                                          icon: const Icon(Icons.edit_rounded, size: 16, color: _T.accentBlue),
+                                          tooltip: 'Modifier',
+                                          onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(),
                                         ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, size: 16, color: Color(0xFF58A6FF)),
-                                        tooltip: 'Modifier',
-                                        onPressed: () { Navigator.pop(ctx); _showEditVariantDialog(v); },
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
+                                ],
+                              ),
+                              children: [
+                                Text('Historique des prix',
+                                  style: AppTextStyles.bodyMedium(color: _T.accentGold),
                                 ),
+                                const SizedBox(height: 8),
+                                _buildVariantPriceHistory(v['id']),
                               ],
                             ),
-                            children: [
-                              Text('Historique des prix',
-                                style: AppTextStyles.bodyMedium(color: kPrimaryColor),
-                              ),
-                              const SizedBox(height: 8),
-                              _buildVariantPriceHistory(v['id']),
-                            ],
                           );
                         }),
                       ],
@@ -986,12 +1173,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 children: [
                   if (activeVariants.isNotEmpty)
                     OutlinedButton.icon(
-                      icon: const Icon(Icons.print, size: 18),
+                      icon: const Icon(Icons.print_rounded, size: 18),
                       label: const Text('Imprimer tout'),
                       onPressed: () { Navigator.pop(ctx); _printAllVariants(product); },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: kPrimaryColor,
-                        side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
+                        foregroundColor: _T.accentGold,
+                        side: BorderSide(color: _T.accentGold.withValues(alpha: 0.3)),
                       ),
                     )
                   else
@@ -1000,15 +1187,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     children: [
                       if (AppSession.isOwner)
                         TextButton.icon(
-                          icon: const Icon(Icons.archive, color: Color(0xFFF87171), size: 18),
-                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFF87171))),
+                          icon: const Icon(Icons.archive_rounded, color: _T.statusUnpaidText, size: 18),
+                          label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: _T.statusUnpaidText)),
                           onPressed: () { Navigator.pop(ctx); _archiveProduct(product['id']); },
                         ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: () => Navigator.pop(ctx),
-                        style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor, foregroundColor: Color(0xFFEEEEFF)),
-                        child: const Text('Fermer'),
+                        style: ElevatedButton.styleFrom(backgroundColor: _T.accentGold, foregroundColor: _T.bgPage, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        child: const Text('Fermer', style: TextStyle(fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -1025,13 +1212,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Options d\'impression'),
-        content: const Text('Combien d\'étiquettes imprimer pour cette variante?'),
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Options d\'impression', style: TextStyle(color: _T.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
+        content: const Text('Combien d\'étiquettes imprimer pour cette variante?', style: TextStyle(color: _T.textSecondary)),
         actions: [
           TextButton(onPressed: () { Navigator.pop(ctx); _printSingleVariant(variant, productName); },
-            child: const Text('1 copie')),
-          ElevatedButton(onPressed: () { Navigator.pop(ctx); _printCustomQuantity(variant, productName); },
-            child: const Text('X copies (saisir)')),
+            child: const Text('1 copie', style: TextStyle(color: _T.textSecondary))),
+          ElevatedButton(
+            onPressed: () { Navigator.pop(ctx); _printCustomQuantity(variant, productName); },
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accentGold, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: const Text('X copies (saisir)', style: TextStyle(color: _T.bgPage, fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
@@ -1042,13 +1234,13 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.07),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
         child: Column(
           children: [
-            Text(label, style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8))),
+            Text(label, style: AppTextStyles.bodyMedium(color: _T.textSecondary)),
             const SizedBox(height: 4),
             Text(value, style: AppTextStyles.bodyMedium(color: color)),
           ],
@@ -1059,8 +1251,8 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
   Widget _buildImageFallback() {
     return Container(
-      color: Color(0xFF1E1E35),
-      child: const Center(child: Icon(Icons.shopping_bag, size: 40, color: Color(0xFF9090A8))),
+      color: _T.borderColor,
+      child: const Center(child: Icon(Icons.shopping_bag_rounded, size: 40, color: _T.textMuted)),
     );
   }
 
@@ -1082,14 +1274,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 60,
-            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: _T.accentGold))),
           );
         }
         final history = snapshot.data ?? [];
         if (history.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Aucun historique', style: TextStyle(color: Color(0xFF9090A8))),
+            child: Text('Aucun historique', style: TextStyle(color: _T.textSecondary)),
           );
         }
 
@@ -1116,7 +1308,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Color(0xFF9090A8).withValues(alpha: 0.2),
+                      color: _T.textMuted.withValues(alpha: 0.25),
                       strokeWidth: 0.5,
                     ),
                   ),
@@ -1127,7 +1319,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         reservedSize: 36,
                         getTitlesWidget: (value, meta) {
                           return Text('${value.toInt()}',
-                            style: const TextStyle(fontSize: 8, color: Color(0xFF9090A8)),
+                            style: const TextStyle(fontSize: 8, color: _T.textSecondary),
                           );
                         },
                       ),
@@ -1143,7 +1335,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(label,
-                              style: const TextStyle(fontSize: 7, color: Color(0xFF9090A8)),
+                              style: const TextStyle(fontSize: 7, color: _T.textSecondary),
                             ),
                           );
                         },
@@ -1160,7 +1352,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     LineChartBarData(
                       spots: spots,
                       isCurved: true,
-                      color: kWarningOrange,
+                      color: _T.accentGold,
                       barWidth: 2,
                       isStrokeCapRound: true,
                       dotData: FlDotData(
@@ -1168,15 +1360,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         getDotPainter: (spot, percent, barData, index) {
                           return FlDotCirclePainter(
                             radius: 3,
-                            color: kWarningOrange,
+                            color: _T.accentGold,
                             strokeWidth: 1,
-                            strokeColor: Color(0xFFEEEEFF),
+                            strokeColor: _T.bgCard,
                           );
                         },
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: kWarningOrange.withValues(alpha: 0.1),
+                        color: _T.accentGold.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
@@ -1189,7 +1381,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             : '';
                         return LineTooltipItem(
                           '$date\n${spot.y.toStringAsFixed(0)} DA',
-                          const TextStyle(color: Color(0xFFEEEEFF)),
+                          const TextStyle(color: _T.textPrimary),
                         );
                       }).toList(),
                     ),
@@ -1201,7 +1393,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
             // Table
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFF1E1E35)),
+                border: Border.all(color: _T.borderColor),
                 borderRadius: BorderRadius.circular(8),
               ),
               clipBehavior: Clip.antiAlias,
@@ -1209,18 +1401,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    color: const Color(0xFF1A1400),
+                    color: _T.bgTableHeader,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: const Row(
                       children: [
                         Expanded(flex: 2, child: Text('Date',
-                          style: TextStyle(color: Color(0xFFEEEEFF)))),
+                          style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 11))),
                         Expanded(flex: 2, child: Text('Fournisseur',
-                          style: TextStyle(color: Color(0xFFEEEEFF)))),
+                          style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 11))),
                         Expanded(flex: 1, child: Text('Prix',
-                          style: TextStyle(color: Color(0xFFEEEEFF)))),
+                          style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 11))),
                         Expanded(flex: 1, child: Text('Variation',
-                          style: TextStyle(color: Color(0xFFEEEEFF)))),
+                          style: TextStyle(color: _T.accentGold, fontWeight: FontWeight.w700, fontSize: 11))),
                       ],
                     ),
                   ),
@@ -1237,24 +1429,24 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
-                        color: i.isEven ? Color(0xFFEEEEFF) : const Color(0xFFF8F9FA),
-                        border: Border(bottom: BorderSide(color: Color(0xFF1E1E35)!)),
+                        color: i.isEven ? _T.bgTable : _T.bgTableRowAlt,
+                        border: const Border(bottom: BorderSide(color: _T.borderColor)),
                       ),
                       child: Row(
                         children: [
                           Expanded(flex: 2, child: Text(date,
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF9090A8)))),
+                            style: const TextStyle(fontSize: 10, color: _T.textSecondary))),
                           Expanded(flex: 2, child: Text(supplier,
-                            style: const TextStyle(fontSize: 10))),
+                            style: const TextStyle(fontSize: 10, color: _T.textPrimary))),
                           Expanded(flex: 1, child: Text('${price.toStringAsFixed(0)} DA',
-                            style: TextStyle(fontSize: 10, color: Color(0xFFF0A500)))),
+                            style: const TextStyle(fontSize: 10, color: _T.accentGold))),
                           Expanded(
                             flex: 1,
                             child: hasChange
                                 ? Row(
                                     children: [
                                       Icon(
-                                        change >= 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                        change >= 0 ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
                                         size: 16,
                                         color: change >= 0 ? kDangerRed : kAccentGreen,
                                       ),
@@ -1268,7 +1460,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                       ),
                                     ],
                                   )
-                                : Text('-', style: TextStyle(fontSize: 10, color: Color(0xFF606078))),
+                                : const Text('-', style: TextStyle(fontSize: 10, color: _T.textMuted)),
                           ),
                         ],
                       ),
@@ -1287,9 +1479,9 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: kPrimaryColor.withValues(alpha: 0.05),
+        color: _T.accentGold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kPrimaryColor.withValues(alpha: 0.12)),
+        border: Border.all(color: _T.accentGold.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1297,7 +1489,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
           Text(text,
-            style: AppTextStyles.bodyMedium(color: kPrimaryColor),
+            style: AppTextStyles.bodyMedium(color: _T.accentGold),
           ),
         ],
       ),
@@ -1315,64 +1507,70 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final bool hasActiveFilters = _activeFilterCount > 0;
 
     return Scaffold(
-      backgroundColor: kBackgroundColor,
+      backgroundColor: _T.bgPage,
       appBar: AppBar(
         title: Text(S.t('prod_catalog_title'),
-          style: AppTextStyles.bodyMedium(),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _T.textPrimary),
         ),
-        backgroundColor: kPrimaryColor,
-        foregroundColor: Color(0xFFEEEEFF),
-        elevation: 1,
+        backgroundColor: _T.bgAppBar,
+        foregroundColor: _T.textPrimary,
+        elevation: 0,
         actions: [
           if (hasActiveFilters)
             TextButton(
               onPressed: _resetFilters,
-              child: const Text('Réinitialiser', style: TextStyle(color: Color(0xFF9090A8))),
+              child: const Text('Réinitialiser', style: TextStyle(color: _T.textSecondary)),
             ),
           IconButton(
-            icon: const Icon(Icons.checklist),
+            icon: const Icon(Icons.checklist_rounded, color: _T.textSecondary),
             tooltip: 'Sélectionner',
             onPressed: () => setState(() => _selectionMode = true),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded, color: _T.textSecondary),
             tooltip: S.t('action_refresh'),
             onPressed: _fetchProducts,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       floatingActionButton: AppSession.isOwner
           ? FloatingActionButton.extended(
               onPressed: widget.onAddProduct,
-              backgroundColor: kAccentGreen,
-              icon: const Icon(Icons.add, color: Color(0xFFEEEEFF)),
-              label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEEEEFF))),
+              backgroundColor: _T.accentGold,
+              icon: const Icon(Icons.add_rounded, color: _T.bgPage),
+              label: Text(S.t('prod_add_btn'), style: const TextStyle(fontWeight: FontWeight.w700, color: _T.bgPage)),
             )
           : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: _T.accentGold))
           : Column(
               children: [
                 // Search bar
                 Container(
                   padding: const EdgeInsets.all(16),
-                  color: Color(0xFFEEEEFF),
+                  color: _T.bgAppBar,
                   child: Row(
                     children: [
                       Expanded(
                         flex: 3,
                         child: Container(
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: Color(0xFF0A0A14),
-                            borderRadius: BorderRadius.circular(12),
+                            color: _T.bgCard,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _T.borderColor),
                           ),
                           child: TextField(
                             controller: _searchController,
+                            style: const TextStyle(color: _T.textPrimary, fontSize: 14),
+                            cursorColor: _T.accentGold,
                             decoration: InputDecoration(
                               hintText: S.t('prod_search_hint'),
-                              prefixIcon: const Icon(Icons.search),
+                              hintStyle: const TextStyle(color: _T.textMuted, fontSize: 13),
+                              prefixIcon: const Icon(Icons.search_rounded, color: _T.textMuted, size: 18),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             onChanged: (val) => setState(() => _searchQuery = val),
                           ),
@@ -1383,16 +1581,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: kWarningOrange.withValues(alpha: 0.1),
+                            color: _T.accentGold.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: kWarningOrange.withValues(alpha: 0.3)),
+                            border: Border.all(color: _T.accentGold.withValues(alpha: 0.3)),
                           ),
                           child: Text('$_activeFilterCount filtre(s)',
-                            style: TextStyle(fontSize: 11, color: kWarningOrange),
+                            style: const TextStyle(fontSize: 11, color: _T.accentGold),
                           ),
                         ),
                       const SizedBox(width: 12),
-                      _buildMiniStat(S.t('prod_active_count'), '${_filteredProducts.length}', Icons.category, Color(0xFF58A6FF)),
+                      _buildMiniStat(S.t('prod_active_count'), '${_filteredProducts.length}', Icons.category_rounded, _T.accentBlue),
                     ],
                   ),
                 ),
@@ -1403,19 +1601,19 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: kNegativeRed.withValues(alpha: 0.1),
-                      border: Border.all(color: kNegativeRed),
+                      color: _T.statusUnpaidBg,
+                      border: Border.all(color: _T.statusUnpaidText),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: kNegativeRed),
+                        const Icon(Icons.warning_amber_rounded, color: _T.statusUnpaidText),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '$_negativeCount produit(s) avec stock négatif détecté — vérification requise',
                             style: AppTextStyles.bodyMedium(
-                              color: kNegativeRed,
+                              color: _T.statusUnpaidText,
                             ),
                           ),
                         ),
@@ -1427,7 +1625,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                 if (_products.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Color(0xFFEEEEFF),
+                    color: _T.bgAppBar,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1464,7 +1662,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 onSelected: () => setState(() => _filterStockStatus = null)),
                               const SizedBox(width: 8),
                               _buildFilterChip('Disponible', 'healthy', _filterStockStatus,
-                                icon: Icons.check_circle, chipColor: kAccentGreen,
+                                icon: Icons.check_circle_rounded, chipColor: kAccentGreen,
                                 onSelected: () => setState(() => _filterStockStatus = 'healthy')),
                               const SizedBox(width: 8),
                               _buildFilterChip('Faible', 'low', _filterStockStatus,
@@ -1472,11 +1670,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                 onSelected: () => setState(() => _filterStockStatus = 'low')),
                               const SizedBox(width: 8),
                               _buildFilterChip('Rupture', 'empty', _filterStockStatus,
-                                icon: Icons.remove_circle, chipColor: kDangerRed,
+                                icon: Icons.remove_circle_rounded, chipColor: kDangerRed,
                                 onSelected: () => setState(() => _filterStockStatus = 'empty')),
                               const SizedBox(width: 8),
                               _buildFilterChip('Négatif', 'negative', _filterStockStatus,
-                                icon: Icons.error, chipColor: kNegativeRed,
+                                icon: Icons.error_rounded, chipColor: kNegativeRed,
                                 onSelected: () => setState(() => _filterStockStatus = 'negative')),
                             ],
                           ),
@@ -1508,17 +1706,19 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   value: _allVisibleVariants.isNotEmpty &&
                                       _selectedVariantIds.length == _allVisibleVariants.length,
                                   onChanged: (_) => _toggleSelectAllVariants(),
+                                  activeColor: _T.accentGold,
+                                  checkColor: _T.bgPage,
                                   visualDensity: VisualDensity.compact,
                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 const SizedBox(width: 4),
                                 Text('Tout sélectionner (${_allVisibleVariants.length})',
-                                  style: AppTextStyles.bodyMedium(),
+                                  style: AppTextStyles.bodyMedium(color: _T.textPrimary),
                                 ),
                                 const Spacer(),
                                 TextButton.icon(
-                                  icon: const Icon(Icons.close, size: 16),
-                                  label: const Text('Annuler'),
+                                  icon: const Icon(Icons.close_rounded, size: 16, color: _T.textSecondary),
+                                  label: const Text('Annuler', style: TextStyle(color: _T.textSecondary)),
                                   onPressed: () => setState(() {
                                     _selectionMode = false;
                                     _selectedVariantIds.clear();
@@ -1530,7 +1730,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${_filteredProducts.length} produit(s) trouvé(s)',
-                          style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
+                          style: AppTextStyles.bodyMedium(color: _T.textSecondary),
                         ),
                       ],
                     ),
@@ -1544,24 +1744,24 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                hasActiveFilters ? Icons.filter_alt_off : Icons.inventory_2_outlined,
-                                size: 80,
-                                color: Color(0xFF1E1E35),
+                                hasActiveFilters ? Icons.filter_alt_off_rounded : Icons.inventory_2_outlined,
+                                size: 48,
+                                color: _T.textMuted,
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 hasActiveFilters
                                   ? 'Aucun produit ne correspond aux filtres sélectionnés'
                                   : S.t('prod_no_results'),
-                                style: AppTextStyles.bodyMedium(color: Color(0xFF9090A8)),
+                                style: AppTextStyles.bodyMedium(color: _T.textSecondary),
                               ),
                               if (hasActiveFilters) ...[
                                 const SizedBox(height: 16),
                                 OutlinedButton(
                                   onPressed: _resetFilters,
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: kPrimaryColor,
-                                    side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
+                                    foregroundColor: _T.accentGold,
+                                    side: BorderSide(color: _T.accentGold.withValues(alpha: 0.3)),
                                   ),
                                   child: const Text('Réinitialiser les filtres'),
                                 ),
@@ -1593,20 +1793,28 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   width: stockStatus == StockStatus.negative ? 4 : 3,
                                 )),
                                 color: stockStatus == StockStatus.negative
-                                    ? kNegativeRed.withValues(alpha: 0.03)
+                                    ? kNegativeRed.withValues(alpha: 0.05)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(kBorderRadius + 2),
                               ),
                               child: Card(
                                 margin: EdgeInsets.zero,
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
-                                child: ExpansionTile(
+                                color: _T.bgCard,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(kBorderRadius),
+                                  side: const BorderSide(color: _T.borderColor),
+                                ),
+                                child: Theme(
+                                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                  child: ExpansionTile(
+                                  iconColor: _T.textSecondary,
+                                  collapsedIconColor: _T.textMuted,
                                   leading: Container(
                                     width: 60,
                                     height: 60,
                                     decoration: BoxDecoration(
-                                      color: Color(0xFF1E1E35),
+                                      color: _T.borderColor,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: imageUrl != null
@@ -1614,7 +1822,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                             borderRadius: BorderRadius.circular(8),
                                             child: Image.network(imageUrl, fit: BoxFit.cover),
                                           )
-                                        : const Icon(Icons.image_not_supported, color: Color(0xFF9090A8)),
+                                        : const Icon(Icons.image_not_supported_rounded, color: _T.textMuted),
                                   ),
                                   title: Row(
                                     children: [
@@ -1622,7 +1830,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         child: Text(
                                           product['name'] ?? 'Inconnu',
                                           overflow: TextOverflow.ellipsis,
-                                          style: AppTextStyles.bodyMedium(),
+                                          style: AppTextStyles.bodyMedium(color: _T.textPrimary),
                                         ),
                                       ),
                                       _buildCategoryBadge(product['category']),
@@ -1630,15 +1838,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                   ),
                                   subtitle: Row(
                                     children: [
-                                      Icon(Icons.local_shipping, size: 14, color: Color(0xFF9090A8)),
+                                      const Icon(Icons.local_shipping_rounded, size: 14, color: _T.textMuted),
                                       const SizedBox(width: 4),
                                       Flexible(child: Text(supplierName, overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: Color(0xFF9090A8)))),
+                                        style: const TextStyle(color: _T.textSecondary))),
                                       const SizedBox(width: 12),
-                                      Icon(Icons.style, size: 14, color: Color(0xFF9090A8)),
+                                      const Icon(Icons.style_rounded, size: 14, color: _T.textMuted),
                                       const SizedBox(width: 4),
                                       Text('${activeVariants.length} var.',
-                                        style: TextStyle(color: Color(0xFF9090A8))),
+                                        style: const TextStyle(color: _T.textSecondary)),
                                       const SizedBox(width: 12),
                                       _buildStockBadge(stockStatus, totalStock),
                                     ],
@@ -1647,11 +1855,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                     if (activeVariants.isEmpty)
                                       Padding(
                                         padding: const EdgeInsets.all(16),
-                                        child: Text(S.t('prod_no_active_variants'), style: const TextStyle(color: Color(0xFF9090A8))),
+                                        child: Text(S.t('prod_no_active_variants'), style: const TextStyle(color: _T.textSecondary)),
                                       )
                                     else
                                       Container(
-                                        color: Color(0xFF0A0A14),
+                                        color: _T.bgTable,
                                         child: Column(
                                           children: [
 
@@ -1673,14 +1881,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
 
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                                              decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.05)),
+                                              decoration: BoxDecoration(color: _T.accentGold.withValues(alpha: 0.06)),
                                               child: Row(
                                                 children: [
-                                                  Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                                  Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                                  Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF58A6FF)))),
-                                                  SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold))),
+                                                  Expanded(flex: 2, child: Text(S.t('prod_details'), style: const TextStyle(fontWeight: FontWeight.bold, color: _T.textPrimary))),
+                                                  Expanded(flex: 2, child: Text(S.t('label_barcode'), style: const TextStyle(fontWeight: FontWeight.bold, color: _T.textPrimary))),
+                                                  Expanded(flex: 3, child: Text(S.t('prod_buy_sell_margin'), style: const TextStyle(fontWeight: FontWeight.bold, color: _T.textPrimary))),
+                                                  Expanded(flex: 1, child: Text(S.t('label_stock'), style: const TextStyle(fontWeight: FontWeight.bold, color: _T.accentBlue))),
+                                                  SizedBox(width: 96, child: Text(S.t('label_actions'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, color: _T.textPrimary))),
                                                 ],
                                               ),
                                             ),
@@ -1711,14 +1919,16 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                 child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  border: Border(bottom: BorderSide(color: Color(0xFF1E1E35)!)),
-                                                  color: variantStock < 0 ? kNegativeRed.withValues(alpha: 0.03) : null,
+                                                  border: const Border(bottom: BorderSide(color: _T.borderColor)),
+                                                  color: variantStock < 0 ? kNegativeRed.withValues(alpha: 0.05) : null,
                                                 ),
                                                 child: Row(
                                                   children: [
                                                     if (_selectionMode)
                                                       Checkbox(
                                                         value: isSelected,
+                                                        activeColor: _T.accentGold,
+                                                        checkColor: _T.bgPage,
                                                         onChanged: (_) {
                                                           setState(() {
                                                             if (isSelected) {
@@ -1734,11 +1944,11 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                     Expanded(flex: 2, child: Text('${v['size']} - ${v['color']}',
                                                       style: TextStyle(
                                                         fontWeight: FontWeight.bold,
-                                                        color: variantStock < 0 ? kNegativeRed : null,
+                                                        color: variantStock < 0 ? kNegativeRed : _T.textPrimary,
                                                       ),
                                                     )),
                                                     Expanded(flex: 2, child: Text(v['barcode'] ?? '-',
-                                                      style: const TextStyle(fontSize: 12, color: Color(0xFF9090A8)))),
+                                                      style: const TextStyle(fontSize: 12, color: _T.textSecondary))),
                                                     Expanded(
                                                       flex: 3,
                                                       child: Column(
@@ -1747,14 +1957,14 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                       children: [
                                                         if (AppSession.isOwner) ...[
                                                           Text('${S.t('prod_buy_short')}$buyPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Color(0xFFF0A500))),
+                                                            style: const TextStyle(fontSize: 12, color: _T.accentGold)),
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Color(0xFF4ADE80))),
+                                                            style: const TextStyle(fontSize: 12, color: _T.statusPaidText)),
                                                           Text('${S.t('prod_margin_short')}$margin ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 11, color: Color(0xFF58A6FF))),
+                                                            style: const TextStyle(fontSize: 11, color: _T.accentBlue)),
                                                         ] else
                                                           Text('${S.t('prod_sell_short')}$sellPrice ${S.t('misc_currency')}',
-                                                            style: const TextStyle(fontSize: 12, color: Color(0xFF4ADE80))),
+                                                            style: const TextStyle(fontSize: 12, color: _T.statusPaidText)),
                                                       ],
                                                       ),
                                                     ),
@@ -1772,18 +1982,18 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                                         children: [
                                                           if ((v['barcode'] as String?)?.isNotEmpty == true)
                                                             IconButton(
-                                                              icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF9090A8)),
+                                                              icon: const Icon(Icons.print_outlined, size: 16, color: _T.textSecondary),
                                                               tooltip: 'Imprimer étiquette',
                                                               onPressed: () => _printCustomQuantity(v, product['name']),
                                                             ),
                                                           if (AppSession.isOwner) ...[
                                                             IconButton(
-                                                              icon: const Icon(Icons.edit, size: 16, color: Color(0xFF58A6FF)),
+                                                              icon: const Icon(Icons.edit_rounded, size: 16, color: _T.accentBlue),
                                                               tooltip: S.t('prod_edit_price_code'),
                                                               onPressed: () => _showEditVariantDialog(v),
                                                             ),
                                                             IconButton(
-                                                              icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFF87171)),
+                                                              icon: const Icon(Icons.delete_outline_rounded, size: 16, color: _T.statusUnpaidText),
                                                               tooltip: S.t('prod_archive_variant'),
                                                               onPressed: () => _archiveVariant(v['id']),
                                                             ),
@@ -1806,25 +2016,26 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           OutlinedButton.icon(
-                                            icon: const Icon(Icons.info_outline, size: 18),
+                                            icon: const Icon(Icons.info_outline_rounded, size: 18),
                                             label: const Text('Détails complets'),
                                             onPressed: () => _showProductDetailDialog(product),
                                             style: OutlinedButton.styleFrom(
-                                              foregroundColor: kPrimaryColor,
-                                              side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
+                                              foregroundColor: _T.accentGold,
+                                              side: BorderSide(color: _T.accentGold.withValues(alpha: 0.3)),
                                             ),
                                           ),
                                           const SizedBox(width: 8),
                                           if (AppSession.isOwner)
                                             TextButton.icon(
                                               onPressed: () => _archiveProduct(product['id']),
-                                              icon: const Icon(Icons.archive, color: Color(0xFFF87171), size: 18),
-                                              label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: Color(0xFFF87171))),
+                                              icon: const Icon(Icons.archive_rounded, color: _T.statusUnpaidText, size: 18),
+                                              label: Text(S.t('prod_archive_btn'), style: const TextStyle(color: _T.statusUnpaidText)),
                                             ),
                                         ],
                                       ),
                                     )
                                   ],
+                                ),
                                 ),
                               ),
                             ),
@@ -1843,29 +2054,29 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: Color(0xFFEEEEFF),
-          boxShadow: [
-            BoxShadow(color: Color(0xFF0A0A14).withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, -2)),
-          ],
+          color: _T.bgCard,
+          border: const Border(top: BorderSide(color: _T.borderColor)),
         ),
         child: SafeArea(
           top: false,
           child: Row(
             children: [
-              Icon(Icons.check_circle, color: kAccentGreen, size: 20),
+              const Icon(Icons.check_circle_rounded, color: _T.statusPaidText, size: 20),
               const SizedBox(width: 8),
               Text(
                 '${_selectedVariantIds.length} sélectionné(s)',
-                style: AppTextStyles.bodyMedium(),
+                style: AppTextStyles.bodyMedium(color: _T.textPrimary),
               ),
               const Spacer(),
               ElevatedButton.icon(
-                icon: const Icon(Icons.print, size: 18),
+                icon: const Icon(Icons.print_rounded, size: 18),
                 label: Text('Imprimer Barcodes (${_selectedVariantIds.length})'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  foregroundColor: Color(0xFFEEEEFF),
+                  backgroundColor: _T.accentGold,
+                  foregroundColor: _T.bgPage,
+                  elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: _showBulkPrintDialog,
               ),
@@ -1878,7 +2089,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
   Widget _buildFilterChip(String label, String? value, String? currentValue, {
     VoidCallback? onSelected,
     IconData? icon,
-    Color chipColor = kPrimaryColor,
+    Color chipColor = _T.accentGold,
   }) {
     final selected = currentValue == value;
     return GestureDetector(
@@ -1896,13 +2107,12 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: selected ? Color(0xFFEEEEFF) : chipColor),
+              Icon(icon, size: 14, color: selected ? _T.bgPage : chipColor),
               const SizedBox(width: 4),
             ],
             Text(
               label,
-              style: AppTextStyles.bodyMedium(color: selected ? Color(0xFFEEEEFF) : chipColor,
-              ),
+              style: AppTextStyles.bodyMedium(color: selected ? _T.bgPage : chipColor),
             ),
           ],
         ),
@@ -1914,15 +2124,15 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     final color = _getStockColor(status);
     IconData icon;
     switch (status) {
-      case StockStatus.healthy: icon = Icons.check_circle; break;
+      case StockStatus.healthy: icon = Icons.check_circle_rounded; break;
       case StockStatus.low: icon = Icons.warning_amber_rounded; break;
-      case StockStatus.empty: icon = Icons.remove_circle; break;
-      case StockStatus.negative: icon = Icons.error; break;
+      case StockStatus.empty: icon = Icons.remove_circle_rounded; break;
+      case StockStatus.negative: icon = Icons.error_rounded; break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
@@ -1948,7 +2158,7 @@ class _ListeProduitsScreenState extends State<ListeProduitsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
